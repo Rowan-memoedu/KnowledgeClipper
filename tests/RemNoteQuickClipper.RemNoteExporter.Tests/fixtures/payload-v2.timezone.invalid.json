@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "2.0.0",
+  "documentTitle": "摘录 · wrong-zone",
+  "sink": "mcp-direct",
+  "target": { "rootRemId": "root-rem-id", "rootTitle": "剪藏" },
+  "route": {
+    "kind": "clip-daily-route",
+    "timeZone": "UTC",
+    "localDate": "2026-08-28",
+    "dateFormat": "yyyy-MM-dd"
+  }
+}

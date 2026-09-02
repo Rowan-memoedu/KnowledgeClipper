@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "authority-worker-registry-checkpoint.v1",
+  "checkpointId": "invalid-old-registry-modified",
+  "publishedAt": "2026-08-26T02:42:18Z",
+  "status": "published",
+  "authorityRegistry": {"path": "contracts/authority/worker-registry/invalid/worker-registry.v1.json", "schemaVersion": "1.0.0", "registryVersion": "1.1.0", "bytes": 1, "sha256": "1111111111111111111111111111111111111111111111111111111111111111", "workers": 5},
+  "releaseBinding": {"root": "releases/invalid/win-x64", "files": 1, "bytes": 1, "treeSha256": "2222222222222222222222222222222222222222222222222222222222222222", "state": "unsealed-no-go"},
+  "workers": [{}, {}, {}, {}, {}],
+  "checkpointFiles": [{}, {}, {}, {}, {}, {}, {}],
+  "validation": {
+    "productionRegistryLoader": {"status": "valid", "workers": 5},
+    "liveDescribe": {"status": "passed", "workers": 5},
+    "dependencies": {"status": "passed"},
+    "contracts": {"status": "passed"},
+    "dispatcherCanary": {"status": "passed", "externalProductionApisInvoked": false},
+    "verifier": {"status": "passed"}
+  },
+  "immutableBoundaries": {"frozenFilesChecked": 21, "frozenMismatches": 0, "oldEmptyRegistry": {"path": "contracts/v1/registry/worker-registry.v1.json", "sha256": "ACB4BA01ADBC0A410AAE7050FEC04F527C47EE6D0A98F30B73E7AC2B0E35F6E1", "modified": true}},
+  "externalProductionApisInvoked": false,
+  "readiness": {"authorityRegistry": "GO", "releaseCandidate": "NO-GO"}
+}

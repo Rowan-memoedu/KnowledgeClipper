@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.event/2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "eventId", "streamId", "sequence", "eventType", "eventVersion", "occurredAt", "correlationId", "causationId", "operation", "effectClass", "data", "artifacts"],
+  "properties": {
+    "schema": {"const": "kc.event/2"},
+    "eventId": {"type": "string", "minLength": 1},
+    "streamId": {"type": "string", "minLength": 1},
+    "sequence": {"type": "integer", "minimum": 1},
+    "eventType": {"enum": ["command.accepted", "operation.started", "worker.dispatched", "artifact.published", "operation.completed", "operation.failed", "operation.cancelled", "operation.unknown-external-state", "authorization.consumed"]},
+    "eventVersion": {"type": "integer", "minimum": 1},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "correlationId": {"type": "string", "minLength": 1},
+    "causationId": {"type": "string", "minLength": 1},
+    "operation": {"type": "string", "minLength": 1},
+    "effectClass": {"enum": ["none", "read-only-external", "external-write"]},
+    "data": {},
+    "artifacts": {"type": "array", "items": {"$ref": "../../artifacts/schemas/artifact-ref.v2.schema.json"}}
+  }
+}

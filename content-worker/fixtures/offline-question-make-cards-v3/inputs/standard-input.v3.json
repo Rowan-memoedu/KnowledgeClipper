@@ -1,0 +1,52 @@
+{
+  "schema_version": "standard-input/3.0.0",
+  "package_id": "knowledge-clipper-question-cards-v3",
+  "task_id": "question-cards-v3",
+  "input_version": "3",
+  "mode": "question",
+  "questionWorkflow": {
+    "schemaVersion": "question-workflow-input/1.0.0",
+    "phase": "make-cards",
+    "questionTurns": [
+      {
+        "turnId": "question-1",
+        "turnIndex": 0,
+        "question": "为什么 TCP 建立连接需要三次握手？"
+      },
+      {
+        "turnId": "question-2",
+        "turnIndex": 1,
+        "question": "如果只有两次握手，会留下什么风险？",
+        "parentAnswerId": "answer-tcp-1"
+      }
+    ],
+    "answerAncestry": [
+      {
+        "answerId": "answer-tcp-1",
+        "artifactRef": "question-answer-initial-tcp",
+        "turnId": "question-1",
+        "turnIndex": 0,
+        "questionSha256": "a56676447ef40bb84975a32656c57ecbe3c7a80ec950e72394a41a34838f00b2",
+        "answerText": "三次握手让双方确认彼此的发送与接收能力，并同步初始序列号。",
+        "answerTextSha256": "25a3166153d45a5d6ca8829f48d5d82256173f13925612f55addb7557baab9d0"
+      },
+      {
+        "answerId": "answer-tcp-2",
+        "artifactRef": "question-answer-followup-tcp",
+        "turnId": "question-2",
+        "turnIndex": 1,
+        "questionSha256": "24378060d7993ac4652b612943c6240d05c1104388eaa57c2c8e11a9edd4368c",
+        "answerText": "服务端无法确认客户端是否收到了自己的确认，历史失效连接请求也可能造成半开连接和资源浪费。",
+        "answerTextSha256": "f0f05e72f26343f66403c06570c572ad79b66d866d09aa34a07fec86e57856f0",
+        "parentAnswerId": "answer-tcp-1"
+      }
+    ],
+    "cardStructureRef": "materials/card-structure.v1.json"
+  },
+  "items": [
+    {
+      "item_id": "item-question",
+      "source": { "kind": "question_workflow" }
+    }
+  ]
+}

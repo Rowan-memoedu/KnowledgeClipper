@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "request-speech-002",
+  "operationId": "operation-speech-002",
+  "taskId": "task-002",
+  "runId": "run-002",
+  "stageId": "speech-synthesize",
+  "attemptId": "attempt-001",
+  "workerId": "speech.edge",
+  "operation": "speech.synthesize",
+  "idempotencyKey": "3333333333333333333333333333333333333333333333333333333333333333",
+  "attemptPath": "runs/run-002/stages/speech-synthesize/attempts/attempt-001",
+  "outputPath": "runs/run-002/stages/speech-synthesize/attempts/attempt-001/outputs",
+  "progressPath": "runs/run-002/stages/speech-synthesize/attempts/attempt-001/progress.ndjson",
+  "resultPath": "runs/run-002/stages/speech-synthesize/attempts/attempt-001/result.json",
+  "cancelSignal": { "schemaVersion": "1.0.0", "path": "runs/run-002/stages/speech-synthesize/attempts/attempt-001/cancel.json", "gracePeriodMs": 2000 },
+  "inputRefs": [],
+  "configSnapshot": {},
+  "payload": {
+    "schemaVersion": "1.0.0",
+    "requestId": "request-speech-002",
+    "operationId": "operation-speech-002",
+    "spokenText": {
+      "artifactRef": "spoken-text-002",
+      "path": "inputs/spoken-text-002/v0001/payload.txt",
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "bytes": 128,
+      "encoding": "utf-8",
+      "mediaType": "text/plain"
+    },
+    "contextMode": "selection_plus_paragraph",
+    "language": { "strategy": "override", "override": "en-US" },
+    "voiceSnapshot": {
+      "provider": "edge-tts",
+      "voicesByLanguage": { "en-US": "en-US-AvaMultilingualNeural" },
+      "ratePercent": 10,
+      "volumePercent": 0,
+      "pitchHz": -5
+    },
+    "playbackPolicy": {
+      "autoPlay": true,
+      "activePlayback": "supersede",
+      "replay": "from_start",
+      "naturalCompletion": "idle_replayable",
+      "stopTerminal": "stopped"
+    },
+    "cachePolicy": { "scope": "task", "reuseSuccessfulAudio": true, "crossTaskReuse": false }
+  }
+}

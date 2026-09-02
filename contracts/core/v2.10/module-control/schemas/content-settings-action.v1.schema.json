@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "content-settings-action.v1",
+  "oneOf": [
+    {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "action", "effectClass", "externalMutation"],
+      "properties": {
+        "schemaVersion": {"const": "content-settings-action.v1"},
+        "action": {"const": "content.settings.describe"},
+        "effectClass": {"const": "local-filesystem-read-only"},
+        "externalMutation": {"const": false}
+      }
+    },
+    {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "action", "targetRoot", "effectClass", "externalMutation", "authorization"],
+      "properties": {
+        "schemaVersion": {"const": "content-settings-action.v1"},
+        "action": {"const": "content.settings.copy"},
+        "targetRoot": {"type": "string", "minLength": 3},
+        "effectClass": {"const": "local-filesystem-create-once"},
+        "externalMutation": {"const": true},
+        "authorization": {
+          "type": "object", "additionalProperties": false,
+          "required": ["mode", "operation", "targetRoot", "createOnly"],
+          "properties": {
+            "mode": {"const": "explicit-user-action"},
+            "operation": {"const": "copy"},
+            "targetRoot": {"type": "string", "minLength": 3},
+            "createOnly": {"const": true}
+          }
+        }
+      }
+    },
+    {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "action", "root", "effectClass", "externalMutation"],
+      "properties": {
+        "schemaVersion": {"const": "content-settings-action.v1"},
+        "action": {"enum": ["content.settings.validate", "content.settings.diff"]},
+        "root": {"type": "string", "minLength": 3},
+        "effectClass": {"const": "local-filesystem-read-only"},
+        "externalMutation": {"const": false}
+      }
+    }
+  ]
+}

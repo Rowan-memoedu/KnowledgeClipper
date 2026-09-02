@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.4.0",
+  "transport": "windows-named-pipe",
+  "pipeName": "RemNoteQuickClipper.Orchestrator.v1",
+  "endpoint": "\\\\.\\pipe\\RemNoteQuickClipper.Orchestrator.v1",
+  "serverOwnership": "orchestrator-exclusive",
+  "accessControl": "current-windows-user",
+  "allowedMessages": ["task-command", "task-query", "stage-control", "module-action"],
+  "inlineContentProhibited": true,
+  "persistentSourceOfTruth": "job-event-sequence",
+  "maxMessageBytes": 1048576,
+  "framing": {"protocol": "utf-8-json-lines-v1", "requestPerConnection": 1, "responsePerConnection": 1, "delimiter": "LF", "acceptedDelimiter": ["LF", "CRLF"], "bomAllowed": false, "jsonNewlines": "escaped-only", "byteLimitExcludesDelimiter": true, "serverPush": false, "connectionMode": "unary", "concurrency": "multiple-connections"},
+  "requestSchema": "schemas/ipc-request.v1.4.schema.json",
+  "responseSchema": "schemas/ipc-response.v1.4.schema.json",
+  "protocolErrorBehavior": "respond-when-possible-then-close"
+}

@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "knowledge-clipper-ocr-human-resolution-command/1.0.0",
+  "decisionKind": "ocr-human-resolution",
+  "targetToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "action": "accept_original",
+  "reason": "The user confirms the retained OCR literal is intentional."
+}

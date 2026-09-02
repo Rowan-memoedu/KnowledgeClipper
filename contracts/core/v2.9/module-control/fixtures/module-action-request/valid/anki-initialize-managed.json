@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "knowledge-clipper-module-action.v3",
+  "actionId": "anki-init-001",
+  "operation": "anki.initialize-managed",
+  "payloadRef": "module-actions/anki-init-001/input.json",
+  "idempotencyKey": "4444444444444444444444444444444444444444444444444444444444444444"
+}

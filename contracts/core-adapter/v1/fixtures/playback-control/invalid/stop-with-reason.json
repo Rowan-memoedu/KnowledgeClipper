@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "desktop-action.v1",
+  "action": "playback.stop",
+  "reason": "stopped"
+}

@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/rqc/desktop-automation/v1/capture-bundle.v1.schema.json",
+  "title": "RQC capture bundle v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "captureId", "createdAt", "intent", "source", "modeSnapshot", "artifacts", "questionImages", "answerImages", "questionTurns"],
+  "properties": {
+    "schemaVersion": { "const": "capture-bundle.v1" },
+    "captureId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "intent": { "enum": ["clip", "read", "screenshot", "question"] },
+    "source": { "enum": ["selection", "clipboard-text", "clipboard-image", "screenshot", "question"] },
+    "modeSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workflow", "contextEnabled", "contextGranularity", "contextApplied", "imageHandling"],
+      "properties": {
+        "workflow": { "const": "card" },
+        "contextEnabled": { "type": "boolean" },
+        "contextGranularity": { "enum": ["sentence", "paragraph"] },
+        "contextApplied": { "type": "boolean" },
+        "imageHandling": { "enum": ["ocr", "original"] }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "selectedTextArtifactRef": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/captureArtifactRef" }
+      ]
+    },
+    "contextSegments": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["prefixArtifactRef", "selectionArtifactRef", "suffixArtifactRef", "captureMethod"],
+          "properties": {
+            "prefixArtifactRef": {
+              "oneOf": [
+                { "type": "null" },
+                { "$ref": "#/$defs/captureArtifactRef" }
+              ]
+            },
+            "selectionArtifactRef": { "$ref": "#/$defs/captureArtifactRef" },
+            "suffixArtifactRef": {
+              "oneOf": [
+                { "type": "null" },
+                { "$ref": "#/$defs/captureArtifactRef" }
+              ]
+            },
+            "captureMethod": { "enum": ["uia-text-pattern", "provider-native", "fixture"] }
+          }
+        }
+      ]
+    },
+    "questionImages": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/captureArtifactRef" },
+      "uniqueItems": true
+    },
+    "answerImages": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/captureArtifactRef" },
+      "uniqueItems": true
+    },
+    "questionTurns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["turnIndex", "role", "artifactRef"],
+        "properties": {
+          "turnIndex": { "type": "integer", "minimum": 1 },
+          "role": { "enum": ["user", "assistant"] },
+          "artifactRef": { "$ref": "#/$defs/captureArtifactRef" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "captureArtifactRef": {
+      "allOf": [
+        { "$ref": "../../v1/schemas/common/artifact.schema.json#/$defs/identifier" },
+        { "type": "string", "pattern": "^capture\\.[a-z0-9][a-z0-9._-]*$" }
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactRef", "relativePath", "sha256", "bytes", "mediaType"],
+      "properties": {
+        "artifactRef": { "$ref": "#/$defs/captureArtifactRef" },
+        "relativePath": { "type": "string", "minLength": 1, "pattern": "^(?![A-Za-z]:)(?![/\\\\])(?!.*(?:^|[/\\\\])\\.\\.(?:[/\\\\]|$)).+$" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "mediaType": { "type": "string", "minLength": 1 },
+        "encoding": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "intent": { "const": "screenshot" } }, "required": ["intent"] },
+      "then": { "properties": { "questionImages": { "minItems": 1 } } }
+    },
+    {
+      "if": { "properties": { "intent": { "const": "question" } }, "required": ["intent"] },
+      "then": { "properties": { "questionTurns": { "minItems": 1 } } }
+    },
+    {
+      "if": { "properties": { "modeSnapshot": { "properties": { "contextApplied": { "const": true } }, "required": ["contextApplied"] } } },
+      "then": { "required": ["contextSegments"], "properties": { "contextSegments": { "type": "object" } } }
+    }
+  ]
+}

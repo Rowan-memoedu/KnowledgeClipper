@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "artifactRef": "anki-connection-status.production-shape",
+  "kind": "anki-connection-status",
+  "contractVersion": "1.0.0",
+  "files": [
+    { "path": "outputs/operations.ndjson", "bytes": 139, "sha256": "C6D51ACC47160F1C4EAAFD952E5DD7090BCC5476262A92911E44A7DAE047D365" },
+    { "path": "outputs/preflight.json", "bytes": 93, "sha256": "A129F2C6041FFCC298B718F02ADC5738FDC90282F7F04398088D1C7199102F8F" },
+    { "path": "outputs/connection-status.json", "bytes": 210, "sha256": "3F9874C1D0A91241222E9089C5BB4C2515D515A4CBF3C5E2228CB689C420F05F" },
+    { "path": "outputs/receipt.json", "bytes": 116, "sha256": "1AC0B4CA66810708B8F67337B5DB59EC1153EC2DBAED3A9A917C0FDABD10237F" }
+  ],
+  "metadata": {
+    "entrypoint": "outputs/connection-status.json"
+  }
+}

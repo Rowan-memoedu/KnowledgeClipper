@@ -1,0 +1,40 @@
+{
+  "candidate": {
+    "id": "kc-i-crq-v1214-20260830T105500Z",
+    "root": "releases/kc-i-crq-v1214-20260830T105500Z/win-x64",
+    "manifestSha256": "E4D18D1DE41AC6CC001B0E9D1E70F40BB8206A65D6573E1BC480B345D5886FDF",
+    "sealedFileCount": 854,
+    "sealedTotalBytes": 430192317,
+    "sealedTreeSha256": "DEDDB7EA56CB410804A54FD376D4B4EF9D6D440CD3C39EEFF7D608C289A2CB9A"
+  },
+  "desktop": {
+    "candidateId": "kc-i-crq-v1214-20260830T105500Z",
+    "buildReceiptSha256": "66F8A54A69098D1B21C117C403DCC0F74E6FF714E5B0F062B2740E02B4807532",
+    "fileCount": 544,
+    "totalBytes": 169218660,
+    "treeSha256": "69B4EA1BD04681826910AE1730A1ED909D6721E5EABD020F9DB692A00ABF80B6",
+    "equalityEvidence": "canary/desktop-integrated/kc-i-crq-v1214-20260830T105500Z/desktop-payload-equality.json"
+  },
+  "authority": {
+    "sourceReleaseRoot": "releases/knowledge-clipper-authority-v1.2.14-20260830T184700Z/win-x64",
+    "checkpointPath": "contracts/authority/worker-registry/v1.2.14-20260830T184700Z/checkpoint.json",
+    "checkpointSha256": "C2DD2E6C2099E9D7A2D4C742A53BEDE28EA229CEF50D849A464F7C20314121D4",
+    "registryPath": "contracts/authority/worker-registry/v1.2.14-20260830T184700Z/worker-registry.v1.json",
+    "registrySha256": "A1A95EE7FCBBBB3051777088E66389EC2C6578B30AD7562CFB0992DE4729897C",
+    "releaseFileCount": 296,
+    "releaseTotalBytes": 260669250,
+    "releaseTreeSha256": "30F1A8E65A335811545114474573196B689657DA8BAFB511E7A2F84638DB9D3E"
+  },
+  "evidence": {
+    "candidateId": "kc-i-crq-v1214-20260830T105500Z",
+    "candidateRoot": "releases/kc-i-crq-v1214-20260830T105500Z/win-x64",
+    "ownerReceiptPath": "receipts/desktop-context-resize-answer-v1.2.14-20260830T110000Z.json",
+    "ownerReceiptSha256": "17C1CD2CCD1E975893AA71E93ED6244E1F0B3D8D38D39A0832928561D38BACE6"
+  },
+  "baseQualityReceipt": {
+    "path": "canary/v1214-external-qualification/20260830T105916Z-question-anki-sealed/v1214-question-anki-quality-receipt.json",
+    "sha256": "26B197AF6A1E5F620099DD075604D81F9C4892F4549C7DAC0CBE2C6C9F155BDD"
+  },
+  "manualBoundaryPolicy": "hand-test-not-release-failure",
+  "externalRerun": false
+}

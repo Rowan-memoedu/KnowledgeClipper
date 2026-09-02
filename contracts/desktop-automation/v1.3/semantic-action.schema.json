@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/knowledge-clipper/desktop-automation/v1.3/semantic-action.schema.json",
+  "title": "KnowledgeClipper additive OCR human-resolution semantic actions v1.3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "requestId", "action"],
+  "properties": {
+    "schemaVersion": { "const": "desktop-automation.v1.3" },
+    "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "action": { "enum": ["ocr-human-resolution.accept-original", "ocr-human-resolution.submit-correction", "ocr-human-resolution.cancel"] },
+    "arguments": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": { "type": "string", "minLength": 1 },
+        "candidateText": { "type": "string" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "action": { "const": "ocr-human-resolution.submit-correction" } }, "required": ["action"] },
+      "then": { "required": ["arguments"], "properties": { "arguments": { "required": ["text", "candidateText"] } } },
+      "else": { "not": { "required": ["arguments"] } }
+    }
+  ]
+}

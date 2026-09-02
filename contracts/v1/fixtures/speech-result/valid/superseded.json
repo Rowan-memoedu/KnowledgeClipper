@@ -1,0 +1,6 @@
+{
+  "schemaVersion": "1.0.0", "requestId": "request-speech-result-003", "operationId": "operation-speech-result-003", "taskId": "task-003", "runId": "run-003", "stageId": "speech-playback", "attemptId": "attempt-003",
+  "worker": { "id": "speech.edge", "version": "1.2.3" }, "contractVersion": "1.0.0", "idempotencyKey": "3333333333333333333333333333333333333333333333333333333333333333",
+  "status": "cancelled", "outputs": [], "error": { "code": "playback.superseded", "category": "cancelled", "retryable": false, "detailsRef": "runs/run-003/stages/speech-playback/attempts/attempt-003/cancel.json" }, "startedAt": "2026-08-25T11:00:00Z", "finishedAt": "2026-08-25T11:00:01Z", "warnings": [],
+  "payload": { "operationId": "operation-speech-result-003", "languageTag": "en-US", "voiceId": "en-US-AvaMultilingualNeural", "cacheHit": true, "playbackState": "superseded" }
+}

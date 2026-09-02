@@ -1,0 +1,25 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-needs-research": {
+      "cleaned_text": "某种新保健品是否能替代处方降压药？\n",
+      "removed_fragments": [],
+      "format_anomalies": []
+    },
+    "classification:item-needs-research": {
+      "units": [
+        {
+          "unit_id": "unit-needs-research",
+          "source_segment_indexes": [0],
+          "category_id": "question_answer",
+          "subtype": "medical_question",
+          "answer_state": "missing",
+          "context_state": "missing",
+          "risk_state": "high_stakes",
+          "question": "某种新保健品是否能替代处方降压药？",
+          "unresolved_reasons": []
+        }
+      ]
+    }
+  }
+}

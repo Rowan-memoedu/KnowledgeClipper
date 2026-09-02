@@ -1,0 +1,752 @@
+{
+  "schemaVersion": "knowledge-clipper-core-integration-checkpoint.v2",
+  "checkpointVersion": "2.5.1",
+  "createdAt": "2026-08-30T07:54:43.2651875+00:00",
+  "status": "passed-offline-authority-admission-ready",
+  "supersedes": {
+    "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.8-20260828T092700Z/checkpoint.json",
+    "sha256": "3306DF313EB6AACF52AE1A447F3F095C95295605A2D68A451ADA5D00AE41C846"
+  },
+  "core": {
+    "version": "2.5.0",
+    "describedVersion": "2.5.0.0",
+    "executable": "dist/orchestrator/win-x64/v2.5.0/KnowledgeClipper.Orchestrator.exe",
+    "bytes": 68162720,
+    "sha256": "ADA1A3DF07813B20012B70CF89413B7949DE978A3E9E686A4EB87E38871A15E8"
+  },
+  "publicVersions": {
+    "workflowSettings": "knowledge-clipper-workflow-settings.v3",
+    "taskOverride": "knowledge-clipper-task-settings-override.v3",
+    "taskSnapshot": "knowledge-clipper-task-settings-snapshot.v3",
+    "moduleAdapter": "knowledge-clipper-module-settings-adapter.v3",
+    "pipelinePlan": "2.1.0",
+    "workerRequestEnvelope": "1.0.0"
+  },
+  "validation": {
+    "contracts": {
+      "schemaVersion": "1.0.0",
+      "schemasChecked": 64,
+      "validFixturesAccepted": 67,
+      "invalidFixturesRejected": 55,
+      "authoritativeRegistryEntries": 0,
+      "workerCliDescriptorChecked": true,
+      "speechEdgeRegistryState": "authority-pending",
+      "imageOcrRegistryState": "authority-pending",
+      "ipcFramingChecked": true,
+      "stageControlIpcVersion": "1.1",
+      "stageControlReceiptVersion": "2.3.0",
+      "coreAdapterContractVersion": "2.0.0",
+      "dynamicPipelineSchemaVersion": "2.0.0",
+      "productIdentity": "knowledge-clipper",
+      "destinationNeutral": true
+    },
+    "settings": {
+      "path": "canary/core-v2.5-offline/20260830T075000Z/settings-control.receipt.json",
+      "sha256": "1942B9DA8F060BC35258B40948114F1E28FBCAC4ED9C41DCCC1252D358536BA7",
+      "status": "passed",
+      "externalCalls": 0,
+      "physicalSpeakerInvocations": 0
+    },
+    "coreAdapter": {
+      "path": "canary/core-v2.5-offline/20260830T075000Z/core-adapter.receipt.json",
+      "sha256": "F6FD77A1017BF05DC93EA8333270CB4E1D1448176C7A7FD76042F9E4B872810B",
+      "status": "passed",
+      "groups": 11
+    },
+    "orchestrator": {
+      "path": "canary/core-v2.5-offline/20260830T075000Z/orchestrator-contract-tests.receipt.json",
+      "sha256": "88F8FE9A6EB8013F4A458FB904217C2FC0F53756C9A9EC2AA9646AE21929A119",
+      "status": "passed",
+      "tests": 23
+    },
+    "productionRetention": {
+      "status": "disabled-fail-closed",
+      "legacyStartupInvocations": 0,
+      "stateAwareRetentionService": "conditional-not-implemented"
+    }
+  },
+  "requirements": {
+    "originalImage": {
+      "status": "terminal-unsupported",
+      "worker": "image.ocr.mineru",
+      "outputKind": "image.original",
+      "providerCalls": 0,
+      "downstreamStarted": false
+    },
+    "imagePartial": {
+      "status": "failed-items-only",
+      "wholeCardBlocksDownstreamUntilMergedCompletion": true,
+      "successfulItemsReusedByHash": true,
+      "unknownExternalAutomaticRetry": false
+    },
+    "contentSettings": {
+      "configSchemaVersion": "content-config-snapshot/1.1.0",
+      "runtimePolicyFrozen": true,
+      "promptAndCategoryShaFrozen": true,
+      "promptAfterRecognition": "conditional-core-ui"
+    },
+    "speechSettings": {
+      "languageOverrideBound": true,
+      "deploymentPathsStageScoped": true,
+      "effectiveAt": "next_task",
+      "speakerPreview": "conditional-explicit-physical-audio-not-run"
+    },
+    "ankiProbe": {
+      "status": "supported",
+      "invocation": "explicit_only",
+      "effectClass": "provider-read-only",
+      "externalMutation": false
+    },
+    "remnoteProbe": {
+      "status": "conditional-cli-only",
+      "externalMutation": false
+    }
+  },
+  "modules": {
+    "image": {
+      "workerId": "image.ocr.mineru",
+      "workerVersion": "1.2.2",
+      "executable": "workers/image-ocr/candidates/1.2.2/KnowledgeClipper.ImageOcr.Worker.exe",
+      "bytes": 10310385,
+      "sha256": "8F99C403AF250E0BD2BB62CEECAA74A768860C10B3C582236BA0A6B3B0D73F78",
+      "describe": {
+        "schemaVersion": "1.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersion": "1.2.2",
+        "contractVersion": "1.0.0",
+        "stages": [
+          "image-ocr"
+        ],
+        "inputKinds": [
+          "capture-bundle"
+        ],
+        "outputKinds": [
+          "image.original",
+          "image-ocr.markdown",
+          "image-ocr.structured",
+          "image-ocr.image"
+        ],
+        "concurrency": {
+          "model": "parallel",
+          "maxParallelAttempts": 4
+        },
+        "sideEffectLevel": "external",
+        "idempotencyLevel": "reconcilable",
+        "cancellation": {
+          "protocol": "attempt-signal-file-v1",
+          "supportedReasons": [
+            "user_stop",
+            "superseded",
+            "task_cancel",
+            "timeout"
+          ]
+        }
+      }
+    },
+    "content": {
+      "workerId": "content.deepseek",
+      "workerVersion": "0.7.0",
+      "executable": "content-worker/releases/content.deepseek-0.7.0-win-x64-formal-20260828T103735Z/KnowledgeClipper.Content.Worker.exe",
+      "bytes": 67490988,
+      "sha256": "F6EC35798F8948727B8664517FDBB096DB8A94C8DD079F612B05BAC4EA72D3B8",
+      "describe": {
+        "schemaVersion": "1.0.0",
+        "workerId": "content.deepseek",
+        "workerVersion": "0.7.0",
+        "contractVersion": "1.0.0",
+        "stages": [
+          "content.understand-and-card"
+        ],
+        "inputKinds": [
+          "content-input",
+          "content-config-snapshot"
+        ],
+        "outputKinds": [
+          "learning-bundle",
+          "card-bundle",
+          "language-practice-decision",
+          "question.answer"
+        ],
+        "concurrency": {
+          "model": "parallel",
+          "maxParallelAttempts": 4
+        },
+        "sideEffectLevel": "local",
+        "idempotencyLevel": "idempotent",
+        "cancellation": {
+          "protocol": "attempt-signal-file-v1",
+          "supportedReasons": [
+            "user_stop",
+            "superseded",
+            "task_cancel",
+            "timeout"
+          ]
+        }
+      }
+    },
+    "speech": {
+      "workerId": "speech.edge",
+      "workerVersion": "1.2.4",
+      "executable": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260830T073825Z-c0980038/win-x64/workers/speech/KnowledgeClipper.Speech.Worker.exe",
+      "bytes": 116224,
+      "sha256": "C098003823B5217C3A4F7267A57E69128AE5F6DF7BCC8083BA92B4CC56C34EE2",
+      "describe": {
+        "schemaVersion": "1.0.0",
+        "workerId": "speech.edge",
+        "workerVersion": "1.2.4",
+        "contractVersion": "1.0.0",
+        "stages": [
+          "speech.synthesize",
+          "speech.playback"
+        ],
+        "inputKinds": [
+          "text.spoken",
+          "audio.speech"
+        ],
+        "outputKinds": [
+          "audio.speech"
+        ],
+        "concurrency": {
+          "model": "serial",
+          "maxParallelAttempts": 1
+        },
+        "sideEffectLevel": "local",
+        "idempotencyLevel": "idempotent",
+        "cancellation": {
+          "protocol": "attempt-signal-file-v1",
+          "supportedReasons": [
+            "user_stop",
+            "superseded",
+            "task_cancel",
+            "timeout"
+          ]
+        }
+      }
+    },
+    "remnote": {
+      "workerId": "export.remnote",
+      "workerVersion": "2.1.0",
+      "executable": "releases/knowledge-clipper-remnote-exporter-v2.1.0-20260830T073620Z/win-x64/KnowledgeClipper.RemNoteExporter.Worker.exe",
+      "bytes": 122368,
+      "sha256": "443835ECA91E5F68C97070777C250FD95E4A2E4873C9EFC7FBF45A528EF2CAD2",
+      "describe": {
+        "schemaVersion": "1.0.0",
+        "workerId": "export.remnote",
+        "workerVersion": "2.1.0",
+        "contractVersion": "1.0.0",
+        "stages": [
+          "export-remnote"
+        ],
+        "inputKinds": [
+          "learning.bundle",
+          "card.bundle"
+        ],
+        "outputKinds": [
+          "remnote.write-receipt",
+          "remnote.import-package"
+        ],
+        "concurrency": {
+          "model": "serial",
+          "maxParallelAttempts": 1
+        },
+        "sideEffectLevel": "external",
+        "idempotencyLevel": "reconcilable",
+        "cancellation": {
+          "protocol": "attempt-signal-file-v1",
+          "supportedReasons": [
+            "user_stop",
+            "superseded",
+            "task_cancel",
+            "timeout"
+          ]
+        }
+      }
+    },
+    "anki": {
+      "workerId": "export.anki",
+      "workerVersion": "1.2.1",
+      "executable": "releases/knowledge-clipper-anki-exporter-v1.2.1-20260828T104000Z/win-x64/workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe",
+      "bytes": 10219371,
+      "sha256": "135B7BC31DA93389819E4F802226600CD3879F6527ED4194555D613A32CC4EE1",
+      "describe": {
+        "cancellation": {
+          "protocol": "attempt-signal-file-v1",
+          "supportedReasons": [
+            "user_stop",
+            "superseded",
+            "task_cancel",
+            "timeout"
+          ]
+        },
+        "concurrency": {
+          "maxParallelAttempts": 1,
+          "model": "serial"
+        },
+        "contractVersion": "1.0.0",
+        "idempotencyLevel": "reconcilable",
+        "inputKinds": [
+          "card-bundle",
+          "learning-bundle",
+          "anki-export-config"
+        ],
+        "outputKinds": [
+          "anki-export-evidence",
+          "anki-connection-status"
+        ],
+        "schemaVersion": "1.0.0",
+        "sideEffectLevel": "external",
+        "stages": [
+          "anki-export"
+        ],
+        "workerId": "export.anki",
+        "workerVersion": "1.2.1"
+      }
+    }
+  },
+  "moduleReceipts": {
+    "image": {
+      "path": "workers/image-ocr/canary/core-admission-1.2.2-20260830T074207Z/core-admission-receipt.v1.json",
+      "sha256": "8833618214090F8871A86F2693B74B3C996E7DCD0570441D2D17C0214228FBA7",
+      "treeSha256": "F0F8FA5D5BC3210D8CA01CEC8707B29891A8ECFFBE6B533982990BE15FC03B89"
+    },
+    "content": {
+      "path": "content-worker/receipts/core-v3-desktop-compatibility/20260830T074659078Z/receipt.v1.json",
+      "sha256": "BF933C31A6D0D16C51313CDD6B71D58EB493A11D23F5A01DCFA8A762FCF9513C",
+      "releaseManifest": "content-worker/releases/content.deepseek-0.7.0-win-x64-formal-20260828T103735Z/release-manifest.v1.json",
+      "releaseManifestSha256": "552F29D7BD1EF848DA1D7587EE664DD1F68DD23EA6E8228E52198C9BF6D2CCB9",
+      "treeSha256": "724F2D2732FA13FA236825F7E82E8E8E8DAF4DC1354E36093AB8B79262EDFBEC"
+    },
+    "speech": {
+      "path": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260830T073825Z-c0980038/speech-formal-win-x64-release-receipt.json",
+      "sha256": "91250CAB1E4441EBC5EE9324B114A27D1CE3D84BC3B95C26F374003CDA3B7E70",
+      "treeSha256": "985E678EEFD7335F772F21483BF39763544B57260E4449DFC3C017B2E31FB38"
+    },
+    "remnote": {
+      "path": "releases/knowledge-clipper-remnote-exporter-v2.1.0-20260830T073620Z/win-x64/release-receipt.json",
+      "sha256": "B290E8FFBA1011130CD740DEB806AC52D76B1179FD0CD51DF9CEA5A89A52A1A2",
+      "treeSha256": "A2C5F932B79F2528F2F1B8E30E9B68D3C15AEE07FE7F3AE8E834BF698C675CA8"
+    },
+    "anki": {
+      "path": "workers/anki-exporter/canary/shared-consumer-compatibility/20260830T074135Z-28e90aac/receipt.json",
+      "sha256": "3474DF53E79744A69F49CEB8F2009EC9B76A1120C77EB8BD2400227A2D20EB5F",
+      "treeSha256": "E7EBA348C344865B0F403D34187831BABDEADC4818451084ACB86CC37A3E161D"
+    }
+  },
+  "compatibility": {
+    "frozenContractsV1Modified": false,
+    "priorAuthorityModified": false,
+    "externalCalls": 0,
+    "mineruCalls": 0,
+    "remnoteWrites": 0,
+    "ankiWrites": 0,
+    "physicalSpeakerInvocations": 0,
+    "invalidatedGenerationAttempt": {
+      "path": "contracts/core/v2.5/checkpoints/v2.5.0-20260830T075200Z/checkpoint.json",
+      "sha256": "52119B00F9D548B70B09FF5F5B54904B66DAB85D674D75E9CB8FE9A2D68B4B42",
+      "authorityBound": false
+    }
+  },
+  "authorityBoundary": {
+    "currentAuthority": "1.2.11",
+    "intendedAuthority": "1.2.12",
+    "promotion": "pending-append-only-authority-assembly"
+  },
+  "tree": {
+    "algorithm": "ordinal relative path; path TAB bytes TAB lowercase sha256; LF; SHA-256 UTF-8",
+    "fileCount": 78,
+    "totalBytes": 69009806,
+    "treeSha256": "88024AD025F81E5BD300EB9CD45934A12BC182080CFF7EEA6C854C81D13AFF5B",
+    "files": [
+      {
+        "path": "canary/core-v2.5-offline/20260830T075000Z/core-adapter.receipt.json",
+        "bytes": 4204,
+        "sha256": "f6fd77a1017bf05dc93ea8333270cb4e1d1448176c7a7fd76042f9e4b872810b"
+      },
+      {
+        "path": "canary/core-v2.5-offline/20260830T075000Z/orchestrator-contract-tests.receipt.json",
+        "bytes": 7952,
+        "sha256": "88f8fe9a6eb8013f4a458fb904217c2fc0f53756c9a9ec2aa9646ae21929a119"
+      },
+      {
+        "path": "canary/core-v2.5-offline/20260830T075000Z/settings-control.receipt.json",
+        "bytes": 4309,
+        "sha256": "1942b9da8f060bc35258b40948114f1e28fbcac4ed9c41dccc1252d358536ba7"
+      },
+      {
+        "path": "content-worker/receipts/core-v3-desktop-compatibility/20260830T074659078Z/receipt.v1.json",
+        "bytes": 26338,
+        "sha256": "bf933c31a6d0d16c51313cdd6b71d58eb493a11d23f5a01dcfa8a762fcf9513c"
+      },
+      {
+        "path": "content-worker/releases/content.deepseek-0.7.0-win-x64-formal-20260828T103735Z/release-manifest.v1.json",
+        "bytes": 15884,
+        "sha256": "552f29d7bd1ef848da1d7587ee664dd1f68dd23ea6e8228e52198c9bf6d2ccb9"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-override-v2/invalid/partial-content.json",
+        "bytes": 167,
+        "sha256": "114eab404fd870a8b894c7b495e5a67734b1f181232734ff5aaabe180af6d9eb"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-override-v2/valid/image-content.json",
+        "bytes": 490,
+        "sha256": "8f483c2f69f0d0aa19415df9cd954154b464f700ffc8bc09f6dc1849b78b442f"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-override-v3/invalid/editable-autoplay.json",
+        "bytes": 110,
+        "sha256": "700f3a398670638cf1b30e033986dd64ee67871f03097e0f54cb6c59a01a1d6b"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-override-v3/valid/speech-language-override.json",
+        "bytes": 502,
+        "sha256": "4063ed90fa0fc447fb29af39618d0e108f32b8bd0c070c766a47b3370572ad4f"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-override/invalid/learning-anki-unknown.json",
+        "bytes": 179,
+        "sha256": "1f5335ac20f17ec463b612606aebb719ae5a490d944874bc7f5372470f9deaf9"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-override/valid/content-only.json",
+        "bytes": 172,
+        "sha256": "d4b4836067c94d3d6762af498e08ab1eccfe88ee58240d762324ebbcd0507a2b"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-snapshot-v2/invalid/ocr-without-provider.json",
+        "bytes": 663,
+        "sha256": "b55242fcb61571249978f01cbae59fc64273a790251441d639595772a6382b58"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-snapshot-v2/valid/image-content.json",
+        "bytes": 1085,
+        "sha256": "ba17d594951a6df2e2e61c705163b83f0bf6e0e0d8614a55491eb2ff3f659e04"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-snapshot-v3/invalid/override-without-language.json",
+        "bytes": 985,
+        "sha256": "ce631207d19a46c9d3d2c1248671fd7d87c26da9afde8022c40a4e6b33e575a2"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-snapshot-v3/valid/speech-language-override.json",
+        "bytes": 1146,
+        "sha256": "c20c49307a18b26ea010c548f0366defb41dd92515b570a95bc11318e886fc49"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-snapshot/invalid/cards-with-daily-route.json",
+        "bytes": 1203,
+        "sha256": "ff5e8c56d468ab3e9a906d94b46f71ad965cf33755352c02079d43fcfe7ce97a"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-snapshot/valid/learning-remnote.json",
+        "bytes": 1272,
+        "sha256": "bda1dfa33fdc4b6b6caebd39e37f6310c32d34f6526cf7b39ae5a5c636d97ff4"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/workflow-settings-v2/invalid/raw-secret.json",
+        "bytes": 439,
+        "sha256": "36a1ae2b67f34315a280dab903b3bb3b6fb1fd4b5c1560f3341a05f5aa6044c9"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/workflow-settings-v2/valid/image-content.json",
+        "bytes": 737,
+        "sha256": "5d5c85e3f1e5de764c660b2e0f815ce537877e86d02bfe3b64aaec98e0b03aa0"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/workflow-settings-v3/invalid/editable-autoplay.json",
+        "bytes": 188,
+        "sha256": "1ac441e396bfeb829e69e4e951da4a8c8c5135c813c37e7b4ec7d683c4bf7016"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/workflow-settings-v3/valid/speech-language-override.json",
+        "bytes": 770,
+        "sha256": "520f4d0fc6456e45cd33109ff1b1bdac2ee1bb8cb4f04420eb950a87550ab132"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/workflow-settings/invalid/secret-and-unknown-field.json",
+        "bytes": 208,
+        "sha256": "37a834bc910f7a94f7efb8116dc219694efcfa614e0e33bcd4ab7e9b653aee07"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/fixtures/workflow-settings/valid/default-and-dual.json",
+        "bytes": 870,
+        "sha256": "7a9becc3351d316615d0677981ba4425db229fb7b1e6f6445b58f89409a91b74"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/module-settings-adapter.v1.json",
+        "bytes": 5603,
+        "sha256": "be948b59485328f629ff79c4ec87b6fe4699169b57e6de34195abed1605ee99a"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/module-settings-adapter.v2.json",
+        "bytes": 3940,
+        "sha256": "263db21f081414caf04f996dc658eae363614efc83b2461888edaa962866c147"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/module-settings-adapter.v3.json",
+        "bytes": 9186,
+        "sha256": "c59c4234072fb40b538c4c3275b10ae827ea130ac70b5157f3140149408c16bc"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/readable-settings-to-plan-v2.md",
+        "bytes": 2121,
+        "sha256": "72bc326cb46c9d01634ff27dad618feebe93bc3411ad27864ea68ba8944c698a"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/readable-settings-to-plan.md",
+        "bytes": 3207,
+        "sha256": "aaf7791cd7191851c6c0e7252c5799e376a3e0ff5481022f86c206daf7efdcf4"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/module-settings-adapter.v1.schema.json",
+        "bytes": 2272,
+        "sha256": "1f4930990b0705ea7e507b200baef0637f75d926f0544f5481866a0009c5a709"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/module-settings-adapter.v2.schema.json",
+        "bytes": 2026,
+        "sha256": "c130833b3c709a819deaeaabbd170e6486433d0857adad5d253f452288863c1e"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/module-settings-adapter.v3.schema.json",
+        "bytes": 3013,
+        "sha256": "fc94935bbdefe6eb26d970fd8fed2b189c9e33e38e57876b122040594f2dcd1f"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/task-settings-override.v1.schema.json",
+        "bytes": 1547,
+        "sha256": "d76c9803d962d116d4d5a5bbe251b7d3bb0d6a0c8dd7375544c5c66c1002f45f"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/task-settings-override.v2.schema.json",
+        "bytes": 787,
+        "sha256": "a1e86f41a1a0cc93b4c92458156749e8e5681507067b442b2931152774d44eb2"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/task-settings-override.v3.schema.json",
+        "bytes": 787,
+        "sha256": "7cfeead92470b2ed87b22f4d568245988f19dfa8ee8592afafbdc605f53e4bfe"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/task-settings-snapshot.v1.schema.json",
+        "bytes": 5485,
+        "sha256": "cff2addccbed715fd9916ebaffc7ab1e4baa2a67658c85da023c9a85ed4c1944"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/task-settings-snapshot.v2.schema.json",
+        "bytes": 3889,
+        "sha256": "268f4b9b638d5227cb59fd9950e0a531b3d0ed13cc5d27128985453873fb9d53"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/task-settings-snapshot.v3.schema.json",
+        "bytes": 6344,
+        "sha256": "80bf181327aedf8bf5e5d16696a52ba731d7fed9d1cce6fe87c73bcaf4af1346"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/workflow-settings.v1.schema.json",
+        "bytes": 2363,
+        "sha256": "e4fab209d12776b5254cec1ccb2db8af765a1c4c66c498c8afe4fcf3e9f21d86"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/workflow-settings.v2.schema.json",
+        "bytes": 3495,
+        "sha256": "50aaf86a0748f76f329f8f3fb5e91c61cf0fead74196c7d164068379d3f6e6b9"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/workflow-settings.v3.schema.json",
+        "bytes": 2746,
+        "sha256": "fd22f4faf01302632884f0fafc5ae263f7ea35ca15fbfaf149db0800f3e6e9e7"
+      },
+      {
+        "path": "contracts/core/v2.5/checkpoints/v2.5.0-20260830T075200Z/invalidation-receipt.v1.json",
+        "bytes": 465,
+        "sha256": "fb51975abac253961790383339e150f6db2eef890f8a1bac1b951e11eed50992"
+      },
+      {
+        "path": "contracts/core/v2.5/image-orchestration/fixtures/pipeline-plan/invalid/original-with-content-stage.json",
+        "bytes": 1141,
+        "sha256": "6bf7023fea5f5b0a97620163a70169b4e1cff7348641c2435a85d21cdbc9a748"
+      },
+      {
+        "path": "contracts/core/v2.5/image-orchestration/fixtures/pipeline-plan/invalid/unknown-partial-strategy.json",
+        "bytes": 658,
+        "sha256": "6508039c1238113438c2ea3dcf5f44b7c8a0595f5f515ac2127d7f391dca6476"
+      },
+      {
+        "path": "contracts/core/v2.5/image-orchestration/fixtures/pipeline-plan/valid/ocr-failed-items-only.json",
+        "bytes": 701,
+        "sha256": "8f5fdbb687e053895e6e2aae7a34719c92e670159796d7b511bdaee7606ddec0"
+      },
+      {
+        "path": "contracts/core/v2.5/image-orchestration/fixtures/pipeline-plan/valid/original-unsupported-terminal.json",
+        "bytes": 909,
+        "sha256": "7bc863f844ee41d0e2d4bfed7ecc9fc4c8524f940dd65ac82a4a4c9ab8e86640"
+      },
+      {
+        "path": "contracts/core/v2.5/image-orchestration/schemas/pipeline-plan.v2.1.schema.json",
+        "bytes": 4969,
+        "sha256": "53a5a55b5d5a2f33f112f01f22609cef9ddf2a4ee97fb1ba2c236bac12f6870c"
+      },
+      {
+        "path": "dist/orchestrator/win-x64/v2.5.0/KnowledgeClipper.Orchestrator.exe",
+        "bytes": 68162720,
+        "sha256": "ada1a3df07813b20012b70cf89413b7949de978a3e9e686a4eb87e38871a15e8"
+      },
+      {
+        "path": "orchestrator/Core/CommandAndIpc.cs",
+        "bytes": 27246,
+        "sha256": "bf7d6169ed7114c1b8df9cb155e2806200da23fb99de0c23ee4bce9b3e20905c"
+      },
+      {
+        "path": "orchestrator/Core/Contracts.cs",
+        "bytes": 12238,
+        "sha256": "085eff41fe4b19ee55c8a37082a2c5dc631947ad594606bf0a8905cda8f4159e"
+      },
+      {
+        "path": "orchestrator/Core/DesktopIntentResolver.cs",
+        "bytes": 50609,
+        "sha256": "bd23fb92ed10997251acd3833e1a84c8f925629b68b373c293d0b3c0b6435f90"
+      },
+      {
+        "path": "orchestrator/Core/EventStore.cs",
+        "bytes": 5139,
+        "sha256": "8a41ae6e994682898f5447f4941acff132ab893e9f3564b23f65ac0c524531ee"
+      },
+      {
+        "path": "orchestrator/Core/FileSystemPrimitives.cs",
+        "bytes": 4302,
+        "sha256": "d5786bb6b5581ffd1549e96c71f95b2c322624e561525253753a7226c814cfb9"
+      },
+      {
+        "path": "orchestrator/Core/OrchestratorEngine.cs",
+        "bytes": 53053,
+        "sha256": "c93a1e89634b10ba78bfec7a9c4394eba72039867e9cdfdc42619e5afdf8f4d1"
+      },
+      {
+        "path": "orchestrator/Core/OrchestratorHost.cs",
+        "bytes": 47414,
+        "sha256": "8b6f2aa7ef4e269e5eddfaa6de17b0b6fe07594665e94cb200ec446ed66d98b4"
+      },
+      {
+        "path": "orchestrator/Core/RegistryLoader.cs",
+        "bytes": 16024,
+        "sha256": "31ca400782391fbcd426b5ef0364869053e35cca6d762fe532791aca24797360"
+      },
+      {
+        "path": "orchestrator/Core/SettingsControl.cs",
+        "bytes": 47295,
+        "sha256": "562ee9457fb915557ecb1b7683f6b2596a0218306944520692b9ceeac5febda3"
+      },
+      {
+        "path": "orchestrator/Core/StageControl.cs",
+        "bytes": 13098,
+        "sha256": "763d6f41f6632db37d7cb87366b750b52104faa0dd8056b291745bf8aabb7abd"
+      },
+      {
+        "path": "orchestrator/Core/StageInputResolver.cs",
+        "bytes": 65567,
+        "sha256": "73253ff3237283e0f86a8388813bd45bfca363a788e42572558c54931cb65a19"
+      },
+      {
+        "path": "orchestrator/Core/WorkerProcessRunner.cs",
+        "bytes": 12600,
+        "sha256": "16f04f01a6f1e050000217d51b683a8407c7449cba625c20b6557b147a4151ca"
+      },
+      {
+        "path": "orchestrator/KnowledgeClipper.Orchestrator.csproj",
+        "bytes": 584,
+        "sha256": "cd1c079817da2453fe81c22f0a469588a395e45b19aa0cb4d8e41d90ee31792f"
+      },
+      {
+        "path": "orchestrator/Program.cs",
+        "bytes": 9427,
+        "sha256": "55c3e2c1ce955ffe823aae6e18d431f3c420e4c5dab6b7572f9fac1cb6fbe679"
+      },
+      {
+        "path": "receipts/knowledge-clipper-requirement-audit-20260828T103725Z.md",
+        "bytes": 8150,
+        "sha256": "9b05ccd170c73d763f0a6a9581f7d5d66eb1742809d3aaaa5f65ee4a72680606"
+      },
+      {
+        "path": "releases/knowledge-clipper-remnote-exporter-v2.1.0-20260830T073620Z/win-x64/release-receipt.json",
+        "bytes": 1579,
+        "sha256": "b290e8ffba1011130cd740deb806ac52d76b1179fd0cd51df9cea5a89a52a1a2"
+      },
+      {
+        "path": "src/Program.cs",
+        "bytes": 28465,
+        "sha256": "69361e29c3ace09795ab7848c9f68e8750b3835e74fc1d497a70558e4fe9aa27"
+      },
+      {
+        "path": "tests/CoreAdapter.IntegrationTests/CoreAdapter.IntegrationTests.csproj",
+        "bytes": 413,
+        "sha256": "41700c9e77f927894a4ec2e196644612d19266fce2abf45c609cd48bab2fe62c"
+      },
+      {
+        "path": "tests/CoreAdapter.IntegrationTests/Program.cs",
+        "bytes": 65566,
+        "sha256": "0db2f861e8743625b3e70f64c11a174c3fe7dc5848f3698f90098d008c30dc2e"
+      },
+      {
+        "path": "tests/FakeWorker/FakeWorker.csproj",
+        "bytes": 357,
+        "sha256": "7f021e8435a6054a0b0a1f19b8bafd230587d3893fd1f09b5bfb27c81fc5e468"
+      },
+      {
+        "path": "tests/FakeWorker/Program.cs",
+        "bytes": 38666,
+        "sha256": "dfe7c50b933e8f88a238f0217be2e9d40ccee7529bba12011b282c74ad740866"
+      },
+      {
+        "path": "tests/Orchestrator.ContractTests/Orchestrator.ContractTests.csproj",
+        "bytes": 512,
+        "sha256": "dec0ce4c3043d37faf71148e90733af1d85cb0f31b2f599e95aa9d88a9e91aef"
+      },
+      {
+        "path": "tests/Orchestrator.ContractTests/Program.cs",
+        "bytes": 88889,
+        "sha256": "12d3916f439b878002ee1e5b99c1b928bbab3398c18e81af9710a2aae8b967b4"
+      },
+      {
+        "path": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260830T073825Z-c0980038/speech-formal-win-x64-release-receipt.json",
+        "bytes": 15887,
+        "sha256": "91250cab1e4441ebc5ee9324b114a27d1ce3d84bc3b95c26f374003cda3b7e70"
+      },
+      {
+        "path": "tests/SettingsControl.IntegrationTests/Program.cs",
+        "bytes": 44568,
+        "sha256": "d87d0165d59a1550c73002faa3d213b605dacd27c6e7b387d7e774adba61f55c"
+      },
+      {
+        "path": "tests/SettingsControl.IntegrationTests/SettingsControl.IntegrationTests.csproj",
+        "bytes": 413,
+        "sha256": "f7353e4a3c2ba46299b8fe602dc67cd2a6f33a61d282dfdd02e5aca2e0aaeaea"
+      },
+      {
+        "path": "tools/New-CoreV25Checkpoint.ps1",
+        "bytes": 14401,
+        "sha256": "a38cfd98ec4c4a1b14d403f4a2ade67927d550fc90f16317a7cb3b1446de24d2"
+      },
+      {
+        "path": "tools/test-desktop-brand-surface.ps1",
+        "bytes": 3711,
+        "sha256": "00a83b94901a2ebc8dbdc12538293875435fca5b41e5e8cdc5d4fe8c216aebce"
+      },
+      {
+        "path": "tools/validate_contracts.py",
+        "bytes": 19248,
+        "sha256": "1840fe6dfe8e6463361d777864269a95aed90db064f520b638b39066ef8ec958"
+      },
+      {
+        "path": "workers/anki-exporter/canary/shared-consumer-compatibility/20260830T074135Z-28e90aac/receipt.json",
+        "bytes": 7608,
+        "sha256": "3474df53e79744a69f49ceb8f2009ec9b76a1120c77eb8bd2400227a2d20eb5f"
+      },
+      {
+        "path": "workers/image-ocr/canary/core-admission-1.2.2-20260830T074207Z/core-admission-receipt.v1.json",
+        "bytes": 6530,
+        "sha256": "8833618214090f8871a86f2693b74b3c996e7dcd0570441d2d17c0214228fba7"
+      }
+    ]
+  }
+}

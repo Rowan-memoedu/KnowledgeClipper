@@ -1,0 +1,139 @@
+{
+  "schemaVersion": "knowledge-clipper-image-ocr-release-root-receipt.v1",
+  "createdAt": "2026-08-31T06:25:32.5108871+00:00",
+  "worker": {
+    "id": "image.ocr.mineru",
+    "version": "1.2.4",
+    "contractVersion": "1.0.0",
+    "executable": "KnowledgeClipper.ImageOcr.Worker.exe"
+  },
+  "companion": {
+    "version": "1.3.1",
+    "executable": "KnowledgeClipper.ImageOcr.Settings.exe",
+    "descriptor": "image-ocr-capability-config-descriptor.v6.json"
+  },
+  "releaseRoot": "workers/image-ocr/candidates/1.2.4",
+  "files": [
+    {
+      "path": "evidence/core-continuation-contract-evidence.v5.json",
+      "bytes": 1760,
+      "sha256": "35a70d90bc899fd520c987fff6c5652089d7734e30b925fa392eb48529c8f46a"
+    },
+    {
+      "path": "evidence/credential-metadata-dpapi-verified.v1.json",
+      "bytes": 213,
+      "sha256": "368b04e30cc768555671e588ac089ee6ab1f899004e7745e02b200bbc8eb95af"
+    },
+    {
+      "path": "evidence/provenance-original-binding.invalid-missing-sha.v1.json",
+      "bytes": 686,
+      "sha256": "147dfb0ad748311ad716e04e830fa33d7bc479329c8dc9a452b7048f3db456e6"
+    },
+    {
+      "path": "evidence/provenance-original-binding.valid.v1.json",
+      "bytes": 774,
+      "sha256": "36fc3a269f7bd1103622fb732b55a67ea1ac271f22c594620c874dfa88d8d401"
+    },
+    {
+      "path": "image-ocr-capability-config-descriptor.v6.json",
+      "bytes": 24257,
+      "sha256": "e153ebf1e10d38fcb086f71ecb0187dc7afbcbcbcd5974cd57b7b495832862de"
+    },
+    {
+      "path": "KnowledgeClipper.ImageOcr.Settings.exe",
+      "bytes": 10288138,
+      "sha256": "b901194b36403ec68be8837169a5c55375770ef3b3a2fd9ac3a9d36e15b52af0"
+    },
+    {
+      "path": "KnowledgeClipper.ImageOcr.Worker.exe",
+      "bytes": 10321664,
+      "sha256": "2e0c8d2ed9741fdbc9f482330eb4181719a5877f425145fee8672cd119c86ac4"
+    },
+    {
+      "path": "schemas/image-ocr-capability-config-descriptor.v6.schema.json",
+      "bytes": 3843,
+      "sha256": "afe6e23ac60f269c7ed1d9c5a9e960cccb258357695afe60b41d14dbc98cbded"
+    },
+    {
+      "path": "schemas/image-ocr-capability-status.v4.schema.json",
+      "bytes": 2666,
+      "sha256": "7490a05419d120075a22dbb8ca2d5cb2c52ba9d992a0ba6f1085cbc1802f3fa4"
+    },
+    {
+      "path": "schemas/image-ocr-companion-test-result.v4.schema.json",
+      "bytes": 2383,
+      "sha256": "0a51493ff673921a578becca80d40779dd08b7d50870c7db0606823efa8b05a9"
+    },
+    {
+      "path": "schemas/image-ocr-companion-validate-result.v4.schema.json",
+      "bytes": 2486,
+      "sha256": "7dd72bd8496f75eff7b09c31f9e5e19c351d76cf6dcfd6c4bccb145e072cf439"
+    },
+    {
+      "path": "schemas/image-ocr-core-continuation-evidence.v5.schema.json",
+      "bytes": 2753,
+      "sha256": "1570f5a5aeddb241ce6fcdeaf12dd04a8dc21972c683a77057d641d76ce8ac70"
+    },
+    {
+      "path": "schemas/image-ocr-credential-metadata.v1.schema.json",
+      "bytes": 1052,
+      "sha256": "a6e767dd8b8c0e5d96d3b5eb73e0bbeb6ca346c71121903f76c71a70fe3a4e56"
+    },
+    {
+      "path": "schemas/image-ocr-settings-adapter-result.v1.schema.json",
+      "bytes": 2337,
+      "sha256": "ece25cc1f15c8145d120f8fcb1822dcf1a48dac77df76d84a9943d33c51997c8"
+    },
+    {
+      "path": "schemas/image-ocr-settings.v1.schema.json",
+      "bytes": 1390,
+      "sha256": "c7854daf612e1d022b2d67bc5ca1ba7ed98c952cc500f451e3ab92d0371e8d2b"
+    },
+    {
+      "path": "schemas/image-original-media-bundle.v1.schema.json",
+      "bytes": 1492,
+      "sha256": "bf64a64338ed24b5b46051eb853cb468c95af0049cfefbda1a446dc385130300"
+    },
+    {
+      "path": "schemas/image-processing-provenance-original-binding.v1.schema.json",
+      "bytes": 2401,
+      "sha256": "46ace7ea42706056f32a635396fab4c9965f8c8faf5d1b2e45c9f1dfe427db0f"
+    },
+    {
+      "path": "schemas/image-processing-provenance.v1.schema.json",
+      "bytes": 3215,
+      "sha256": "c199d00eafabb4f1ead06339d2c50aeb67d8fdf78c3dc15ae97c12ad121fa186"
+    },
+    {
+      "path": "schemas/image-request.v1.schema.json",
+      "bytes": 2199,
+      "sha256": "2b7402f215ae45c327a1c7bebb232e60e219c2f4bf1ce95e477ae4e5d7c97ba4"
+    }
+  ],
+  "fileCount": 19,
+  "totalBytes": 20665709,
+  "treeSha256": "f88730086d1237bb099ee816864fa2034e4b28206362d0362d7a82f4c50d05c3",
+  "validation": {
+    "workerDescribe": "passed",
+    "companionDescribe": "passed",
+    "validateOnly": "passed",
+    "offlineReadiness": "passed-no-network",
+    "fakeProvider": "passed-exact-settings",
+    "credentialMetadataGate": "passed-value-free-dpapi-metadata",
+    "processEnvironmentInheritance": "passed-worker-observed",
+    "taskLogReceiptSecretLeakOccurrences": 0,
+    "ocrSameRunOriginal": "passed-hash-bytes-media-type-role-order-bound",
+    "originalMediaBundle": "passed-provider-calls-zero",
+    "humanDecisionContinuation": "passed-default-no-ocr-rerun",
+    "liveConnectivity": "defined-not-run"
+  },
+  "safety": {
+    "externalProductionApisInvoked": 0,
+    "mineruServiceInvocations": 0,
+    "externalUploads": 0,
+    "credentialValuesPersisted": 0
+  },
+  "pyInstallerVersion": "6.22.2",
+  "registryOnboarding": "NO-GO-until-Core-same-run-original-admission-and-new-authority-checkpoint",
+  "replacesPriorCandidate": false
+}

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "image-ocr-settings-readable-example.v2",
+  "workerVersion": "1.2.1",
+  "input": {
+    "mode": "ocr",
+    "modelVersion": "pipeline",
+    "language": "en",
+    "table": false,
+    "formula": true,
+    "providerTimeoutSeconds": 120,
+    "pollIntervalSeconds": 3,
+    "mineruScriptPath": "C:\\KnowledgeClipper\\providers\\mineru_ocr.py",
+    "mineruCredential": "local-credential://image-ocr/mineru-api-token"
+  },
+  "expectedTaskProjection": {
+    "captureBundle.modeSnapshot.imageHandling": "ocr",
+    "workerRequest.workerId": "image.ocr.mineru",
+    "workerRequest.configSnapshot.providerSettings": {
+      "modelVersion": "pipeline",
+      "language": "en",
+      "enableTable": false,
+      "enableFormula": true,
+      "timeoutSeconds": 120,
+      "pollIntervalSeconds": 3
+    },
+    "workerRequest.configSnapshot.mineruScriptPath": "C:\\KnowledgeClipper\\providers\\mineru_ocr.py",
+    "derived.cloudUploadAuthorized": true,
+    "taskContainsTokenValue": false
+  },
+  "readOnlyPipelineFacts": {
+    "coreStageTimeoutMs": 600000,
+    "coreRetryMaxAttempts": 2,
+    "coreRetryBackoffMs": 1000,
+    "providerTimeoutSecondsIsDistinct": true
+  },
+  "requiredHonestStatuses": {
+    "coreSettingsControlPlaneBinding": "conditional",
+    "originalFullPipeline": "unsupported",
+    "partialFailedOnlyAutomaticContinuation": "conditional",
+    "retentionExecution": "unsupported"
+  }
+}

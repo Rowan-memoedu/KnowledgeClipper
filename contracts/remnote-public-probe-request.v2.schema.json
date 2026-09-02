@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "knowledgeclipper://contracts/remnote-public-probe-request.v2",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "probeId", "authorizationScope", "timeoutMs", "operations", "target"],
+  "properties": {
+    "schemaVersion": { "const": "remnote-public-probe-request.v2" }, "probeId": { "type": "string", "minLength": 1 },
+    "authorizationScope": { "enum": ["configured-destination", "isolated-canary"] }, "timeoutMs": { "const": 15000 },
+    "operations": { "const": ["status", "search", "list", "read"] },
+    "target": { "type": "object", "additionalProperties": false, "required": ["rootRemId", "rootTitle"], "properties": { "rootRemId": { "type": "string", "minLength": 1 }, "rootTitle": { "type": "string", "minLength": 1 } } }
+  },
+  "allOf": [{ "if": { "properties": { "authorizationScope": { "const": "isolated-canary" } } }, "then": { "properties": { "target": { "properties": { "rootTitle": { "not": { "const": "剪藏" } } } } } } }]
+}

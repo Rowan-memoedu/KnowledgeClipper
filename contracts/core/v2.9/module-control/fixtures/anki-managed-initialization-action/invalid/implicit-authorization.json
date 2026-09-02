@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "anki-managed-initialization-action.v1",
+  "workerId": "export.anki",
+  "workerVersion": "1.4.0",
+  "packageRootRef": "module-actions/anki-init-001/package",
+  "taskManifestRef": "module-actions/anki-init-001/package/task.manifest.v1.json",
+  "taskManifestSha256": "1111111111111111111111111111111111111111111111111111111111111111",
+  "requestRef": "module-actions/anki-init-001/package/runs/run-001/stages/anki-export/attempts/attempt-001/request.json",
+  "requestSha256": "2222222222222222222222222222222222222222222222222222222222222222",
+  "configManifestRef": "module-actions/anki-init-001/package/artifacts/anki-config/artifact.json",
+  "configManifestSha256": "3333333333333333333333333333333333333333333333333333333333333333",
+  "configPayloadRef": "module-actions/anki-init-001/package/artifacts/anki-config/anki-export.v2.json",
+  "configPayloadSha256": "4444444444444444444444444444444444444444444444444444444444444444",
+  "authorization": {"schemaVersion": "1.0.0", "authorizationId": "implicit-startup", "mode": "automatic", "operation": "initialize-managed", "scope": "managed-models-and-decks", "taskId": "anki-init-task-001", "configArtifactId": "anki-config", "authorizedAt": "2026-09-01T06:00:00Z"}
+}

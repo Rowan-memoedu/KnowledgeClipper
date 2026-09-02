@@ -1,0 +1,67 @@
+{
+  "receiptPath": "C:\\Users\\fy\\Desktop\\\u65B0\u5EFA\u6587\u4EF6\u5939\\04 Projects\\RemNote Quick Clipper\\canary\\rwa\\260828091022\\receipt.json",
+  "receiptSha256": "dbc680253ba7275ca961bb7fb2e3696c26b424ee6213245a0b34b028049413af",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "boundary.upstream_bundles_are_target_neutral",
+      "status": "passed"
+    },
+    {
+      "name": "boundary.descriptor_is_optional_terminal_exporter",
+      "status": "passed"
+    },
+    {
+      "name": "language_extension.deterministic_front_semantics",
+      "status": "passed"
+    },
+    {
+      "name": "language_extension.real_content_source_semantics",
+      "status": "passed"
+    },
+    {
+      "name": "language_extension.real_fixture_projection",
+      "status": "passed"
+    },
+    {
+      "name": "card.real_fixture_projection",
+      "status": "passed"
+    },
+    {
+      "name": "target.same_bundle_across_task_ids",
+      "status": "passed"
+    },
+    {
+      "name": "learning.blank_line_remains_fail_closed",
+      "status": "passed"
+    },
+    {
+      "name": "learning.multiline_text_projects_to_ordered_v2_entries",
+      "status": "passed"
+    },
+    {
+      "name": "learning.inline_whitespace_preserved_or_rejected",
+      "status": "passed"
+    },
+    {
+      "name": "card.inline_whitespace_preserved_or_rejected",
+      "status": "passed"
+    },
+    {
+      "name": "card.multiple_blocks_rejected",
+      "status": "passed"
+    },
+    {
+      "name": "card.asset_block_rejected",
+      "status": "passed"
+    },
+    {
+      "name": "kind_only_alias_rejected",
+      "status": "passed"
+    },
+    {
+      "name": "card.lossless_constraints",
+      "status": "passed"
+    }
+  ]
+}

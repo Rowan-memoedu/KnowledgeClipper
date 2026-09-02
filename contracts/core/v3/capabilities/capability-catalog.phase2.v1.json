@@ -1,0 +1,158 @@
+{
+  "schema": "kc.capability-catalog/1",
+  "catalogId": "knowledge-clipper-core-v3-question-anki-slice",
+  "catalogVersion": "3.1.0-slice.1",
+  "authorityAnchor": {
+    "authorityVersion": "1.2.41",
+    "checkpointPath": "contracts/core/v2.10/checkpoints/v2.10.6-20260902T041800Z/checkpoint.json",
+    "checkpointSha256": "20AF0975FF176B6D46249B98AC36D72C74C7A494965AF3A69DE4C7FF52235D79"
+  },
+  "operations": [
+    {
+      "operationId": "content.settings.describe",
+      "available": true,
+      "availabilityReason": null,
+      "commandSchema": "kc.content-settings-describe-command/1",
+      "resultArtifactKind": null,
+      "resultContract": null,
+      "effectClass": "none",
+      "authorizationPolicy": "none",
+      "retryPolicy": "safe",
+      "idempotencyPolicy": "required",
+      "timeoutMilliseconds": 5000,
+      "workerBinding": {"mode": "in-process", "workerId": null, "versionRange": null, "handler": "ContentSettingsDescribeOperation"},
+      "uiAffordance": {"label": "描述设置能力", "surface": "settings", "visible": true}
+    },
+    {
+      "operationId": "artifact.publish",
+      "available": true,
+      "availabilityReason": null,
+      "commandSchema": "kc.artifact-publish-command/1",
+      "resultArtifactKind": "domain-text",
+      "resultContract": "3.0.0",
+      "effectClass": "none",
+      "authorizationPolicy": "none",
+      "retryPolicy": "safe",
+      "idempotencyPolicy": "required",
+      "timeoutMilliseconds": 5000,
+      "workerBinding": {"mode": "in-process", "workerId": null, "versionRange": null, "handler": "ArtifactPublishOperation"},
+      "uiAffordance": {"label": "保存本地输入", "surface": "sdk-only", "visible": false}
+    },
+    {
+      "operationId": "anki.probe",
+      "available": true,
+      "availabilityReason": null,
+      "commandSchema": "kc.anki-probe-command/1",
+      "resultArtifactKind": "anki-connection-status",
+      "resultContract": "1.0.0",
+      "effectClass": "read-only-external",
+      "authorizationPolicy": "none",
+      "retryPolicy": "safe",
+      "idempotencyPolicy": "required",
+      "timeoutMilliseconds": 30000,
+      "workerBinding": {
+        "mode": "worker",
+        "workerId": "export.anki",
+        "versionRange": "=1.4.0",
+        "handler": null,
+        "authority": {
+          "releaseRoot": "releases/knowledge-clipper-authority-v1.2.41-20260902T042000Z/win-x64",
+          "registryPath": "contracts/authority/worker-registry/v1.2.41-20260902T042000Z/worker-registry.v1.json",
+          "registrySha256": "FBF1A3E30462A7C05269E47D510153A0165D502E204ABB50936E332BA07129A7",
+          "entrypointPath": "workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe",
+          "entrypointSha256": "B1F68947D8500766A8C63D30719BC849444F2533C2DB48DDC1065E2230C9751C",
+          "exactWorkerVersion": "1.4.0",
+          "contractVersion": "1.0.0"
+        }
+      },
+      "uiAffordance": {"label": "检查 Anki 连接", "surface": "settings", "visible": false}
+    },
+    {
+      "operationId": "question.initial",
+      "available": true,
+      "availabilityReason": null,
+      "commandSchema": "kc.question-initial-command/2",
+      "resultArtifactKind": "question-answer",
+      "resultContract": "1.0.0",
+      "effectClass": "read-only-external",
+      "authorizationPolicy": "none",
+      "retryPolicy": "safe",
+      "idempotencyPolicy": "required",
+      "timeoutMilliseconds": 30000,
+      "workerBinding": {
+        "mode": "worker",
+        "workerId": "content.deepseek",
+        "versionRange": "=0.9.5",
+        "handler": null,
+        "authority": {
+          "releaseRoot": "releases/knowledge-clipper-authority-v1.2.41-20260902T042000Z/win-x64",
+          "registryPath": "contracts/authority/worker-registry/v1.2.41-20260902T042000Z/worker-registry.v1.json",
+          "registrySha256": "FBF1A3E30462A7C05269E47D510153A0165D502E204ABB50936E332BA07129A7",
+          "entrypointPath": "workers/content/KnowledgeClipper.Content.Worker.exe",
+          "entrypointSha256": "F6EC35798F8948727B8664517FDBB096DB8A94C8DD079F612B05BAC4EA72D3B8",
+          "exactWorkerVersion": "0.9.5",
+          "contractVersion": "1.0.0"
+        }
+      },
+      "uiAffordance": {"label": "开始问题解答", "surface": "question", "visible": false}
+    },
+    {
+      "operationId": "question.follow-up",
+      "available": true,
+      "availabilityReason": null,
+      "commandSchema": "kc.question-follow-up-command/1",
+      "resultArtifactKind": "question-answer",
+      "resultContract": "1.0.0",
+      "effectClass": "read-only-external",
+      "authorizationPolicy": "none",
+      "retryPolicy": "safe",
+      "idempotencyPolicy": "required",
+      "timeoutMilliseconds": 30000,
+      "workerBinding": {
+        "mode": "worker",
+        "workerId": "content.deepseek",
+        "versionRange": "=0.9.5",
+        "handler": null,
+        "authority": {
+          "releaseRoot": "releases/knowledge-clipper-authority-v1.2.41-20260902T042000Z/win-x64",
+          "registryPath": "contracts/authority/worker-registry/v1.2.41-20260902T042000Z/worker-registry.v1.json",
+          "registrySha256": "FBF1A3E30462A7C05269E47D510153A0165D502E204ABB50936E332BA07129A7",
+          "entrypointPath": "workers/content/KnowledgeClipper.Content.Worker.exe",
+          "entrypointSha256": "F6EC35798F8948727B8664517FDBB096DB8A94C8DD079F612B05BAC4EA72D3B8",
+          "exactWorkerVersion": "0.9.5",
+          "contractVersion": "1.0.0"
+        }
+      },
+      "uiAffordance": {"label": "继续追问", "surface": "question", "visible": false}
+    },
+    {
+      "operationId": "question.make-cards",
+      "available": true,
+      "availabilityReason": null,
+      "commandSchema": "kc.question-make-cards-command/1",
+      "resultArtifactKind": "question-card-bundle",
+      "resultContract": "1.0.0",
+      "effectClass": "external-write",
+      "authorizationPolicy": "explicit",
+      "retryPolicy": "conditional",
+      "idempotencyPolicy": "required",
+      "timeoutMilliseconds": 30000,
+      "workerBinding": {
+        "mode": "worker",
+        "workerId": "content.deepseek",
+        "versionRange": "=0.9.5",
+        "handler": null,
+        "authority": {
+          "releaseRoot": "releases/knowledge-clipper-authority-v1.2.41-20260902T042000Z/win-x64",
+          "registryPath": "contracts/authority/worker-registry/v1.2.41-20260902T042000Z/worker-registry.v1.json",
+          "registrySha256": "FBF1A3E30462A7C05269E47D510153A0165D502E204ABB50936E332BA07129A7",
+          "entrypointPath": "workers/content/KnowledgeClipper.Content.Worker.exe",
+          "entrypointSha256": "F6EC35798F8948727B8664517FDBB096DB8A94C8DD079F612B05BAC4EA72D3B8",
+          "exactWorkerVersion": "0.9.5",
+          "contractVersion": "1.0.0"
+        }
+      },
+      "uiAffordance": {"label": "生成卡片并导出到 Anki", "surface": "question", "visible": false}
+    }
+  ]
+}

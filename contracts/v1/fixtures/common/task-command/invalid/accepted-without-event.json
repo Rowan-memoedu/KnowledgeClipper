@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0",
+  "commandId": "command-invalid-001",
+  "accepted": true,
+  "taskId": "task-invalid",
+  "operationId": "operation-invalid",
+  "status": "created",
+  "timestamp": "2026-08-25T10:00:00Z",
+  "error": null,
+  "durableEventRef": null
+}

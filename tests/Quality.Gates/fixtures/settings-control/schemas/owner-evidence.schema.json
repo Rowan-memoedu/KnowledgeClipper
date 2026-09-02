@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "owner-evidence.schema.json",
+  "title": "KnowledgeClipper settings control quality evidence adapter v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "evidenceId", "modules"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-settings-control-owner-evidence.v1" },
+    "evidenceId": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$", "minLength": 3 },
+    "modules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["desktop", "core", "content", "remnote", "anki", "imageOcr", "speech"],
+      "properties": {
+        "desktop": { "$ref": "#/$defs/desktop" },
+        "core": { "$ref": "#/$defs/core" },
+        "content": { "$ref": "#/$defs/moduleEvidence" },
+        "remnote": { "$ref": "#/$defs/remnote" },
+        "anki": { "$ref": "#/$defs/anki" },
+        "imageOcr": { "$ref": "#/$defs/imageOcr" },
+        "speech": { "$ref": "#/$defs/speech" }
+      }
+    }
+  },
+  "$defs": {
+    "status": { "enum": ["passed", "no-go"] },
+    "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+    "fileRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "moduleBase": {
+      "type": "object",
+      "required": ["status", "evidence"],
+      "properties": {
+        "status": { "$ref": "#/$defs/status" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/fileRef" } }
+      }
+    },
+    "moduleEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence"],
+      "properties": {
+        "status": { "$ref": "#/$defs/status" },
+        "evidence": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/fileRef" } }
+      }
+    },
+    "schemaFixtureSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "valid", "invalid"],
+      "properties": {
+        "schema": { "$ref": "#/$defs/fileRef" },
+        "valid": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/fileRef" } },
+        "invalid": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/fileRef" } }
+      }
+    },
+    "desktop": {
+      "allOf": [
+        { "$ref": "#/$defs/moduleBase" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "evidence", "settingsSchema", "profileSchema", "observations"],
+          "properties": {
+            "status": { "$ref": "#/$defs/status" },
+            "evidence": { "type": "array", "items": { "$ref": "#/$defs/fileRef" } },
+            "settingsSchema": { "$ref": "#/$defs/schemaFixtureSet" },
+            "profileSchema": { "$ref": "#/$defs/schemaFixtureSet" },
+            "observations": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["corruptFallback", "backupCreated", "backupPreserved", "adapterFieldsValid", "guiPages", "automationIds", "automationIdsUnique", "saveCancel", "restartHint", "unsupportedConditionalReadOnly", "secretGuiConfigurable", "secretLeaks"],
+              "properties": {
+                "corruptFallback": { "type": "boolean" },
+                "backupCreated": { "type": "boolean" },
+                "backupPreserved": { "type": "boolean" },
+                "adapterFieldsValid": { "type": "boolean" },
+                "guiPages": { "const": ["normal", "advanced", "diagnostics"] },
+                "automationIds": {
+                  "type": "array",
+                  "minItems": 3,
+                  "uniqueItems": true,
+                  "items": { "type": "string", "minLength": 1 }
+                },
+                "automationIdsUnique": { "type": "boolean" },
+                "saveCancel": { "type": "boolean" },
+                "restartHint": { "type": "boolean" },
+                "unsupportedConditionalReadOnly": { "type": "boolean" },
+                "secretGuiConfigurable": { "type": "boolean" },
+                "secretLeaks": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "snapshotBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["settings", "taskSnapshot", "resolvedPlan", "workerRequest", "retryWorkerRequest", "activeTaskSnapshotAfterSettingsChange", "newTaskSnapshot", "mappings"],
+      "properties": {
+        "settings": { "$ref": "#/$defs/fileRef" },
+        "taskSnapshot": { "$ref": "#/$defs/fileRef" },
+        "resolvedPlan": { "$ref": "#/$defs/fileRef" },
+        "workerRequest": { "$ref": "#/$defs/fileRef" },
+        "retryWorkerRequest": { "$ref": "#/$defs/fileRef" },
+        "activeTaskSnapshotAfterSettingsChange": { "$ref": "#/$defs/fileRef" },
+        "newTaskSnapshot": { "$ref": "#/$defs/fileRef" },
+        "mappings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["settingPointer", "snapshotPointer", "planConfigPointer", "planPayloadPointer", "requestConfigPointer", "requestPayloadPointer"],
+            "properties": {
+              "settingPointer": { "type": "string", "pattern": "^/" },
+              "snapshotPointer": { "type": "string", "pattern": "^/" },
+              "planConfigPointer": { "type": "string", "pattern": "^/" },
+              "planPayloadPointer": { "type": "string", "pattern": "^/" },
+              "requestConfigPointer": { "type": "string", "pattern": "^/" },
+              "requestPayloadPointer": { "type": "string", "pattern": "^/" }
+            }
+          }
+        }
+      }
+    },
+    "core": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence", "snapshotBinding", "observations"],
+      "properties": {
+        "status": { "$ref": "#/$defs/status" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/fileRef" } },
+        "snapshotBinding": { "$ref": "#/$defs/snapshotBinding" },
+        "observations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["stageConfigBound", "stagePayloadBound", "workerRequestBound", "activeTaskFrozen", "retryUsesOriginalSnapshot", "newTaskUsesNewSnapshot"],
+          "properties": {
+            "stageConfigBound": { "type": "boolean" },
+            "stagePayloadBound": { "type": "boolean" },
+            "workerRequestBound": { "type": "boolean" },
+            "activeTaskFrozen": { "type": "boolean" },
+            "retryUsesOriginalSnapshot": { "type": "boolean" },
+            "newTaskUsesNewSnapshot": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "routeProbe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact", "pointer", "expected"],
+      "properties": {
+        "artifact": { "$ref": "#/$defs/fileRef" },
+        "pointer": { "type": "string", "pattern": "^/" },
+        "expected": { "type": "boolean" }
+      }
+    },
+    "remnote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence", "clippingDateRoute", "cardsDateRoute"],
+      "properties": {
+        "status": { "$ref": "#/$defs/status" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/fileRef" } },
+        "clippingDateRoute": { "$ref": "#/$defs/routeProbe" },
+        "cardsDateRoute": { "$ref": "#/$defs/routeProbe" }
+      }
+    },
+    "anki": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence", "probeMode", "mutatingActions", "externalCalls"],
+      "properties": {
+        "status": { "$ref": "#/$defs/status" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/fileRef" } },
+        "probeMode": { "const": "read-only" },
+        "mutatingActions": { "const": 0 },
+        "externalCalls": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "imageOcr": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence", "probeMode", "realUploads"],
+      "properties": {
+        "status": { "$ref": "#/$defs/status" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/fileRef" } },
+        "probeMode": { "enum": ["fake", "validate-only"] },
+        "realUploads": { "const": 0 }
+      }
+    },
+    "speech": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence", "probeMode", "physicalSpeakerInvocations"],
+      "properties": {
+        "status": { "$ref": "#/$defs/status" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/fileRef" } },
+        "probeMode": { "enum": ["fake", "synthesize-only", "validate-only"] },
+        "physicalSpeakerInvocations": { "const": 0 }
+      }
+    }
+  }
+}

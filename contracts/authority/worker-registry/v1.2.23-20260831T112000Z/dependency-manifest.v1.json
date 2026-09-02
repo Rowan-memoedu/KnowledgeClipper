@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "knowledge-clipper-release-dependency-manifest.v1",
+  "releaseId": "knowledge-clipper-authority-v1.2.23-20260831T112000Z",
+  "releaseRoot": "releases/knowledge-clipper-authority-v1.2.23-20260831T112000Z/win-x64",
+  "files": 561,
+  "bytes": 267989240,
+  "treeHashAlgorithm": "sort relative paths ordinal; path TAB bytes TAB lowercase SHA-256; LF; SHA-256 UTF-8",
+  "treeSha256": "823E27AA0A974607A9EE8F97CE3544BCA61FC6F5E456660682B4763D518484C2",
+  "keyFiles": [
+    {
+      "path": "contracts/core/v2.7/checkpoints/v2.7.8-20260831T111800Z/checkpoint.json",
+      "bytes": 40556,
+      "sha256": "88713A6638BE74587F371287E83ED11056E13CC389F11E052DFCC5C719B5BE0C"
+    }
+  ],
+  "workerOperations": null,
+  "legacyEntrypointsExcluded": true,
+  "baseAuthority": {
+    "registryVersion": "1.2.20",
+    "checkpointSha256": "9644D9FD80EB29A57D4B16ED5FCD1FE16475D8101B2C93DF1B21B7530C5F7509"
+  },
+  "coreIntegration": {
+    "checkpoint": "contracts/core/v2.7/checkpoints/v2.7.8-20260831T111800Z/checkpoint.json",
+    "checkpointSha256": "88713A6638BE74587F371287E83ED11056E13CC389F11E052DFCC5C719B5BE0C",
+    "version": "2.7.8",
+    "coreVersion": "2.7.4"
+  }
+}

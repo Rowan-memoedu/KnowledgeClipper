@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "quality-v3-canonical-build-manifest.v1",
+  "buildId": "quality-v3-canonical-fixture-001",
+  "source": {
+    "repositoryCommit": "6fc44e18637e00d394227ec4b15ad4c06054102a",
+    "sourceSnapshotSha256": "75061E04AEB2C107BE0A1BBE74E0694DE522A0D45E4AD9C33DE16AC2622D91B7",
+    "dirty": false
+  },
+  "selfContained": true,
+  "runtimeIdentifier": "win-x64",
+  "contracts": {
+    "coreIpc": { "version": "3.0.0-fixture", "path": "contracts/core-ipc.v3.json" },
+    "moduleAction": { "version": "3.0.0-fixture", "path": "contracts/module-action.v3.json" },
+    "artifact": { "version": "3.0.0-fixture", "path": "contracts/artifact-ref.v3.json" },
+    "capabilityCatalog": { "version": "3.0.0-fixture", "path": "contracts/capability-catalog.v3.json" }
+  },
+  "entrypoints": {
+    "desktop": "desktop/KnowledgeClipper.exe",
+    "core": "core/KnowledgeClipper.Orchestrator.exe",
+    "workers": [
+      { "id": "export.anki", "path": "workers/anki.exe" },
+      { "id": "content.deepseek", "path": "workers/content.exe" }
+    ]
+  },
+  "files": [
+    { "path": "contracts/artifact-ref.v3.json", "bytes": 52, "sha256": "0930BEDB66078317A1C171EF4847108A68804A705A016FE7DF020BD126940E25" },
+    { "path": "contracts/capability-catalog.v3.json", "bytes": 140, "sha256": "9E207A7EB4E65006DDCBEB6BF44B62DE460A0E9DAAAC2719595C77ED88F4E784" },
+    { "path": "contracts/core-ipc.v3.json", "bytes": 48, "sha256": "13B2D0C3C225D0037FBEA3DB5C72F1247F47793FD18DC5949241A1FDD9034F5A" },
+    { "path": "contracts/module-action.v3.json", "bytes": 53, "sha256": "014636E4EB0385166EB2028DACC68765290FA149B8455A572139452DF711ECDA" },
+    { "path": "core/KnowledgeClipper.Orchestrator.exe", "bytes": 35, "sha256": "0613641A48F80F4CB0CBF4176AF78BBEEF9B07A036CE280994065738438EEAC9" },
+    { "path": "desktop/KnowledgeClipper.exe", "bytes": 38, "sha256": "0D402D33332937875B457595FD2307A645C4B55B06354904A4F923C2D4264CA8" },
+    { "path": "workers/anki.exe", "bytes": 31, "sha256": "066BB1FD81A2B0EDF65E446F92ADCE4567C2B72524B0916EFA45843603C3FB2C" },
+    { "path": "workers/content.exe", "bytes": 34, "sha256": "92D3A45516AA4DC410BDB9F04D8DF9F236380AAFEE5B9D8516BFF88BA8219499" }
+  ],
+  "tree": {
+    "algorithm": "sha256 utf8 ordinal(path TAB bytes TAB lowercase-sha256) joined with LF, no trailing LF",
+    "fileCount": 8,
+    "totalBytes": 431,
+    "sha256": "59AF14B6D5915799CC1581A2B6A065CB3DB8DAE100B5E3B2271C769F29C41432"
+  },
+  "startupSelfVerification": {
+    "required": true,
+    "mode": "full-manifest-before-service-start",
+    "failureMode": "fail-closed"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./desktop-intent.v1.schema.json",
+  "title": "Desktop intent compatibility input v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "taskId", "intent", "inputArtifactRef", "requestedOutputs"],
+  "properties": {
+    "schemaVersion": { "const": "desktop-intent.v1" },
+    "taskId": { "$ref": "../../../v1/schemas/common/artifact.schema.json#/$defs/identifier" },
+    "intent": { "enum": ["clip.card", "clip.read-aloud", "clip.question"] },
+    "inputArtifactRef": { "$ref": "../../../v1/schemas/common/artifact.schema.json#/$defs/identifier" },
+    "requestedOutputs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": { "enum": ["card-bundle", "audio.speech", "question.answer"] }
+    }
+  },
+  "allOf": [
+    { "if": { "properties": { "intent": { "const": "clip.card" } } }, "then": { "properties": { "requestedOutputs": { "contains": { "const": "card-bundle" } } } } },
+    { "if": { "properties": { "intent": { "const": "clip.read-aloud" } } }, "then": { "properties": { "requestedOutputs": { "contains": { "const": "audio.speech" } } } } },
+    { "if": { "properties": { "intent": { "const": "clip.question" } } }, "then": { "properties": { "requestedOutputs": { "contains": { "const": "question.answer" } } } } }
+  ]
+}

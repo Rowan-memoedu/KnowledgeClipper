@@ -1,0 +1,35 @@
+{
+  "contractId": "knowledge-clipper.desktop-automation",
+  "contractVersion": "1.1.0",
+  "verifiedAt": "2026-08-26T04:18:12.653426Z",
+  "treeHashAlgorithm": "sha256(utf8(relativePath UTF-8 ordinal ascending|fileSha256 + LF))",
+  "treeSha256": "a05c8720c0ee8a493c403225957f497072e97fe36f836dc566c7d584d44c2276",
+  "receiptExcludedFromTreeHash": true,
+  "files": [
+    {
+      "path": "desktop-automation.contract.json",
+      "sha256": "f0aafabc9b75eae3346bd95c19c8d237016b4175156b7ae18afe3edbe9415991",
+      "bytes": 6405
+    },
+    {
+      "path": "fixtures/fake-scenario.v1.1.json",
+      "sha256": "4d0c81b103be607b6edce30adf7f1826d5fad14521a7eec5409a4e486b3bd052",
+      "bytes": 1800
+    },
+    {
+      "path": "fixtures/semantic-actions.valid.ndjson",
+      "sha256": "338373492091ba83a240faf1a9e282ee8a42e678c478e562c0f31656d17583b5",
+      "bytes": 1991
+    },
+    {
+      "path": "semantic-action.schema.json",
+      "sha256": "e07b0b643498b2aef6e37b2e9a2ae865e1452cbe687857f88cd624d8d0f0eea8",
+      "bytes": 2609
+    },
+    {
+      "path": "semantic-state.schema.json",
+      "sha256": "be601e9a21bbc6ee73d917109627e901654d1db91866c7a94cf004fa95dee562",
+      "bytes": 3148
+    }
+  ]
+}

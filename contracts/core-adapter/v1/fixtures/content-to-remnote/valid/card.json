@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "card-bundle.v1",
+  "bundleId": "cards-fixture",
+  "cards": [{ "cardId": "card-fixture", "cardType": "basic", "direction": "forward", "front": "Question", "back": "Answer" }]
+}

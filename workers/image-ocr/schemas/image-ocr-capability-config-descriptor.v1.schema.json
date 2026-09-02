@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-ocr-capability-config-descriptor.v1.schema.json",
+  "title": "KnowledgeClipper image/OCR capability config descriptor v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "moduleId", "workerBinding", "capabilities", "readOnlyFacts", "statusSemantics"],
+  "properties": {
+    "schemaVersion": {"const": "image-ocr-capability-config-descriptor.v1"},
+    "moduleId": {"const": "image-ocr"},
+    "workerBinding": {"$ref": "#/$defs/workerBinding"},
+    "capabilities": {
+      "type": "array",
+      "minItems": 9,
+      "items": {"$ref": "#/$defs/capability"}
+    },
+    "readOnlyFacts": {"type": "object"},
+    "statusSemantics": {"type": "object"}
+  },
+  "$defs": {
+    "workerBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workerId", "workerVersionRange", "contractVersionRange"],
+      "properties": {
+        "workerId": {"const": "image.ocr.mineru"},
+        "workerVersionRange": {"type": "string", "minLength": 1},
+        "contractVersionRange": {"type": "string", "minLength": 1}
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capabilityId", "moduleId", "workerBinding", "display", "controlKind", "scope", "valueSchema", "sensitivity", "effectiveAt", "snapshotBinding", "availability", "compatibility", "sideEffects", "statusProbe"],
+      "properties": {
+        "capabilityId": {"type": "string", "pattern": "^image\\."},
+        "moduleId": {"const": "image-ocr"},
+        "workerBinding": {"$ref": "#/$defs/workerBinding"},
+        "display": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["title", "tier"],
+          "properties": {
+            "title": {"type": "string", "minLength": 1},
+            "tier": {"enum": ["common", "advanced", "developer-diagnostics"]}
+          }
+        },
+        "controlKind": {"enum": ["selectable", "read-only-status", "deployment-path", "secret-reference", "diagnostic-action"]},
+        "scope": {"enum": ["project", "device", "deployment", "task", "attempt", "process"]},
+        "valueSchema": {"type": "object"},
+        "defaultValue": {},
+        "sensitivity": {"enum": ["public-config", "local-path", "secret-reference", "secret-value-prohibited"]},
+        "effectiveAt": {"enum": ["immediate", "next-capture-session", "next-task", "next-attempt", "process-start", "release-bind"]},
+        "snapshotBinding": {"type": ["object", "null"]},
+        "availability": {"type": "object"},
+        "compatibility": {"type": "object"},
+        "sideEffects": {"type": "object"},
+        "statusProbe": {"type": ["object", "null"]}
+      }
+    }
+  }
+}

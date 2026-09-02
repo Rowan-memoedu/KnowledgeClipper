@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "2.3.0",
+  "controlId": "control-playback-001",
+  "accepted": true,
+  "taskId": "task-playback-001",
+  "operation": "speech.playback",
+  "selector": "current-active",
+  "reason": "user_stop",
+  "status": "requested",
+  "resolved": null,
+  "timestamp": "2026-08-28T03:00:00Z",
+  "durableEventRef": null,
+  "receiptRef": null,
+  "error": null
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-invalidation-receipt.v1",
+  "generatedAt": "2026-09-01T01:25:05.9371442+00:00",
+  "status": "invalidated-never-promoted",
+  "authority": {
+    "registryVersion": "1.2.25",
+    "checkpoint": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.25-20260901T011500Z\\checkpoint.json",
+    "checkpointSha256": "D973AAB19943F8C8BA2917A616CE4527BCF960780BA9BA6A901DDBAA576F82A8"
+  },
+  "reason": "portable-schema-closure gate passed against the release but was not bound into the authority checkpoint; superseded by v1.2.26 before any task dispatch.",
+  "externalWorkerRuns": 0,
+  "externalWrites": 0,
+  "frozenV1Modified": false
+}

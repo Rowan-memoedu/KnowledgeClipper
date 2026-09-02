@@ -1,0 +1,15 @@
+{
+  "schema": "kc.legacy-ipc-matrix/1",
+  "ownerBoundary": "Kernel.CompatibilityGateway",
+  "recognizedEnvelopeVersions": ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7"],
+  "phase1ConvertedSlices": [
+    {
+      "protocolVersion": "1.6",
+      "messageType": "module-action",
+      "legacySchema": "knowledge-clipper-module-action.v5",
+      "operation": "content.settings.describe",
+      "currentCommandSchema": "kc.content-settings-describe-command/1"
+    }
+  ],
+  "defaultForRecognizedButUnconverted": "fail-closed"
+}

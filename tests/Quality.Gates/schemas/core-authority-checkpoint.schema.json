@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "core-authority-checkpoint.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "checkpointId", "publishedAt", "status", "authorityRegistry", "releaseBinding", "workers", "checkpointFiles", "validation", "immutableBoundaries", "externalProductionApisInvoked", "readiness"],
+  "properties": {
+    "schemaVersion": {"const": "authority-worker-registry-checkpoint.v1"},
+    "checkpointId": {"type": "string", "minLength": 1},
+    "publishedAt": {"type": "string", "format": "date-time"},
+    "status": {"const": "published"},
+    "authorityRegistry": {
+      "type": "object",
+      "required": ["path", "schemaVersion", "registryVersion", "bytes", "sha256", "workers"],
+      "properties": {
+        "schemaVersion": {"const": "1.0.0"},
+        "registryVersion": {"type": "string"},
+        "bytes": {"type": "integer", "minimum": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "workers": {"const": 5}
+      }
+    },
+    "releaseBinding": {
+      "type": "object",
+      "required": ["root", "files", "bytes", "treeSha256", "state"],
+      "properties": {"treeSha256": {"$ref": "#/$defs/sha256"}, "state": {"const": "unsealed-no-go"}}
+    },
+    "workers": {"type": "array", "minItems": 5, "maxItems": 5},
+    "checkpointFiles": {"type": "array", "minItems": 7},
+    "validation": {
+      "type": "object",
+      "required": ["productionRegistryLoader", "liveDescribe", "dependencies", "contracts", "dispatcherCanary", "verifier"],
+      "properties": {
+        "productionRegistryLoader": {"type": "object", "required": ["status", "workers"], "properties": {"status": {"const": "valid"}, "workers": {"const": 5}}},
+        "liveDescribe": {"type": "object", "required": ["status", "workers"], "properties": {"status": {"const": "passed"}, "workers": {"const": 5}}},
+        "dependencies": {"type": "object", "required": ["status"], "properties": {"status": {"const": "passed"}}},
+        "contracts": {"type": "object", "required": ["status"], "properties": {"status": {"const": "passed"}}},
+        "dispatcherCanary": {"type": "object", "required": ["status", "externalProductionApisInvoked"], "properties": {"status": {"const": "passed"}, "externalProductionApisInvoked": {"const": false}}},
+        "verifier": {"type": "object", "required": ["status"], "properties": {"status": {"const": "passed"}}}
+      }
+    },
+    "immutableBoundaries": {
+      "type": "object",
+      "required": ["frozenFilesChecked", "frozenMismatches", "oldEmptyRegistry"],
+      "properties": {
+        "frozenFilesChecked": {"const": 21},
+        "frozenMismatches": {"const": 0},
+        "oldEmptyRegistry": {
+          "type": "object",
+          "required": ["path", "sha256", "modified"],
+          "properties": {
+            "path": {"const": "contracts/v1/registry/worker-registry.v1.json"},
+            "sha256": {"const": "ACB4BA01ADBC0A410AAE7050FEC04F527C47EE6D0A98F30B73E7AC2B0E35F6E1"},
+            "modified": {"const": false}
+          }
+        }
+      }
+    },
+    "externalProductionApisInvoked": {"const": false},
+    "readiness": {"type": "object", "required": ["authorityRegistry", "releaseCandidate"], "properties": {"authorityRegistry": {"const": "GO"}, "releaseCandidate": {"const": "NO-GO"}}}
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"}}
+}

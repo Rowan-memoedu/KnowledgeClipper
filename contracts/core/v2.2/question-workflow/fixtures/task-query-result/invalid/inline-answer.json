@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "2.2.0", "queryId": "query-question", "type": "task.get", "nextCursor": null,
+  "items": [{
+    "taskId": "task-question", "operationId": "operation-question", "intent": "clip.question", "status": "waiting_input",
+    "createdAt": "2026-08-26T04:00:00Z", "updatedAt": "2026-08-26T04:01:00Z", "attentionRequired": true,
+    "replayable": false, "summaryCode": "task.answer_available", "decisionKind": null, "decisionTargetToken": null,
+    "answerAvailable": true, "questionTargetToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "questionTurnCount": 1,
+    "questionAnswerRef": null, "answerText": "must not travel over IPC"
+  }]
+}

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "2.1.0",
+  "planVersion": "2.1.0",
+  "taskId": "task-original-media",
+  "maxConcurrency": 1,
+  "stages": [
+    {
+      "stageId": "image-ocr",
+      "workerId": "image.ocr.mineru",
+      "operation": "process-images",
+      "dependsOn": [],
+      "inputRefs": [],
+      "outputKinds": ["image.original"],
+      "timeoutMs": 600000,
+      "retryPolicy": { "maxAttempts": 1, "backoffMs": 1000 },
+      "configSnapshot": {},
+      "payload": {},
+      "inputBindings": [],
+      "partialRetryPolicy": null
+    }
+  ],
+  "routing": { "processingProfile": "cards", "destinations": ["remnote", "anki"], "source": "knowledge-clipper-task-settings-snapshot.v2" },
+  "terminalBoundary": {
+    "status": "unsupported",
+    "code": "media.downstream_unsupported",
+    "availableOutputKinds": ["image.original"],
+    "unsupportedConsumers": ["content.deepseek", "export.remnote", "export.anki"]
+  }
+}

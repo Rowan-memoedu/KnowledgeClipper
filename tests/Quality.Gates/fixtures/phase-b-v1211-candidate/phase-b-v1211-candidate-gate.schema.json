@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-phase-b-v1211-candidate-gate-fixture.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "authority", "invalidations", "core", "paths", "desktop", "desktopCredential", "supersededEvidence", "policy"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-phase-b-v1211-candidate-gate-fixture.v1" },
+    "authority": { "$ref": "#/$defs/evidenceGroup" },
+    "invalidations": { "$ref": "#/$defs/evidenceGroup" },
+    "core": { "$ref": "#/$defs/evidenceGroup" },
+    "paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["A", "D", "qualificationReceipt", "qualificationReadable"],
+      "properties": {
+        "A": { "$ref": "#/$defs/evidenceGroup" },
+        "D": { "$ref": "#/$defs/evidenceGroup" },
+        "qualificationReceipt": { "$ref": "#/$defs/fileEvidence" },
+        "qualificationReadable": { "$ref": "#/$defs/fileEvidence" }
+      }
+    },
+    "desktop": { "$ref": "#/$defs/evidenceGroup" },
+    "desktopCredential": { "$ref": "#/$defs/evidenceGroup" },
+    "supersededEvidence": { "$ref": "#/$defs/evidenceGroup" },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["oldAuthorityEvidenceMayQualify", "pendingPathsAreFailures", "modulePassImpliesFullE2E", "retryUnknownExternalState", "desktopRequiredForCandidateIdentity"],
+      "properties": {
+        "oldAuthorityEvidenceMayQualify": { "const": false },
+        "pendingPathsAreFailures": { "const": false },
+        "modulePassImpliesFullE2E": { "const": false },
+        "retryUnknownExternalState": { "const": false },
+        "desktopRequiredForCandidateIdentity": { "const": true }
+      }
+    }
+  },
+  "$defs": {
+    "evidenceGroup": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "oneOf": [
+          { "$ref": "#/$defs/fileEvidence" },
+          { "type": "string", "minLength": 1 },
+          { "type": "integer", "minimum": 0 },
+          { "type": "boolean" }
+        ]
+      }
+    },
+    "fileEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }
+      }
+    }
+  }
+}

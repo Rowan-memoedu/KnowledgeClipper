@@ -1,0 +1,19 @@
+{
+  "schema_version": "standard-input/2.0.0",
+  "package_id": "knowledge-clipper-language-decision-v2",
+  "task_id": "language-decision-v2",
+  "input_version": "1",
+  "mode": "card",
+  "items": [
+    {
+      "item_id": "item-language-en",
+      "source": { "kind": "text", "material_path": "materials/clip.md" },
+      "hints": {
+        "category_id": "language_en",
+        "answer_state": "not_applicable",
+        "target_term": "tentative",
+        "context_state": "provided"
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-task-settings-override.v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-task-settings-override.v3" },
+    "workflow": { "$ref": "workflow-settings.v2.schema.json#/$defs/workflow" },
+    "capture": { "$ref": "workflow-settings.v2.schema.json#/$defs/capture" },
+    "speech": { "$ref": "workflow-settings.v3.schema.json#/$defs/speech" },
+    "remnote": { "$ref": "../../../../remnote-destination-settings.v1.schema.json" },
+    "imageOcr": { "$ref": "workflow-settings.v2.schema.json#/$defs/imageOcr" },
+    "content": { "$ref": "workflow-settings.v2.schema.json#/$defs/content" }
+  }
+}

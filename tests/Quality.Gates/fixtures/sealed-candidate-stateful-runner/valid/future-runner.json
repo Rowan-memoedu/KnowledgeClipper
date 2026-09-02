@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "knowledge-clipper-sealed-stateful-runner.v1",
+  "fixtureOnly": true,
+  "driver": "tools/Invoke-KnowledgeClipperStatefulUi.ps1",
+  "externalPolicy": { "remnote": false, "anki": false, "mineru": false, "deepseek": false, "speaker": false },
+  "isolation": {
+    "persistenceMode": "real-filesystem",
+    "singleInstanceIsolated": true,
+    "pipeName": "KnowledgeClipper.Quality.Stateful.fixture",
+    "environmentBindings": {
+      "settingsRoot": "KNOWLEDGE_CLIPPER_SETTINGS_ROOT",
+      "jobsRoot": "KNOWLEDGE_CLIPPER_JOBS_ROOT",
+      "pipeName": "KNOWLEDGE_CLIPPER_PIPE_NAME"
+    }
+  },
+  "journeys": {
+    "anki": {
+      "productionArtifact": "formal-multifile-metadata-entrypoint",
+      "expectedWrites": 0,
+      "phases": [
+        { "name": "probe", "restartDesktop": false, "closeOwnedProcess": true, "desktopArgs": ["--open-settings"], "scenario": { "path": "tests/Quality.Gates/fixtures/sealed-candidate-stateful-runner/scenarios/anki-probe.json", "bytes": 651, "sha256": "B38DCED6BD46DF088D21665452A141368CA8AE827A38891D1D227909FBF13062" } }
+      ]
+    },
+    "remnote": {
+      "sequence": ["initial-disabled-root-title-only", "discovery-verified-pending", "probe-same-window", "save", "reopen-after-restart", "probe-after-restart", "next-task-snapshot"],
+      "phases": [
+        { "name": "discover-save", "restartDesktop": false, "closeOwnedProcess": true, "desktopArgs": ["--open-settings"], "scenario": { "path": "tests/Quality.Gates/fixtures/sealed-candidate-stateful-runner/scenarios/remnote-discover-save.json", "bytes": 1288, "sha256": "5CFF409FBE12444078E150792223538FE88854DC9A85DAD10022563255B09953" } },
+        { "name": "reopen-probe", "restartDesktop": true, "closeOwnedProcess": true, "desktopArgs": ["--open-settings"], "scenario": { "path": "tests/Quality.Gates/fixtures/sealed-candidate-stateful-runner/scenarios/remnote-reopen-probe.json", "bytes": 835, "sha256": "66324864C332AF56253E959436725C44BD62D9A1B37F3DB6351030D3159CA4A6" } }
+      ]
+    },
+    "question": {
+      "inputMethod": "native-keyboard",
+      "expectedActionCounts": { "question.submit": 1, "question.follow-up": 1 },
+      "unresolvedTerminal": "attention_required",
+      "permanentLoadingAllowed": false,
+      "phases": [
+        { "name": "initial-followup-cards", "restartDesktop": false, "closeOwnedProcess": true, "desktopArgs": ["--open-question"], "scenario": { "path": "tests/Quality.Gates/fixtures/sealed-candidate-stateful-runner/scenarios/question-native-enter.json", "bytes": 1302, "sha256": "986DA306799EA25A39BB8BD089C0E2FD55C9D2C225DF9473F4DA8BD361726EAF" } }
+      ]
+    }
+  }
+}

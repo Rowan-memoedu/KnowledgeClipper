@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/rqc/image-request.v1.schema.json",
+  "title": "RQC Image/OCR worker request adapter v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "operationId",
+    "mode",
+    "retentionDays",
+    "cloudUploadAuthorized",
+    "captureBundle",
+    "providerSettings"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "requestId": {"$ref": "#/$defs/id"},
+    "operationId": {"$ref": "#/$defs/id"},
+    "mode": {"enum": ["original_passthrough", "ocr_mineru"]},
+    "retentionDays": {"const": 30},
+    "cloudUploadAuthorized": {"type": "boolean"},
+    "captureBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactRef", "path", "sha256", "bytes", "mediaType"],
+      "properties": {
+        "artifactRef": {"$ref": "#/$defs/id"},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "bytes": {"type": "integer", "minimum": 1},
+        "mediaType": {"const": "application/vnd.rqc.capture-bundle+json"}
+      }
+    },
+    "providerSettings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "modelVersion": {"enum": ["vlm", "pipeline", "MinerU-HTML"]},
+        "language": {"type": "string", "minLength": 1, "maxLength": 32, "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,31}$"},
+        "enableTable": {"type": "boolean"},
+        "enableFormula": {"type": "boolean"},
+        "timeoutSeconds": {"type": "integer", "minimum": 30, "maximum": 3600},
+        "pollIntervalSeconds": {"type": "integer", "minimum": 1, "maximum": 60}
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"mode": {"const": "ocr_mineru"}}},
+      "then": {"properties": {"cloudUploadAuthorized": {"const": true}}}
+    },
+    {
+      "if": {"properties": {"mode": {"const": "original_passthrough"}}},
+      "then": {"properties": {"cloudUploadAuthorized": {"const": false}}}
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./task-command.schema.json",
+  "title": "RemNote Quick Clipper Task Command v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "commandId", "operationId", "taskId", "type", "issuedAt", "idempotencyKey", "payloadRef"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "commandId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "operationId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "taskId": { "oneOf": [{ "type": "null" }, { "$ref": "./artifact.schema.json#/$defs/identifier" }] },
+    "type": { "type": "string", "enum": ["task.submit", "task.cancel", "task.retry", "task.provide_input", "task.query_recent", "task.get"] },
+    "issuedAt": { "type": "string", "format": "date-time" },
+    "idempotencyKey": { "$ref": "./artifact.schema.json#/$defs/sha256" },
+    "payloadRef": { "$ref": "./artifact.schema.json#/$defs/jobRelativePath" },
+    "expectedState": { "$ref": "./task-status.schema.json" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "task.submit" } }, "required": ["type"] },
+      "else": { "properties": { "taskId": { "$ref": "./artifact.schema.json#/$defs/identifier" } } }
+    }
+  ]
+}

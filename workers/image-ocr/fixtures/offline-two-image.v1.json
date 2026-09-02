@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "image-ocr-offline-fixture.v1",
+  "fixtureId": "offline-two-image-question-answer-v1",
+  "dataClass": "synthetic-non-sensitive",
+  "images": [
+    {
+      "artifactRef": "capture.image.question.0001",
+      "role": "question",
+      "fileName": "question-0001.png",
+      "mediaType": "image/png",
+      "contentBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zt9sAAAAASUVORK5CYII=",
+      "bytes": 68,
+      "sha256": "91be7ab2771f47f033b6e2f50a2c9229720befff58671d2c68ce4efec88391f2"
+    },
+    {
+      "artifactRef": "capture.image.answer.0001",
+      "role": "answer",
+      "fileName": "answer-0001.png",
+      "mediaType": "image/png",
+      "contentBase64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zt9sAAAAASUVORK5CYII=",
+      "bytes": 68,
+      "sha256": "91be7ab2771f47f033b6e2f50a2c9229720befff58671d2c68ce4efec88391f2"
+    }
+  ],
+  "artifactsArrayOrder": [
+    "capture.image.answer.0001",
+    "capture.image.question.0001"
+  ],
+  "questionImages": [
+    "capture.image.question.0001"
+  ],
+  "answerImages": [
+    "capture.image.answer.0001"
+  ],
+  "scenarios": {
+    "success": {
+      "firstAttemptFailureRefs": []
+    },
+    "partial-retry": {
+      "firstAttemptFailureRefs": [
+        "capture.image.answer.0001"
+      ],
+      "expectedRetryRefs": [
+        "capture.image.answer.0001"
+      ]
+    },
+    "resume": {
+      "expectedResumeRefs": [
+        "capture.image.question.0001",
+        "capture.image.answer.0001"
+      ]
+    },
+    "original": {
+      "expectedOutputKind": "image.original",
+      "providerMustNotRun": true
+    },
+    "provider-failed": {
+      "failureRefs": [
+        "capture.image.question.0001",
+        "capture.image.answer.0001"
+      ],
+      "expectedTopErrorCode": "all_items_failed"
+    },
+    "tampered-input": {
+      "tamperArtifactRef": "capture.image.question.0001",
+      "expectedErrorCode": "integrity_mismatch",
+      "providerMustNotRun": true
+    },
+    "unknown-external-state": {
+      "expectedStatus": "unknown_external_state",
+      "expectedErrorCode": "provider_submission_unknown",
+      "expectedRetryable": false,
+      "expectedCommonOutputs": 0
+    }
+  }
+}

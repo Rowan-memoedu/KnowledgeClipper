@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "content-portable-release/1.0.0",
+  "releaseId": "content.deepseek-0.5.0-win-x64-portable-20260826T0532Z",
+  "productId": "KnowledgeClipper",
+  "productDisplayName": "零碎知识剪藏",
+  "releaseRoot": "workers/content",
+  "entrypoint": "workers/content/KnowledgeClipper.Content.Worker.exe",
+  "worker": {
+    "workerId": "content.deepseek",
+    "workerVersion": "0.5.0",
+    "contractVersion": "1.0.0",
+    "stages": ["content.understand-and-card"],
+    "operations": ["understand-and-card", "question.answer", "question.make-cards"],
+    "inputKinds": ["content-input"],
+    "outputKinds": ["learning-bundle", "card-bundle", "language-practice-decision", "question.answer"]
+  },
+  "layout": {
+    "launcher": "KnowledgeClipper.Content.Worker.exe",
+    "moduleRoot": "app",
+    "node": "runtime/node-v24.18.0-win-x64/node.exe",
+    "portableAsDirectory": true,
+    "currentWorkingDirectoryIndependent": true,
+    "environmentOverrideRequired": false
+  },
+  "payloadFileCount": 27,
+  "payloadBytes": 160184502,
+  "files": [
+    { "path": "app/config/categories.v2.json", "bytes": 1293, "sha256": "4A2DF154C9FC39006B7B65C76E233FD5593934B5DC539E560C14CA4323C721E6" },
+    { "path": "app/dist/src/canary.js", "bytes": 11440, "sha256": "33A8ADFDB68801C0D9AE7C25C4DFB4A635ABA3D97AE0F738EC152FCFAB4F776A" },
+    { "path": "app/dist/src/cli.js", "bytes": 1091, "sha256": "9BB9BD33E905FA28E3FAB56EFC3F20C05D97BE2EBF2ECABA17209B9847D66718" },
+    { "path": "app/dist/src/common-adapter.js", "bytes": 24445, "sha256": "E5E7A72F69A9C48BEF57167F647C0D45B3AB9633FFF3401E8FA4BFA858F94FCD" },
+    { "path": "app/dist/src/contracts.js", "bytes": 14202, "sha256": "894EEB42D86188ED0A302DAC301C54F5E85DEC804390B91E9E05877334DC3A81" },
+    { "path": "app/dist/src/gates.js", "bytes": 24595, "sha256": "B97F58E3A6F37D5889CECBEEBD684DD875A37FB9B998AA5958D0D8D71563512C" },
+    { "path": "app/dist/src/identity.js", "bytes": 393, "sha256": "EF501F217A39646C5E8E923A4AF0AA3C30BFE2049ECAD4DE5B20BA8C286660D6" },
+    { "path": "app/dist/src/prompts.js", "bytes": 1800, "sha256": "B8BBA6533D8C583C05BBF4CFA0A2D1028F2AF60DD111F4A8D93C011058CDCB86" },
+    { "path": "app/dist/src/provider.js", "bytes": 7329, "sha256": "11A9704C13F4148F1F8F50545D9383832649B3CB592C4875339FC1F25023CAB7" },
+    { "path": "app/dist/src/types.js", "bytes": 44, "sha256": "01AE2A5B120382F9A648CED7EE8507493A134F216D100FC61600C6C9738235D2" },
+    { "path": "app/dist/src/util.js", "bytes": 3722, "sha256": "63D7D3E61DAD6E0BFEB2F01508B8557D9C354EC77EB9DAF560D5E335589AC389" },
+    { "path": "app/dist/src/worker.js", "bytes": 49738, "sha256": "36452A3957F98703A416C2EBDAD8672BDDA90BBFB36AFB4E41FCF4679FEB7F8E" },
+    { "path": "app/package.json", "bytes": 3331, "sha256": "405C54E3BC6E220B2ED3D6291E2922A31E1A66FC129602CA9D76D33E06B273D0" },
+    { "path": "app/prompts/categories/general-learning.md", "bytes": 1178, "sha256": "DB807473E6ED3A151CAFBBC6DABEDD7DCD6F8C00F98DFB151252EAB663AA5FF9" },
+    { "path": "app/prompts/categories/language-en.md", "bytes": 744, "sha256": "16D0E29E85E898D69BDF4254B909C6BFBB5BD6706755F500397214D0FE40F9DE" },
+    { "path": "app/prompts/categories/language-writing-en.md", "bytes": 392, "sha256": "E3FD88CA556B4732F9824AAD7E803DE0DC74A749DB2FEDFB3D494055BC931410" },
+    { "path": "app/prompts/categories/language-writing-zh.md", "bytes": 431, "sha256": "D6F570F69CA7E02DBB0B9D966428139F4101A3C228833FD595C1B067A61415CF" },
+    { "path": "app/prompts/categories/language-zh.md", "bytes": 795, "sha256": "F1A8211F14F6CBDB736687B2E17FC38581D5B96927A8B5B8F7BECEE253591C4D" },
+    { "path": "app/prompts/categories/question-answer.md", "bytes": 1010, "sha256": "CC03D02A2DA06289B59C56C2BE57C345648B0669313BC150637FD8550E199998" },
+    { "path": "app/prompts/shared/card-output-contract.md", "bytes": 3084, "sha256": "CD1A2BBF8EA7D91EB38290EC4101F0074707916C6CAA1F6F26F66A509F18E579" },
+    { "path": "app/prompts/shared/system.md", "bytes": 820, "sha256": "0ECD0B66B67C5E8436B437F6B2A0F1C43876D7565DF20184BD1C633BB78CC67C" },
+    { "path": "app/prompts/stages/classification.md", "bytes": 3235, "sha256": "9B3ED24A948A4E7C801D69FC50617755003322D81FCC93097517790921D0B851" },
+    { "path": "app/prompts/stages/cleaning.md", "bytes": 2321, "sha256": "3B1114AEE32F1AC3D6E0560924A543B76F9DAAE8D6D5ACD04412C2E46F5E6181" },
+    { "path": "app/prompts/stages/language-writing.md", "bytes": 778, "sha256": "63AA62796A98139004D13985EF5A26E0E23D535444A8D8D9F4A2F05D2E533001" },
+    { "path": "app/prompts/stages/question-answer.md", "bytes": 1215, "sha256": "EC87860779A74AC34662A9293679F4EED10F6F83FC09492B90DEE93CC97F82F7" },
+    { "path": "KnowledgeClipper.Content.Worker.exe", "bytes": 67490988, "sha256": "F6EC35798F8948727B8664517FDBB096DB8A94C8DD079F612B05BAC4EA72D3B8" },
+    { "path": "runtime/node-v24.18.0-win-x64/node.exe", "bytes": 92534088, "sha256": "9A4EB5F1C29C6A2E93852EAD46B999E284A6A5CA8BAB4D4E241D587D025A52DE" }
+  ],
+  "legacyCompatibilityExcludedFromAuthority": [
+    "RemNoteQuickClipper.Content.Worker.exe",
+    "RemNoteQuickClipper.Content.Worker.dll",
+    "RemNoteQuickClipper.Content.Worker.deps.json",
+    "RemNoteQuickClipper.Content.Worker.runtimeconfig.json",
+    "RemNoteQuickClipper.Content.Worker.pdb"
+  ],
+  "stableCheckpoint": {
+    "checkpointId": "contracts-v1-20260825T115938Z",
+    "receiptPath": "receipts/contracts-v1-stable-checkpoint-20260825T115938Z.json",
+    "receiptSha256": "1CB738FE133F6645B9757E246E2FBC210785086342F70BAD32B5015BD19E1B1E"
+  }
+}

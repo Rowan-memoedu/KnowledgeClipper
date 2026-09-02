@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "remnote-destination-settings.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "enabled", "target", "advanced"],
+  "properties": {
+    "schemaVersion": { "const": "remnote-destination-settings.v1" },
+    "enabled": { "type": "boolean" },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rootRemId", "rootTitle"],
+      "properties": {
+        "rootRemId": { "type": ["string", "null"], "minLength": 1 },
+        "rootTitle": { "type": "string", "minLength": 1 }
+      }
+    },
+    "advanced": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sink", "clipRouting", "cardRouting", "timeZone", "dateFormat"],
+      "properties": {
+        "sink": { "enum": ["mcp-direct", "markdown-zip"] },
+        "clipRouting": { "const": "clip-daily-route" },
+        "cardRouting": { "const": "card-export" },
+        "timeZone": { "const": "Asia/Shanghai" },
+        "dateFormat": { "const": "yyyy-MM-dd" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+      "then": { "properties": { "target": { "properties": { "rootRemId": { "type": "string", "minLength": 1 } } } } }
+    }
+  ]
+}

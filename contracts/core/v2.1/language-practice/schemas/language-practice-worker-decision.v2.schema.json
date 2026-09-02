@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./language-practice-worker-decision.v2.schema.json",
+  "title": "KnowledgeClipper acceptance view of Content language-practice decision artifact",
+  "$ref": "../../../../../content-worker/schemas/language-practice-decision.v1.schema.json"
+}

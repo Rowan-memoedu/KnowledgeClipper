@@ -1,0 +1,10 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "question_answer:item-question:question-1": {
+      "answer_state": "answered",
+      "answer_text": "三次握手用于确认双方能力。\n\n版权所有 © 2026",
+      "unresolved_reasons": []
+    }
+  }
+}

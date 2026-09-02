@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="KnowledgeClipper.Core.V3.Client">
+      <HintPath>$(CoreV3ReleaseRoot)\artifacts\net8.0\KnowledgeClipper.Core.V3.Client.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="KnowledgeClipper.Core.V3.Contracts">
+      <HintPath>$(CoreV3ReleaseRoot)\artifacts\net8.0\KnowledgeClipper.Core.V3.Contracts.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="ValidateImmutableCoreV3Release" BeforeTargets="ResolveReferences">
+    <Error Condition="'$(CoreV3ReleaseRoot)' == ''" Text="CoreV3ReleaseRoot must identify the independently approved immutable release." />
+    <Error Condition="!Exists('$(CoreV3ReleaseRoot)\checkpoint.json')" Text="CoreV3ReleaseRoot has no checkpoint.json." />
+    <Error Condition="!Exists('$(CoreV3ReleaseRoot)\artifacts\net8.0\KnowledgeClipper.Core.V3.Client.dll')" Text="CoreV3ReleaseRoot has no public SDK assembly." />
+  </Target>
+</Project>

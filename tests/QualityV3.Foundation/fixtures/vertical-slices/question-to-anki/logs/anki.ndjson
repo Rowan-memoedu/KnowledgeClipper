@@ -1,0 +1,2 @@
+{"action":"addNotes","effect":"write"}
+{"action":"notesInfo","effect":"read"}

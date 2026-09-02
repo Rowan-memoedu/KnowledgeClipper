@@ -1,0 +1,35 @@
+{
+  "schema_version": "category-registry/2.0.0",
+  "categories": [
+    {
+      "id": "question_answer",
+      "description": "题目、疑问、已有答案或需要生成答案的问答学习单元",
+      "prompt_file": "categories/question-answer.md",
+      "allowed_templates": ["basic_qa", "media_qa"]
+    },
+    {
+      "id": "language_zh",
+      "description": "中文或汉字词语学习，可生成释义阅读或书写练习",
+      "prompt_file": "categories/language-zh.md",
+      "allowed_templates": ["language_context", "language_writing"],
+      "template_prompt_files": {
+        "language_writing": "categories/language-writing-zh.md"
+      }
+    },
+    {
+      "id": "language_en",
+      "description": "英语词语学习，可生成释义阅读或书写练习",
+      "prompt_file": "categories/language-en.md",
+      "allowed_templates": ["language_context", "language_writing"],
+      "template_prompt_files": {
+        "language_writing": "categories/language-writing-en.md"
+      }
+    },
+    {
+      "id": "general_learning",
+      "description": "概念、数学方法或 trick、生活建议与攻略等一般学习内容",
+      "prompt_file": "categories/general-learning.md",
+      "allowed_templates": ["basic_qa", "concept_transfer", "procedure"]
+    }
+  ]
+}

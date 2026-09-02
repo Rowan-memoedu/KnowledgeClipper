@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "learning-bundle/1.0.0",
+  "type": "object",
+  "required": ["schema_version", "bundle_id", "package_id", "task_id", "input_version", "attempt_id", "created_at", "input", "worker", "items", "ai_trace", "release_state", "unresolved_items", "gates"],
+  "properties": {
+    "schema_version": { "const": "learning-bundle/1.0.0" },
+    "bundle_id": { "type": "string", "minLength": 1 },
+    "package_id": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "input_version": { "type": "string", "minLength": 1 },
+    "attempt_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "input": { "type": "object" },
+    "worker": { "type": "object" },
+    "items": { "type": "array" },
+    "ai_trace": { "type": "array" },
+    "release_state": { "enum": ["ready", "partial", "unresolved", "failed"] },
+    "unresolved_items": { "type": "array" },
+    "gates": { "type": "array" }
+  },
+  "additionalProperties": false
+}

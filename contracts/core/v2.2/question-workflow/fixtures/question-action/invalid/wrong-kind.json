@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "knowledge-clipper-question-action.v2",
+  "action": "question.follow-up",
+  "targetToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "turnIndex": 1,
+  "questionTurnRef": {
+    "artifactRef": "capture.bundle.0002",
+    "kind": "capture-bundle",
+    "contractVersion": "1.0.0",
+    "manifestPath": "commands/command-2/capture/artifact.json",
+    "expectedSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  }
+}

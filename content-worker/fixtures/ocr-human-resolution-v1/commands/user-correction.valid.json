@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "knowledge-clipper-ocr-human-resolution-command/1.0.0",
+  "decisionKind": "ocr-human-resolution",
+  "targetToken": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "action": "user_correction",
+  "reason": "The user explicitly identifies the intended token.",
+  "correction": {
+    "correctedText": "Question: Which code is shown?\n\nAnswer: MODEL.",
+    "correctedTextSha256": "69764133b7c80632475e0ca942cd95129af3ed4b9bb70d992f52aa41744af37f",
+    "diffs": [{ "segmentIndex": 1, "operation": "insertion", "start": 11, "end": 11, "before": "", "after": "E" }]
+  }
+}

@@ -1,0 +1,399 @@
+{
+  "schema_version": "learning-bundle/1.0.0",
+  "bundle_id": "learning-projection-fixture-v1",
+  "package_id": "projection-fixture-v1",
+  "task_id": "content-to-exporter-projection-fixture",
+  "input_version": "1.0.0",
+  "attempt_id": "attempt-projection-fixture-v1",
+  "created_at": "2026-08-25T15:00:00Z",
+  "input": {
+    "manifest_path": "upstream/task-manifest.json",
+    "manifest_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "standard_input_path": "upstream/standard-input.json",
+    "standard_input_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "worker": {
+    "name": "content-understanding-card-worker",
+    "version": "0.2.0",
+    "category_registry_sha256": "ca137d441140543eba15023135f8a41792ebfba6c52c9e07e325c3ee08bf7879"
+  },
+  "items": [
+    {
+      "item_id": "item-zh",
+      "source_kind": "text",
+      "source_refs": [
+        {
+          "path": "materials/zh.md",
+          "sha256": "6e8e29a42333c02bb4868da9497fa3061a97f8752f22ad69a678712d4e7d6eee"
+        }
+      ],
+      "source_segments": [
+        {
+          "segment_index": 0,
+          "segment_id": "seg-zh",
+          "source_kind": "text",
+          "source_path": "materials/zh.md",
+          "start": 0,
+          "end": 9,
+          "text": "他心中仍有疑窦。\n"
+        }
+      ],
+      "cleaning": {
+        "state": "ready",
+        "cleaned_text": "他心中仍有疑窦。\n",
+        "removals": [],
+        "format_anomalies": []
+      },
+      "units": [
+        {
+          "unit_id": "unit-zh",
+          "source_segment_ids": ["seg-zh"],
+          "category_id": "language_zh",
+          "subtype": "contextual_vocabulary",
+          "answer_state": "not_applicable",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "target_term": "疑窦",
+          "generated_content": [
+            {
+              "kind": "definition",
+              "text": "疑窦（yí dòu）：心里的疑问。"
+            }
+          ],
+          "state": "ready",
+          "unresolved_reasons": [],
+          "gates": [
+            {
+              "gate_id": "content-ready",
+              "status": "pass",
+              "evidence": "source and generated definition are present"
+            }
+          ]
+        }
+      ],
+      "state": "ready",
+      "unresolved_reasons": [],
+      "gates": [
+        {
+          "gate_id": "item-ready",
+          "status": "pass",
+          "evidence": "all units are ready"
+        }
+      ]
+    },
+    {
+      "item_id": "item-en",
+      "source_kind": "text",
+      "source_refs": [
+        {
+          "path": "materials/en.md",
+          "sha256": "7ce1bede56fd62784ab5b581169d54613e380bccfddd1c67927780dba0d31f02"
+        }
+      ],
+      "source_segments": [
+        {
+          "segment_index": 0,
+          "segment_id": "seg-en",
+          "source_kind": "text",
+          "source_path": "materials/en.md",
+          "start": 0,
+          "end": 23,
+          "text": "The plan is tentative.\n"
+        }
+      ],
+      "cleaning": {
+        "state": "ready",
+        "cleaned_text": "The plan is tentative.\n",
+        "removals": [],
+        "format_anomalies": []
+      },
+      "units": [
+        {
+          "unit_id": "unit-en",
+          "source_segment_ids": ["seg-en"],
+          "category_id": "language_en",
+          "subtype": "contextual_vocabulary",
+          "answer_state": "not_applicable",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "target_term": "tentative",
+          "generated_content": [
+            {
+              "kind": "definition",
+              "text": "tentative /ˈtentətɪv/：暂定的；尚未最终确定的。"
+            }
+          ],
+          "state": "ready",
+          "unresolved_reasons": [],
+          "gates": [
+            {
+              "gate_id": "content-ready",
+              "status": "pass",
+              "evidence": "source and generated definition are present"
+            }
+          ]
+        }
+      ],
+      "state": "ready",
+      "unresolved_reasons": [],
+      "gates": [
+        {
+          "gate_id": "item-ready",
+          "status": "pass",
+          "evidence": "all units are ready"
+        }
+      ]
+    },
+    {
+      "item_id": "item-qa",
+      "source_kind": "text",
+      "source_refs": [
+        {
+          "path": "materials/qa.md",
+          "sha256": "fe46076106a5339d7031adb221c3170f6813678039e840a9d57a031fc51064b8"
+        }
+      ],
+      "source_segments": [
+        {
+          "segment_index": 0,
+          "segment_id": "seg-qa",
+          "source_kind": "text",
+          "source_path": "materials/qa.md",
+          "start": 0,
+          "end": 13,
+          "text": "为什么 0! 等于 1？\n"
+        }
+      ],
+      "cleaning": {
+        "state": "ready",
+        "cleaned_text": "为什么 0! 等于 1？\n",
+        "removals": [],
+        "format_anomalies": []
+      },
+      "units": [
+        {
+          "unit_id": "unit-qa",
+          "source_segment_ids": ["seg-qa"],
+          "category_id": "question_answer",
+          "subtype": "conceptual_question",
+          "answer_state": "missing",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "question": "为什么 0! 等于 1？",
+          "generated_content": [
+            {
+              "kind": "answer",
+              "text": "因为空排列只有一种，且递推关系 n!=n×(n-1)! 在 n=1 时要求 0!=1。"
+            }
+          ],
+          "state": "ready",
+          "unresolved_reasons": [],
+          "gates": [
+            {
+              "gate_id": "answer-generated",
+              "status": "pass",
+              "evidence": "missing source answer was generated and labeled"
+            }
+          ]
+        }
+      ],
+      "state": "ready",
+      "unresolved_reasons": [],
+      "gates": [
+        {
+          "gate_id": "item-ready",
+          "status": "pass",
+          "evidence": "all units are ready"
+        }
+      ]
+    },
+    {
+      "item_id": "item-media",
+      "source_kind": "media_set",
+      "source_refs": [
+        {
+          "path": "materials/question.svg",
+          "sha256": "236cc919596301a0a2100f5b554fe90bf2a72b84396c5a0b13a9fa2ba94bcc32",
+          "role": "question"
+        },
+        {
+          "path": "materials/answer.svg",
+          "sha256": "e9879c9138ebe4dcc82d468c9447b12afb6768324cc06cfb3119ad625b215cf8",
+          "role": "answer"
+        }
+      ],
+      "source_segments": [],
+      "cleaning": {
+        "state": "not_applicable",
+        "removals": [],
+        "format_anomalies": []
+      },
+      "units": [
+        {
+          "unit_id": "unit-media",
+          "source_segment_ids": [],
+          "category_id": "question_answer",
+          "subtype": "media_problem",
+          "answer_state": "provided",
+          "context_state": "not_applicable",
+          "risk_state": "ordinary",
+          "generated_content": [],
+          "state": "ready",
+          "unresolved_reasons": [],
+          "gates": [
+            {
+              "gate_id": "media-pair-ready",
+              "status": "pass",
+              "evidence": "question and answer assets are present"
+            }
+          ]
+        }
+      ],
+      "state": "ready",
+      "unresolved_reasons": [],
+      "gates": [
+        {
+          "gate_id": "item-ready",
+          "status": "pass",
+          "evidence": "all units are ready"
+        }
+      ]
+    },
+    {
+      "item_id": "item-concept-transfer",
+      "source_kind": "text",
+      "source_refs": [
+        {
+          "path": "materials/concept.md",
+          "sha256": "5004495af1bbc6ab5fbf377142fbf242471069bc9e5cc7716699fe354337b053"
+        }
+      ],
+      "source_segments": [
+        {
+          "segment_index": 0,
+          "segment_id": "seg-concept-transfer",
+          "source_kind": "text",
+          "source_path": "materials/concept.md",
+          "start": 0,
+          "end": 50,
+          "text": "负迁移是已掌握的旧知识干扰新知识学习；当两个情境表面相似但规则不同时，先比较适用条件可以减少误用。\n"
+        }
+      ],
+      "cleaning": {
+        "state": "ready",
+        "cleaned_text": "负迁移是已掌握的旧知识干扰新知识学习；当两个情境表面相似但规则不同时，先比较适用条件可以减少误用。\n",
+        "removals": [],
+        "format_anomalies": []
+      },
+      "units": [
+        {
+          "unit_id": "unit-concept-transfer",
+          "source_segment_ids": ["seg-concept-transfer"],
+          "category_id": "general_learning",
+          "subtype": "transfer_strategy",
+          "answer_state": "provided",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "supplied_answer": "当两个情境表面相似但规则不同时，先比较适用条件可以减少误用。",
+          "generated_content": [
+            {
+              "kind": "question_wording",
+              "text": "遇到表面相似但规则不同的新情境时，如何减少负迁移？"
+            }
+          ],
+          "state": "ready",
+          "unresolved_reasons": [],
+          "gates": [
+            {
+              "gate_id": "source-answer-ready",
+              "status": "pass",
+              "evidence": "answer is an exact source span; only question wording is generated"
+            }
+          ]
+        }
+      ],
+      "state": "ready",
+      "unresolved_reasons": [],
+      "gates": [
+        {
+          "gate_id": "item-ready",
+          "status": "pass",
+          "evidence": "all units are ready"
+        }
+      ]
+    },
+    {
+      "item_id": "item-procedure",
+      "source_kind": "text",
+      "source_refs": [
+        {
+          "path": "materials/procedure.md",
+          "sha256": "1c78831bcd9873635c13106f2c4535681209cf21c257906efdfedc23bac4293c"
+        }
+      ],
+      "source_segments": [
+        {
+          "segment_index": 0,
+          "segment_id": "seg-procedure",
+          "source_kind": "text",
+          "source_path": "materials/procedure.md",
+          "start": 0,
+          "end": 57,
+          "text": "解一元一次方程时，先去括号，再移项并合并同类项，最后把未知数的系数化为 1。每一步都要保持等式两边同作相同变换。\n"
+        }
+      ],
+      "cleaning": {
+        "state": "ready",
+        "cleaned_text": "解一元一次方程时，先去括号，再移项并合并同类项，最后把未知数的系数化为 1。每一步都要保持等式两边同作相同变换。\n",
+        "removals": [],
+        "format_anomalies": []
+      },
+      "units": [
+        {
+          "unit_id": "unit-procedure",
+          "source_segment_ids": ["seg-procedure"],
+          "category_id": "general_learning",
+          "subtype": "worked_procedure",
+          "answer_state": "provided",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "supplied_answer": "解一元一次方程时，先去括号，再移项并合并同类项，最后把未知数的系数化为 1。每一步都要保持等式两边同作相同变换。",
+          "generated_content": [
+            {
+              "kind": "question_wording",
+              "text": "解一元一次方程的操作顺序和不变原则是什么？"
+            }
+          ],
+          "state": "ready",
+          "unresolved_reasons": [],
+          "gates": [
+            {
+              "gate_id": "source-answer-ready",
+              "status": "pass",
+              "evidence": "answer is an exact source span; only question wording is generated"
+            }
+          ]
+        }
+      ],
+      "state": "ready",
+      "unresolved_reasons": [],
+      "gates": [
+        {
+          "gate_id": "item-ready",
+          "status": "pass",
+          "evidence": "all units are ready"
+        }
+      ]
+    }
+  ],
+  "ai_trace": [],
+  "release_state": "ready",
+  "unresolved_items": [],
+  "gates": [
+    {
+      "gate_id": "bundle-ready",
+      "status": "pass",
+      "evidence": "all six representative items are ready"
+    }
+  ]
+}

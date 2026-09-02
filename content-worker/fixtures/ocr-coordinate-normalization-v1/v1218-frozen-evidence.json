@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "ocr-coordinate-frozen-provider-evidence/1.0.0",
+  "source": {
+    "authority": "v1.2.18",
+    "evidenceRoot": "canary/sealed-live-ocr-anki-v1.2.18/20260831T091200Z",
+    "workerVersion": "0.9.0",
+    "sourceText": "KNOWLEDGECLIPPER SYNTHETIC OCR CANAR Question: What is 19 + 23? Answer: 42 No personal information.",
+    "sourceSha256": "1b43e9f82b60c3ca998a587fd5ac577aaa98e69c51e4a238347c27579649acaa",
+    "originalResultStatus": "failed",
+    "originalError": "FAILED_CONTENT_GATE ocr-proofreading.before-exact"
+  },
+  "response": {
+    "proofread_text": "KNOWLEDGECLIPPER SYNTHETIC OCR CANARY Question: What is 19 + 23? Answer: 42 No personal information.",
+    "corrections": [
+      {
+        "after": "CANARY",
+        "before": "CANAR",
+        "confidence": 0.97,
+        "end": 39,
+        "evidence": "The word 'CANAR' is not a valid English word; the surrounding text 'SYNTHETIC OCR CANARY' is a common phrase in synthetic OCR datasets, and 'CANARY' is the only plausible correction within edit distance 1.",
+        "evidence_type": "lexical_context",
+        "operation": "substitution",
+        "segment_index": 0,
+        "start": 34
+      }
+    ],
+    "unresolved": []
+  },
+  "responseSha256": "bf07a78c3eddbff0956a91027f868956f48b84047e324826868b11bdd3c28c2c"
+}

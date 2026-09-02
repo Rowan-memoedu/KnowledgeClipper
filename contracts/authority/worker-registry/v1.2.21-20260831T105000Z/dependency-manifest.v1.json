@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "knowledge-clipper-release-dependency-manifest.v1",
+  "releaseId": "knowledge-clipper-authority-v1.2.21-20260831T105000Z",
+  "releaseRoot": "releases/knowledge-clipper-authority-v1.2.21-20260831T105000Z/win-x64",
+  "files": 560,
+  "bytes": 267948684.0,
+  "treeHashAlgorithm": "sort relative paths ordinal; path TAB bytes TAB lowercase SHA-256; LF; SHA-256 UTF-8",
+  "treeSha256": "57955E5D410B2A0C059B614D788EBB508CB7DC4EC476EF99A27A7B9261F5BB66",
+  "keyFiles": [],
+  "workerOperations": null,
+  "legacyEntrypointsExcluded": true
+}

@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "knowledge-clipper-core-checkpoint.v1",
+  "checkpointVersion": "2.10.1",
+  "createdAt": "2026-09-01T09:45:00Z",
+  "status": "passed",
+  "scope": "Core Phase 1 additive content settings public module-action boundary plus complete regression closure",
+  "repositoryHeadAtCheckpoint": "6fc44e18637e00d394227ec4b15ad4c06054102a",
+  "extendsCheckpoint": "contracts/core/v2.10/checkpoints/v2.10.0-20260901T091243Z/checkpoint.json",
+  "authority": {
+    "ipc": {
+      "schemaVersion": "1.6.0",
+      "protocolVersion": "1.6",
+      "configuration": "contracts/core/v2.10/module-control/orchestrator-ipc.v1.6.json",
+      "serverOwnership": "orchestrator-exclusive",
+      "transport": "windows-named-pipe",
+      "existingProtocolsPreserved": ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5"]
+    },
+    "moduleAction": {
+      "request": "knowledge-clipper-module-action.v5",
+      "input": "content-settings-action.v1",
+      "receipt": "knowledge-clipper-module-action-receipt.v5",
+      "worker": "content.deepseek",
+      "operations": ["content.settings.describe", "content.settings.copy", "content.settings.validate", "content.settings.diff"],
+      "typedOutputKinds": ["content-settings-description", "content-settings-copy-result", "content-settings-validation", "content-settings-diff"],
+      "resultReference": {"referenceType": "file", "rootRef": "jobs-root", "sha256Bound": true},
+      "externalWriteCount": 0,
+      "physicalAudio": false,
+      "automaticRetryAllowed": false,
+      "copyPolicy": {
+        "effectClass": "local-filesystem-create-once",
+        "authorization": "explicit-user-action+exact-target",
+        "protectedRoots": ["Core jobs root", "admitted release root"],
+        "unknownOutcome": "unknown_external_state",
+        "automaticRetry": false
+      },
+      "readOnlyPolicy": {
+        "effectClass": "local-filesystem-read-only",
+        "externalMutation": false,
+        "root": "absolute existing non-reparse directory"
+      }
+    },
+    "questionWorkflowFixtureRepair": {
+      "scope": "tests/QuestionWorkflow.ContractTests/Program.cs only",
+      "change": "registry fixture export.anki outputKinds now includes the already-present anki-managed-initialization-status",
+      "productionRegistryLoaderChanged": false,
+      "productionWorkerOutputKindsChanged": false,
+      "gateLowered": false
+    },
+    "compatibility": {
+      "frozenContractsV1Modified": false,
+      "frozenContractsV1FilesChecked": 21,
+      "frozenContractsV1Mismatches": 0,
+      "existingTaskTruth24Preserved": true,
+      "existingAnkiProbe15Preserved": true,
+      "nextTaskSettingsSemanticsModified": false
+    }
+  },
+  "verification": {
+    "warningsAsErrors": {"status": "passed", "projectsBuilt": 5, "warnings": 0, "errors": 0},
+    "coreAdapter": {
+      "status": "passed",
+      "log": "receipts/core-phase1/20260901T093844Z/core-adapter.log",
+      "logSha256": "b18dca03e1ae087d915e8bf7c3f23063149892f83125e13b489f12ed905b6304"
+    },
+    "questionWorkflow": {
+      "status": "passed",
+      "log": "receipts/core-phase1/20260901T093844Z/question-workflow.log",
+      "logSha256": "22fa8289f2c01c269837e5ba1b57aa9a15fedb54cd76ec9f64d0f409bab9c9c4",
+      "orderedTurns": 2,
+      "failClosedCases": 13,
+      "ankiConfigShaBinding": true
+    },
+    "orchestratorContracts": {
+      "status": "passed",
+      "log": "receipts/core-phase1/20260901T093844Z/orchestrator-contract.log",
+      "logSha256": "d2c10b5db40d893c61d55f2d337e69b5d33bf1376f0ab21ca4e7d5e85b28fb71",
+      "independentProductionProcess": true,
+      "jsonLinesAndFaultMatrix": true
+    },
+    "formalProcessNamedPipe": {
+      "status": "passed",
+      "receipt": "receipts/core-phase1/20260901T094233Z/core-process-named-pipe.receipt.json",
+      "receiptSha256": "896d67fc22d6dd24d2a7ab410583fc85cf39fc5f59df3013fb92dd37b4cf8ba2",
+      "log": "receipts/core-phase1/20260901T094233Z/core-process-named-pipe.log",
+      "logSha256": "223f7bdeab52c38c58b010c2d50d67305b7ee5742571382082c765f558c7585b",
+      "process": "KnowledgeClipper.Orchestrator.dll serve",
+      "contentOperationsPassed": 4,
+      "authorizationDriftRejected": true,
+      "immutableReceiptReplayPassed": true,
+      "ankiProbeAndTaskGetPreserved": true
+    },
+    "schemaValidation": {
+      "status": "passed",
+      "receipt": "receipts/core-phase1/20260901T094233Z/schema-validation.receipt.json",
+      "receiptSha256": "3547790e20d5241515579096880e5deb1feb05a4d4dcf6ad897f602f6fe869fd"
+    },
+    "frozenV1": {
+      "status": "passed",
+      "receipt": "receipts/core-phase1/20260901T094233Z/frozen-v1-verification.receipt.json",
+      "receiptSha256": "399cd8ac9dee60e6f55ae033806b44b80f6f3d9554a0fa03047a07968e084450"
+    },
+    "desktopAudit": {
+      "status": "gap_found_and_core_route_published",
+      "receipt": "receipts/core-phase1/20260901T094233Z/desktop-control-plane-audit.receipt.json",
+      "receiptSha256": "fa4a9f659dd0c550bd91a6a05ce16caf07b6d037568c6d26308430e2dc77505b"
+    },
+    "preservedFailureEvidence": {
+      "status": "retained",
+      "log": "receipts/core-phase1/20260901T093844Z/core-process-named-pipe.log",
+      "logSha256": "2c8e584d911fb4f524526d7e036a21f4a9ca6576fadb8bf81f77e706d0a39c80",
+      "classification": "canary target was intentionally rejected because it was inside the admitted development release root",
+      "correction": "test-only target moved outside the admitted release root; Core protection remained unchanged"
+    }
+  },
+  "desktopMigrationInput": [
+    "Load contracts/core/v2.10/module-control/orchestrator-ipc.v1.6.json.",
+    "Replace DesktopContentSettingsHost direct Content Worker Process.Start with module-action v5 requests.",
+    "Use content.settings.describe for fallback descriptor reads; prefer the shipped descriptor when its existing SHA gate passes.",
+    "For copy, authorize the exact new non-existing ContentDraftRoot with explicit-user-action and createOnly=true; never auto-retry failed or unknown outcomes.",
+    "For validate and diff, pass the absolute existing draft root with local-filesystem-read-only and externalMutation=false.",
+    "Resolve the returned outputRefs[0] under jobs-root and verify expectedSha256 before Desktop display projection or local ContentDraftRoot persistence.",
+    "Keep Desktop and Quality gates independent; this checkpoint is not integrated candidate or release GO."
+  ],
+  "releaseDecision": {
+    "coreRuntimeInputReady": true,
+    "desktopPassRequired": true,
+    "qualityPassRequired": true,
+    "integratedCandidateGo": false,
+    "releaseGo": false
+  },
+  "fileBindings": [
+    {"path": "orchestrator/Core/CommandAndIpc.cs", "sha256": "9986517d723324cdfea0da760b19dbe8143197b1df6f7da6091239ae22354f2a"},
+    {"path": "orchestrator/Core/ModuleActionControl.cs", "sha256": "533bdef4b18dc50bc9eea1f9cd6512dccc79d58b92406c04e41e184d3aa95cc6"},
+    {"path": "tests/FakeWorker/Program.cs", "sha256": "36ee36160a574b3ab230cf1e5871ae49e0875e82bf41637cea16aeeeda609c8c"},
+    {"path": "tests/CoreProcessNamedPipe.IntegrationTests/Program.cs", "sha256": "c9ab1c3ea09e28366f87cf7c17a18c34b20d60498ed35efb5fff00ba3970070b"},
+    {"path": "tests/QuestionWorkflow.ContractTests/Program.cs", "sha256": "b910dbea43330c5332175327e905e52698780c764d0a8c4d215145cfa9b49420"},
+    {"path": "contracts/core/v2.10/module-control/orchestrator-ipc.v1.6.json", "sha256": "fb2d22d55abd199cebb6f1372959a14291c27ddf8ba4506c2e04ce5a042fe910"},
+    {"path": "contracts/core/v2.10/module-control/schemas/ipc-request.v1.6.schema.json", "sha256": "0b2b1d132793b92415b99610142128ce176f04c958092de82b215d49b664805d"},
+    {"path": "contracts/core/v2.10/module-control/schemas/ipc-response.v1.6.schema.json", "sha256": "c2b17a905a73d944c4b8b9041a52ce91373e61fcf5b37d3a7e1560496c7457c5"},
+    {"path": "contracts/core/v2.10/module-control/schemas/module-action-request.v5.schema.json", "sha256": "8ef9e7b9e1b2ec50242c02996d05bce451d5c5ac51517d743b95acbcaec672f1"},
+    {"path": "contracts/core/v2.10/module-control/schemas/content-settings-action.v1.schema.json", "sha256": "18c30f803090f41e818401f24861667bffdabba981841da534c7d7f41e44ce3a"},
+    {"path": "contracts/core/v2.10/module-control/schemas/module-action-receipt.v5.schema.json", "sha256": "70558eca43e68ff928cdb395d5325ba2ae8fd9d107fd72ec973af923df019104"}
+  ]
+}

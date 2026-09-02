@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "remnote-destination-settings-descriptor.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "destinationType", "displayName", "peerDestinationTypes", "secretReferences", "groups"],
+  "properties": {
+    "schemaVersion": { "const": "remnote-destination-settings-descriptor.v1" },
+    "destinationType": { "const": "remnote" },
+    "displayName": { "const": "RemNote" },
+    "peerDestinationTypes": { "const": ["anki"] },
+    "secretReferences": { "const": [] },
+    "groups": {
+      "type": "array", "minItems": 3,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["id", "fields"],
+        "properties": {
+          "id": { "enum": ["common", "advanced", "diagnostics"] },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["path", "type", "ownership", "readOnly", "default"],
+              "properties": {
+                "path": { "type": "string", "minLength": 1 }, "type": { "type": "string", "minLength": 1 },
+                "ownership": { "enum": ["user", "policy", "deployment", "diagnostic"] },
+                "readOnly": { "type": "boolean" }, "default": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

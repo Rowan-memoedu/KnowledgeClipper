@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "image-ocr-core-continuation-evidence.v4",
+  "workerVersion": "1.2.3",
+  "publicContractReuse": {
+    "commonV1Modified": false,
+    "moduleOwnedSchemas": [
+      "image-original-media-bundle.v1",
+      "image-processing-provenance.v1",
+      "image-ocr-credential-metadata.v1"
+    ]
+  },
+  "originalPassThrough": {
+    "providerCalls": 0,
+    "orderedRoles": ["questionImages[]", "answerImages[]"],
+    "hashPreserved": true,
+    "mediaBundleKind": "image.original.bundle",
+    "provenanceKind": "image.processing.provenance",
+    "coreTerminalState": "unsupported"
+  },
+  "ocrHumanDecision": {
+    "actions": ["accept", "correct"],
+    "defaultOcrRerun": false,
+    "requiresOriginalArtifactHashMatch": true,
+    "requiresSuccessfulOutputHashMatch": true,
+    "appendOnlyCorrection": true,
+    "sourceArtifactKinds": ["image.original", "image-ocr.markdown", "image-ocr.structured", "image.processing.provenance"]
+  },
+  "partialFailedItemsOnlyContinuation": {
+    "state": "available-core-v2.5",
+    "providerReceives": "failed item artifactRefs only",
+    "successfulItemsReusedByHash": true,
+    "partialBlocksDownstream": true
+  },
+  "downstreamIntegration": {
+    "coreAdmission": "pending-new-checkpoint",
+    "desktopReviewRenderer": "pending",
+    "destinationMediaConsumers": "pending",
+    "claimedComplete": false
+  },
+  "retention": {
+    "requestMetadataDays": 30,
+    "executorState": "unsupported",
+    "automaticDeletionClaim": false
+  }
+}

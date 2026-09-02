@@ -1,0 +1,6 @@
+{
+  "schemaVersion": "knowledge-clipper-language-practice-choice.v2",
+  "decisionKind": "language-practice",
+  "targetToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "choice": "translation"
+}

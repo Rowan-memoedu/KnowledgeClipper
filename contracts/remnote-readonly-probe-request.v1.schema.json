@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "remnote-readonly-probe-request.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "probeId", "mode", "timeoutMs", "authorizationScope", "target", "operations", "evidence"],
+  "properties": {
+    "schemaVersion": { "const": "remnote-readonly-probe-request.v1" },
+    "probeId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "mode": { "enum": ["health", "reconcile"] },
+    "timeoutMs": { "const": 15000 },
+    "authorizationScope": { "enum": ["configured-destination", "isolated-canary"] },
+    "target": {
+      "type": "object", "additionalProperties": false, "required": ["rootRemId", "rootTitle"],
+      "properties": { "rootRemId": { "type": "string", "minLength": 1 }, "rootTitle": { "type": "string", "minLength": 1 } }
+    },
+    "operations": { "const": ["status", "search", "list", "read"] },
+    "evidence": {
+      "type": "object", "additionalProperties": false, "required": ["settingsSnapshot"],
+      "properties": {
+        "settingsSnapshot": { "$ref": "#/$defs/fileRef" },
+        "workerRequest": { "$ref": "#/$defs/fileRef" },
+        "workerResult": { "$ref": "#/$defs/fileRef" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "mode": { "const": "reconcile" } }, "required": ["mode"] },
+      "then": { "properties": { "evidence": { "required": ["settingsSnapshot", "workerRequest", "workerResult"] } } },
+      "else": { "properties": { "evidence": { "not": { "anyOf": [{ "required": ["workerRequest"] }, { "required": ["workerResult"] }] } } } }
+    },
+    {
+      "if": { "properties": { "authorizationScope": { "const": "isolated-canary" } }, "required": ["authorizationScope"] },
+      "then": { "properties": { "target": { "properties": { "rootTitle": { "not": { "const": "剪藏" } } } } } }
+    }
+  ],
+  "$defs": {
+    "fileRef": {
+      "type": "object", "additionalProperties": false, "required": ["path", "sha256"],
+      "properties": { "path": { "type": "string", "minLength": 3 }, "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" } }
+    }
+  }
+}

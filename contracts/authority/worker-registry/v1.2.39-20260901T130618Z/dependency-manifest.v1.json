@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "knowledge-clipper-release-dependency-manifest.v1",
+  "releaseId": "knowledge-clipper-authority-v1.2.39-20260901T130618Z",
+  "releaseRoot": "releases/knowledge-clipper-authority-v1.2.39-20260901T130618Z/win-x64",
+  "files": 596,
+  "bytes": 268681365,
+  "treeHashAlgorithm": "sort relative paths ordinal; path TAB bytes TAB lowercase SHA-256; LF; SHA-256 UTF-8",
+  "treeSha256": "5F6F87792C67B30FC1BE321359E9E114252D06B48C3542E7628BE5C6752937EF",
+  "keyFiles": [
+    {
+      "path": "contracts/core/v2.7/checkpoints/v2.7.16-20260901T023000Z/checkpoint.json",
+      "bytes": 40803,
+      "sha256": "779F9DCD4E3B13644C4C7FC1DA2A2ED8ECDB8B8759DE07AC42CA0EADF23B19D9"
+    }
+  ],
+  "workerOperations": null,
+  "legacyEntrypointsExcluded": true,
+  "baseAuthority": {
+    "registryVersion": "1.2.37",
+    "releaseId": "knowledge-clipper-authority-v1.2.37-20260901T063000Z",
+    "treeSha256": "973E63B7F876A650D6EF4CFAF6D31F6386510BDE81FB2F096F83C403982CECCC"
+  },
+  "coreWorkflow": {
+    "checkpointId": "knowledge-clipper-core-v2.10.2",
+    "checkpointVersion": "2.10.2",
+    "checkpointSha256": "954F1D28DA9F64E15099FD55527FC158A0C3E5E34668A3F2385A09A8266F1039",
+    "contractRoot": "contracts/core/v2.10",
+    "ipcSchemaVersion": "1.7.0",
+    "ipcProtocolVersion": "1.7",
+    "requestContract": "knowledge-clipper-module-action.v6",
+    "receiptContract": "knowledge-clipper-module-action-receipt.v6",
+    "orchestratorRuntimeManifestSha256": "46EA7A794C161104D16D19F9AECBCDD9405E7C921DE756762D55C73B4AFE807F",
+    "orchestratorRuntimeTreeSha256": "897089A13C1F29728E677413276F5E1EB4BD9137DFF8B2C7F9E0FC3DD3E54346",
+    "schemaDependencyFiles": {
+      "path": "contracts/core/v2.3/playback-control/schemas/stage-control-request.v1.schema.json",
+      "bytes": 528,
+      "sha256": "B717994985275623719C09C93D04A4F05A5B23BAE6AB240191E00898908182E8",
+      "referencedBy": "contracts/core/v2.10/module-control/schemas/ipc-request.v1.7.schema.json"
+    }
+  }
+}

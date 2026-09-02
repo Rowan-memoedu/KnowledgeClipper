@@ -1,0 +1,72 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-partial-format": {
+      "cleaned_text": "地球绕太阳公转。\n\n公式草稿：$x + = 5$\n",
+      "removed_fragments": [],
+      "format_anomalies": [
+        {
+          "segment_index": 1,
+          "kind": "broken_formula",
+          "severity": "requires_human",
+          "evidence": "公式在加号后缺少操作数"
+        }
+      ]
+    },
+    "classification:item-partial-format": {
+      "units": [
+        {
+          "unit_id": "unit-clean-fact",
+          "source_segment_indexes": [0],
+          "category_id": "general_learning",
+          "subtype": "fact",
+          "answer_state": "provided",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "supplied_answer": "地球绕太阳公转。",
+          "unresolved_reasons": []
+        },
+        {
+          "unit_id": "unit-broken-formula",
+          "source_segment_indexes": [1],
+          "category_id": "general_learning",
+          "subtype": "formula_draft",
+          "answer_state": "provided",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "supplied_answer": "公式草稿：$x + = 5$",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "card_generation:item-partial-format:unit-clean-fact": {
+      "generated_content": [
+        {
+          "kind": "question_wording",
+          "text": "地球绕什么天体公转？"
+        }
+      ],
+      "cards": [
+        {
+          "template": "basic_qa",
+          "front_blocks": [
+            {
+              "type": "text",
+              "text": "地球绕什么天体公转？",
+              "provenance": "generated"
+            }
+          ],
+          "back_blocks": [
+            {
+              "type": "text",
+              "text": "地球绕太阳公转。",
+              "provenance": "source"
+            }
+          ],
+          "answer_provenance": "source"
+        }
+      ],
+      "unresolved_reasons": []
+    }
+  }
+}

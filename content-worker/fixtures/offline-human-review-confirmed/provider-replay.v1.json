@@ -1,0 +1,49 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-edit-after-submit": {
+      "cleaned_text": "在当前规则下，提交后是否还能修改？\n\n提交后原则上不可修改；管理员确认录入错误时可以退回重填。\n",
+      "removed_fragments": [],
+      "format_anomalies": []
+    },
+    "classification:item-edit-after-submit": {
+      "units": [
+        {
+          "unit_id": "unit-edit-after-submit",
+          "source_segment_indexes": [0, 1],
+          "category_id": "question_answer",
+          "subtype": "conditional_policy_question",
+          "answer_state": "ambiguous",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "question": "在当前规则下，提交后是否还能修改？",
+          "unresolved_reasons": ["answer_scope_requires_human"]
+        }
+      ]
+    },
+    "card_generation:item-edit-after-submit:unit-edit-after-submit": {
+      "generated_content": [],
+      "cards": [
+        {
+          "template": "basic_qa",
+          "front_blocks": [
+            {
+              "type": "text",
+              "text": "在当前规则下，提交后是否还能修改？",
+              "provenance": "source"
+            }
+          ],
+          "back_blocks": [
+            {
+              "type": "text",
+              "text": "提交后原则上不可修改；管理员确认录入错误时可以退回重填。",
+              "provenance": "source"
+            }
+          ],
+          "answer_provenance": "source"
+        }
+      ],
+      "unresolved_reasons": []
+    }
+  }
+}

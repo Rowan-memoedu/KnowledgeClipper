@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "knowledge-clipper-core-checkpoint.v1",
+  "checkpointVersion": "2.10.2",
+  "createdAt": "2026-09-01T10:05:05Z",
+  "status": "passed",
+  "scope": "Core additive typed public control plane for RemNote read-only probe and Speech voice discovery/explicit preview",
+  "repositoryHeadAtCheckpoint": "6fc44e18637e00d394227ec4b15ad4c06054102a",
+  "extendsCheckpoint": "contracts/core/v2.10/checkpoints/v2.10.1-20260901T094233Z/checkpoint.json",
+  "authority": {
+    "ipc": {
+      "schemaVersion": "1.7.0",
+      "protocolVersion": "1.7",
+      "configuration": "contracts/core/v2.10/module-control/orchestrator-ipc.v1.7.json",
+      "request": "knowledge-clipper-module-action.v6",
+      "receipt": "knowledge-clipper-module-action-receipt.v6",
+      "existingProtocolsPreserved": ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6"]
+    },
+    "remnoteProbe": {
+      "operation": "remnote.probe",
+      "input": "remnote-public-probe-request.v2",
+      "outputKind": "remnote-public-probe-result",
+      "outputContractVersion": "2.0.0",
+      "allowedOperations": ["status", "search", "list", "read"],
+      "timeoutMs": 15000,
+      "externalWriteCount": 0,
+      "sanitized": true,
+      "businessStatuses": ["ready", "blocked"],
+      "automaticRetryAllowed": false
+    },
+    "speechVoiceDiscovery": {
+      "operation": "speech.voices",
+      "input": "speech-settings-voice-discovery-input.v1",
+      "outputKind": "speech-voice-discovery-result",
+      "outputContractVersion": "1.0.0",
+      "settingsMutationCount": 0,
+      "physicalSpeakerPlayback": false,
+      "businessStatuses": ["ready", "conditional"],
+      "automaticRetryAllowed": false
+    },
+    "speechPreview": {
+      "operation": "speech.preview",
+      "input": "speech-settings-speaker-preview-action.v2",
+      "workerInput": "speech-settings-speaker-preview-input.v1",
+      "outputKind": "speech-speaker-preview-result",
+      "outputContractVersion": "1.0.0",
+      "authorization": "explicit-user-action bound to actionId+previewLanguage+authorizedAt",
+      "effectClass": "physical-audio-single-attempt",
+      "previewAttemptCount": 1,
+      "automaticRetryAllowed": false,
+      "unknownOutcome": "unknown_external_state"
+    },
+    "typedResult": {
+      "referenceType": "file",
+      "rootRef": "jobs-root",
+      "sha256Bound": true,
+      "executionStatusSeparatedFromBusinessStatus": true
+    },
+    "compatibility": {
+      "frozenContractsV1Modified": false,
+      "frozenContractsV1FilesChecked": 21,
+      "frozenContractsV1Mismatches": 0,
+      "legacyIpc12ModuleActionsPreserved": true,
+      "contentSettingsIpc16Preserved": true,
+      "ankiProbeIpc15Preserved": true,
+      "taskTruth24Preserved": true
+    }
+  },
+  "verification": {
+    "warningsAsErrors": {"status": "passed", "projectsBuilt": 5, "warnings": 0, "errors": 0},
+    "coreAdapter": {"status": "passed", "log": "receipts/core-phase1/20260901T100127Z/core-adapter.log", "logSha256": "6a81ef1fcaa145e483159b52bbd4824cd296f6a85f1ac89aa20649309027b5dc"},
+    "questionWorkflow": {"status": "passed", "log": "receipts/core-phase1/20260901T100127Z/question-workflow.log", "logSha256": "22fa8289f2c01c269837e5ba1b57aa9a15fedb54cd76ec9f64d0f409bab9c9c4"},
+    "orchestratorContracts": {"status": "passed", "log": "receipts/core-phase1/20260901T100127Z/orchestrator-contract.log", "logSha256": "3c856e457d8586ad33423ea9827d5ffb0ca16f8c1b1db79f6f4bbc013197b084"},
+    "formalProcessNamedPipe": {
+      "status": "passed",
+      "receipt": "receipts/core-phase1/20260901T100127Z/core-process-named-pipe.receipt.json",
+      "receiptSha256": "65445d97e6850e1bb1cdb211b872cf6e46182fa63685f939e8aa5be50f5e71cd",
+      "log": "receipts/core-phase1/20260901T100127Z/core-process-named-pipe.log",
+      "logSha256": "88f674a7e9bcd279dbee4e54b31784664531f337a903344a9123869ac8942735",
+      "process": "KnowledgeClipper.Orchestrator.dll serve",
+      "remnoteAllowedOperationsExact": true,
+      "remnoteExternalWrites": 0,
+      "voiceSettingsMutations": 0,
+      "voicePhysicalPlayback": false,
+      "previewAuthorizationDriftRejectedBeforeWorker": true,
+      "previewFakeOffline": true,
+      "previewPhysicalSpeakerInvocationsDuringCanary": 0
+    },
+    "schemaValidation": {"status": "passed", "receipt": "receipts/core-phase1/20260901T100127Z/schema-validation.receipt.json", "receiptSha256": "0510dcaca8956676cebd9ca360053a0fc310057c06abab46c29aa665cf8f1608"},
+    "frozenV1": {"status": "passed", "receipt": "receipts/core-phase1/20260901T100127Z/frozen-v1-verification.receipt.json", "receiptSha256": "75df2a789361f174ebc010f3c532d660ca27a3031111c2c17b9f1a781b7d20b8"}
+  },
+  "desktopMigrationInput": [
+    "Migrate DesktopModuleSettingsHost speech.voices, speech.preview, and remnote.probe from IPC 1.2/module-action v1 to IPC 1.7/module-action v6.",
+    "For RemNote probe, continue using only the persisted or verified-pending exact target and the fixed status/search/list/read sequence; verify the returned typed result SHA before projecting readiness.",
+    "For voice discovery, keep it read-only and never route settings open/save/status to preview.",
+    "Wrap preview worker input in speech-settings-speaker-preview-action.v2 and bind explicit-user-action authorization to actionId, previewLanguage, and authorizedAt.",
+    "Treat receipt.executionStatus separately from receipt.status and never auto-retry preview failed/unknown outcomes.",
+    "This checkpoint was validated with Fake/offline preview only; Desktop physical preview remains a separate explicit human test gate."
+  ],
+  "qualityAuditInput": [
+    "Independently re-hash every fileBinding and rerun formal Core process IPC 1.7; do not trust this checkpoint status.",
+    "Verify RemNote operations cannot exceed status/search/list/read and externalWriteCount remains zero for healthy/degraded/blocked typed results.",
+    "Verify Speech voices cannot mutate settings or play audio.",
+    "Verify preview authorization drift creates no receipt and no worker result, while authorized Fake/offline preview produces one typed SHA-bound result and no physical speaker invocation.",
+    "Do not promote to integrated candidate without separate Desktop and Quality PASS."
+  ],
+  "releaseDecision": {"coreRuntimeInputReady": true, "desktopPassRequired": true, "qualityPassRequired": true, "integratedCandidateGo": false, "releaseGo": false},
+  "fileBindings": [
+    {"path": "orchestrator/Core/CommandAndIpc.cs", "sha256": "bc22e38e8607ec230047d200ed16dbfccb032faf0af435eb6842d1c3780acab8"},
+    {"path": "orchestrator/Core/ModuleActionControl.cs", "sha256": "98e1031d490a4ac3fcb48df910307b680517a3de726a85b061d7e9fd82f08489"},
+    {"path": "tests/FakeWorker/Program.cs", "sha256": "c38cbc5b7994e04df47d4a3b96e35a3413517a5fa11df5bf15534592e0422efd"},
+    {"path": "tests/CoreProcessNamedPipe.IntegrationTests/Program.cs", "sha256": "5fd5b0d0239c6b9139a46ddb86e0c50446fa1345331e9801e24af8923a31f7fa"},
+    {"path": "tests/QuestionWorkflow.ContractTests/Program.cs", "sha256": "b910dbea43330c5332175327e905e52698780c764d0a8c4d215145cfa9b49420"},
+    {"path": "contracts/core/v2.10/module-control/orchestrator-ipc.v1.7.json", "sha256": "5121c02069bd8b23263aaf0695096e40843205fef82be288107a6b523b2370a1"},
+    {"path": "contracts/core/v2.10/module-control/schemas/ipc-request.v1.7.schema.json", "sha256": "2302965353b8f0a4bda7926e1755af0b541f8805e246b3f3c51cb79dcdd1a47b"},
+    {"path": "contracts/core/v2.10/module-control/schemas/ipc-response.v1.7.schema.json", "sha256": "7110a8e77800e21d78add9e08fccc60a88ee691faa6f30333012857dcf6c7e3d"},
+    {"path": "contracts/core/v2.10/module-control/schemas/module-action-request.v6.schema.json", "sha256": "1ffc6811e1671b4568c213be7132753070852d88e43a5700dab927612fec5788"},
+    {"path": "contracts/core/v2.10/module-control/schemas/speech-settings-speaker-preview-action.v2.schema.json", "sha256": "e65e3373619e6628723b8df4dfc07a8f0e0adca8594f7f8b1109164ccb61531a"},
+    {"path": "contracts/core/v2.10/module-control/schemas/module-action-receipt.v6.schema.json", "sha256": "bf6064ffb9d0edfa0080a8c716b8434103e6e3f2c67572b03a5c668bc7b9fac9"}
+  ]
+}

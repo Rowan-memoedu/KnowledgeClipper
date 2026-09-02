@@ -1,0 +1,34 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-ocr-ambiguous": {
+      "cleaned_text": "Question: Which code is shown?\n\nAnswer: MODL.",
+      "removed_fragments": [],
+      "format_anomalies": []
+    },
+    "classification:item-ocr-ambiguous": {
+      "units": [{
+        "unit_id": "unit-confirmed-literal",
+        "source_segment_indexes": [0, 1],
+        "category_id": "question_answer",
+        "subtype": "provided_answer",
+        "answer_state": "provided",
+        "context_state": "provided",
+        "risk_state": "ordinary",
+        "question": "Question: Which code is shown?",
+        "supplied_answer": "Answer: MODL.",
+        "unresolved_reasons": []
+      }]
+    },
+    "card_generation:item-ocr-ambiguous:unit-confirmed-literal": {
+      "generated_content": [],
+      "cards": [{
+        "template": "basic_qa",
+        "front_blocks": [{ "type": "text", "text": "Question: Which code is shown?", "provenance": "source" }],
+        "back_blocks": [{ "type": "text", "text": "Answer: MODL.", "provenance": "source" }],
+        "answer_provenance": "source"
+      }],
+      "unresolved_reasons": []
+    }
+  }
+}

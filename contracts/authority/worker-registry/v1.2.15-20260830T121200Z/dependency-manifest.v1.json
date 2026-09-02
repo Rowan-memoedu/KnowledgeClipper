@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "knowledge-clipper-release-dependency-manifest.v2",
+  "releaseId": "knowledge-clipper-authority-v1.2.15-20260830T121200Z",
+  "releaseRoot": "releases/knowledge-clipper-authority-v1.2.15-20260830T121200Z/win-x64",
+  "files": 538,
+  "bytes": 267590016,
+  "treeSha256": "E5067C1B93A47B5650A2B1A049F974A73F66E31C3A5CEFC5DBD4D33B623190D4",
+  "treeHashAlgorithm": "sort relative paths ordinal; path TAB bytes TAB lowercase SHA-256; LF; SHA-256 UTF-8",
+  "core": {
+    "version": "2.6.0",
+    "checkpoint": "contracts/core/v2.6/checkpoints/v2.6.0-20260830T120900Z/checkpoint.json",
+    "checkpointSha256": "F913D27758E0AD20859B7C0C2B5B8756B0D8487E346FE0FD9732D3D480C34D65",
+    "executableSha256": "1EE66639D12C0FA9EBE809117C7BC02789A562C3A1063CBCAE874A073C38524A"
+  },
+  "modules": {
+    "image.ocr.mineru": {
+      "version": "1.2.3",
+      "source": "workers/image-ocr/candidates/1.2.3",
+      "destination": "workers/image-ocr",
+      "executable": "workers/image-ocr/KnowledgeClipper.ImageOcr.Worker.exe",
+      "sha256": "61E10D6B89B6BE29EB653D526FED9872ADC9C3A376FFFB1857AF10F2EBB82C9A",
+      "treeSha256": "D41726200D01DEE7F9288EB77E2F326AE2B5812EFE5B6DC4AC320D46A34159E5"
+    },
+    "content.deepseek": {
+      "version": "0.9.0",
+      "source": "content-worker/releases/content.deepseek-0.9.0-win-x64-formal-20260830T113459Z",
+      "destination": "workers/content",
+      "executable": "workers/content/KnowledgeClipper.Content.Worker.exe",
+      "sha256": "F6EC35798F8948727B8664517FDBB096DB8A94C8DD079F612B05BAC4EA72D3B8",
+      "treeSha256": "7269891A09766D4D6F0CAEE8D97B862784A4F71E4EF7DE95A3A7088544587EF0"
+    },
+    "speech.edge": {
+      "version": "1.2.5",
+      "source": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260830T113159Z-b7c28db9/win-x64/workers/speech",
+      "destination": "workers/speech",
+      "executable": "workers/speech/KnowledgeClipper.Speech.Worker.exe",
+      "sha256": "B7C28DB9AE2DFF94DB09CD0BBCA5BA95BECFF08C9ABD03B5D906B8834CCAC85C",
+      "treeSha256": "308987D265958B8A303690C1794E686F796999A04F02B05756FA1E2BCF698468"
+    },
+    "export.remnote": {
+      "version": "2.2.0",
+      "source": "releases/knowledge-clipper-remnote-exporter-v2.2.0-20260830T113219Z/win-x64",
+      "destination": "workers/remnote",
+      "executable": "workers/remnote/KnowledgeClipper.RemNoteExporter.Worker.exe",
+      "sha256": "7BC0931CAD917302CE03426E7B6DA206DA15552A1C3D7CC80679815CBA4FBC63",
+      "treeSha256": "12C59EF4B4F6101B90D66F2CBD065696333F3F30E194A71A58E6110EA0453F00"
+    },
+    "export.anki": {
+      "version": "1.3.0",
+      "source": "releases/knowledge-clipper-anki-exporter-v1.3.0-20260830T113059Z/win-x64/workers/anki",
+      "destination": "workers/anki",
+      "executable": "workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe",
+      "sha256": "E38ED8ECB84785A555214C855B083DE1F5277225A197ED49254E15A2DE73C3C7",
+      "treeSha256": "3784600C634987F25A84E319809E831A645311EFDD49D26231002EBC7F7D44A0"
+    }
+  },
+  "moduleEvidence": {
+    "image-core-continuation.json": "workers/image-ocr/candidates/1.2.3/evidence/core-continuation-contract-evidence.v4.json",
+    "image-original-canary.json": "canary/iof-original-20260830-193529-01a0c90f/canary-receipt.json",
+    "content-ocr-human-resolution-admission.json": "content-worker/receipts/content-ocr-human-resolution-0.9.0-admission-20260830T114000Z.json",
+    "speech-formal-release.json": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260830T113159Z-b7c28db9/speech-formal-win-x64-release-receipt.json",
+    "speech-independent-validation.json": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260830T113159Z-b7c28db9/speech-formal-win-x64-independent-validation-receipt.json",
+    "remnote-offline-release.json": "canary/remnote-exporter-v2.2-offline/20260830T113201Z/receipt.json",
+    "remnote-readonly-probe.json": "canary/remnote-exporter-v2.2-live-readonly-probe/20260830T113227Z/receipt.json",
+    "anki-original-media-admission.json": "workers/anki-exporter/canary/original-media-v1.3.0/20260830T113121Z/qualification-receipt.json",
+    "quality-module-increment.json": "canary/product-gap-audit/20260830T113658Z-anki-speech-image-module-increment/audit-receipt.json",
+    "quality-remnote-content-increment.json": "canary/product-gap-audit/20260830T114421Z-remnote-content-module-increment/audit-receipt.json",
+    "core-settings.json": "canary/core-v2.6.0-offline/20260830T120500Z/settings-control.receipt.json",
+    "core-adapter.json": "canary/core-v2.6.0-offline/20260830T120500Z/core-adapter.receipt.json",
+    "core-contracts.json": "canary/core-v2.6.0-offline/20260830T120500Z/orchestrator-contract-tests.receipt.json",
+    "core-question-workflow.json": "canary/core-v2.6.0-offline/20260830T120500Z/question-workflow.receipt.json",
+    "core-public-contracts.json": "canary/core-v2.6.0-offline/20260830T120500Z/public-contracts.receipt.json"
+  },
+  "baseAuthority": "1.2.14",
+  "supersedesCheckpointSha256": "C2DD2E6C2099E9D7A2D4C742A53BEDE28EA229CEF50D849A464F7C20314121D4"
+}

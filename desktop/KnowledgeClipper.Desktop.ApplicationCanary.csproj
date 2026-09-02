@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <StartupObject>KnowledgeClipper.DesktopApplicationCanary</StartupObject>
+    <AssemblyName>KnowledgeClipper.Desktop.ApplicationCanary</AssemblyName>
+    <RootNamespace>KnowledgeClipper</RootNamespace>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\src\DesktopApplication.cs" Link="DesktopApplication.cs" />
+    <Compile Include="..\src\DesktopSettingsDomain.cs" Link="DesktopSettingsDomain.cs" />
+    <Compile Include="..\src\RemNoteQuickClipper.Desktop.Core\DesktopArtifactVerification.cs" Link="DesktopArtifactVerification.cs" />
+    <Compile Include="..\src\DesktopApplicationCanary.cs" Link="DesktopApplicationCanary.cs" />
+  </ItemGroup>
+</Project>

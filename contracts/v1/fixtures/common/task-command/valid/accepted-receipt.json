@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0",
+  "commandId": "command-001",
+  "accepted": true,
+  "taskId": "task-001",
+  "operationId": "operation-001",
+  "status": "created",
+  "timestamp": "2026-08-25T10:00:00Z",
+  "error": null,
+  "durableEventRef": "runs/run-001/events/000001-task-created.json"
+}

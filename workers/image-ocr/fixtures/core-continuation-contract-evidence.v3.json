@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "image-ocr-core-continuation-evidence.v3",
+  "workerVersion": "1.2.2",
+  "publicContractReuse": {
+    "newPublicContractCreated": false,
+    "captureBundle": "contracts/desktop-automation/v1/capture-bundle.v1.schema.json",
+    "workerRequest": "contracts/v1/schemas/common/worker-request.schema.json",
+    "workerResult": "contracts/v1/schemas/common/worker-result.schema.json",
+    "artifact": "contracts/v1/schemas/common/artifact.schema.json"
+  },
+  "originalPassThrough": {
+    "input": {
+      "captureBundle.modeSnapshot.imageHandling": "original",
+      "captureBundle.roleOrder": [
+        "questionImages[]",
+        "answerImages[]"
+      ],
+      "workerRequest.workerId": "image.ocr.mineru",
+      "workerRequest.operation": "process-images",
+      "workerRequest.configSnapshot": {}
+    },
+    "workerOutput": {
+      "status": "completed",
+      "artifactKind": "image.original",
+      "itemDiagnosticStatus": "completed",
+      "payload.mode": "original_passthrough",
+      "providerSubmissionExpected": false
+    },
+    "coreTerminal": {
+      "state": "unsupported",
+      "consumeWhenSupported": "worker-result.outputs[*] where kind=image.original in explicit role order",
+      "requiredFields": [
+        "outputs[*].artifactRef",
+        "outputs[*].manifestPath",
+        "itemDiagnostics[*].itemId",
+        "payload.mode"
+      ],
+      "reason": "core_original_terminal_unsupported"
+    }
+  },
+  "partialFailedItemsOnlyContinuation": {
+    "firstAttemptOutput": {
+      "status": "partial",
+      "successfulOutputsPublished": true,
+      "failedItemDiagnosticCode": "provider_timeout",
+      "failedItemRetryable": true,
+      "warning": "partial result blocks automatic downstream execution",
+      "payload.partialBlocksDownstream": true,
+      "payload.moduleResultPathRequired": true
+    },
+    "retryInput": {
+      "workerRequest.payload.retryModuleResultPath": "prior attempt module-result.json",
+      "sameOperationId": true,
+      "newAttemptId": true,
+      "reuseOriginalConfigSnapshot": true
+    },
+    "workerRetryOutput": {
+      "providerReceives": "failed item artifactRefs only",
+      "successfulItemsReusedByHash": true,
+      "terminalStatusAfterRecovery": "completed"
+    },
+    "coreContinuation": {
+      "state": "conditional",
+      "blockDownstreamWhileStatusPartial": true,
+      "scheduleOnlyFailedItems": true,
+      "releaseDownstreamOnlyAfterCompleted": true,
+      "reason": "core_partial_continuation_not_connected"
+    }
+  },
+  "retention": {
+    "requestMetadataDays": 30,
+    "executorState": "unsupported",
+    "automaticDeletionClaim": false
+  }
+}

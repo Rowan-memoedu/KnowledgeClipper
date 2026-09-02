@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "knowledge-clipper-task-settings-override.v1",
+  "workflow": { "processingProfile": "learning", "destinations": ["anki"] },
+  "credential": "inline-secret"
+}

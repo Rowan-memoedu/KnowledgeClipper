@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.question-initial-command/2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sessionId", "question", "context"],
+  "properties": {
+    "sessionId": {"type": "string", "minLength": 1, "maxLength": 80, "pattern": "^[A-Za-z0-9._-]+$"},
+    "question": {"$ref": "../../artifacts/schemas/artifact-ref.v2.schema.json"},
+    "context": {"type": "array", "items": {"$ref": "../../artifacts/schemas/artifact-ref.v2.schema.json"}}
+  }
+}

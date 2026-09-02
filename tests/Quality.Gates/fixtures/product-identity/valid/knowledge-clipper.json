@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "knowledge-clipper-product-identity.v1",
+  "displayName": "零碎知识剪藏",
+  "asciiRoot": "KnowledgeClipper",
+  "desktopEntrypoint": "desktop/KnowledgeClipper.exe",
+  "primaryProcess": "KnowledgeClipper",
+  "coreIdentities": [
+    {"componentId": "desktop", "assemblyName": "KnowledgeClipper", "namespaceRoot": "KnowledgeClipper.Desktop"},
+    {"componentId": "orchestrator.core", "assemblyName": "KnowledgeClipper.Orchestrator", "namespaceRoot": "KnowledgeClipper.Orchestrator"},
+    {"componentId": "image.ocr.mineru", "assemblyName": "KnowledgeClipper.ImageOcr.Worker", "namespaceRoot": "KnowledgeClipper.ImageOcr"},
+    {"componentId": "content.deepseek", "assemblyName": "KnowledgeClipper.Content.Worker", "namespaceRoot": "KnowledgeClipper.Content"},
+    {"componentId": "speech.edge", "assemblyName": "KnowledgeClipper.Speech.Worker", "namespaceRoot": "KnowledgeClipper.Speech"}
+  ],
+  "exporters": ["export.remnote", "export.anki"],
+  "legacyCompatibilityAliases": [
+    {"alias": "RemNoteQuickClipper.exe", "target": "KnowledgeClipper.exe", "authoritative": false, "scope": "legacy-compatibility-only"}
+  ]
+}

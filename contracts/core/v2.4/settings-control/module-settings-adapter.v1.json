@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "knowledge-clipper-module-settings-adapter.v1",
+  "profileSchema": "schemas/workflow-settings.v1.schema.json",
+  "overrideSchema": "schemas/task-settings-override.v1.schema.json",
+  "snapshotSchema": "schemas/task-settings-snapshot.v1.schema.json",
+  "credentialStorageBoundary": {
+    "profileAllowsSecrets": false,
+    "taskSnapshotAllowsSecrets": false,
+    "allowedMechanisms": ["worker-owned-environment", "sha256-bound-task-artifact-reference"]
+  },
+  "modules": [
+    {
+      "moduleId": "workflow",
+      "status": "supported",
+      "reason": "Core v2 routing consumes the frozen processing profile and destination set.",
+      "fields": [
+        { "settingPointer": "/workflow/processingProfile", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/workflow/processingProfile", "effectTargets": ["pipeline.routing.processingProfile", "remnote.inputAdapter.targetKind"] },
+        { "settingPointer": "/workflow/destinations", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/workflow/destinations", "effectTargets": ["pipeline.routing.destinations", "pipeline.exportStages"] }
+      ]
+    },
+    {
+      "moduleId": "capture",
+      "status": "conditional",
+      "reason": "Desktop freezes these fields in capture-bundle.modeSnapshot and Core verifies them; original-image downstream understanding remains unsupported and fails closed.",
+      "fields": [
+        { "settingPointer": "/capture/contextEnabled", "editable": true, "defaultSource": "moduleDefault", "snapshotPointer": "/modules/capture/contextEnabled", "effectTargets": ["capture-bundle.modeSnapshot.contextEnabled"] },
+        { "settingPointer": "/capture/contextGranularity", "editable": true, "defaultSource": "moduleDefault", "snapshotPointer": "/modules/capture/contextGranularity", "effectTargets": ["capture-bundle.modeSnapshot.contextGranularity", "content-input.payload.contextMode"] },
+        { "settingPointer": "/capture/imageHandling", "editable": true, "defaultSource": "moduleDefault", "snapshotPointer": "/modules/capture/imageHandling", "effectTargets": ["capture-bundle.modeSnapshot.imageHandling", "pipeline.image-ocr.selection"] }
+      ]
+    },
+    {
+      "moduleId": "content",
+      "status": "unsupported",
+      "reason": "Prompt/provider selection has no admitted runtime adapter; Core freezes the fixed open-md-v2/live values read-only.",
+      "fields": [
+        { "settingPointer": "/content/promptSet", "editable": false, "defaultSource": "fixedContract", "snapshotPointer": "/modules/content/promptSet", "effectTargets": ["content.configSnapshot.promptSet"] },
+        { "settingPointer": "/content/providerMode", "editable": false, "defaultSource": "fixedContract", "snapshotPointer": "/modules/content/providerMode", "effectTargets": ["content.payload.providerMode"] }
+      ]
+    },
+    {
+      "moduleId": "speech",
+      "status": "supported",
+      "reason": "Read-aloud tasks copy the frozen voice and playback values into both speech stages and WorkerRequest.",
+      "fields": [
+        { "settingPointer": "/speech/voicesByLanguage", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/modules/speech/voicesByLanguage", "effectTargets": ["speech.payload.voiceSnapshot.voicesByLanguage"] },
+        { "settingPointer": "/speech/ratePercent", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/modules/speech/ratePercent", "effectTargets": ["speech.payload.voiceSnapshot.ratePercent"] },
+        { "settingPointer": "/speech/volumePercent", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/modules/speech/volumePercent", "effectTargets": ["speech.payload.voiceSnapshot.volumePercent"] },
+        { "settingPointer": "/speech/pitchHz", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/modules/speech/pitchHz", "effectTargets": ["speech.payload.voiceSnapshot.pitchHz"] },
+        { "settingPointer": "/speech/autoPlay", "editable": true, "defaultSource": "moduleDefault", "snapshotPointer": "/modules/speech/autoPlay", "effectTargets": ["speech.payload.playbackPolicy.autoPlay", "pipeline.speech-playback.selection"] }
+      ]
+    },
+    {
+      "moduleId": "export.remnote",
+      "status": "conditional",
+      "reason": "Supported when remnote is selected and a non-null rootRemId is frozen; learning and cards use distinct v2 routes.",
+      "fields": [
+        { "settingPointer": "/remnote", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/modules/remnote/settings", "effectTargets": ["export-remnote.payload.target", "export-remnote.payload.route"] }
+      ]
+    },
+    {
+      "moduleId": "export.anki",
+      "status": "conditional",
+      "reason": "Supported only for cards when a sha256-bound anki-export-config task artifact is present.",
+      "fields": [
+        { "settingPointer": "/workflow/destinations", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/workflow/destinations", "effectTargets": ["anki-export.stage"] },
+        { "settingPointer": "/anki/configArtifactRef", "editable": false, "defaultSource": "taskArtifact", "snapshotPointer": "/modules/anki/configArtifactRef", "effectTargets": ["anki-export.configSnapshot.ankiConfigArtifactId", "anki-export.inputRefs"] }
+      ]
+    },
+    {
+      "moduleId": "retention-retry-timeout-diagnostics",
+      "status": "unsupported",
+      "reason": "No stable public adapter currently applies these values; existing manifest and plan values remain read-only.",
+      "fields": []
+    }
+  ]
+}

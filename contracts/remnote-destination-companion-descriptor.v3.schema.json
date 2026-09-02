@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledgeclipper://contracts/remnote-destination-companion-descriptor.v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "destinationType", "displayName", "optional", "peerDestinationTypes", "secretReferences", "settings", "routes", "fixedSemantics", "diagnostics", "publicProbe", "targetDiscovery", "originalMedia"],
+  "properties": {
+    "schemaVersion": { "const": "remnote-destination-companion-descriptor.v3" },
+    "destinationType": { "const": "remnote" }, "displayName": { "const": "RemNote" }, "optional": { "const": true },
+    "peerDestinationTypes": { "const": ["anki"] }, "secretReferences": { "const": [] },
+    "settings": {
+      "type": "object", "additionalProperties": false, "required": ["enabled", "target"],
+      "properties": {
+        "enabled": { "const": { "ownership": "user", "effectiveAt": "next-task" } },
+        "target": {
+          "type": "object", "additionalProperties": false,
+          "required": ["rootRemIdPath", "rootTitlePath", "authority", "rootTitleRole", "changeEffectiveAt", "inFlightTaskMutation", "isolatedCanaryRequiresAuthorizedRoot", "formalRootTitle", "formalRootAllowedForCanary"],
+          "properties": {
+            "rootRemIdPath": { "const": "target.rootRemId" }, "rootTitlePath": { "const": "target.rootTitle" },
+            "authority": { "const": "rootRemId+exact-readback" }, "rootTitleRole": { "const": "readback-only-not-authority" },
+            "changeEffectiveAt": { "const": "next-task" }, "inFlightTaskMutation": { "const": false },
+            "isolatedCanaryRequiresAuthorizedRoot": { "const": true }, "formalRootTitle": { "const": "剪藏" }, "formalRootAllowedForCanary": { "const": false }
+          }
+        }
+      }
+    },
+    "routes": {
+      "type": "object", "additionalProperties": false, "required": ["clip", "cards"],
+      "properties": {
+        "clip": { "const": { "kind": "clip-daily-route", "timeZone": "Asia/Shanghai", "dateFormat": "yyyy-MM-dd" } },
+        "cards": { "const": { "kind": "card-export", "dateRouting": false } }
+      }
+    },
+    "fixedSemantics": { "const": { "readback": "exact", "idempotency": "reconcilable", "unknownExternalStateRetry": "manual-only", "automaticRetryAllowed": false } },
+    "diagnostics": {
+      "type": "object", "additionalProperties": false, "required": ["deploymentPath", "mcpEndpoint", "workerVersion", "contractVersion"],
+      "properties": {
+        "deploymentPath": { "const": { "readOnly": true, "publicValue": "redacted" } },
+        "mcpEndpoint": { "const": { "readOnly": true, "publicValue": "loopback-local" } },
+        "workerVersion": { "const": "2.3.0" }, "contractVersion": { "const": "1.0.0" }
+      }
+    },
+    "publicProbe": {
+      "type": "object", "additionalProperties": false,
+      "required": ["requestSchemaVersion", "resultSchemaVersion", "cli", "operations", "timeoutMs", "externalCall", "externalWriteCount", "sanitized", "connectedToolTimeoutState", "admissionOnDegraded"],
+      "properties": {
+        "requestSchemaVersion": { "const": "remnote-public-probe-request.v2" }, "resultSchemaVersion": { "const": "remnote-public-probe-result.v2" },
+        "cli": { "const": "probe-public --request <absolute-probe-request.json> --json" }, "operations": { "const": ["status", "search", "list", "read"] },
+        "timeoutMs": { "const": 15000 }, "externalCall": { "const": true }, "externalWriteCount": { "const": 0 }, "sanitized": { "const": true },
+        "connectedToolTimeoutState": { "const": "degraded" }, "admissionOnDegraded": { "const": "blocked" }
+      }
+    },
+    "targetDiscovery": {
+      "type": "object", "additionalProperties": false,
+      "required": ["requestSchemaVersion", "resultSchemaVersion", "cli", "authorizationScope", "selector", "authorityAfterResolution", "persistOnlyWhen", "changeEffectiveAt", "operations", "timeoutMs", "externalCall", "externalWriteCount", "automaticRetryAllowed", "sanitized"],
+      "properties": {
+        "requestSchemaVersion": { "const": "remnote-target-discovery-request.v1" }, "resultSchemaVersion": { "const": "remnote-target-discovery-result.v1" },
+        "cli": { "const": "discover-target-public --request <absolute-discovery-request.json> --json" }, "authorizationScope": { "const": "configured-destination" },
+        "selector": { "const": { "expectedType": "document", "match": "exact", "uniqueness": "required" } },
+        "authorityAfterResolution": { "const": "resolved-rootRemId+exact-readback" }, "persistOnlyWhen": { "const": "healthy+ready+unique+exactReadback" },
+        "changeEffectiveAt": { "const": "next-task" }, "operations": { "const": ["status", "search", "list", "read"] },
+        "timeoutMs": { "const": 15000 }, "externalCall": { "const": true }, "externalWriteCount": { "const": 0 },
+        "automaticRetryAllowed": { "const": false }, "sanitized": { "const": true }
+      }
+    },
+    "originalMedia": {
+      "const": { "productPolicy": "by-design-unsupported", "supportedDestination": "anki", "workerInvocationAllowed": false, "reasonCode": "destination.original_media_unsupported", "silentDropAllowed": false }
+    }
+  }
+}

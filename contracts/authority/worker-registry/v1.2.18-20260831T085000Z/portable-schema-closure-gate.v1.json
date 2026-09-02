@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "knowledge-clipper-portable-schema-closure-gate.v1",
+  "status": "passed",
+  "releaseRoot": ".",
+  "schemasChecked": 62,
+  "localRefsChecked": 188,
+  "failures": []
+}

@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "knowledge-clipper-settings-control-canary.v1",
+  "status": "passed",
+  "externalCalls": 0,
+  "physicalSpeakerInvocations": 0,
+  "storeEvidence": {
+    "status": "passed",
+    "backupCreated": true,
+    "corruptFallback": true,
+    "recoveredRatePercent": 5
+  },
+  "routeEvidence": {
+    "status": "passed",
+    "routes": [
+      {
+        "name": "none",
+        "processingProfile": "cards",
+        "destinations": []
+      },
+      {
+        "name": "remnote-cards",
+        "processingProfile": "cards",
+        "destinations": [
+          "remnote"
+        ],
+        "route": {
+          "kind": "card-export"
+        }
+      },
+      {
+        "name": "anki",
+        "processingProfile": "cards",
+        "destinations": [
+          "anki"
+        ],
+        "ankiConfigArtifactRef": "anki-config"
+      },
+      {
+        "name": "dual",
+        "processingProfile": "cards",
+        "destinations": [
+          "remnote",
+          "anki"
+        ],
+        "route": {
+          "kind": "card-export"
+        },
+        "ankiConfigArtifactRef": "anki-config"
+      },
+      {
+        "name": "remnote-learning",
+        "processingProfile": "learning",
+        "destinations": [
+          "remnote"
+        ],
+        "route": {
+          "kind": "clip-daily-route",
+          "timeZone": "Asia/Shanghai",
+          "localDate": "2026-08-28",
+          "dateFormat": "yyyy-MM-dd"
+        }
+      }
+    ],
+    "learningAnki": "conditional-unsupported",
+    "questionExport": "unsupported"
+  },
+  "learningResolverEvidence": {
+    "status": "passed",
+    "requestedOutputs": [
+      "learning-bundle"
+    ],
+    "rootRemId": "8zNzfX45XLCSKoPSJ",
+    "route": {
+      "kind": "clip-daily-route",
+      "timeZone": "Asia/Shanghai",
+      "localDate": "2026-08-28",
+      "dateFormat": "yyyy-MM-dd"
+    },
+    "planBound": true,
+    "workerRequestBound": true,
+    "ankiStage": false
+  },
+  "flowEvidence": {
+    "status": "passed",
+    "migration": "task.manifest.v1.json preserved; task.manifest.v2.json appended",
+    "precedence": [
+      "taskOverride",
+      "activeProfile",
+      "moduleDefault"
+    ],
+    "taskOverrideRatePercent": 19,
+    "stageConfigBound": true,
+    "stagePayloadBound": true,
+    "workerRequestBound": true,
+    "activeTaskFrozen": true,
+    "replayUsesOriginalSnapshot": true,
+    "newTaskUsesNewSnapshot": true,
+    "playbackSuppressedWithoutSpeaker": true
+  },
+  "moduleV2Evidence": {
+    "status": "passed",
+    "snapshotSchemaVersion": "knowledge-clipper-task-settings-snapshot.v2",
+    "imageProviderSettings": {
+      "modelVersion": "pipeline",
+      "language": "en",
+      "enableTable": false,
+      "enableFormula": true,
+      "timeoutSeconds": 120,
+      "pollIntervalSeconds": 3
+    },
+    "contentSettingsRevisionId": "content-settings-canary-v1",
+    "contentConfigArtifactRef": "content-config-canary",
+    "planBound": true,
+    "workerRequestBound": true
+  }
+}

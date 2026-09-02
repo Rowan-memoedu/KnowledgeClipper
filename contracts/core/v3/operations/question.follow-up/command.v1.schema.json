@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.question-follow-up-command/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sessionId", "followUp"],
+  "properties": {
+    "sessionId": {"type": "string", "minLength": 1},
+    "followUp": {"$ref": "../../artifacts/schemas/artifact-ref.v2.schema.json"}
+  }
+}

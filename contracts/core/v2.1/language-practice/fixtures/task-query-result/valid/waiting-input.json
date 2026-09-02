@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "2.0.0",
+  "queryId": "query-language-recent",
+  "type": "task.query_recent",
+  "nextCursor": null,
+  "items": [
+    {
+      "taskId": "task-language-001",
+      "operationId": "operation-submit-001",
+      "intent": "clip.card",
+      "status": "waiting_input",
+      "createdAt": "2026-08-26T03:29:00Z",
+      "updatedAt": "2026-08-26T03:30:00Z",
+      "attentionRequired": true,
+      "replayable": false,
+      "summaryCode": "task.waiting_input",
+      "decisionKind": "language-practice",
+      "decisionTargetToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "desktop-profile-resolver.v1",
+  "defaultProfile": "cards-remnote",
+  "profiles": ["parity-remnote", "cards-remnote", "cards-anki"],
+  "remNoteExport": { "sink": "mcp-direct", "rootRemId": "fake-root", "rootTitle": "剪藏", "documentTitlePrefix": "Fake Export" },
+  "remNoteProjection": {
+    "categoryRegistryVersion": "category-registry/1.0.0",
+    "templateMappings": {
+      "basic_qa": { "policy": "project", "cardType": "basic", "direction": "forward" },
+      "media_qa": { "policy": "reject-media-deferred", "cardType": null, "direction": null },
+      "language_context": { "policy": "project", "cardType": "basic", "direction": "forward" },
+      "concept_transfer": { "policy": "project", "cardType": "basic", "direction": "forward" },
+      "procedure": { "policy": "project", "cardType": "basic", "direction": "forward" }
+    },
+    "allowedTextBlockTypes": ["text", "markdown"], "blockRendering": "single-block-verbatim-inline", "assetRefPolicy": "reject-media-deferred"
+  },
+  "ankiProjection": {
+    "categoryRegistryVersion": "category-registry/1.0.0",
+    "categoryToDeckRoute": { "question_answer": "question", "language_zh": "language.zh", "language_en": "language.en", "general_learning": "other" },
+    "templateMappings": {
+      "basic_qa": { "policy": "project", "noteTypeKey": "basic_qa", "frontField": "question", "backField": "answer" },
+      "media_qa": { "policy": "reject-media-deferred", "noteTypeKey": null, "frontField": null, "backField": null },
+      "language_context": { "policy": "project", "noteTypeKey": "language_item", "frontField": "context_sentence", "backField": "reading_and_meaning" },
+      "concept_transfer": { "policy": "project", "noteTypeKey": "basic_qa", "frontField": "question", "backField": "answer" },
+      "procedure": { "policy": "project", "noteTypeKey": "basic_qa", "frontField": "question", "backField": "answer" }
+    },
+    "revisionPolicy": "initial-revision-1", "contentHashPolicy": "sha256-canonical-projection-v1", "tags": [], "assetRefPolicy": "reject-media-deferred"
+  },
+  "speech": {
+    "voicesByLanguage": { "zh-CN": "zh-CN-XiaoxiaoNeural" },
+    "ratePercent": 0,
+    "volumePercent": 0,
+    "pitchHz": 0,
+    "edgeTtsPath": null,
+    "ffplayPath": null
+  }
+}

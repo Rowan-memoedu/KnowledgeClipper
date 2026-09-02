@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "2.0.0",
+  "planVersion": "2.0.0",
+  "taskId": "task-v2-content-only",
+  "maxConcurrency": 4,
+  "stages": [
+    {
+      "stageId": "content-understand",
+      "workerId": "content.deepseek",
+      "operation": "understand-and-card",
+      "dependsOn": [],
+      "inputRefs": [],
+      "outputKinds": ["learning-bundle", "card-bundle"],
+      "timeoutMs": 300000,
+      "retryPolicy": { "maxAttempts": 3, "backoffMs": 1000 },
+      "configSnapshot": {},
+      "payload": {},
+      "inputBindings": [],
+      "inputAdapter": { "type": "content-input.v1", "targetKind": null, "mappingSnapshot": null },
+      "completionPolicy": null
+    }
+  ],
+  "routing": { "processingProfile": "cards", "destinations": [], "source": "task-manifest.v2" }
+}

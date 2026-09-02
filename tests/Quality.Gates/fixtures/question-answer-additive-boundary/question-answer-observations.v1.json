@@ -1,0 +1,28 @@
+{
+  "fixtureType": "quality-observation-fixture-not-business-schema",
+  "currentCoreFailure": {
+    "intent": "clip.question",
+    "requestedOutput": "question.answer",
+    "errorCode": "resolver.intent_unsupported"
+  },
+  "requiredAdditiveEvidence": {
+    "core": ["question.answer", "question.follow-up", "question.make-cards"],
+    "content": ["question.answer"],
+    "exporters": ["export.remnote", "export.anki"],
+    "desktop": {
+      "semanticActions": ["question.submit", "question.follow-up", "question.make-cards"],
+      "answerRegion": {"visible": true, "readOnly": true}
+    }
+  },
+  "desktopWindowsUiCanary": {
+    "path": "canary/desktop-windows/20260826T034715Z/windows-ui-automation.log",
+    "sha256": "C299ED0374BBB8CBE532C6D7BA665064E35C93184265D50CDBAD150950DF84C3",
+    "expectedFailure": "Assertion failed: meaning-reading choice is returned unchanged"
+  },
+  "acceptancePolicy": {
+    "frozenV1Modified": false,
+    "newAdditiveContractsOnly": true,
+    "candidateBlockedUntilAllNewReceiptsPass": true,
+    "externalProductionApisInvoked": false
+  }
+}

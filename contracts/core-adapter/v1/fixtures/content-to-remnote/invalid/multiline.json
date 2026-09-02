@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "learning-bundle.v1",
+  "bundleId": "learning-fixture",
+  "entries": [{ "itemId": "item-fixture", "text": "Line one\nLine two" }]
+}

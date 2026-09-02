@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "knowledge-clipper-identity.v2",
+  "productId": "knowledge-clipper",
+  "productName": "零碎知识剪藏",
+  "assemblyRoot": "KnowledgeClipper",
+  "namespaceRoot": "KnowledgeClipper",
+  "desktopEntrypoint": "KnowledgeClipper.exe",
+  "orchestratorComponentId": "knowledge-clipper.orchestrator",
+  "architecture": "destination-neutral",
+  "destinations": ["remnote", "anki"],
+  "legacyAliasesRef": "legacy-aliases.v2.json"
+}

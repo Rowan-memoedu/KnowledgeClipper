@@ -1,0 +1,5 @@
+# Exact intentional test-fixture findings. New or moved findings remain blocking.
+tests/Quality.Gates/test_settings_control_plane_quality.py:generic-api-key:52
+tests/Quality.Gates/test_settings_control_plane_quality.py:generic-api-key:191
+tests/RemNoteQuickClipper.RemNoteExporter.Tests/fixtures/receipt-v2.clip.valid.json:generic-api-key:18
+

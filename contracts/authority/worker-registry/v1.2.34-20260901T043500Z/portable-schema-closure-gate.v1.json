@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "knowledge-clipper-portable-schema-closure-gate.v1",
+  "status": "passed",
+  "releaseRoot": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\releases\\knowledge-clipper-authority-v1.2.34-20260901T043500Z\\win-x64",
+  "registrySha256": "96966ADD1BE8B8CDA9D456DCBC3E2860B89F85C752330A0F38AF2A05C6AA71A5",
+  "dependencyManifestSha256": "A2E7523EC14E8458993C70156653245F4CBBCED98CC62DABD9BAF645569EF26D",
+  "schemasChecked": 63,
+  "localRefsChecked": 188,
+  "failures": [],
+  "frozenArtifactSchemaPath": "contracts\\v1\\schemas\\common\\artifact.schema.json",
+  "frozenArtifactSchemaSha256": "14AAA3BA918B201280DF462677C39A373ACDF421C8DA06C1D4A7B6D619DA0E91",
+  "frozenArtifactSchemaPackedUnchanged": true
+}

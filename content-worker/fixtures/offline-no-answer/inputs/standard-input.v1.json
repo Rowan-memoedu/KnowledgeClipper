@@ -1,0 +1,22 @@
+{
+  "schema_version": "standard-input/1.0.0",
+  "package_id": "clipper-content-offline-no-answer",
+  "task_id": "offline-no-answer-canary",
+  "input_version": "1",
+  "mode": "card",
+  "items": [
+    {
+      "item_id": "item-no-answer",
+      "source": {
+        "kind": "text",
+        "material_path": "materials/clip.md"
+      },
+      "hints": {
+        "category_id": "question_answer",
+        "answer_state": "missing",
+        "risk_state": "ordinary",
+        "requested_templates": ["basic_qa"]
+      }
+    }
+  ]
+}

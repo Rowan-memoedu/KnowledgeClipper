@@ -1,0 +1,171 @@
+{
+  "schemaVersion": "quality-v3-core-real-runtime-unknown-state-gate-contract.v1",
+  "status": "READY-AWAITING-SELF-CONTAINED-REAL-RUNTIME-PACKET",
+  "requiredPacketProperties": {
+    "immutable": true,
+    "selfContained": true,
+    "containsWorkerProcessRuntime": true,
+    "allAuthorityTreesAndFixturesInventoryBound": true
+  },
+  "scenarios": [
+    {
+      "id": "anki-export-result-unknown-external-state",
+      "effectClass": "external-write",
+      "stimulus": "After durable worker dispatch, the Quality process invoker writes an identity-valid worker result whose status is unknown_external_state.",
+      "expectedTerminalEvent": "operation.unknown-external-state",
+      "expectedTypedProjection": "Degraded",
+      "forbiddenTerminalEvent": "operation.failed",
+      "forbiddenErrorCode": "operation_failed"
+    },
+    {
+      "id": "anki-export-dispatched-process-loss",
+      "effectClass": "external-write",
+      "stimuli": [
+        "process-exit-nonzero-after-dispatch",
+        "process-timeout-after-dispatch",
+        "process-cancelled-after-dispatch",
+        "result-json-missing-after-dispatch"
+      ],
+      "expectedTerminalEvent": "operation.unknown-external-state",
+      "expectedTypedProjection": "Degraded",
+      "restartMustPreserveTerminal": true
+    },
+    {
+      "id": "unknown-write-replay-and-reconcile-barrier",
+      "precondition": "The session has a dispatched Anki export in operation.unknown-external-state.",
+      "exactReplay": {
+        "sameOperationId": true,
+        "processInvocationDelta": 0,
+        "artifactDelta": 0,
+        "externalWriteAttemptDelta": 0
+      },
+      "newWriteBeforeReconcile": {
+        "blocked": true,
+        "processInvocationDelta": 0,
+        "artifactDelta": 0,
+        "externalWriteAttemptDelta": 0
+      },
+      "requiredUnblock": "explicit-reconcile-transition"
+    },
+    {
+      "id": "read-only-failures-stay-failed",
+      "effectClasses": [
+        "none",
+        "read-only-external"
+      ],
+      "operations": [
+        "anki.probe",
+        "question.initial",
+        "question.follow-up"
+      ],
+      "stimuli": [
+        "worker-result-unknown_external_state",
+        "process-exit-nonzero",
+        "result-json-missing"
+      ],
+      "expectedTerminalEvent": "operation.failed",
+      "forbiddenTerminalEvent": "operation.unknown-external-state",
+      "questionSessionTerminalEvent": "question.session-command-aborted",
+      "questionSessionReusable": true,
+      "externalWriteAttemptDelta": 0
+    },
+    {
+      "id": "canonical-typed-routing",
+      "requirements": [
+        "WorkerProcessRuntime emits the same typed unknown-state channel consumed by KernelApplication.",
+        "KernelApplication handles that channel before its generic exception catch.",
+        "No same-named shadow exception exists in a second namespace.",
+        "The typed error code from the worker boundary is preserved in the durable unknown-state event."
+      ]
+    },
+    {
+      "id": "production-host-rejects-fake-runtime",
+      "scope": [
+        "published-host-executable",
+        "published-host-argument-parser",
+        "candidate-inventory"
+      ],
+      "productionInvocationWithAuthorityBoundFakeTestOnly": {
+        "mustBeRejected": true,
+        "hostReadinessForbidden": true,
+        "fakeWorkerConstructionForbidden": true
+      },
+      "sourceReachability": {
+        "fakeAllowedOnlyInTestAssemblyOrDirectTestComposition": true,
+        "productionHostReferenceToAuthorityBoundFakeWorkerRuntimeForbidden": true,
+        "productionHostFakeRuntimeSwitchForbidden": true
+      },
+      "candidateInventory": {
+        "testHostExecutableForbidden": true,
+        "fakeRuntimeArgumentOrLauncherForbidden": true
+      },
+      "note": "Proving only that production is the default runtime is insufficient. The production Host must make the fake mode unreachable."
+    },
+    {
+      "id": "unknown-write-side-effect-accounting",
+      "requiredCounters": [
+        "confirmedWrites",
+        "unknownWriteAttempts",
+        "dispatchAttempts"
+      ],
+      "lostResponseAfterDispatch": {
+        "state": "unknown",
+        "possibleWrite": true,
+        "dispatchAttemptsMinimum": 1,
+        "unknownWriteAttemptsMinimum": 1,
+        "confirmedWritesMayBeZero": true,
+        "externalWritesZeroConclusionForbidden": true
+      },
+      "projectionMustExpose": [
+        "unknown-state",
+        "possible-write"
+      ],
+      "receiptMustExpose": [
+        "confirmedWrites",
+        "unknownWriteAttempts",
+        "dispatchAttempts",
+        "possibleWrite"
+      ]
+    },
+    {
+      "id": "anki-request-scoped-readiness",
+      "workerFixture": {
+        "overallStatus": "needs_initialization",
+        "selectedCanaryRouteReady": true,
+        "requiredModelsReady": true,
+        "permissionGranted": true,
+        "optionalRoutesMissing": true
+      },
+      "coreTypedProjection": {
+        "readyForRequestedAction": true,
+        "readinessState": "partially_ready",
+        "nonBlockingIssuesRequired": true,
+        "globalFailureForbidden": true
+      },
+      "externalSdkConsumer": {
+        "mustCompileAgainstClientAssemblyOnly": true,
+        "mustAccessTypedReadinessFieldsDirectly": true,
+        "rawWorkerJsonForbidden": true,
+        "arrayOrderInferenceForbidden": true,
+        "sequenceOrSingleAssumptionForbidden": true
+      },
+      "desktopConsumer": {
+        "mustCompileAgainstTypedSdkProjection": true,
+        "rawWorkerJsonAccessForbidden": true,
+        "globalFailureDisplayForbidden": true,
+        "sequenceOrSingleAssumptionForbidden": true
+      }
+    }
+  ],
+  "receiptRequirements": {
+    "allScenarioStatusesMustPass": true,
+    "recordTerminalEventTypes": true,
+    "recordTypedProjectionStates": true,
+    "recordInvocationArtifactAndWriteDeltas": true,
+    "recordConfirmedUnknownAndDispatchWriteCountersSeparately": true,
+    "forbidZeroWriteClaimWhenDispatchOutcomeUnknown": true,
+    "ownerReceiptTrusted": false,
+    "realExternalServicesInvoked": false
+  },
+  "promotionOnMissingOrFailure": "NO-GO"
+}

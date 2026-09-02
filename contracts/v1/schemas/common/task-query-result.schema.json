@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./task-query-result.schema.json",
+  "title": "RemNote Quick Clipper Task Query Result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "queryId", "type", "nextCursor", "items"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "queryId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "type": { "type": "string", "enum": ["task.query_recent", "task.get"] },
+    "nextCursor": { "type": ["string", "null"], "maxLength": 512 },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["taskId", "operationId", "intent", "status", "createdAt", "updatedAt", "attentionRequired", "replayable", "summaryCode"],
+        "properties": {
+          "taskId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+          "operationId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+          "intent": { "type": "string", "maxLength": 128 },
+          "status": { "$ref": "./task-status.schema.json" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "attentionRequired": { "type": "boolean" },
+          "replayable": { "type": "boolean" },
+          "summaryCode": { "type": "string", "minLength": 1, "maxLength": 128 }
+        }
+      }
+    }
+  }
+}

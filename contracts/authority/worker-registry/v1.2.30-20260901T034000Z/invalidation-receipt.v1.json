@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-invalidation-receipt.v1",
+  "status": "invalidated-never-promoted",
+  "authorityBound": false,
+  "reason": "The candidate portable-schema closure gate omitted releaseRoot, registrySha256, and dependencyManifestSha256 required by the common authority checkpoint gate. No checkpoint or authority receipt was created.",
+  "supersededBy": "pending-v1.2.31",
+  "preservedEvidence": {
+    "runtimeGates": "canary/core-authority-v1.2.30/20260901T034500Z/runtime-gates.json",
+    "workerMonotonicityGate": "worker-monotonicity-gate.v1.json"
+  }
+}

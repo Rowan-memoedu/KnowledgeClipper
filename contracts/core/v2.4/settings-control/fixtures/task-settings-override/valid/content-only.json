@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "knowledge-clipper-task-settings-override.v1",
+  "workflow": { "processingProfile": "cards", "destinations": [] },
+  "speech": { "ratePercent": 12 }
+}

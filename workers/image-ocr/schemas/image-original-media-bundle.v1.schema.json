@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-original-media-bundle.v1.schema.json",
+  "title": "Destination-neutral ordered original image bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "captureId", "mode", "providerCalls", "questionImages", "answerImages"],
+  "properties": {
+    "schemaVersion": {"const": "image-original-media-bundle.v1"},
+    "captureId": {"type": "string", "minLength": 1},
+    "mode": {"const": "original_passthrough"},
+    "providerCalls": {"const": 0},
+    "questionImages": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/image"}},
+    "answerImages": {"type": "array", "items": {"$ref": "#/$defs/image"}}
+  },
+  "$defs": {
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactRef", "role", "groupIndex", "imageIndex", "sha256", "bytes", "mediaType", "width", "height"],
+      "properties": {
+        "artifactRef": {"type": "string", "minLength": 1},
+        "role": {"enum": ["question", "answer"]},
+        "groupIndex": {"type": "integer", "minimum": 0},
+        "imageIndex": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "bytes": {"type": "integer", "minimum": 1},
+        "mediaType": {"type": "string", "pattern": "^image/"},
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

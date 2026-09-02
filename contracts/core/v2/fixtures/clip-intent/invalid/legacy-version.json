@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "desktop-intent.v1",
+  "taskId": "task-v2-card",
+  "intent": "clip.card",
+  "inputArtifactRef": "capture-v2-card",
+  "requestedOutputs": ["card-bundle"]
+}

@@ -1,0 +1,13 @@
+{
+  "fixtureId": "four-file-artifact-single-file-consumer",
+  "expectedRejectCode": "artifact.legacy-single-file-consumer",
+  "schemaVersion": "quality-v3-artifact-manifest.v1",
+  "consumerMode": "exactly-one-file",
+  "files": [
+    { "path": "one.json", "bytes": 18, "sha256": "3C308FD95A5E8D55B030A0EDEA217DCFF578305F513E91C49C86E294BD7D646C" },
+    { "path": "two.json", "bytes": 18, "sha256": "36509FF67A69742DB9F8542C7102A9EECAE2B003A16E4460D4AB2DAA7A8CBE75" },
+    { "path": "three.json", "bytes": 20, "sha256": "6C83127922906A1249C17872D94CA0D7A54C1D358FC05E01BDBE1AB1BD2DFA5A" },
+    { "path": "four.json", "bytes": 19, "sha256": "6969BC6122FCA13A467F9EFDA70D056946E77DE2E161F78E926C5DB3186B603F" }
+  ],
+  "metadata": { "entrypoint": "one.json" }
+}

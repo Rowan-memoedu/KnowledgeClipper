@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "learning-bundle.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "bundleId", "entries"],
+  "properties": {
+    "schemaVersion": { "const": "learning-bundle.v1" },
+    "bundleId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["itemId", "text"],
+        "properties": {
+          "itemId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+          "text": { "type": "string", "minLength": 1, "maxLength": 20000 }
+        }
+      }
+    }
+  }
+}

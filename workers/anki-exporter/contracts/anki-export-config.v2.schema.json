@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./anki-export-config.v2.schema.json",
+  "title": "KnowledgeClipper Anki export config v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "endpoint", "expected_profile", "deck_routes", "note_types"],
+  "properties": {
+    "schema_version": {"const": "anki-export-config.v2"},
+    "endpoint": {"type": "string", "pattern": "^http://127\\.0\\.0\\.1:[0-9]{1,5}$"},
+    "expected_profile": {"type": "string", "minLength": 1},
+    "timeout_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "max_media_bytes": {"type": "integer", "minimum": 1},
+    "provision_managed": {"type": "boolean"},
+    "deck_routes": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "minLength": 1}},
+    "note_types": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/noteType"}
+    }
+  },
+  "$defs": {
+    "noteType": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model_name", "field_map", "required_fields"],
+      "properties": {
+        "model_name": {"type": "string", "minLength": 1},
+        "field_map": {"type": "object", "minProperties": 1, "additionalProperties": {"enum": ["Front", "Back", "Context", "Extra", "Source"]}},
+        "required_fields": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "css": {"type": "string"},
+        "front_template": {"type": "string"},
+        "back_template": {"type": "string"},
+        "media_projection": {"const": "ordered-original-images.v1"}
+      },
+      "allOf": [
+        {
+          "if": {"required": ["media_projection"]},
+          "then": {
+            "required": ["css", "front_template", "back_template"],
+            "properties": {
+              "field_map": {
+                "type": "object",
+                "required": ["question", "answer"],
+                "properties": {"question": {"const": "Front"}, "answer": {"const": "Back"}}
+              },
+              "required_fields": {"contains": {"const": "question"}, "not": {"contains": {"const": "answer"}}}
+            }
+          }
+        }
+      ]
+    }
+  }
+}

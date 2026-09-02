@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <StartupObject>KnowledgeClipper.DesktopIntegrationCanary</StartupObject>
+    <AssemblyName>KnowledgeClipper.Desktop.IntegrationCanary</AssemblyName>
+    <RootNamespace>KnowledgeClipper</RootNamespace>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\src\Core.cs" Link="Core.cs" />
+    <Compile Include="..\src\DesktopCredentialSettings.cs" Link="DesktopCredentialSettings.cs" />
+    <Compile Include="..\src\SingleInstanceCoordinator.cs" Link="SingleInstanceCoordinator.cs" />
+    <Compile Include="..\src\CandidateIntegration.cs" Link="CandidateIntegration.cs" />
+    <Compile Include="..\src\DesktopIntegrationCanary.cs" Link="DesktopIntegrationCanary.cs" />
+    <Compile Include="..\src\Compat\JavaScriptSerializer.Net8.cs" Link="Compat\JavaScriptSerializer.Net8.cs" />
+    <Compile Include="..\src\RemNoteQuickClipper.Desktop.Core\*.cs" Exclude="..\src\RemNoteQuickClipper.Desktop.Core\SemanticPortProgram.cs;..\src\RemNoteQuickClipper.Desktop.Core\SemanticPortProgramV11.cs" Link="Desktop.Core\%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

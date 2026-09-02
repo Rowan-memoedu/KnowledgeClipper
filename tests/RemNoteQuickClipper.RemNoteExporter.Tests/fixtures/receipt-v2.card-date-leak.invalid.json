@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "2.0.0",
+  "sink": "mcp-direct",
+  "route": "card-export",
+  "outcome": "created",
+  "documentRemId": "card-document-rem-id",
+  "documentTitle": "卡片 · invalid",
+  "rootRemId": "root-rem-id",
+  "idempotencyKey": "fixture-v2-card-invalid",
+  "contentSha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+  "readbackVerified": true,
+  "duplicateCount": 0,
+  "dateRouting": false,
+  "imagesHandled": false,
+  "localDate": "2026-08-28"
+}

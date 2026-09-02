@@ -1,0 +1,103 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-concept-transfer": {
+      "cleaned_text": "负迁移是已掌握的旧知识干扰新知识学习；当两个情境表面相似但规则不同时，先比较适用条件可以减少误用。\n",
+      "removed_fragments": [],
+      "format_anomalies": []
+    },
+    "classification:item-concept-transfer": {
+      "units": [
+        {
+          "unit_id": "unit-concept-transfer",
+          "source_segment_indexes": [0],
+          "category_id": "general_learning",
+          "subtype": "transfer_strategy",
+          "answer_state": "provided",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "supplied_answer": "当两个情境表面相似但规则不同时，先比较适用条件可以减少误用。",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "card_generation:item-concept-transfer:unit-concept-transfer": {
+      "generated_content": [
+        {
+          "kind": "question_wording",
+          "text": "遇到表面相似但规则不同的新情境时，如何减少负迁移？"
+        }
+      ],
+      "cards": [
+        {
+          "template": "concept_transfer",
+          "front_blocks": [
+            {
+              "type": "text",
+              "text": "遇到表面相似但规则不同的新情境时，如何减少负迁移？",
+              "provenance": "generated"
+            }
+          ],
+          "back_blocks": [
+            {
+              "type": "text",
+              "text": "当两个情境表面相似但规则不同时，先比较适用条件可以减少误用。",
+              "provenance": "source"
+            }
+          ],
+          "answer_provenance": "source"
+        }
+      ],
+      "unresolved_reasons": []
+    },
+    "cleaning:item-procedure": {
+      "cleaned_text": "解一元一次方程时，先去括号，再移项并合并同类项，最后把未知数的系数化为 1。每一步都要保持等式两边同作相同变换。\n",
+      "removed_fragments": [],
+      "format_anomalies": []
+    },
+    "classification:item-procedure": {
+      "units": [
+        {
+          "unit_id": "unit-procedure",
+          "source_segment_indexes": [0],
+          "category_id": "general_learning",
+          "subtype": "worked_procedure",
+          "answer_state": "provided",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "supplied_answer": "解一元一次方程时，先去括号，再移项并合并同类项，最后把未知数的系数化为 1。每一步都要保持等式两边同作相同变换。",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "card_generation:item-procedure:unit-procedure": {
+      "generated_content": [
+        {
+          "kind": "question_wording",
+          "text": "解一元一次方程的操作顺序和不变原则是什么？"
+        }
+      ],
+      "cards": [
+        {
+          "template": "procedure",
+          "front_blocks": [
+            {
+              "type": "text",
+              "text": "解一元一次方程的操作顺序和不变原则是什么？",
+              "provenance": "generated"
+            }
+          ],
+          "back_blocks": [
+            {
+              "type": "text",
+              "text": "解一元一次方程时，先去括号，再移项并合并同类项，最后把未知数的系数化为 1。每一步都要保持等式两边同作相同变换。",
+              "provenance": "source"
+            }
+          ],
+          "answer_provenance": "source"
+        }
+      ],
+      "unresolved_reasons": []
+    }
+  }
+}

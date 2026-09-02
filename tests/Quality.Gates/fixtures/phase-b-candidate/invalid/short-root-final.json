@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "knowledge-clipper-phase-b-candidate-gate-fixture.v1",
+  "authority": { "value": "invalid-negative-fixture" },
+  "invalidatedAuthority127": { "value": "invalid-negative-fixture" },
+  "desktop": { "value": "invalid-negative-fixture" },
+  "content061": { "value": "invalid-negative-fixture" },
+  "speech122": { "value": "invalid-negative-fixture" },
+  "coreResolver": { "value": "invalid-negative-fixture" },
+  "historicalFailure": { "value": "invalid-negative-fixture" },
+  "currentPaths": {
+    "C": { "value": "invalid-negative-fixture" },
+    "D": { "value": "invalid-negative-fixture" }
+  },
+  "phaseB128": { "value": "invalid-negative-fixture" },
+  "qualificationPolicy": {
+    "standardLongRootRequired": true,
+    "shortRootMayQualify": true,
+    "contentFormalReleaseMayCloseHistoricalFailure": true,
+    "desktopModuleCheckpointMayBeUserEntrypoint": true
+  }
+}

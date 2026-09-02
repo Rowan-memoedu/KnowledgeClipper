@@ -1,0 +1,35 @@
+{
+  "settings": {
+    "languageStrategy": "auto",
+    "languageOverride": null,
+    "voicesByLanguage": {
+      "zh-CN": "zh-CN-XiaoxiaoNeural",
+      "en-US": "en-US-AvaMultilingualNeural",
+      "es-ES": "es-ES-XimenaNeural",
+      "ja-JP": "ja-JP-NanamiNeural",
+      "ko-KR": "ko-KR-SunHiNeural"
+    },
+    "ratePercent": 17,
+    "volumePercent": -8,
+    "pitchHz": 23
+  },
+  "catalog": {
+    "provider": "edge-tts",
+    "catalogVersion": "fixture-1",
+    "updatedAtUtc": "2026-08-30T00:00:00Z",
+    "voices": [
+      { "languageTag": "zh-CN", "voiceId": "zh-CN-XiaoxiaoNeural", "displayName": "晓晓", "gender": "female", "natural": true, "available": true, "status": "available" },
+      { "languageTag": "en-US", "voiceId": "en-US-AvaMultilingualNeural", "displayName": "Ava Multilingual", "gender": "female", "natural": true, "available": true, "status": "available" },
+      { "languageTag": "es-ES", "voiceId": "es-ES-XimenaNeural", "displayName": "Ximena", "gender": "female", "natural": true, "available": true, "status": "available" },
+      { "languageTag": "ja-JP", "voiceId": "ja-JP-NanamiNeural", "displayName": "Nanami", "gender": "female", "natural": true, "available": true, "status": "available" },
+      { "languageTag": "ko-KR", "voiceId": "ko-KR-SunHiNeural", "displayName": "SunHi", "gender": "female", "natural": true, "available": true, "status": "available" }
+    ]
+  },
+  "samples": [
+    { "text": "这是中文设置快照。", "expectedLanguage": "zh-CN", "expectedVoice": "zh-CN-XiaoxiaoNeural" },
+    { "text": "This is an English settings snapshot.", "expectedLanguage": "en-US", "expectedVoice": "en-US-AvaMultilingualNeural" },
+    { "text": "¿Cómo funciona esta configuración?", "expectedLanguage": "es-ES", "expectedVoice": "es-ES-XimenaNeural" },
+    { "text": "これは日本語の設定スナップショットです。", "expectedLanguage": "ja-JP", "expectedVoice": "ja-JP-NanamiNeural" },
+    { "text": "이것은 한국어 설정 스냅샷입니다.", "expectedLanguage": "ko-KR", "expectedVoice": "ko-KR-SunHiNeural" }
+  ]
+}

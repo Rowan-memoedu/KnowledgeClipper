@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./question-session.v2.schema.json",
+  "title": "KnowledgeClipper durable question session v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "targetToken", "binding", "sourceAnswerArtifact", "displayAnswerArtifact", "answeredTurnCount", "latestAnswerId", "requestedAt"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-question-session.v2" },
+    "targetToken": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["taskId", "runId", "stageId", "attemptId", "operationId"],
+      "properties": {
+        "taskId": { "$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/identifier" },
+        "runId": { "$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/identifier" },
+        "stageId": { "$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/identifier" },
+        "attemptId": { "$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/identifier" },
+        "operationId": { "$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/identifier" }
+      }
+    },
+    "sourceAnswerArtifact": {
+      "allOf": [
+        { "$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/artifactReference" },
+        { "properties": { "kind": { "const": "question.answer" } } }
+      ]
+    },
+    "displayAnswerArtifact": {
+      "allOf": [
+        { "$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/artifactReference" },
+        { "properties": { "kind": { "const": "question.answer.text" } } }
+      ]
+    },
+    "answeredTurnCount": { "type": "integer", "minimum": 1 },
+    "latestAnswerId": { "$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/identifier" },
+    "requestedAt": { "type": "string", "format": "date-time" }
+  }
+}

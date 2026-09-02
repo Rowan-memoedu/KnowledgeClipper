@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "knowledge-clipper-intent.v2",
+  "taskId": "task-v2-card",
+  "intent": "clip.card",
+  "inputArtifactRef": "capture-v2-card",
+  "requestedOutputs": ["card-bundle"]
+}

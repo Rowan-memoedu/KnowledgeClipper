@@ -1,0 +1,1 @@
+{"schemaVersion":"knowledge-clipper-ocr-human-resolution-action.v1","decisionKind":"ocr-human-resolution","targetToken":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","action":"submit_correction","reason":"missing immutable correction","diffs":[{"segmentIndex":0,"operation":"substitution","start":0,"end":1,"before":"a","after":"b"}]}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-candidate-invalidation.v1",
+  "status": "invalidated-never-authority-admitted",
+  "generatedAt": "2026-09-01T06:29:00Z",
+  "registryVersion": "1.2.36",
+  "candidateRelease": {
+    "root": "releases/knowledge-clipper-authority-v1.2.36-20260901T062600Z/win-x64",
+    "files": 403,
+    "bytes": 262179012,
+    "treeSha256": "51B1F0245AFEC3DBC68A5FE0A5F9B8F8C7237A2476855D3B3B107B6DA9325633"
+  },
+  "registry": {
+    "path": "contracts/authority/worker-registry/v1.2.36-20260901T062600Z/worker-registry.v1.json",
+    "sha256": "E3CFC409B282E7B8F50345FC939649FD7483C64536AFB8673571D5FAD8EB7958"
+  },
+  "dependencyManifest": {
+    "path": "contracts/authority/worker-registry/v1.2.36-20260901T062600Z/dependency-manifest.v1.json",
+    "sha256": "F743C873A9B926D38A38DD50A502BC6175C1048A96EFE632D5DE965D3BEFC14C"
+  },
+  "passedCandidateGates": {
+    "portableSchemaClosureSha256": "7352978D41A00C956EAED00D96017ED136D456191C6825E2C59574EB8A21D024",
+    "workerMonotonicitySha256": "8ED3694F262EACEDAF28F26A0B0EB3DB40E4258006659BF42C7D618BFB59FFC4",
+    "runtimeGatesPath": "canary/core-authority-v1.2.36/20260901T062700Z/runtime-gates.json",
+    "runtimeGatesSha256": "E95494CCDFDD4BF39C58A2E786E4C4F8D1F29EEE488CF1FE574A0A4453B83716",
+    "workerRunInvocations": 0,
+    "externalWrites": 0
+  },
+  "reason": {
+    "code": "core-checkpoint-tree-entry-stale",
+    "checkpoint": "contracts/core/v2.9/checkpoints/v2.9.3-20260901T062500Z/checkpoint.json",
+    "checkpointSha256": "9838422164F4A161A0D16AA8F94F4D4DBEAE8F12D8D92F10191D0D7EFFD08C20",
+    "detail": "SettingsControl.cs was already included in the tested runtime but its inherited checkpoint tree entry was not refreshed; no authority checkpoint or authority receipt was issued"
+  },
+  "replacement": {
+    "coreCheckpoint": "contracts/core/v2.9/checkpoints/v2.9.4-20260901T062900Z/checkpoint.json",
+    "coreCheckpointSha256": "FF766146F8D8EF67F98B75B3BA4345F98C50E5F6A5B9023CB2DA1BAC7A0C9179",
+    "treeDriftCountAfterCorrection": 0,
+    "intendedRegistryVersion": "1.2.37"
+  },
+  "authorityCheckpointIssued": false,
+  "authorityReceiptIssued": false,
+  "immutableEvidenceRetained": true
+}

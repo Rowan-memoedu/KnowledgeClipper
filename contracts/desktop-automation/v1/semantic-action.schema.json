@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/rqc/desktop-automation/v1/semantic-action.schema.json",
+  "title": "RQC desktop semantic action v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "requestId", "action"],
+  "properties": {
+    "schemaVersion": { "const": "desktop-automation.v1" },
+    "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "action": {
+      "enum": [
+        "clip.capture",
+        "read.capture",
+        "screenshot.session.start",
+        "screenshot.session.continue",
+        "screenshot.session.finish",
+        "screenshot.session.cancel",
+        "screenshot.session.undo-last",
+        "screenshot.group.set-question",
+        "screenshot.group.set-answer",
+        "mode.context.set",
+        "mode.original-image.set",
+        "capture.context.continue-without",
+        "question.open",
+        "question.submit",
+        "question.follow-up",
+        "question.make-cards",
+        "playback.replay",
+        "playback.stop",
+        "task.status.query-recent"
+      ]
+    },
+    "arguments": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "granularity": { "enum": ["sentence", "paragraph"] },
+        "text": { "type": "string", "minLength": 1 },
+        "cardStructureRef": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "action": { "const": "mode.context.set" } }, "required": ["action"] },
+      "then": { "required": ["arguments"], "properties": { "arguments": { "required": ["enabled", "granularity"] } } }
+    },
+    {
+      "if": { "properties": { "action": { "const": "mode.original-image.set" } }, "required": ["action"] },
+      "then": { "required": ["arguments"], "properties": { "arguments": { "required": ["enabled"] } } }
+    },
+    {
+      "if": { "properties": { "action": { "enum": ["question.submit", "question.follow-up"] } }, "required": ["action"] },
+      "then": { "required": ["arguments"], "properties": { "arguments": { "required": ["text"] } } }
+    },
+    {
+      "if": { "properties": { "action": { "const": "question.make-cards" } }, "required": ["action"] },
+      "then": { "required": ["arguments"], "properties": { "arguments": { "required": ["cardStructureRef"] } } }
+    }
+  ]
+}

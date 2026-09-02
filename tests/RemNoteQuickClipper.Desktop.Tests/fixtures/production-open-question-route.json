@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "knowledge-clipper-native-ui-scenario.v1",
+  "journey": "desktop-production-open-question-route",
+  "windowTimeoutMs": 30000,
+  "steps": [
+    {
+      "id": "wait-question-input",
+      "operation": "wait",
+      "automationId": "knowledge-clipper.desktop.question.input"
+    },
+    {
+      "id": "cancel-question",
+      "operation": "invoke",
+      "automationId": "knowledge-clipper.desktop.question.cancel",
+      "waitAfterMs": 300
+    },
+    {
+      "id": "close-floating-window",
+      "operation": "close-window"
+    }
+  ]
+}

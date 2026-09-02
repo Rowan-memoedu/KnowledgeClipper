@@ -1,0 +1,251 @@
+{
+  "schema": "kc.core-v3-foundation-checkpoint/1",
+  "createdAt": "2026-09-02T05:49:01.3358013+00:00",
+  "status": "PASS",
+  "sourceTreeSha256": "B83912EE7DD11781F21A97B99713FB8BE0E708057F736B871F77B284D63754E2",
+  "sourceTree": [
+    {
+      "path": "contracts/core/v3/artifacts/schemas/artifact-envelope.v2.schema.json",
+      "bytes": 2170,
+      "sha256": "AC4231B427BFAB8D7437D82F0133D59B12DE40DAE2B4643F1C6814A3F9FDA0D7"
+    },
+    {
+      "path": "contracts/core/v3/artifacts/schemas/artifact-ref.v2.schema.json",
+      "bytes": 813,
+      "sha256": "080FF839413EE9062B555AB7DDAB871552464D5A70123E7CCB430FA53EA8CBED"
+    },
+    {
+      "path": "contracts/core/v3/capabilities/authority-bound-capability-catalog.ref.json",
+      "bytes": 459,
+      "sha256": "7F86C8EDA3CF95EBE6F5F312253DF80C2A6F62B093F2F790AFDFF5ED1548DEBD"
+    },
+    {
+      "path": "contracts/core/v3/capabilities/capability-catalog.v1.json",
+      "bytes": 4708,
+      "sha256": "1B17ECF0784A762192D7F0B59DF4B7CC205707AF7716FBF944D6F5D65BD401D7"
+    },
+    {
+      "path": "contracts/core/v3/capabilities/schemas/capability-binding.v1.schema.json",
+      "bytes": 911,
+      "sha256": "D07230DDB0F14DCCCE9ABD13D8292782CECF4889D48A7805D58AB228241D4415"
+    },
+    {
+      "path": "contracts/core/v3/capabilities/schemas/capability-catalog.v1.schema.json",
+      "bytes": 1707,
+      "sha256": "53A5F2B36CB10D8C437B20E1DD33F5BEBF26AB10B381A58E99E6C60AA92F29E0"
+    },
+    {
+      "path": "contracts/core/v3/compatibility/legacy-ipc-matrix.v1.json",
+      "bytes": 531,
+      "sha256": "41DD0FC7E94F7CA4966595C4862473D80D95481A38E04B515EE3E30D7CB14F29"
+    },
+    {
+      "path": "contracts/core/v3/operations/anki.probe/command.v1.schema.json",
+      "bytes": 294,
+      "sha256": "25C310ACD194421E7922A53622D10BBDA7CA74F7C1CCD50A5C1A4155DE1138FE"
+    },
+    {
+      "path": "contracts/core/v3/operations/artifact.publish/command.v1.schema.json",
+      "bytes": 461,
+      "sha256": "23D0C6C06A6FB3D823A41039A90F46282E49AD173279F057E6A75FBAABD392DB"
+    },
+    {
+      "path": "contracts/core/v3/operations/content.settings.describe/command.v1.schema.json",
+      "bytes": 233,
+      "sha256": "B7E858DA7C7FA3ACCA7C0CBC18B6C74CE769516F472F9C90D053C35925B9FE19"
+    },
+    {
+      "path": "contracts/core/v3/operations/question.follow-up/command.v1.schema.json",
+      "bytes": 358,
+      "sha256": "D9A341C93AC61B4CF8E532943A52AF50278B18612BE7886E67F4EBDAE5694388"
+    },
+    {
+      "path": "contracts/core/v3/operations/question.initial/command.v1.schema.json",
+      "bytes": 409,
+      "sha256": "E1AC2E62E2A015FF456623531C7B38BC2C175BB27EFC6FBCED5AC1A9D0B05B00"
+    },
+    {
+      "path": "contracts/core/v3/operations/question.make-cards/command.v1.schema.json",
+      "bytes": 355,
+      "sha256": "94E9BFBD97DAC8E4A0FE3579B5560C3A265BCF75FDFB85B99E021DE0D37D654F"
+    },
+    {
+      "path": "contracts/core/v3/protocol/schemas/command.v2.schema.json",
+      "bytes": 1281,
+      "sha256": "5D7757C79F32FDB7346AEE06C3EF47A8F8BC11F38D755EB7EB22B9979C1DAD6C"
+    },
+    {
+      "path": "contracts/core/v3/protocol/schemas/event.v2.schema.json",
+      "bytes": 1267,
+      "sha256": "E575CF3D3A8905FC0C2053C337C70DDB45C4EA2479AC33DB102025CB6660498F"
+    },
+    {
+      "path": "contracts/core/v3/protocol/schemas/query.v2.schema.json",
+      "bytes": 624,
+      "sha256": "0E2D3BC0FCF741A3E4F751109757DDCA8CD85F0C46C2C62D0DA9235EB5C66B62"
+    },
+    {
+      "path": "contracts/core/v3/protocol/schemas/wire-request.v2.schema.json",
+      "bytes": 473,
+      "sha256": "9A3E9D10D1834C5C9D9F17EAB5415FD136D583EC08FE6C58F54874FB51303D14"
+    },
+    {
+      "path": "contracts/core/v3/protocol/schemas/wire-response.v2.schema.json",
+      "bytes": 500,
+      "sha256": "47A3C28CDA845F23E7EEE10056276A62F972DD3FC688B4E12FAE1F95B0091B74"
+    },
+    {
+      "path": "contracts/core/v3/README.md",
+      "bytes": 527,
+      "sha256": "CB44A083A3C1E0E9E8ED09E918E0BF4FF28F902664BE5D9F68E8E567A58C69B0"
+    },
+    {
+      "path": "core-v3/README.md",
+      "bytes": 832,
+      "sha256": "A3F6739B6C8F04906C4566EB8256549A2ACF9DD1BC4CB5B5F5BD7A8FDB481E2F"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Client/CoreV3Client.cs",
+      "bytes": 9296,
+      "sha256": "0310B57B48E48A924977F1F29633238FB80340C87D825073B9B4315542B7BA51"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Client/DomainClient.cs",
+      "bytes": 18494,
+      "sha256": "FCBB565AC8DE1C92952327AADD1AA2933E16D5B3F02FECA621620A57906CA491"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Client/KnowledgeClipper.Core.V3.Client.csproj",
+      "bytes": 656,
+      "sha256": "1BC7F04A05225D3F3659D2FB018AD53BD8CA308C0EA01B885A49F5C79642D466"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Contracts/KnowledgeClipper.Core.V3.Contracts.csproj",
+      "bytes": 440,
+      "sha256": "759C9459941F273EF828216EEA7BC1A90E59597509AA3A95409D79A6E52E4F0E"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Contracts/ProtocolDtos.cs",
+      "bytes": 10473,
+      "sha256": "5EFD38087913EC4285BD0E80B15C3CA9C659F4444EABB6759D117DBAFA2F6BD1"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Host/KnowledgeClipper.Core.V3.Host.csproj",
+      "bytes": 601,
+      "sha256": "8D31AAC89C62AC1A24C786020BBB1A81DF420E264241B7B60BAEEA886259439D"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Host/Program.cs",
+      "bytes": 1592,
+      "sha256": "7C89D3D7085D8A61F3EE4D213F2925AFAC0DE10DC9460132266538C365EA29E5"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/Application/CommandIndex.cs",
+      "bytes": 8728,
+      "sha256": "6F9393251F4D8DCA41802BF5A461F3D032A747616605E4EFB394B488ADF459E1"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/Application/FileEventStore.cs",
+      "bytes": 7642,
+      "sha256": "241C9C1DB77B414F13FDA10275FDEC3129D62E4E194C64D2ADF7BF4A4DF1D8CF"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/Application/InMemoryEventStore.cs",
+      "bytes": 2640,
+      "sha256": "B2D040495068467C3D2BAD7167DCEBF6B25FB1D33C566305D7301A69227630F9"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/Application/KernelApplication.cs",
+      "bytes": 26632,
+      "sha256": "0EC8D74ACB85A6CC872E5B91E025B93EFDE4A12A9C668F8D1C63A311C4996377"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/Artifacts/FileArtifactStore.cs",
+      "bytes": 19201,
+      "sha256": "85BFC10AF4B470E007603F5A0EB8FF7DB52DA225CFC6E0EA4B6A0FEDA8BDD62E"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/Capabilities/CapabilityCatalog.cs",
+      "bytes": 6430,
+      "sha256": "7D78481B550B79E32CD23DE50A763F46FAD289A0E0A7FE8CFF4A11A720A20693"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/Common/StrictJson.cs",
+      "bytes": 2198,
+      "sha256": "B201C07E38AE000DE25C8B7286A484DF905B3678D59CDE7690C53C872D5F9BFD"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/CompatibilityGateway/KernelCompatibilityGateway.cs",
+      "bytes": 12035,
+      "sha256": "569160D48A08C4C77BE99F8B9CFDBEBD6BEEFE14363DEB97109CEA10A1461ADC"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/KernelComposition.cs",
+      "bytes": 1666,
+      "sha256": "9A003AA270AFA4EC2E75725C8D2F78CAFF2D00527CD38289B0A0CB91E70F7B68"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/KnowledgeClipper.Core.V3.Kernel.csproj",
+      "bytes": 656,
+      "sha256": "66EF64D35172B61DA3E06018C288F62EE6B0C1CFCFF5C599343BBDD61837D046"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/Operations/ArtifactPublishOperation.cs",
+      "bytes": 3775,
+      "sha256": "A0CAB31219D9EE5BE624EF7A0D410F5057BC56E6D68918B02F566E1A919AB770"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/Operations/ContentSettingsDescribeOperation.cs",
+      "bytes": 1358,
+      "sha256": "5AFB7BFDB7CB16EE1CCB2F041D492765C3217F5033DC4342B04A9F65B42FF634"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/Operations/OperationRegistry.cs",
+      "bytes": 1708,
+      "sha256": "FBEB354744B3EE45B8F115E56AB69D31658B1C8ADAF494BFDB5FEE9D63E1591B"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/Transport/NamedPipeKernelServer.cs",
+      "bytes": 3994,
+      "sha256": "EEE8F2177DF43EDEF51B37C88E4E3112862AC6D9EA3AD926708E270EA7295020"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Kernel/WorkerRuntime/WorkerRuntime.cs",
+      "bytes": 955,
+      "sha256": "56C422CB2A1D66BC790D7B8316E885497D48FDF3DFF6C3C04D207FE2B3E945DD"
+    },
+    {
+      "path": "core-v3/tests/KnowledgeClipper.Core.V3.FoundationTests/KnowledgeClipper.Core.V3.FoundationTests.csproj",
+      "bytes": 970,
+      "sha256": "6DF644E09B66840B269ED1C036B3CC540E2D6F7492D18A88B7051BF5B9A16664"
+    },
+    {
+      "path": "core-v3/tests/KnowledgeClipper.Core.V3.FoundationTests/Program.cs",
+      "bytes": 49816,
+      "sha256": "05D17F69EC9E9ABD886CBF7683C73E3F6D6738D8924D7313EFE1D4FE3E5253C7"
+    },
+    {
+      "path": "core-v3/tools/Invoke-FoundationQualification.ps1",
+      "bytes": 8132,
+      "sha256": "554B17D4B3AA37E9861D69445AA4208F9DC5682A11F7CC602814D3EEEF5E19C2"
+    }
+  ],
+  "typedSdkPacket": {
+    "path": "contracts/core/v3/checkpoints/20260902T054850Z-foundation/typed-sdk-packet.json",
+    "bytes": 2787,
+    "sha256": "127B75F9FE8F4B29F93C908A7D093AE8A0D84B96AE0FC114B49BBFE35AF47E0C"
+  },
+  "buildReceipt": {
+    "path": "core-v3/receipts/20260902T054850Z-formal-release-build.receipt.json",
+    "bytes": 1733,
+    "sha256": "237A7B69CC0D5948007601A58A9757D0BB0920B98EF7D80C7371EAD6EC711E98"
+  },
+  "testReceipt": {
+    "path": "core-v3/receipts/20260902T054850Z-formal-foundation-tests.receipt.json",
+    "bytes": 4850,
+    "sha256": "7A450B47833E061D3D6DC6FD86AA4DF82723321610C2CF98E1C7BB91C68D2C0B"
+  },
+  "authorityPromoted": false,
+  "candidateAssembled": false,
+  "externalServicesCalled": false
+}

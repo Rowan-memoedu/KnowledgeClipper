@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./question-input-adapter.v2.schema.json",
+  "title": "KnowledgeClipper question input adapter snapshot v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "phase", "turnIndex"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-question-input-adapter.v2" },
+    "phase": { "enum": ["answer", "make-cards"] },
+    "turnIndex": { "type": ["integer", "null"], "minimum": 1 }
+  },
+  "allOf": [
+    { "if": { "properties": { "phase": { "const": "answer" } }, "required": ["phase"] }, "then": { "properties": { "turnIndex": { "type": "integer", "minimum": 1 } } }, "else": { "properties": { "turnIndex": { "type": "null" } } } }
+  ]
+}

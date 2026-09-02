@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "knowledge-clipper-candidate-stateful-evidence.v1",
+  "fixtureOnly": true,
+  "evidenceLevel": "synthetic-component",
+  "candidate": { "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "sealedTreeSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
+  "runtime": { "desktopProcess": "WindowsUiCanary.exe", "orchestratorProcess": "fake", "transport": "in-process", "persistenceStore": "temporary-mock", "artifactReader": "injected", "injectedHost": true, "sharedTestCoreDll": true, "manualDisplayState": true },
+  "journeys": { "anki": { "status": "passed" }, "remnote": { "status": "passed" }, "question": { "status": "passed" } },
+  "promotion": { "userHandTestEntrypoint": true }
+}

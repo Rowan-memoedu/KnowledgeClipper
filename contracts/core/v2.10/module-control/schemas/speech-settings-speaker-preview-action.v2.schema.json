@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "speech-settings-speaker-preview-action.v2",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "workerInput", "authorization", "effectClass", "automaticRetryAllowed"],
+  "properties": {
+    "schemaVersion": {"const": "speech-settings-speaker-preview-action.v2"},
+    "workerInput": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "scope", "effectiveAt", "action", "explicitSideEffectAuthorization", "previewLanguage", "adapterInput"],
+      "properties": {
+        "schemaVersion": {"const": "speech-settings-speaker-preview-input.v1"},
+        "scope": {"const": "project"},
+        "effectiveAt": {"const": "preview_only"},
+        "action": {"const": "speaker.preview"},
+        "explicitSideEffectAuthorization": {"const": true},
+        "previewLanguage": {"type": "string", "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$"},
+        "adapterInput": {"type": "object"}
+      }
+    },
+    "authorization": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "operation", "actionId", "previewLanguage", "authorizedAt"],
+      "properties": {
+        "mode": {"const": "explicit-user-action"},
+        "operation": {"const": "speaker.preview"},
+        "actionId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+        "previewLanguage": {"type": "string"},
+        "authorizedAt": {"type": "string", "format": "date-time"}
+      }
+    },
+    "effectClass": {"const": "physical-audio-single-attempt"},
+    "automaticRetryAllowed": {"const": false}
+  }
+}

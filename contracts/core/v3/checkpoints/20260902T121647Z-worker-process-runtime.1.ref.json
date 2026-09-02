@@ -1,0 +1,14 @@
+{
+  "schema": "kc.core-v3-phase2-slice-checkpoint-ref/1",
+  "releaseId": "20260902T121647Z-worker-process-runtime.1",
+  "status": "PASS-awaiting-independent-quality",
+  "releaseRoot": "core-v3/releases/20260902T121647Z-worker-process-runtime.1",
+  "checkpoint": "checkpoint.json",
+  "checkpointBytes": 1436,
+  "checkpointSha256": "CEBE3389FD6A40F36B126021E4BFB15CC6A6FDB1E5F943C7935F7417F543C186",
+  "predecessor": {
+    "releaseRoot": "core-v3/releases/20260902T060054Z-foundation.2",
+    "checkpointSha256": "D789C855FE1F3264939E82A5661172523FFAD479218F927A8C2B44F7AD872F7A",
+    "preserved": true
+  }
+}

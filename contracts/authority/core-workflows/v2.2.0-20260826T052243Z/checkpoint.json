@@ -1,0 +1,246 @@
+{
+  "schemaVersion": "knowledge-clipper-core-workflows-checkpoint.v2",
+  "checkpointId": "core-workflows-v2.2.0-20260826T052243Z",
+  "publishedAt": "2026-08-26T05:22:43Z",
+  "status": "stable",
+  "workspaceRoot": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper",
+  "scope": {
+    "languagePractice": "v2.1",
+    "questionWorkflow": "v2.2",
+    "destinationNeutral": true,
+    "externalProductionApisInvoked": false
+  },
+  "frozenV1": {
+    "checkpointId": "contracts-v1-20260825T115938Z",
+    "receiptPath": "receipts/contracts-v1-stable-checkpoint-20260825T115938Z.json",
+    "receiptSha256": "1CB738FE133F6645B9757E246E2FBC210785086342F70BAD32B5015BD19E1B1E",
+    "filesChecked": 21,
+    "mismatches": 0,
+    "modified": false
+  },
+  "contractTrees": [
+    {
+      "root": "contracts/core/v2.1",
+      "files": 22,
+      "treeHashAlgorithm": "sort Windows relative paths ordinal; for each file emit path<TAB>bytes<TAB>lowercase SHA-256; join with LF; SHA-256 UTF-8",
+      "treeSha256": "D95161BE17E748EC7C7A352D57337F76E89F45E933E8366C19CE1077C8EDCD59"
+    },
+    {
+      "root": "contracts/core/v2.2/question-workflow",
+      "files": 14,
+      "treeHashAlgorithm": "sort Windows relative paths ordinal; for each file emit path<TAB>bytes<TAB>lowercase SHA-256; join with LF; SHA-256 UTF-8",
+      "treeSha256": "DBE33CCCA8A7EE8D5BB9D59F71DDCB5CBD58E7CA3BFCE98FCE851C0C1729AB57"
+    }
+  ],
+  "schemasAndSnapshots": [
+    {
+      "path": "contracts/core/v2.1/profile-resolver.v2.1.json",
+      "$id": null,
+      "schemaVersion": "knowledge-clipper-profile-resolver.v2.1",
+      "bytes": 3147,
+      "sha256": "F5C06A1F6EF75AE04DED89D64F8FC8FFD7B9F0242AF602B06D2F947A9BBBFB86"
+    },
+    {
+      "path": "contracts/core/v2.1/schemas/profile-resolver.v2.1.schema.json",
+      "$id": "./profile-resolver.v2.1.schema.json",
+      "schemaVersion": "knowledge-clipper-profile-resolver.v2.1",
+      "bytes": 6670,
+      "sha256": "C5FC71B870A905BF858DEDC31E999D32379B0BFFF035CBC1B11842E2C2312AF5"
+    },
+    {
+      "path": "contracts/core/v2.1/language-practice/schemas/language-practice-choice.v2.schema.json",
+      "$id": "./language-practice-choice.v2.schema.json",
+      "schemaVersion": "knowledge-clipper-language-practice-choice.v2",
+      "bytes": 618,
+      "sha256": "E0D40A0E7B5F628DCB93EB6804B27EAF95FB0E9508EBE56CBBC92F805BE41798"
+    },
+    {
+      "path": "contracts/core/v2.1/language-practice/schemas/language-practice-decision.v2.schema.json",
+      "$id": "./language-practice-decision.v2.schema.json",
+      "schemaVersion": "knowledge-clipper-language-practice-decision.v2",
+      "bytes": 2321,
+      "sha256": "B667CE6031BB03237CB3C29BC1E9D066EDDEB2E92C7B6E9B312C3546A9BC25A1"
+    },
+    {
+      "path": "contracts/core/v2.1/language-practice/schemas/language-practice-input-adapter.v2.schema.json",
+      "$id": "./language-practice-input-adapter.v2.schema.json",
+      "schemaVersion": "knowledge-clipper-language-practice-input-adapter.v2",
+      "bytes": 488,
+      "sha256": "240A586DE85C459ED502FD2B36E370835326E3EDABD9CFC9421014AC5A41D18F"
+    },
+    {
+      "path": "contracts/core/v2.1/language-practice/schemas/language-practice-worker-decision.v2.schema.json",
+      "$id": "./language-practice-worker-decision.v2.schema.json",
+      "schemaVersionSource": "content-worker/schemas/language-practice-decision.v1.schema.json",
+      "bytes": 314,
+      "sha256": "2975B8221F3882244919168AFC2127EB27C88FCDEC3463DBA648015F28E577C7"
+    },
+    {
+      "path": "contracts/core/v2.1/language-practice/schemas/task-query.v2.schema.json",
+      "$id": "./task-query.v2.schema.json",
+      "schemaVersion": "2.0.0",
+      "bytes": 1219,
+      "sha256": "640C9092F8F716100B281BCA7ACE6F666ABCC25B83B374A23D9BADB9B3BAA00F"
+    },
+    {
+      "path": "contracts/core/v2.1/language-practice/schemas/task-query-result.v2.schema.json",
+      "$id": "./task-query-result.v2.schema.json",
+      "schemaVersion": "2.0.0",
+      "bytes": 2342,
+      "sha256": "9161E5FCEAD68A1AE33E8BD805F3C974542A0081A0199E5E02DAB0D4F76E3100"
+    },
+    {
+      "path": "contracts/core/v2.2/question-workflow/schemas/question-action.v2.schema.json",
+      "$id": "./question-action.v2.schema.json",
+      "schemaVersion": "knowledge-clipper-question-action.v2",
+      "bytes": 1385,
+      "sha256": "1596B88402300D1241617808D9575B894706F47BDF8267FD0B8C4C825F5CDA52"
+    },
+    {
+      "path": "contracts/core/v2.2/question-workflow/schemas/question-input-adapter.v2.schema.json",
+      "$id": "./question-input-adapter.v2.schema.json",
+      "schemaVersion": "knowledge-clipper-question-input-adapter.v2",
+      "bytes": 759,
+      "sha256": "82EE042E41EC35E79EB6CD1DA162D580DBC789289C9F27B5474C0F02BBBFD934"
+    },
+    {
+      "path": "contracts/core/v2.2/question-workflow/schemas/question-session.v2.schema.json",
+      "$id": "./question-session.v2.schema.json",
+      "schemaVersion": "knowledge-clipper-question-session.v2",
+      "bytes": 1959,
+      "sha256": "E60506EB4374C4E3A6739F25FC2B4C974738FDF8D78F32AC3002C425F16F215A"
+    },
+    {
+      "path": "contracts/core/v2.2/question-workflow/schemas/task-query.v2.2.schema.json",
+      "$id": "./task-query.v2.2.schema.json",
+      "schemaVersion": "2.2.0",
+      "bytes": 1198,
+      "sha256": "BC3D0D4C6746F068F80ADF0F6E3D2CFAA1AEC1C855A5F2937EC473C9ABFA5F7C"
+    },
+    {
+      "path": "contracts/core/v2.2/question-workflow/schemas/task-query-result.v2.2.schema.json",
+      "$id": "./task-query-result.v2.2.schema.json",
+      "schemaVersion": "2.2.0",
+      "bytes": 3625,
+      "sha256": "DD70BC1820F64A226F6DDD0AD291CB5E98F75751213C06876DED941200BDA94E"
+    }
+  ],
+  "runtimeSemantics": {
+    "questionWorkflow": {
+      "flow": [
+        "clip.question initial content attempt",
+        "validate structured question.answer and immutable ancestry",
+        "derive single-file question.answer.text without inline IPC content",
+        "project waiting_input and opaque token through query v2.2",
+        "follow-up appends one ordered turn in a new attempt",
+        "question.make-cards consumes the complete structured chain and emits neutral LearningBundle/CardBundle"
+      ],
+      "observedQuestions": [
+        "What is an immutable task package?",
+        "How does retry preserve it?"
+      ],
+      "orderedTurns": 2,
+      "exportersStartedBeforeExplicitDestination": 0,
+      "failClosed": [
+        "empty-input",
+        "stale-token",
+        "repeat-token",
+        "cross-task-token",
+        "out-of-order-turn",
+        "concurrent-loser",
+        "payload-bytes-or-hash-tamper",
+        "manifest-hash-tamper",
+        "learning-ancestry-tamper",
+        "answer-chain-tamper"
+      ]
+    },
+    "languagePractice": {
+      "flow": [
+        "validate exactly one language-practice-decision artifact plus learning audit output",
+        "project waiting_input with opaque target token",
+        "atomically accept one meaning-reading|writing|both choice",
+        "derive immutable content-input v2 with human_overrides.languagePracticeMode",
+        "start a new content attempt and require CardBundle without a repeated decision"
+      ],
+      "choiceObserved": "both",
+      "cardTemplateOrder": ["language_context", "language_writing"],
+      "originalInputSha256Unchanged": "00C92581203C130798067395CE601F90051FE9452EB0A97C373FF30A30D951E2",
+      "failClosed": [
+        "expired-token",
+        "repeat-token",
+        "cross-task-token",
+        "unknown-choice",
+        "concurrent-loser",
+        "decision-manifest-tamper",
+        "decision-payload-tamper",
+        "learning-ancestry-tamper"
+      ]
+    }
+  },
+  "sourceEvidence": [
+    { "path": "orchestrator/Core/Contracts.cs", "bytes": 11854, "sha256": "0C0F0DB35A6476CEC5E5131859DED5D9D3B97782BCDB7641A4756EA7F4B52030" },
+    { "path": "orchestrator/Core/DesktopIntentResolver.cs", "bytes": 41997, "sha256": "8C8195EDC6B50E272F1DFCCB725B41E6B3208B8A4DC1C0758F06614A4CB70FAC" },
+    { "path": "orchestrator/Core/StageInputResolver.cs", "bytes": 63310, "sha256": "6EFD6617BEABE995F21BA54C13009F1903EAB168A72259562DBF45186CBDB53F" },
+    { "path": "orchestrator/Core/OrchestratorEngine.cs", "bytes": 45426, "sha256": "CFBAE4385FDEBB9DE37D4D8A5F4A9DB8F9099872005A966EBDD7D28C80DC4835" },
+    { "path": "orchestrator/Core/OrchestratorHost.cs", "bytes": 48856, "sha256": "9DEB1694CCAC08483D55CD1FDD60B1A3F46AACD202CE819975EDD6FAEB7B7790" },
+    { "path": "orchestrator/Core/CommandAndIpc.cs", "bytes": 24465, "sha256": "59C9822E3AA8DC3227630FA40199612053CC05B41C10F03BC29F1C39AB70F831" },
+    { "path": "tests/FakeWorker/Program.cs", "bytes": 32337, "sha256": "FD6C461C7BE55FCAAB5BCA65C861BAEBD6ED9588C6BC547582319DB48225F65F" },
+    { "path": "tests/LanguagePractice.ContractTests/Program.cs", "bytes": 27746, "sha256": "0EA56EADAEF54C6B423EA97C3E06B2C2B1E8FC84487A1158452AEC432DBA2472" },
+    { "path": "tests/QuestionWorkflow.ContractTests/Program.cs", "bytes": 22911, "sha256": "B29C4CA1DA7E85D82EAB7079B126E9F681EB5947594023ED4AFE34C6245C5FCF" },
+    { "path": "tests/CoreAdapter.IntegrationTests/Program.cs", "bytes": 48473, "sha256": "E2FD3D10C60472687EAD167A5DA185799AF642AD63D430126E7397192FF7369C" },
+    { "path": "tools/validate_contracts.py", "bytes": 15028, "sha256": "BAA3D933D08BC2424D31018E139134DE443B6782E0110EE814B2F8EFD2F336BD" }
+  ],
+  "moduleCompatibility": {
+    "contentWorker": {
+      "version": "0.5.0",
+      "operations": ["understand-and-card", "question.answer", "question.make-cards"],
+      "outputKinds": ["learning-bundle", "card-bundle", "language-practice-decision", "question.answer"],
+      "receiptPath": "receipts/content-worker-v0.5.0-authoritative-20260826T041900Z.json",
+      "receiptSha256": "3476492F2B6FF69014B9AFC854F25A671C1D96BC5720DBC43446BF28C9BF43A4"
+    }
+  },
+  "validation": [
+    {
+      "command": "python tools/validate_contracts.py",
+      "exitCode": 0,
+      "result": { "schemasChecked": 44, "validFixturesAccepted": 53, "invalidFixturesRejected": 40 }
+    },
+    {
+      "command": "dotnet build orchestrator/KnowledgeClipper.Orchestrator.csproj --configuration Release --no-restore -warnaserror",
+      "exitCode": 0,
+      "result": "0 warnings, 0 errors"
+    },
+    {
+      "command": "dotnet tests/QuestionWorkflow.ContractTests/bin/Release/net8.0/QuestionWorkflow.ContractTests.dll <workspaceRoot>",
+      "exitCode": 0,
+      "result": "question workflow passed; 2 ordered turns; 10 fail-closed cases; exportersStarted=0",
+      "receiptPath": "canary/core-question-workflow/core-question-workflow-20260826T042400Z/receipt.json",
+      "receiptSha256": "D1E2896F103ECBEBFE8C4FD644844918CBEE1E3FF6BAC4EE8C55857BFD990C61"
+    },
+    {
+      "command": "dotnet tests/LanguagePractice.ContractTests/bin/Release/net8.0/LanguagePractice.ContractTests.dll <workspaceRoot>",
+      "exitCode": 0,
+      "result": "3 groups passed; decision-to-choice-to-new-attempt; both-order; token and artifact fail-closed",
+      "receiptPath": "canary/core-language-practice/core-language-practice-20260826T042400Z/receipt.json",
+      "receiptSha256": "535252F6811C622BB894E23F84EB1CC2D124ADB6FBFBB545CD5FA67EC2F47485"
+    },
+    {
+      "command": "dotnet tests/CoreAdapter.IntegrationTests/bin/Release/net8.0/CoreAdapter.IntegrationTests.dll <workspaceRoot>",
+      "exitCode": 0,
+      "result": "7 groups passed"
+    },
+    {
+      "command": "dotnet tests/Orchestrator.ContractTests/bin/Release/net8.0/Orchestrator.ContractTests.dll <workspaceRoot>",
+      "exitCode": 0,
+      "result": "23 groups passed"
+    }
+  ],
+  "releaseBoundary": {
+    "contractCheckpoint": "GO",
+    "coreFakeWorkerIntegration": "GO",
+    "frozenV1Integrity": "GO",
+    "authorityRegistryWithContentV0.5Describe": "PENDING_ADMISSION_RECHECK",
+    "desktopV2.2ClientWiring": "module-owned and independently validated",
+    "fullExternalE2E": "not part of this checkpoint"
+  }
+}

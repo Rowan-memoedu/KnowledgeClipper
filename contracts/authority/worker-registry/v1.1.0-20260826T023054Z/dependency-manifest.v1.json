@@ -1,0 +1,169 @@
+{
+  "schemaVersion": "authority-worker-dependencies.v1",
+  "checkpointId": "worker-registry-v1.1.0-20260826T023054Z",
+  "release": {
+    "version": "1.0.0-rc.1-preseal.10",
+    "root": "releases/1.0.0-rc.1-preseal.10/win-x64",
+    "treeSha256": "D0CE5FB36765A45D49BE5C83F6E4223C102C9EB13D37EDE079AEDCB97D00A6BC",
+    "state": "unsealed-no-go"
+  },
+  "dispatcher": {
+    "path": "orchestrator/RemNoteQuickClipper.Orchestrator.exe",
+    "bytes": 67879673,
+    "sha256": "C93E911B5B977F9543AC2ED5BCC82FCCCCD7B4CCB77A367019327834EF0F4802",
+    "componentId": "orchestrator.core",
+    "version": "1.1.0.0"
+  },
+  "runtimeConfiguration": {
+    "path": "config/worker-runtime-paths.v1.json",
+    "bytes": 1550,
+    "sha256": "A6F1ED8AD991030D2F19379B52A0B19A41840F4768861B20F6D6C99F2DD58D2D"
+  },
+  "workers": [
+    {
+      "workerId": "image.ocr.mineru",
+      "workerVersion": "1.0.0",
+      "operations": ["image-ocr"],
+      "inputKinds": ["capture-bundle"],
+      "outputKinds": ["image.original", "image-ocr.markdown", "image-ocr.structured", "image-ocr.image"],
+      "entrypoint": {
+        "path": "workers/image-ocr/RemNoteQuickClipper.ImageOcr.Worker.exe",
+        "bytes": 10235806,
+        "sha256": "12798E6898817F05B87369583A9894239FD1446D482E099980131BDD2F7DB0A0"
+      },
+      "describe": {
+        "path": "describe/image.ocr.mineru.json",
+        "bytes": 501,
+        "sha256": "234CEEF79F5E7E8ED3C251779F5C4440D0DDE0F9239A65F6C61D3A82FB13001B"
+      },
+      "localDependencies": [],
+      "externalDependencies": ["mineru"]
+    },
+    {
+      "workerId": "content.deepseek",
+      "workerVersion": "0.2.0",
+      "operations": ["content.understand-and-card"],
+      "inputKinds": ["content-input"],
+      "outputKinds": ["learning-bundle", "card-bundle"],
+      "entrypoint": {
+        "path": "workers/content/RemNoteQuickClipper.Content.Worker.exe",
+        "bytes": 67486910,
+        "sha256": "2B37B9CAE324CA2B8B94003136B3275B0B87D9DE090B16C44AC214193D609B37"
+      },
+      "describe": {
+        "path": "describe/content.deepseek.json",
+        "bytes": 466,
+        "sha256": "AD0F27AFE5C78E4CCB0A2105A5A5A0FFF75E51092AD6BD0D39B020EF953491D3"
+      },
+      "localDependencies": [
+        {
+          "path": "runtime/node-v24.18.0-win-x64/node.exe",
+          "bytes": 92534088,
+          "sha256": "9A4EB5F1C29C6A2E93852EAD46B999E284A6A5CA8BAB4D4E241D587D025A52DE"
+        },
+        {
+          "path": "content-worker",
+          "kind": "tree",
+          "files": 50,
+          "bytes": 340435,
+          "sha256": "C752212B212C231B2F740AADE9F9FCE6E6D8DACCC5B444A027514398473D058A"
+        }
+      ],
+      "externalDependencies": ["deepseek"]
+    },
+    {
+      "workerId": "speech.edge",
+      "workerVersion": "1.1.0",
+      "operations": ["speech.synthesize", "speech.playback"],
+      "inputKinds": ["text.spoken", "audio.speech"],
+      "outputKinds": ["audio.speech"],
+      "entrypoint": {
+        "path": "workers/speech/RemNoteQuickClipper.Speech.Worker.exe",
+        "bytes": 71680,
+        "sha256": "32E65EDF5D23F87A60E5826278DE06F3B5EC8066006D243ECD58D3FD3A272470"
+      },
+      "describe": {
+        "path": "describe/speech.edge.json",
+        "bytes": 463,
+        "sha256": "093377DC08067F775E5CC1BC289153DCF6F8AEA33255002B0B46C83006666C83"
+      },
+      "localDependencies": [
+        {
+          "path": "runtime/python-edge-tts-3.14.6/python.exe",
+          "bytes": 106208,
+          "sha256": "03168C01B7B7491423350E82C26FEE71F35B43694D1319D3C668BDA6903A0C38"
+        },
+        {
+          "path": "runtime/edge-tts-7.2.8/edge-tts.exe",
+          "bytes": 67486754,
+          "sha256": "341D8DB0D34640289DB735A50DA1CBB19C9FE37A7E39B1B4027AF9475E2C439C"
+        },
+        {
+          "path": "runtime/ffplay-8.1.2/ffplay.exe",
+          "bytes": 244020224,
+          "sha256": "ADF87A00C32B2980293EF065B2A237AACB217AAEAA47007ECBBA56BD5A40463A"
+        }
+      ],
+      "externalDependencies": ["edgeTtsNetwork"]
+    },
+    {
+      "workerId": "export.remnote",
+      "workerVersion": "1.0.0",
+      "operations": ["export-remnote"],
+      "inputKinds": ["learning.bundle", "card.bundle"],
+      "outputKinds": ["remnote.write-receipt", "remnote.import-package"],
+      "entrypoint": {
+        "path": "workers/remnote/RemNoteQuickClipper.RemNoteExporter.Worker.exe",
+        "bytes": 72704,
+        "sha256": "45DE3A87501236ECAA0CFA13FC02A8F6B0C56A79996F1F37613610819F2708FF"
+      },
+      "describe": {
+        "path": "describe/export.remnote.json",
+        "bytes": 487,
+        "sha256": "D7852D865955AFD04F7135A6EB892D737E4E7169CDE73F4CEA82B543703E403E"
+      },
+      "localDependencies": [
+        {
+          "path": "workers/remnote/appsettings.json",
+          "bytes": 1299,
+          "sha256": "DAB21565FC1EBDDC5A15359233D1BA404DF3C033C09EE19014C540DEFCE305E0"
+        },
+        {
+          "path": "runtime/node-v24.18.0-win-x64/node.exe",
+          "bytes": 92534088,
+          "sha256": "9A4EB5F1C29C6A2E93852EAD46B999E284A6A5CA8BAB4D4E241D587D025A52DE"
+        },
+        {
+          "path": "runtime/remnote-mcp/node_modules/remnote-mcp-server/dist/remnote-cli/index.js",
+          "bytes": 98,
+          "sha256": "0C67E1CBADB83F80B0F947DC74BBAE47DEF8AAD87B7C98BBA444C081D61EF571"
+        }
+      ],
+      "externalDependencies": ["remnoteLocalMcp"]
+    },
+    {
+      "workerId": "export.anki",
+      "workerVersion": "1.1.2",
+      "operations": ["anki-export"],
+      "inputKinds": ["card-bundle", "learning-bundle", "anki-export-config"],
+      "outputKinds": ["anki-export-evidence"],
+      "entrypoint": {
+        "path": "workers/anki/RemNoteQuickClipper.AnkiExporter.Worker.exe",
+        "bytes": 10207461,
+        "sha256": "AC1F37AB4486B59BEF50A40214BA8D7C7D3B01BC569461C8539D926308E9BB96"
+      },
+      "describe": {
+        "path": "describe/export.anki.json",
+        "bytes": 476,
+        "sha256": "4EDF2F18FF824EF32E77A273DCBE95BDA12F308180FA7B108B8D098FA6B9EAF6"
+      },
+      "localDependencies": [],
+      "externalDependencies": ["ankiConnect"]
+    }
+  ],
+  "externalDependencyPolicy": {
+    "admission": "declared-not-invoked",
+    "realWrites": false,
+    "services": ["mineru", "deepseek", "edgeTtsNetwork", "remnoteLocalMcp", "ankiConnect"]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.wire-response/2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "correlationId", "messageType", "ok", "payload", "error"],
+  "properties": {
+    "schema": {"const": "kc.wire-response/2"},
+    "correlationId": {"type": "string"},
+    "messageType": {"type": "string"},
+    "ok": {"type": "boolean"},
+    "payload": {"type": ["object", "null"]},
+    "error": {"type": ["object", "null"]}
+  }
+}

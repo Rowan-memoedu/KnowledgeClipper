@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-assembly-receipt.v1",
+  "status": "candidate-built-offline",
+  "registryVersion": "1.2.14",
+  "releaseId": "knowledge-clipper-authority-v1.2.14-20260830T184700Z",
+  "releaseRoot": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\releases\\knowledge-clipper-authority-v1.2.14-20260830T184700Z\\win-x64",
+  "authorityDirectory": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.14-20260830T184700Z",
+  "release": {
+    "files": 296,
+    "bytes": 260669250,
+    "treeSha256": "30F1A8E65A335811545114474573196B689657DA8BAFB511E7A2F84638DB9D3E"
+  },
+  "registrySha256": "A1A95EE7FCBBBB3051777088E66389EC2C6578B30AD7562CFB0992DE4729897C",
+  "dependencyManifestSha256": "5D30847AFBAF7D43379B500F630833A7DBFB781769259B8C64DEA31FB34E8A11",
+  "core": {
+    "version": "2.5.2",
+    "checkpointVersion": "2.5.3",
+    "checkpointSha256": "16F39BAB63346AADEA83D1C66B1BE2520998BFE1A8341667D121CFCB84838D9A",
+    "executableSha256": "1491D70A3CCE57EC37672C209C9DA5D0738236ACC2D8BDDC3F2067530C917FF3"
+  },
+  "workers": {
+    "image.ocr.mineru": {
+      "workerVersion": "1.2.2",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.14-20260830T184700Z\\describe\\image.ocr.mineru.describe.json",
+      "bytes": 680,
+      "sha256": "4EF9DADF0F1CD9633990FC27DEC30778DA4412E4E26FD1BC4AF8763E07308DEF",
+      "executablePath": "workers/image-ocr/KnowledgeClipper.ImageOcr.Worker.exe",
+      "executableBytes": 10310385,
+      "executableSha256": "8F99C403AF250E0BD2BB62CEECAA74A768860C10B3C582236BA0A6B3B0D73F78"
+    },
+    "content.deepseek": {
+      "workerVersion": "0.8.0",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.14-20260830T184700Z\\describe\\content.deepseek.describe.json",
+      "bytes": 753,
+      "sha256": "C479011D19259A07C3EB0CD9DB91CF2186B315D4709BE19A22F27D6F23CE5DEA",
+      "executablePath": "workers/content/KnowledgeClipper.Content.Worker.exe",
+      "executableBytes": 67490988,
+      "executableSha256": "F6EC35798F8948727B8664517FDBB096DB8A94C8DD079F612B05BAC4EA72D3B8"
+    },
+    "speech.edge": {
+      "workerVersion": "1.2.4",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.14-20260830T184700Z\\describe\\speech.edge.describe.json",
+      "bytes": 636,
+      "sha256": "83AD1F7A11B8C8C90E6A1D20ABB002137CEC9FF5FDFD65BA92A5CB6B6F7C0B1F",
+      "executablePath": "workers/speech/KnowledgeClipper.Speech.Worker.exe",
+      "executableBytes": 116224,
+      "executableSha256": "C098003823B5217C3A4F7267A57E69128AE5F6DF7BCC8083BA92B4CC56C34EE2"
+    },
+    "export.remnote": {
+      "workerVersion": "2.1.0",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.14-20260830T184700Z\\describe\\export.remnote.describe.json",
+      "bytes": 660,
+      "sha256": "57F4E4D98CFB234A4ED511389A3739886CAE8726304A6C5F2ABFE5C6748384E2",
+      "executablePath": "workers/remnote/KnowledgeClipper.RemNoteExporter.Worker.exe",
+      "executableBytes": 122368,
+      "executableSha256": "443835ECA91E5F68C97070777C250FD95E4A2E4873C9EFC7FBF45A528EF2CAD2"
+    },
+    "export.anki": {
+      "workerVersion": "1.2.2",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.14-20260830T184700Z\\describe\\export.anki.describe.json",
+      "bytes": 680,
+      "sha256": "9D13DF18F1E503ED896EB100E151198263870C022FC6D41164C324064BE8D097",
+      "executablePath": "workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe",
+      "executableBytes": 10220603,
+      "executableSha256": "0D6F18DD6CD10828C0139183D7D84712378FCDDE0AFFCABFCAFD19C228316449"
+    }
+  },
+  "registryValidation": {
+    "schemaVersion": "1.0.0",
+    "status": "valid",
+    "registryVersion": "1.2.14",
+    "workers": 5
+  },
+  "externalWrites": 0,
+  "mineruCalls": 0,
+  "physicalSpeakerInvocations": 0
+}

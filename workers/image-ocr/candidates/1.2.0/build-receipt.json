@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "knowledge-clipper-image-ocr-build-receipt.v1",
+  "createdAt": "2026-08-28T06:15:04.1098184+00:00",
+  "workerId": "image.ocr.mineru",
+  "workerVersion": "1.2.0",
+  "contractVersion": "1.0.0",
+  "candidatePath": "workers/image-ocr/candidates/1.2.0/KnowledgeClipper.ImageOcr.Worker.exe",
+  "bytes": 10250526,
+  "sha256": "80fe1d2d7d371d135658b36ac22735490dadd5239d263c2e1b3025d5fc7221b3",
+  "pyInstallerVersion": "6.22.2",
+  "replacesAuthorityCandidate": false,
+  "registryOnboarding": "NO-GO-until-new-authority-checkpoint",
+  "externalServiceCalled": false
+}

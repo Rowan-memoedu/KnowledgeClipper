@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "registryVersion": "1.0.0-remnote-exporter-canary",
+  "profiles": ["parity-remnote", "cards-remnote", "cards-anki"],
+  "workers": [
+    {
+      "workerId": "export.remnote",
+      "contractVersionRange": ">=1.0.0 <2.0.0",
+      "entrypoint": {
+        "path": "workers/remnote/KnowledgeClipper.RemNoteExporter.Worker.exe",
+        "args": []
+      },
+      "stages": ["export-remnote"],
+      "inputKinds": ["learning.bundle", "card.bundle"],
+      "outputKinds": ["remnote.write-receipt", "remnote.import-package"],
+      "requiredForProfiles": ["parity-remnote", "cards-remnote"],
+      "sideEffectLevel": "external",
+      "idempotencyLevel": "reconcilable",
+      "enabledByDefault": true
+    }
+  ]
+}

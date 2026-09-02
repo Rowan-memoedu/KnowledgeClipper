@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "receiptId": "receipt-private-e2e",
+  "verificationKind": "end-to-end",
+  "status": "passed",
+  "profile": "parity-remnote",
+  "candidate": {
+    "manifestPath": "releases/1.0.0/win-x64/release-manifest.v1.json",
+    "candidateHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  },
+  "contractCheckpoint": {
+    "checkpointId": "contracts-v1-20260825T115938Z",
+    "receiptPath": "receipts/contracts-v1-stable-checkpoint-20260825T115938Z.json",
+    "receiptSha256": "1CB738FE133F6645B9757E246E2FBC210785086342F70BAD32B5015BD19E1B1E"
+  },
+  "subject": {
+    "componentId": "desktop-to-remnote",
+    "componentVersion": "1.0.0",
+    "componentSha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+  },
+  "startedAt": "2026-08-25T12:00:00Z",
+  "finishedAt": "2026-08-25T12:00:01Z",
+  "checks": [{ "checkId": "e2e", "status": "passed" }],
+  "evidence": [{ "path": "receipts/e2e.json", "sha256": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD", "bytes": 1, "mediaType": "application/json" }],
+  "privacy": { "syntheticDataOnly": false, "productionContentObserved": true, "secretsRedacted": false }
+}

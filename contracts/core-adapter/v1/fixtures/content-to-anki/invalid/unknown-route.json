@@ -1,0 +1,7 @@
+{
+  "bundle_kind": "CardBundle",
+  "schema_version": "1.0",
+  "bundle_id": "unknown-route",
+  "cards": [{ "card_id": "bad", "revision": 1, "content_hash": "1111111111111111111111111111111111111111111111111111111111111111", "status": "ready", "deck_route_key": "math", "note_type_key": "basic_qa", "fields": { "question": "Q", "answer": "A" }, "tags": [], "media_refs": [] }],
+  "media": []
+}

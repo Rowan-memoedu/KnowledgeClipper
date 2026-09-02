@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "content-companion-settings/1.0.0",
+  "title": "KnowledgeClipper Content companion project settings",
+  "$comment": "The control plane may persist this project profile locally. Secrets are forbidden. Only runtimeProjection fields may enter content-config-snapshot/1.1.0; interaction remains Core-owned conditional state.",
+  "type": "object",
+  "required": ["schemaVersion", "profileId", "profileVersion", "languagePractice", "interaction", "promptProfile", "provider", "security"],
+  "properties": {
+    "schemaVersion": { "const": "content-companion-settings/1.0.0" },
+    "profileId": { "$ref": "#/$defs/identifier" },
+    "profileVersion": { "$ref": "#/$defs/version" },
+    "languagePractice": {
+      "type": "object",
+      "required": ["defaultChoice"],
+      "properties": { "defaultChoice": { "enum": ["ask", "meaning-reading", "writing", "both"] } },
+      "additionalProperties": false
+    },
+    "interaction": {
+      "type": "object",
+      "required": ["promptAfterRecognition"],
+      "properties": { "promptAfterRecognition": { "type": "boolean" } },
+      "additionalProperties": false
+    },
+    "promptProfile": {
+      "type": "object",
+      "required": ["promptSetId", "profileVersion"],
+      "properties": { "promptSetId": { "type": "string", "minLength": 1 }, "profileVersion": { "$ref": "#/$defs/version" } },
+      "additionalProperties": false
+    },
+    "provider": {
+      "type": "object",
+      "required": ["model", "maxRetries"],
+      "properties": {
+        "model": { "enum": ["deepseek-chat", "deepseek-reasoner"] },
+        "maxRetries": { "type": "integer", "minimum": 1, "maximum": 5 }
+      },
+      "additionalProperties": false
+    },
+    "security": {
+      "type": "object",
+      "required": ["credentials", "taskPackageSecrets"],
+      "properties": { "credentials": { "const": "local-secret-only" }, "taskPackageSecrets": { "const": "forbidden" } },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$" }
+  },
+  "additionalProperties": false
+}

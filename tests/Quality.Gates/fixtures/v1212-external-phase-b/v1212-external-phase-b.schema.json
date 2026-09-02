@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knowledge-clipper.local/quality/v1212-external-phase-b.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "policy", "baseQualityReceipt", "executionReceipt", "candidate", "authority", "expectedPaths"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-v1212-external-phase-b-fixture.v1" },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification", "desktopProcessE2E", "userHandTestEntrypoint", "rerunExternalServices"],
+      "properties": {
+        "classification": { "const": "backend-harness-candidate-worker-bound" },
+        "desktopProcessE2E": { "const": false },
+        "userHandTestEntrypoint": { "const": false },
+        "rerunExternalServices": { "const": false }
+      }
+    },
+    "baseQualityReceipt": { "$ref": "#/$defs/fileRef" },
+    "executionReceipt": { "$ref": "#/$defs/fileRef" },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidateId", "manifestSha256", "sealedTreeSha256"],
+      "properties": {
+        "candidateId": { "const": "kc-integrated-settings-v1212-20260830T183500Z" },
+        "manifestSha256": { "$ref": "#/$defs/sha256" },
+        "sealedTreeSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registryVersion", "registrySha256", "checkpointSha256"],
+      "properties": {
+        "registryVersion": { "const": "1.2.12" },
+        "registrySha256": { "$ref": "#/$defs/sha256" },
+        "checkpointSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "expectedPaths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["A", "B", "C", "D"],
+      "properties": {
+        "A": { "const": "succeeded" },
+        "B": { "const": "succeeded" },
+        "C": { "const": "credential-unavailable" },
+        "D": { "const": "succeeded" }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+    "fileRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

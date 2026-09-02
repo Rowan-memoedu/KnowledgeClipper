@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "knowledge-clipper-core-checkpoint-assembly-invalidation.v1",
+  "createdAt": "2026-09-02T01:19:14.674886Z",
+  "status": "invalidated-for-authority-assembly-only",
+  "checkpoint": {
+    "path": "contracts/core/v2.10/checkpoints/v2.10.3-20260902T010816Z/checkpoint.json",
+    "sha256": "3D943E1BCCC1570816EA2753E37277D1A3FC68B799D2F8DC7E64F90E485EFCDC"
+  },
+  "runtimeVerificationStillValid": true,
+  "authorityAssemblyReady": false,
+  "reason": "Frozen V3 base assembler requires direct checkpoint fileBindings for the declared request and receipt contract schemas; v2.10.3 included them only through schema closure.",
+  "failure": "Checkpoint-bound request contract schema was not found: knowledge-clipper-module-action.v6",
+  "authorityTargetsCreated": 0,
+  "candidateTargetsCreated": 0,
+  "supersededBy": "contracts/core/v2.10/checkpoints/v2.10.4-20260902T011656Z/checkpoint.json"
+}

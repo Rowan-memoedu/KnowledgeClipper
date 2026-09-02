@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "card-bundle/1.0.0",
+  "type": "object",
+  "required": ["schema_version", "bundle_id", "package_id", "task_id", "attempt_id", "created_at", "learning_bundle_path", "learning_bundle_sha256", "cards", "withheld_units", "release_state", "gates"],
+  "properties": {
+    "schema_version": { "const": "card-bundle/1.0.0" },
+    "bundle_id": { "type": "string", "minLength": 1 },
+    "package_id": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "attempt_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "learning_bundle_path": { "type": "string", "minLength": 1 },
+    "learning_bundle_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "cards": { "type": "array", "minItems": 1 },
+    "withheld_units": { "type": "array" },
+    "release_state": { "enum": ["ready", "partial"] },
+    "gates": { "type": "array" }
+  },
+  "additionalProperties": false
+}

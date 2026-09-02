@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "speech-v123-candidate-bound-backend-canary.v1",
+  "status": "passed",
+  "completedAtUtc": "2026-08-28T02:46:34.2563458+00:00",
+  "authority": {
+    "checkpoint": {
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.3-20260828T021300Z\\checkpoint.json",
+      "bytes": 6351,
+      "sha256": "3EFB89D6D642F8546ABD14C5A114DE00E14BB7173EF33F03D3FD06DDAA2ADB55"
+    },
+    "release": {
+      "root": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\releases\\knowledge-clipper-authority-v1.2.3-20260828T021300Z\\win-x64",
+      "files": 79,
+      "bytes": 248982362,
+      "treeSha256": "7B27BACDB1DBB56991272972A5F9309B1D6F782787EB0B99EBD21248F7959574"
+    },
+    "registryVersion": "1.2.3"
+  },
+  "worker": {
+    "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\releases\\knowledge-clipper-authority-v1.2.3-20260828T021300Z\\win-x64\\workers\\speech\\KnowledgeClipper.Speech.Worker.exe",
+    "bytes": 74240,
+    "sha256": "51FF5937C297DAD562AB781D6114374649E1A965EDBB43D575264BEED3DFB19C",
+    "workerId": "speech.edge",
+    "workerVersion": "1.2.0"
+  },
+  "runtime": {
+    "edgeTts": {
+      "path": "D:\\Applications\\RemNoteQuickClipperRuntime\\edge-tts-7.2.8\\Scripts\\edge-tts.exe",
+      "sha256": "B0ACB91F95B7CDA5FD6EA588DA5934F22AE1F2E3D51D2F65CC3613F6FD3E0728",
+      "realCalls": 14
+    },
+    "fakePlayer": {
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\tests\\RemNoteQuickClipper.Speech.Tests\\bin\\KnowledgeClipper.Speech.FakeTool.exe",
+      "sha256": "EFCEF0255AB412162B581CD141624DD66D0A18CE7CFF505C7B76A35EF7DE5C89",
+      "physicalSpeakerPlayback": false
+    }
+  },
+  "evidence": {
+    "backendContentAndPlayback": {
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\tests\\RemNoteQuickClipper.Speech.Tests\\bc\\r024551fc2e\\backend-content-speech-canary-receipt.json",
+      "sha256": "68808A2BC5B155F06CC2FFD15073551C24873C2E6E7476716716258CD84F3A6E"
+    },
+    "fiveLanguageAuto": {
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\tests\\RemNoteQuickClipper.Speech.Tests\\canary\\r20260828-024606-a-0f4fb3\\canary-receipt.json",
+      "sha256": "C9B51EF4CD941D8D19FA96D9F7FF3EDEF20C1D43E4B95B86EE3378A3C86EEA74"
+    },
+    "fiveLanguageOverride": {
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\tests\\RemNoteQuickClipper.Speech.Tests\\canary\\r20260828-024619-o-281ae9\\canary-receipt.json",
+      "sha256": "0CCEBC93180F51E3AA53F6D53263852C5A864590C4CF623C516113EF19D19737"
+    },
+    "coreReuse": {
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\tests\\RemNoteQuickClipper.Speech.Tests\\candidate-bound-v123\\r20260828-024551-7a05a5\\authority-core-speech-reuse.json",
+      "sha256": "80D30A7E87B92E0DFC00B5E84A3062BCDEF87E624E9FCBC3C8B54F80D926C944",
+      "harnessWorker": "synthetic-contract-worker",
+      "authorityCore": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\releases\\knowledge-clipper-authority-v1.2.3-20260828T021300Z\\win-x64\\orchestrator\\KnowledgeClipper.Orchestrator.exe"
+    },
+    "readable": {
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\tests\\RemNoteQuickClipper.Speech.Tests\\candidate-bound-v123\\r20260828-024551-7a05a5\\readable-evidence.md",
+      "sha256": "614EA25566A9B55C400D3D83C0DBC35B7E542BB5FBC6ABE7BCE4C673B45268B2"
+    }
+  },
+  "assertions": {
+    "languages": [
+      "zh-CN",
+      "en-US",
+      "es-ES",
+      "ja-JP",
+      "ko-KR"
+    ],
+    "autoRoute": true,
+    "explicitOverride": true,
+    "voiceSnapshotPreserved": true,
+    "synthesisCacheReuseOwnedByCore": true,
+    "replayCreatesFreshPlaybackAttempt": true,
+    "playbackResultReuse": false,
+    "stopSignalConsumedByWorker": true,
+    "publicPlaybackStopIpcOwnedByCore": true,
+    "physicalSpeakerPlayback": false,
+    "oldAiTtsRouteCount": 0,
+    "externalProductionWrites": 0
+  }
+}

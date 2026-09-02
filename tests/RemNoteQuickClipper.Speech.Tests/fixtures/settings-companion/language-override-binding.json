@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "speech-settings-language-override-binding.v1",
+  "scope": "project",
+  "effectiveAt": "next_task",
+  "uiInput": {
+    "languageStrategy": "override",
+    "languageOverride": "en-US"
+  },
+  "adapterInput": {
+    "settings.languageStrategy": "override",
+    "settings.languageOverride": "en-US"
+  },
+  "expectedWorkerBinding": {
+    "synthesisRequest.payload.language.strategy": "override",
+    "synthesisRequest.payload.language.override": "en-US",
+    "synthesisRequest.payload.voiceSnapshot.voicesByLanguage.en-US": "en-US-AvaMultilingualNeural",
+    "synthesisRequest.configSnapshot.edgeTtsPath": "<absolute deployment snapshot>"
+  },
+  "currentTaskSemantics": "unchanged; immutable snapshot remains authoritative",
+  "newTaskSemantics": "Core invokes settings adapt/probe before writing the new immutable WorkerRequest",
+  "conditional": [
+    "Desktop project settings persistence and UI event wiring",
+    "Core invocation of the adapter for each new task",
+    "runtime provider voice discovery",
+    "explicit speaker.preview side-effect action"
+  ]
+}

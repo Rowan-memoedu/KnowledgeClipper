@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "quality-v3-side-effect-audit.v1",
+  "type": "object",
+  "required": ["schemaVersion", "provider", "mode", "auditor", "allowlist", "observedCalls", "observedCallCount", "observedWriteCount", "callLog", "callLogSha256"],
+  "properties": {
+    "schemaVersion": { "const": "quality-v3-side-effect-audit.v1" },
+    "auditor": { "const": "independent-proxy-call-log" }
+  },
+  "additionalProperties": true
+}

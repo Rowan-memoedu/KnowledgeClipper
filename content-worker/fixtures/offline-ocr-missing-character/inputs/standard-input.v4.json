@@ -1,0 +1,43 @@
+{
+  "schema_version": "standard-input/4.0.0",
+  "package_id": "content-fixture-ocr-missing",
+  "task_id": "task-fixture-ocr-missing",
+  "input_version": "1",
+  "mode": "card",
+  "items": [
+    {
+      "item_id": "item-ocr-missing",
+      "source": {
+        "kind": "ocr_text",
+        "material_path": "upstream/markdown/content.md",
+        "provenance": {
+          "schema_version": "ocr-provenance/1.0.0",
+          "producer_worker_id": "image.ocr.mineru",
+          "markdown_artifact": {
+            "artifactRef": "fixture.ocr.missing.markdown",
+            "kind": "image-ocr.markdown",
+            "contractVersion": "1.0.0",
+            "manifestPath": "upstream/markdown/artifact.json",
+            "expectedSha256": "353824e04c971a1a2f4adfe65307c3ba29c2d3acad8f920b67917db827fd487e",
+            "payload_path": "upstream/markdown/content.md",
+            "payload_sha256": "4fc90e9e634d9d193d9d728144cfcad05d064fec4c63480a9382bbe674256973"
+          },
+          "structured_artifact": {
+            "artifactRef": "fixture.ocr.missing.structured",
+            "kind": "image-ocr.structured",
+            "contractVersion": "1.0.0",
+            "manifestPath": "upstream/structured/artifact.json",
+            "expectedSha256": "019dbb9aefbf57451f4e3b4f4215aced5d0a5ca772374efd7d011e3a31b9525e",
+            "payload_path": "upstream/structured/content.json",
+            "payload_sha256": "d4ce3195489b1c2375eea61389b5bac32a2db11806aca26678717cece67d4112"
+          }
+        }
+      },
+      "hints": {
+        "category_id": "question_answer",
+        "answer_state": "provided",
+        "requested_templates": ["basic_qa"]
+      }
+    }
+  ]
+}

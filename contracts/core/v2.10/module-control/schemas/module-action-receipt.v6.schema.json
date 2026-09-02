@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-module-action-receipt.v6",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "actionId", "operation", "accepted", "status", "inputRef", "inputSha256", "externalWriteCount", "physicalAudio", "automaticRetryAllowed", "idempotencyKey", "completedAt"],
+  "properties": {
+    "schemaVersion": {"const": "knowledge-clipper-module-action-receipt.v6"},
+    "actionId": {"type": "string", "minLength": 1},
+    "operation": {"enum": ["remnote.probe", "speech.voices", "speech.preview"]},
+    "accepted": {"type": "boolean"},
+    "status": {"enum": ["ready", "blocked", "conditional", "completed", "failed", "unknown_external_state"]},
+    "inputRef": {"type": "string"},
+    "inputSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "outputRef": {"type": ["string", "null"]},
+    "outputSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "catalogSnapshotRef": {"type": ["string", "null"]},
+    "catalogSnapshotSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "externalWriteCount": {"const": 0},
+    "physicalAudio": {"type": "boolean"},
+    "automaticRetryAllowed": {"const": false},
+    "idempotencyKey": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+    "completedAt": {"type": "string", "format": "date-time"},
+    "error": {"type": ["object", "null"]},
+    "executionStatus": {"enum": ["completed", "failed", "unknown_external_state"]},
+    "taskId": {"type": "null"}, "runId": {"type": "null"}, "artifactRootRef": {"type": "null"},
+    "outputRefs": {
+      "type": "array", "maxItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["referenceType", "kind", "contractVersion", "rootRef", "path", "expectedSha256"],
+        "properties": {
+          "referenceType": {"const": "file"},
+          "kind": {"enum": ["remnote-public-probe-result", "speech-voice-discovery-result", "speech-speaker-preview-result"]},
+          "contractVersion": {"enum": ["1.0.0", "2.0.0"]},
+          "rootRef": {"const": "jobs-root"},
+          "path": {"type": "string", "pattern": "^module-actions/.+/result\\.json$"},
+          "expectedSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    }
+  },
+  "allOf": [
+    {"if": {"properties": {"accepted": {"const": true}}, "required": ["accepted"]}, "then": {"required": ["outputRef", "outputSha256", "executionStatus", "outputRefs"], "properties": {"executionStatus": {"const": "completed"}, "outputRef": {"type": "string"}, "outputSha256": {"type": "string"}, "outputRefs": {"minItems": 1}, "error": {"type": "null"}}}},
+    {"if": {"properties": {"accepted": {"const": false}}, "required": ["accepted"]}, "then": {"required": ["error", "executionStatus", "outputRefs"], "properties": {"status": {"enum": ["failed", "unknown_external_state"]}, "outputRefs": {"maxItems": 0}, "error": {"type": "object"}}}},
+    {"if": {"properties": {"operation": {"const": "speech.preview"}}, "required": ["operation"]}, "then": {"properties": {"physicalAudio": {"const": true}}}, "else": {"properties": {"physicalAudio": {"const": false}}}},
+    {"if": {"properties": {"accepted": {"const": true}, "operation": {"const": "remnote.probe"}}, "required": ["accepted", "operation"]}, "then": {"properties": {"status": {"enum": ["ready", "blocked"]}, "outputRefs": {"items": {"properties": {"kind": {"const": "remnote-public-probe-result"}, "contractVersion": {"const": "2.0.0"}}}}}}},
+    {"if": {"properties": {"accepted": {"const": true}, "operation": {"const": "speech.voices"}}, "required": ["accepted", "operation"]}, "then": {"properties": {"status": {"enum": ["ready", "conditional"]}, "outputRefs": {"items": {"properties": {"kind": {"const": "speech-voice-discovery-result"}, "contractVersion": {"const": "1.0.0"}}}}}}},
+    {"if": {"properties": {"accepted": {"const": true}, "operation": {"const": "speech.preview"}}, "required": ["accepted", "operation"]}, "then": {"properties": {"status": {"const": "completed"}, "outputRefs": {"items": {"properties": {"kind": {"const": "speech-speaker-preview-result"}, "contractVersion": {"const": "1.0.0"}}}}}}}
+  ]
+}

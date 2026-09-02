@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/knowledge-clipper/anki/card-bundle.v1.1.schema.json",
+  "title": "KnowledgeClipper finalized ordered original-media cards projection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["bundle_kind", "schema_version", "bundle_id", "cards", "media"],
+  "properties": {
+    "bundle_kind": {"enum": ["CardBundle", "LearningBundle"]},
+    "schema_version": {"const": "1.1"},
+    "bundle_id": {"type": "string", "minLength": 1},
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["card_id", "revision", "content_hash", "status", "deck_route_key", "note_type_key", "fields", "tags", "media_refs"],
+        "properties": {
+          "card_id": {"type": "string", "minLength": 1},
+          "revision": {"type": "integer", "minimum": 1},
+          "content_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "status": {"enum": ["ready", "unresolved"]},
+          "deck_route_key": {"type": "string", "minLength": 1},
+          "note_type_key": {"type": "string", "minLength": 1},
+          "fields": {"type": "object", "additionalProperties": {"type": "string"}},
+          "tags": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "media_refs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["media_id", "field", "placement", "role", "ordinal"],
+              "properties": {
+                "media_id": {"type": "string", "minLength": 1},
+                "field": {"enum": ["question", "answer"]},
+                "placement": {"const": "append"},
+                "role": {"enum": ["questionImages", "answerImages"]},
+                "ordinal": {"type": "integer", "minimum": 0}
+              }
+            }
+          }
+        }
+      }
+    },
+    "media": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["media_id", "kind", "relative_path", "sha256", "size", "mime_type"],
+        "properties": {
+          "media_id": {"type": "string", "minLength": 1},
+          "kind": {"const": "image"},
+          "relative_path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "size": {"type": "integer", "minimum": 0},
+          "mime_type": {"type": "string", "pattern": "^image/"}
+        }
+      }
+    }
+  }
+}

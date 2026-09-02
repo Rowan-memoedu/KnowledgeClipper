@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "knowledge-clipper-checkpoint-invalidation.v1",
+  "checkpoint": "contracts/core/v2.4/settings-control/checkpoints/v2.4.7-20260828T092200Z/checkpoint.json",
+  "checkpointSha256": "c80097b4d29be23da9776f92c046bb6b2a2e2dfe0b39eedee9ed9845883cfc86",
+  "status": "invalidated-never-authority-bound",
+  "reason": "priorPhaseB.authority and executionReceipt identify authority v1.2.8, but priorPhaseB.authorityCheckpointSha256 incorrectly identifies the invalidated v1.2.9 checkpoint. The corrected positive tree byte total and Core 2.4.6 runtime remain useful evidence but the checkpoint identity tuple is not exact.",
+  "authorityBound": false,
+  "supersededBy": "pending-v2.4.8",
+  "externalCalls": 0,
+  "physicalSpeakerInvocations": 0,
+  "evidence": {
+    "recordedAuthorityCheckpointSha256": "5c0cccba82743048126a4a1d56949661e7dae402d6deef6233e4b9db9b2512ae",
+    "correctV128AuthorityCheckpointSha256": "4d2997b2abee89e41dc3f77815ae43122079e2dafea7c773a22fcb29c5bbae11"
+  },
+  "immutability": {
+    "checkpointModified": false,
+    "runtimeV246Modified": false,
+    "frozenV1Modified": false
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "knowledge-clipper-release-dependency-manifest.v1",
+  "releaseId": "knowledge-clipper-authority-v1.2.6-20260828T074944Z",
+  "releaseRoot": "releases/knowledge-clipper-authority-v1.2.6-20260828T074944Z/win-x64",
+  "files": 186,
+  "bytes": 249571806,
+  "treeHashAlgorithm": "sort Windows relative paths ordinal; emit path<TAB>bytes<TAB>lowercase SHA-256; join LF; SHA-256 UTF-8",
+  "treeSha256": "1DF64264BB69F4039C3B58956AA9612B98E45C2DF38B12D396B4813377E512EE",
+  "keyFiles": [
+    {
+      "path": "orchestrator/KnowledgeClipper.Orchestrator.exe",
+      "bytes": 68129952,
+      "sha256": "EBE9E69A9AB8E93D7E0355B57ACDA45D10189580459FD27195FF9DF9398947CB"
+    },
+    {
+      "path": "workers/image-ocr/KnowledgeClipper.ImageOcr.Worker.exe",
+      "bytes": 10250526,
+      "sha256": "80FE1D2D7D371D135658B36AC22735490DADD5239D263C2E1B3025D5FC7221B3"
+    },
+    {
+      "path": "workers/content/KnowledgeClipper.Content.Worker.exe",
+      "bytes": 67490988,
+      "sha256": "F6EC35798F8948727B8664517FDBB096DB8A94C8DD079F612B05BAC4EA72D3B8"
+    },
+    {
+      "path": "workers/speech/KnowledgeClipper.Speech.Worker.exe",
+      "bytes": 92672,
+      "sha256": "BBE77CB1B7F4B9C87D29E8F6DBEB277254501665EA3F171A2BAA75026BB7FCF0"
+    },
+    {
+      "path": "workers/remnote/KnowledgeClipper.RemNoteExporter.Worker.exe",
+      "bytes": 93696,
+      "sha256": "D388301A8667AD334860A541C18300E5F3F0D3923477D5B2A3188B176E7DDCA6"
+    },
+    {
+      "path": "workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe",
+      "bytes": 10218204,
+      "sha256": "661F473D42B752BFF9B1211C2588F8856AAABA24012F9420ABABE09C65F766D2"
+    },
+    {
+      "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.3-20260828T073934Z/checkpoint.json",
+      "bytes": 15964,
+      "sha256": "8A9D2765804B7E7ED9A2B2B98C28DB25559C222DFBB757CDFFB6406FBAE61B32"
+    }
+  ],
+  "workerOperations": {
+    "image.ocr.mineru": [
+      "image-ocr"
+    ],
+    "content.deepseek": [
+      "understand-and-card",
+      "question.answer",
+      "question.make-cards"
+    ],
+    "speech.edge": [
+      "speech.synthesize",
+      "speech.playback"
+    ],
+    "export.remnote": [
+      "remnote.export"
+    ],
+    "export.anki": [
+      "export"
+    ]
+  },
+  "legacyEntrypointsExcluded": true,
+  "baseAuthority": {
+    "registryVersion": "1.2.4",
+    "releaseId": "knowledge-clipper-authority-v1.2.4-20260828T032500Z",
+    "treeSha256": "6CA2D59E66DF9F15CC1BE46890ABDA04F5FAFB98507716D91E568818A37882CE"
+  },
+  "coreSettings": {
+    "version": "2.4.3",
+    "checkpoint": "contracts/core/v2.4/settings-control/checkpoints/v2.4.3-20260828T073934Z/checkpoint.json",
+    "checkpointSha256": "8A9D2765804B7E7ED9A2B2B98C28DB25559C222DFBB757CDFFB6406FBAE61B32"
+  },
+  "moduleEvidence": {
+    "image-admission-receipt.json": "workers/image-ocr/candidates/1.2.0/admission-receipt.v1.json",
+    "content-formal-release-receipt.json": "content-worker/canary/formal-release/content.deepseek-0.6.0-win-x64-formal-20260828T070000Z/20260828T072123449Z-settings-snapshot-replay/formal-release-offline-receipt.v1.json",
+    "remnote-v2-offline-receipt.json": "canary/remnote-exporter-v2-offline/20260828T143218/receipt.json",
+    "anki-formal-release-receipt.json": "workers/anki-exporter/canary/formal-release-settings-probe/20260828T072807Z-4e1cb28a/receipt.json",
+    "speech-formal-release-receipt.json": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260828T072400Z-bbe77cb1/speech-formal-win-x64-release-receipt.json",
+    "speech-independent-validation-receipt.json": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260828T072400Z-bbe77cb1/speech-formal-win-x64-independent-validation-receipt.json"
+  }
+}

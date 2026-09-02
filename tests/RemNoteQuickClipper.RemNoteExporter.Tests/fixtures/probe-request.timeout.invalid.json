@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "remnote-readonly-probe-request.v1",
+  "probeId": "timeout-drift",
+  "mode": "health",
+  "timeoutMs": 30000,
+  "authorizationScope": "isolated-canary",
+  "target": { "rootRemId": "canary-root-id", "rootTitle": "零碎知识剪藏 Canary" },
+  "operations": ["status", "search", "list", "read"],
+  "evidence": {
+    "settingsSnapshot": { "path": "C:/fixtures/settings-snapshot.json", "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" }
+  }
+}

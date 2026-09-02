@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-ocr-companion-test-result.v2.schema.json",
+  "title": "KnowledgeClipper image/OCR companion test result v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "actionId",
+    "status",
+    "worker",
+    "formalWorkerRequest",
+    "fakeProvider",
+    "terminalResult",
+    "safety"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "image-ocr-companion-test-result.v2"
+    },
+    "actionId": {
+      "const": "image.ocr.test.offline-fake-provider"
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "failed"
+      ]
+    },
+    "worker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "const": "image.ocr.mineru"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "formalWorkerRequest": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "operation",
+        "absoluteExistingRequestUsed",
+        "configSnapshotProviderSettings"
+      ]
+    },
+    "fakeProvider": {
+      "type": "object",
+      "required": [
+        "calls",
+        "observedProviderSettings",
+        "exactMatch"
+      ]
+    },
+    "terminalResult": {
+      "type": "object",
+      "required": [
+        "status",
+        "outputKinds",
+        "itemDiagnostics"
+      ]
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "networkAccess",
+        "externalUpload",
+        "mineruServiceCalled",
+        "credentialResolved",
+        "secretValuePersisted"
+      ],
+      "properties": {
+        "networkAccess": {
+          "const": "prohibited"
+        },
+        "externalUpload": {
+          "const": false
+        },
+        "mineruServiceCalled": {
+          "const": false
+        },
+        "credentialResolved": {
+          "const": false
+        },
+        "secretValuePersisted": {
+          "const": false
+        }
+      }
+    }
+  }
+}

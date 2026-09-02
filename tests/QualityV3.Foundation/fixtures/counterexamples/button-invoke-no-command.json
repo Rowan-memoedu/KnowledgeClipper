@@ -1,0 +1,18 @@
+{
+  "fixtureId": "button-invoke-no-command",
+  "expectedRejectCode": "ui.invoke-not-correlated-to-command",
+  "subject": {
+    "schemaVersion": "quality-v3-ui-action-evidence.v1",
+    "trigger": {
+      "driver": "Windows.UIAutomation",
+      "automationId": "knowledge-clipper.desktop.settings.export.anki.probe-readonly",
+      "discovered": true,
+      "invokePattern": true,
+      "invoked": true,
+      "actionId": "fixture-action-no-command"
+    },
+    "typedEvents": [
+      { "eventType": "unrelated.command.accepted", "actionId": "different-action" }
+    ]
+  }
+}

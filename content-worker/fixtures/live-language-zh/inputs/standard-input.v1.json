@@ -1,0 +1,22 @@
+{
+  "schema_version": "standard-input/1.0.0",
+  "package_id": "clipper-content-live-language-zh",
+  "task_id": "live-language-zh-canary",
+  "input_version": "1",
+  "mode": "card",
+  "items": [
+    {
+      "item_id": "item-language-zh",
+      "source": {
+        "kind": "text",
+        "material_path": "materials/clip.md"
+      },
+      "hints": {
+        "category_id": "language_zh",
+        "target_term": "疑窦",
+        "context_state": "provided",
+        "requested_templates": ["language_context"]
+      }
+    }
+  ]
+}

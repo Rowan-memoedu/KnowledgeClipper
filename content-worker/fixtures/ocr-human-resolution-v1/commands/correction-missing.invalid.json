@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "knowledge-clipper-ocr-human-resolution-command/1.0.0",
+  "decisionKind": "ocr-human-resolution",
+  "targetToken": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "action": "user_correction",
+  "reason": "Missing correction fixture."
+}

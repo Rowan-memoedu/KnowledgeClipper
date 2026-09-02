@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "2.3.0",
+  "taskId": "task-playback-001",
+  "operation": "speech.playback",
+  "selector": "current-active",
+  "reason": "user_stop"
+}

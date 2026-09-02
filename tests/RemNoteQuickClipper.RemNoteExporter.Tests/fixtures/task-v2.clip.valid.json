@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "remnote-export-task.v2",
+  "taskPackageId": "fixture-v2-clip",
+  "documentTitle": "摘录 · fixture-v2",
+  "defaultSink": "mcp-direct",
+  "target": { "rootRemId": "root-rem-id", "rootTitle": "剪藏", "dateRouting": true },
+  "route": { "kind": "clip-daily-route", "timeZone": "Asia/Shanghai", "localDate": "2026-08-28", "dateFormat": "yyyy-MM-dd" },
+  "inputs": { "learningBundle": { "path": "inputs/learning-bundle.json", "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" } }
+}

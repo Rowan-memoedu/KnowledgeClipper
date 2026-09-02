@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-ocr-capability-status.v1.schema.json",
+  "title": "KnowledgeClipper image/OCR capability status v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "moduleId", "companionVersion", "workerBinding", "observedAt", "selectedMode", "effectiveProviderSettings", "checks", "safety"],
+  "properties": {
+    "schemaVersion": {"const": "image-ocr-capability-status.v1"},
+    "moduleId": {"const": "image-ocr"},
+    "companionVersion": {"const": "1.1.0"},
+    "workerBinding": {"type": "object", "required": ["workerId", "workerVersionRange", "contractVersionRange"]},
+    "observedAt": {"type": "string", "format": "date-time"},
+    "selectedMode": {"enum": ["ocr", "original"]},
+    "effectiveProviderSettings": {"$ref": "image-request.v1.schema.json#/properties/providerSettings"},
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["settings", "providerScript", "credentialReference", "offlineReadiness", "liveConnectivity", "retentionExecution", "coreIntegration"],
+      "properties": {
+        "settings": {"type": "object", "required": ["state"]},
+        "providerScript": {"type": "object", "required": ["state", "configured", "path", "exists"]},
+        "credentialReference": {"type": "object", "required": ["state", "configured", "reference", "secretValueProhibited"]},
+        "offlineReadiness": {"type": "object", "required": ["state", "reasons", "actionId", "networkAccessPerformed"]},
+        "liveConnectivity": {"type": "object", "required": ["state", "actionId", "externalUpload", "requiresConsent"]},
+        "retentionExecution": {"type": "object", "required": ["state", "requestMetadataDays", "automaticDeletionClaim"]},
+        "coreIntegration": {"type": "object", "required": ["originalFullPipeline", "partialFailedOnlyAutomaticContinuation"]}
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["networkAccessPerformed", "externalUploadPerformed", "credentialResolved", "secretValueProhibited"],
+      "properties": {
+        "networkAccessPerformed": {"const": false},
+        "externalUploadPerformed": {"const": false},
+        "credentialResolved": {"const": false},
+        "secretValueProhibited": {"const": true}
+      }
+    }
+  }
+}

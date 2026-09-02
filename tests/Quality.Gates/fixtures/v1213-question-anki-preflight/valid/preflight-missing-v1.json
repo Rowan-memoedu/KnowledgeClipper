@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "knowledge-clipper-v1213-question-anki-preflight-fixture.v1",
+  "evidenceRoot": "canary/sealed-question-anki-v1.2.13/20260830T101424Z",
+  "authority": {
+    "registryVersion": "1.2.13",
+    "checkpointSha256": "AF9D8494A47ACE7CF28ACAD561CCA648D1D4EC7BDCBABB305A3FE31FCA608BE7",
+    "registrySha256": "63BD9525E97E309ED9D8047E36F23668D6F7AE3CEBDEEA62157494CEF7293CEC",
+    "releaseTreeSha256": "0A82124F5408D5239414C4F995AFCC81AEC7DC29C04723F8D8BA7BC3FDE507FB"
+  },
+  "content": {
+    "admittedVersion": "0.8.0",
+    "admissionReceipt": {
+      "path": "content-worker/receipts/content-ocr-proofreading-0.8.0-admission-20260830T101000Z.json",
+      "sha256": "347C18E0131B3A3BC7D61BA711DE39E9332085C76DD555A0088EF46C98E015D1"
+    },
+    "rejectedVersion": "0.8.1",
+    "rejectionReceipt": {
+      "path": "content-worker/receipts/content-deepseek-0.8.1-never-promoted-failed-canary-20260830T101000Z.json",
+      "sha256": "D24C8B558BEFD74FF7C9F133975C4F29AE02873B415711BB0C08C6C6F9C8E675"
+    }
+  },
+  "classification": {
+    "failureClass": "preflight-missing-v1-manifest-before-anki-client",
+    "externalWrites": 0,
+    "retryOldAttempt": false,
+    "rerunPolicy": "new-immutable-task-only",
+    "promoteRejectedContent": false
+  }
+}

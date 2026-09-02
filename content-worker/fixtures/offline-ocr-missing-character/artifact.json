@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "artifactId": "content-fixture-ocr-missing",
+  "kind": "content-input",
+  "contractVersion": "1.0.0",
+  "mediaType": "application/json",
+  "files": [
+    { "path": "inputs/standard-input.v4.json", "sha256": "1d728f740d3e2b82ec05298fa2bb2201952bcd3dd97101618e50b4a5e9636725", "bytes": 1662, "mediaType": "application/json" },
+    { "path": "upstream/markdown/content.md", "sha256": "4fc90e9e634d9d193d9d728144cfcad05d064fec4c63480a9382bbe674256973", "bytes": 110, "mediaType": "text/markdown; charset=utf-8" },
+    { "path": "upstream/structured/content.json", "sha256": "d4ce3195489b1c2375eea61389b5bac32a2db11806aca26678717cece67d4112", "bytes": 377, "mediaType": "application/json" },
+    { "path": "provider-replay.v1.json", "sha256": "e068b7edbe38f4879a93ee65a654c507953fd27e5d4f43b1d4723af90e9e3616", "bytes": 2229, "mediaType": "application/json" }
+  ],
+  "createdAt": "2026-08-30T00:00:00.000Z",
+  "producer": { "stageId": "content.fixture", "workerId": "content.fixture", "workerVersion": "1.0.0", "attemptId": "fixture-ocr-missing" },
+  "inputRefs": [
+    { "artifactRef": "fixture.ocr.missing.markdown", "kind": "image-ocr.markdown", "contractVersion": "1.0.0", "manifestPath": "upstream/markdown/artifact.json", "expectedSha256": "353824e04c971a1a2f4adfe65307c3ba29c2d3acad8f920b67917db827fd487e" },
+    { "artifactRef": "fixture.ocr.missing.structured", "kind": "image-ocr.structured", "contractVersion": "1.0.0", "manifestPath": "upstream/structured/artifact.json", "expectedSha256": "019dbb9aefbf57451f4e3b4f4215aced5d0a5ca772374efd7d011e3a31b9525e" }
+  ],
+  "dataClass": "public",
+  "metadata": { "entrypoint": "inputs/standard-input.v4.json", "fixture": "offline-ocr-missing-character", "originalOcrImmutable": true }
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": "standard-input/2.0.0",
+  "package_id": "knowledge-clipper-language-writing-unreliable-v2",
+  "task_id": "language-writing-unreliable-v2",
+  "input_version": "2",
+  "mode": "card",
+  "items": [
+    {
+      "item_id": "item-language-en",
+      "source": { "kind": "text", "material_path": "materials/clip.md" },
+      "hints": {
+        "category_id": "language_en",
+        "answer_state": "not_applicable",
+        "target_term": "draft",
+        "context_state": "ambiguous",
+        "languagePracticeMode": "writing"
+      }
+    }
+  ]
+}

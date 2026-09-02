@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "knowledge-clipper-workflow-settings.v3",
+  "activeProfileId": "speech-en",
+  "profiles": {
+    "speech-en": {
+      "displayName": "English speech",
+      "workflow": { "processingProfile": "cards", "destinations": [] },
+      "capture": { "imageHandling": "original" },
+      "speech": {
+        "languageStrategy": "override", "languageOverride": "en-US",
+        "voicesByLanguage": { "zh-CN": "zh-CN-XiaoxiaoNeural", "en-US": "en-US-AvaMultilingualNeural", "es-ES": "es-ES-XimenaNeural", "ja-JP": "ja-JP-NanamiNeural", "ko-KR": "ko-KR-SunHiNeural" },
+        "ratePercent": 17, "volumePercent": -8, "pitchHz": 23,
+        "deployment": { "edgeTtsPath": "D:\\Runtime\\edge-tts.exe", "ffplayPath": "D:\\Runtime\\ffplay.exe" }
+      }
+    }
+  }
+}

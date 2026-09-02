@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "2.2.0", "queryId": "query-ordinary", "type": "task.get", "nextCursor": null,
+  "items": [{
+    "taskId": "task-ordinary", "operationId": "operation-ordinary", "intent": "clip.card", "status": "waiting_input",
+    "createdAt": "2026-08-26T04:00:00Z", "updatedAt": "2026-08-26T04:01:00Z", "attentionRequired": true,
+    "replayable": false, "summaryCode": "task.waiting_input", "decisionKind": null, "decisionTargetToken": null,
+    "answerAvailable": false, "questionTargetToken": null, "questionTurnCount": null, "questionAnswerRef": null
+  }]
+}

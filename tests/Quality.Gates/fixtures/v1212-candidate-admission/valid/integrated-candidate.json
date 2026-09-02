@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "knowledge-clipper-v1212-candidate-admission-fixture.v1",
+  "policy": {
+    "externalCalls": 0,
+    "workerRuns": 0,
+    "candidateHashBeforeDesktop": false,
+    "pendingIsFailure": false
+  },
+  "core": {
+    "path": "contracts/core/v2.5/checkpoints/v2.5.1-20260830T075400Z/checkpoint.json",
+    "sha256": "62996EF471F46470090BE40259BF95ACD84EB7640084A1FCD4EC85E680AEE4F3"
+  },
+  "authority": {
+    "checkpoint": {
+      "path": "contracts/authority/worker-registry/v1.2.12-20260830T075600Z/checkpoint.json",
+      "sha256": "552151B3EDBEED94FD1B4ECC7B49F78CD7503321119235BBF3ECAA2A0EEE8580"
+    },
+    "registry": {
+      "path": "contracts/authority/worker-registry/v1.2.12-20260830T075600Z/worker-registry.v1.json",
+      "sha256": "FC105AB65FD80B72779D1601E2C4B6FAA7ECCAF5F5C1BADC774060D8F685495A"
+    },
+    "qualification": {
+      "path": "receipts/knowledge-clipper-authority-1.2.12-offline-qualification-20260830T080000Z.json",
+      "sha256": "4E46CBE8532F05FBCE1BC0AE222A23390C8C4448720A9A4B53B28D2851F64B9E"
+    },
+    "release": {
+      "root": "releases/knowledge-clipper-authority-v1.2.12-20260830T075600Z/win-x64",
+      "fileCount": 284,
+      "totalBytes": 260374870,
+      "treeSha256": "31CA3150B1A2EF9F97DD67B3B5491E94C49275C23018BC75B8BFECACC504DF13"
+    }
+  },
+  "ankiPostAuthority": {
+    "path": "workers/anki-exporter/canary/shared-consumer-compatibility/20260830T080701Z-fe8c2407/receipt.json",
+    "sha256": "E8335BE40C626A4BECB04ABB76BEC7560A36A5855D053CA6990373984D4019A0"
+  },
+  "desktop": {
+    "requiredRegistryVersion": "1.2.12",
+    "integratedCandidateRoot": "releases/kc-integrated-settings-v1212-20260830T183500Z/win-x64",
+    "manifestSha256": "5D03C90D42FA2A1145FF6DCC4874BD059AC3EE072628F0A8DC81FB23983B4F3C",
+    "entrypointSha256": "29320D1CCAA252057D011490866CC7533901740C5C6921359B7A2F9F58C4720C",
+    "applicationDllSha256": "824DBD4652DCF9DF72D3FFFCE2F39D8D2CB2097EFF1846059717A123249BC74D",
+    "sealedFileCount": 838,
+    "sealedTotalBytes": 429594994,
+    "sealedTreeSha256": "4F1021038635984154290467011FBB25AB9D88DD7A1A035F059CFF309231416A",
+    "ownerReceipt": {
+      "path": "receipts/desktop-integrated-settings-v1.2.12-20260830T184500Z.json",
+      "sha256": "8090FAE764CFB91AFBFA95C8E66FAF7B84447CC8922CF98DE7F878FDEF500ED3"
+    },
+    "settingsUiAutomationLog": {
+      "path": "canary/desktop-windows/settings-companions-v1212-20260830T172500Z/settings-ui-automation.log",
+      "sha256": "08C5548BC17E12DA2C2F3FBA69E47D8798B7E5CA6CCD2B4DB0E90380B75FCC03"
+    },
+    "uiAutomationLog": {
+      "path": "canary/desktop-windows/20260830T081155Z/windows-ui-automation.log",
+      "sha256": "42F2D11205693CED5C128B83746DBE7AA7DE68630232CE420B5EE9F40B911AB1"
+    },
+    "physicalCtrlCLog": {
+      "path": "canary/desktop-windows/20260830T081155Z/ctrl-c-focused-selection.log",
+      "sha256": "492C060D42FAF6EDDA59AE3E7920EE8AAA8D201F667665C2B3BD5F59960FD9A4"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-module-settings-adapter.v3",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "profileSchema", "overrideSchema", "snapshotSchema", "credentialStorageBoundary", "modules", "actions"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-module-settings-adapter.v3" },
+    "profileSchema": { "const": "schemas/workflow-settings.v3.schema.json" },
+    "overrideSchema": { "const": "schemas/task-settings-override.v3.schema.json" },
+    "snapshotSchema": { "const": "schemas/task-settings-snapshot.v3.schema.json" },
+    "credentialStorageBoundary": { "type": "object", "additionalProperties": false, "required": ["profileAllowsSecrets", "taskSnapshotAllowsSecrets", "allowedMechanisms"], "properties": { "profileAllowsSecrets": { "const": false }, "taskSnapshotAllowsSecrets": { "const": false }, "allowedMechanisms": { "const": ["worker-owned-environment", "sha256-bound-task-artifact-reference"] } } },
+    "modules": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["moduleId", "status", "reason", "fields"],
+        "properties": {
+          "moduleId": { "type": "string", "minLength": 1 }, "status": { "enum": ["supported", "conditional", "unsupported"] }, "reason": { "type": "string", "minLength": 1 },
+          "fields": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["settingPointer", "editable", "defaultSource", "snapshotPointer", "effectTargets"], "properties": { "settingPointer": { "type": "string", "pattern": "^/" }, "editable": { "type": "boolean" }, "defaultSource": { "enum": ["resolverDefault", "moduleDefault", "taskArtifact", "fixedContract"] }, "snapshotPointer": { "type": "string", "pattern": "^/" }, "effectTargets": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } } } } }
+        }
+      }
+    },
+    "actions": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["actionId", "moduleId", "status", "invocation", "operation", "effectClass", "externalMutation", "outputKinds", "requiredArtifactKind"],
+        "properties": {
+          "actionId": { "type": "string", "minLength": 1 },
+          "moduleId": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["supported", "conditional", "unsupported"] },
+          "invocation": { "const": "explicit_only" },
+          "operation": { "type": "string", "minLength": 1 },
+          "effectClass": { "enum": ["local-read-only", "provider-read-only", "physical-audio", "external-write"] },
+          "externalMutation": { "type": "boolean" },
+          "outputKinds": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+          "requiredArtifactKind": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

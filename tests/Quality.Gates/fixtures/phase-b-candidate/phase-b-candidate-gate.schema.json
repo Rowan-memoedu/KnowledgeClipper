@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-phase-b-candidate-gate-fixture.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "authority", "invalidatedAuthority127", "desktop", "content061", "speech122", "speech123", "coreResolver", "historicalFailure", "currentPaths", "phaseB128", "qualificationPolicy"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-phase-b-candidate-gate-fixture.v1" },
+    "authority": { "$ref": "#/$defs/evidenceGroup" },
+    "invalidatedAuthority127": { "$ref": "#/$defs/evidenceGroup" },
+    "desktop": { "$ref": "#/$defs/evidenceGroup" },
+    "content061": { "$ref": "#/$defs/evidenceGroup" },
+    "speech122": { "$ref": "#/$defs/evidenceGroup" },
+    "speech123": { "$ref": "#/$defs/evidenceGroup" },
+    "coreResolver": { "$ref": "#/$defs/evidenceGroup" },
+    "historicalFailure": { "$ref": "#/$defs/evidenceGroup" },
+    "currentPaths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["C", "D"],
+      "properties": {
+        "C": { "$ref": "#/$defs/evidenceGroup" },
+        "D": { "$ref": "#/$defs/evidenceGroup" }
+      }
+    },
+    "phaseB128": { "$ref": "#/$defs/evidenceGroup" },
+    "qualificationPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["standardLongRootRequired", "shortRootMayQualify", "contentFormalReleaseMayCloseHistoricalFailure", "desktopModuleCheckpointMayBeUserEntrypoint"],
+      "properties": {
+        "standardLongRootRequired": { "const": true },
+        "shortRootMayQualify": { "const": false },
+        "contentFormalReleaseMayCloseHistoricalFailure": { "const": false },
+        "desktopModuleCheckpointMayBeUserEntrypoint": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "evidenceGroup": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "oneOf": [
+          { "$ref": "#/$defs/fileEvidence" },
+          { "type": "string", "minLength": 1 },
+          { "type": "integer", "minimum": 0 },
+          { "type": "boolean" }
+        ]
+      }
+    },
+    "fileEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }
+      }
+    }
+  }
+}

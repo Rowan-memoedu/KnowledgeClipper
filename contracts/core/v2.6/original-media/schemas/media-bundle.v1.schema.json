@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-media-bundle.v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "bundleId", "taskId", "runId", "sourceMode", "ocrInvoked", "items", "destinationStatus", "createdAt"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-media-bundle.v1" },
+    "bundleId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "taskId": { "type": "string", "minLength": 1 }, "runId": { "type": "string", "minLength": 1 },
+    "sourceMode": { "const": "original" }, "ocrInvoked": { "const": false },
+    "items": {
+      "type": "array", "minItems": 1,
+      "items": { "type": "object", "additionalProperties": false, "required": ["itemId", "mediaRef"], "properties": { "itemId": { "type": "string", "minLength": 1 }, "mediaRef": { "$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/artifactReference" } } }
+    },
+    "destinationStatus": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "prefixItems": [
+        { "type": "object", "additionalProperties": false, "required": ["destination", "status", "code"], "properties": { "destination": { "const": "remnote" }, "status": { "const": "conditional" }, "code": { "const": "mcp.media_write_unavailable" } } },
+        { "type": "object", "additionalProperties": false, "required": ["destination", "status", "code"], "properties": { "destination": { "const": "anki" }, "status": { "const": "supported" }, "code": { "const": "ordered-original-images.v1" } } }
+      ],
+      "items": false
+    },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

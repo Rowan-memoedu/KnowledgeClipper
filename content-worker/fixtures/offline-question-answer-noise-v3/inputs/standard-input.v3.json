@@ -1,0 +1,14 @@
+{
+  "schema_version": "standard-input/3.0.0",
+  "package_id": "knowledge-clipper-question-noise-v3",
+  "task_id": "question-noise-v3",
+  "input_version": "1",
+  "mode": "question",
+  "questionWorkflow": {
+    "schemaVersion": "question-workflow-input/1.0.0",
+    "phase": "answer",
+    "questionTurns": [{ "turnId": "question-1", "turnIndex": 0, "question": "为什么 TCP 建立连接需要三次握手？" }],
+    "answerAncestry": []
+  },
+  "items": [{ "item_id": "item-question", "source": { "kind": "question_workflow" } }]
+}

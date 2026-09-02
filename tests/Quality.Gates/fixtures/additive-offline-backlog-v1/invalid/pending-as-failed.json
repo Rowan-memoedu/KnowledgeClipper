@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "knowledge-clipper-additive-offline-backlog-gate-fixture.v1",
+  "baseline": {},
+  "requirementAudit": {},
+  "originalMode": {},
+  "imagePartialRetry": {},
+  "settingsHonesty": {},
+  "speechSettings": {},
+  "ankiSettings": {},
+  "remnoteSettings": {},
+  "languageCards": {},
+  "desktopAutomation": {},
+  "retentionSafety": {},
+  "legacyCanarySafety": {},
+  "ownerEvidence": { "core": "failed", "content": "pending", "image": "pending", "desktop": "pending", "speech": "module-passed-integration-pending", "anki": "module-passed-integration-pending", "remnote": "module-passed-authority-pending" },
+  "policy": { "externalCalls": 0, "workerStarts": 0, "pendingIsFailure": false, "candidateBound": false, "bAndCRemainPending": true }
+}

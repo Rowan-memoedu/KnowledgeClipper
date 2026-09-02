@@ -1,0 +1,23 @@
+{
+  "schema_version": "standard-input/1.0.0",
+  "package_id": "clipper-content-offline-structured-cleaning",
+  "task_id": "offline-structured-cleaning-canary",
+  "input_version": "1",
+  "mode": "card",
+  "items": [
+    {
+      "item_id": "item-structured-cleaning",
+      "source": {
+        "kind": "text",
+        "material_path": "materials/source.md"
+      },
+      "hints": {
+        "category_id": "general_learning",
+        "answer_state": "provided",
+        "context_state": "provided",
+        "risk_state": "ordinary",
+        "requested_templates": ["procedure"]
+      }
+    }
+  ]
+}

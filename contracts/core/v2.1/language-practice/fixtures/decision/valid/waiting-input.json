@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "knowledge-clipper-language-practice-decision.v2",
+  "decisionKind": "language-practice",
+  "targetToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "binding": {
+    "taskId": "task-language-001",
+    "runId": "run-language-001",
+    "stageId": "content-understand",
+    "attemptId": "attempt-language-001",
+    "operationId": "operation-language-001"
+  },
+  "sourceDecisionArtifact": {
+    "artifactRef": "language-practice-decision-001",
+    "kind": "language-practice-decision",
+    "contractVersion": "1.0.0",
+    "manifestPath": "runs/run-language-001/stages/content-understand/attempts/attempt-language-001/outputs/language-practice-decision/v0001/artifact.json",
+    "expectedSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "decisionCount": 2,
+  "categoryIds": ["language_zh", "language_en"],
+  "choices": ["meaning-reading", "writing", "both"],
+  "requestedAt": "2026-08-26T03:30:00Z"
+}

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "request-001",
+  "operationId": "operation-001",
+  "taskId": "task-001",
+  "runId": "run-001",
+  "stageId": "image-ocr",
+  "attemptId": "attempt-001",
+  "worker": { "id": "image.ocr.mineru", "version": "1.0.0" },
+  "contractVersion": "1.0.0",
+  "idempotencyKey": "1111111111111111111111111111111111111111111111111111111111111111",
+  "status": "completed",
+  "outputs": [{
+    "artifactRef": "ocr-output-001",
+    "kind": "text.ocr",
+    "contractVersion": "1.0.0",
+    "manifestPath": "runs/run-001/stages/image-ocr/attempts/attempt-001/outputs/ocr-output-001/v0001/artifact.json",
+    "expectedSha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  }],
+  "error": null,
+  "startedAt": "2026-08-25T10:00:00Z",
+  "finishedAt": "2026-08-25T10:00:02Z",
+  "warnings": [],
+  "sideEffects": [],
+  "metrics": { "items": 1 },
+  "payload": {}
+}

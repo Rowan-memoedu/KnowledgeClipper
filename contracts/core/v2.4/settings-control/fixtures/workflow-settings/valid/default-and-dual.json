@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "knowledge-clipper-workflow-settings.v1",
+  "activeProfileId": "daily-cards",
+  "profiles": {
+    "daily-cards": {
+      "displayName": "日常制卡",
+      "workflow": { "processingProfile": "cards", "destinations": ["remnote", "anki"] },
+      "capture": { "contextEnabled": true, "contextGranularity": "paragraph", "imageHandling": "ocr" },
+      "speech": { "voicesByLanguage": { "zh-CN": "zh-CN-XiaoxiaoNeural" }, "ratePercent": 8, "volumePercent": 0, "pitchHz": 0, "autoPlay": false },
+      "remnote": {
+        "schemaVersion": "remnote-destination-settings.v1", "enabled": true,
+        "target": { "rootRemId": "clip-root", "rootTitle": "剪藏" },
+        "advanced": { "sink": "markdown-zip", "clipRouting": "clip-daily-route", "cardRouting": "card-export", "timeZone": "Asia/Shanghai", "dateFormat": "yyyy-MM-dd" }
+      }
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "knowledge-clipper-profile-resolver.v2",
+  "defaultProcessingProfile": "cards",
+  "processingProfiles": ["learning", "cards"],
+  "defaultDestinations": [],
+  "destinations": ["remnote", "anki"],
+  "legacyProfileAliases": {
+    "parity-remnote": { "processingProfile": "learning", "destinations": ["remnote"] },
+    "cards-remnote": { "processingProfile": "cards", "destinations": ["remnote"] },
+    "cards-anki": { "processingProfile": "cards", "destinations": ["anki"] }
+  },
+  "destinationConfigurations": {
+    "remnote": {
+      "export": null,
+      "projection": {
+        "categoryRegistryVersion": "category-registry/1.0.0",
+        "templateMappings": {
+          "basic_qa": { "policy": "project", "cardType": "basic", "direction": "forward" },
+          "media_qa": { "policy": "reject-media-deferred", "cardType": null, "direction": null },
+          "language_context": { "policy": "project", "cardType": "basic", "direction": "forward" },
+          "concept_transfer": { "policy": "project", "cardType": "basic", "direction": "forward" },
+          "procedure": { "policy": "project", "cardType": "basic", "direction": "forward" }
+        },
+        "allowedTextBlockTypes": ["text", "markdown"],
+        "blockRendering": "single-block-verbatim-inline",
+        "assetRefPolicy": "reject-media-deferred"
+      }
+    },
+    "anki": {
+      "projection": {
+        "categoryRegistryVersion": "category-registry/1.0.0",
+        "categoryToDeckRoute": {
+          "question_answer": "question",
+          "language_zh": "language.zh",
+          "language_en": "language.en",
+          "general_learning": "other"
+        },
+        "templateMappings": {
+          "basic_qa": { "policy": "project", "noteTypeKey": "basic_qa", "frontField": "question", "backField": "answer" },
+          "media_qa": { "policy": "reject-media-deferred", "noteTypeKey": null, "frontField": null, "backField": null },
+          "language_context": { "policy": "project", "noteTypeKey": "language_item", "frontField": "context_sentence", "backField": "reading_and_meaning" },
+          "concept_transfer": { "policy": "project", "noteTypeKey": "basic_qa", "frontField": "question", "backField": "answer" },
+          "procedure": { "policy": "project", "noteTypeKey": "basic_qa", "frontField": "question", "backField": "answer" }
+        },
+        "revisionPolicy": "initial-revision-1",
+        "contentHashPolicy": "sha256-canonical-projection-v1",
+        "tags": [],
+        "assetRefPolicy": "reject-media-deferred"
+      }
+    }
+  },
+  "speech": {
+    "voicesByLanguage": {
+      "zh-CN": "zh-CN-XiaoxiaoNeural",
+      "en-US": "en-US-AvaMultilingualNeural",
+      "es-ES": "es-ES-XimenaNeural",
+      "ja-JP": "ja-JP-NanamiNeural",
+      "ko-KR": "ko-KR-SunHiNeural"
+    },
+    "ratePercent": 0,
+    "volumePercent": 0,
+    "pitchHz": 0,
+    "edgeTtsPath": null,
+    "ffplayPath": null
+  }
+}

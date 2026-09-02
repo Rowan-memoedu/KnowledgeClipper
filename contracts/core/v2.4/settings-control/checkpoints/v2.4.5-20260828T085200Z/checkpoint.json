@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "knowledge-clipper-core-authority-admission-checkpoint.v1",
+  "checkpointVersion": "2.4.5",
+  "createdAt": "2026-08-28T08:52:01.6100667+00:00",
+  "status": "passed-authority-admission-ready",
+  "supersedes": "contracts/core/v2.4/settings-control/checkpoints/v2.4.4-20260828T082300Z/checkpoint.json",
+  "core": {
+    "version": "2.4.4",
+    "executable": "dist/orchestrator/win-x64/v2.4.4/KnowledgeClipper.Orchestrator.exe",
+    "sha256": "ece6f35ac1e7e5ee1de2cbfa3242648c8df5580eeda3857de523e2cdbbce421a"
+  },
+  "content": {
+    "worker": "content.deepseek@0.6.1",
+    "manifestSha256": "b716e6476d34d325322f6c8930819aaedd33e06fafbe50f883e22acda10d39e9",
+    "treeSha256": "dd5ef58d6390dd02e8bed77d3adac24d83855dd0d9bc3214be938164d7f63f9b",
+    "liveGatePassed": true
+  },
+  "speech": {
+    "worker": "speech.edge@1.2.2",
+    "exeSha256": "c5fecde05fe949c0991c493be60a3d858d13893e0492f46f04761a50f5dd12b7",
+    "treeAlgorithm": "sha256(utf8(join(sorted(path|bytes|sha256),LF)))",
+    "treeSha256": "77eb10d84e6b25292fe119d625c06a984ba4952a42981bd0b8ce00ca90cf98e8",
+    "formalReceiptSha256": "a4c3ad17a3ab5837ce1294cd0ada4e85c7c7f341f32bcb636c1e810a43b028bf",
+    "independentReceiptSha256": "fc9b72672673909ec6f3f8ccbed8c9bdec21205b5584096f2a366fa5208c5099",
+    "deepPath": {
+      "status": "passed",
+      "absolutePayloadPathLength": 268,
+      "languages": [
+        "zh",
+        "en",
+        "es",
+        "ja",
+        "ko"
+      ],
+      "physicalSpeakerPlayback": false,
+      "receiptSha256": "226bb8df9a32f1bb72c7adbce35987f3cf033a2f83523e33d0ffd2dbe2e02ac1"
+    }
+  },
+  "compatibility": {
+    "frozenContractsV1Modified": false,
+    "authorityV126Modified": false,
+    "oldFailureReceiptsModified": false
+  },
+  "authorityBoundary": {
+    "authorityBound": false,
+    "intendedAuthority": "1.2.7",
+    "speechDeepPathReleasePending": false,
+    "phaseBFinal": false
+  },
+  "files": [
+    {
+      "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.4-20260828T082300Z/checkpoint.json",
+      "bytes": 5950,
+      "sha256": "dbc212dd2700c47126a2185bdfabfaf678cb93dd42b4f4a1ea59e53aa0afdf55"
+    },
+    {
+      "path": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260828T084915Z-c5fecde0/speech-formal-win-x64-release-receipt.json",
+      "bytes": 7124,
+      "sha256": "a4c3ad17a3ab5837ce1294cd0ada4e85c7c7f341f32bcb636c1e810a43b028bf"
+    },
+    {
+      "path": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260828T084915Z-c5fecde0/speech-formal-win-x64-independent-validation-receipt.json",
+      "bytes": 1937,
+      "sha256": "fc9b72672673909ec6f3f8ccbed8c9bdec21205b5584096f2a366fa5208c5099"
+    },
+    {
+      "path": "tests/RemNoteQuickClipper.Speech.Tests/canary/r20260828-084827-a-a5181b/deep-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/canary-receipt.json",
+      "bytes": 6838,
+      "sha256": "226bb8df9a32f1bb72c7adbce35987f3cf033a2f83523e33d0ffd2dbe2e02ac1"
+    },
+    {
+      "path": "dist/orchestrator/win-x64/v2.4.4/KnowledgeClipper.Orchestrator.exe",
+      "bytes": 68129952,
+      "sha256": "ece6f35ac1e7e5ee1de2cbfa3242648c8df5580eeda3857de523e2cdbbce421a"
+    },
+    {
+      "path": "content-worker/releases/content.deepseek-0.6.1-win-x64-formal-20260828T082100Z/release-manifest.v1.json",
+      "bytes": 14400,
+      "sha256": "b716e6476d34d325322f6c8930819aaedd33e06fafbe50f883e22acda10d39e9"
+    }
+  ]
+}

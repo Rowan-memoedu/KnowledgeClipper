@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "image-ocr-core-continuation-evidence.v5",
+  "workerVersion": "1.2.4",
+  "publicContractReuse": {
+    "commonV1Modified": false,
+    "moduleOwnedSchemas": [
+      "image-processing-provenance.v1",
+      "image-processing-provenance-original-binding.v1",
+      "image-original-media-bundle.v1"
+    ]
+  },
+  "ocrSameRunOriginal": {
+    "commonOutputKind": "image.original",
+    "publishedInCompletedOcrResult": true,
+    "payloadHashBoundToProvenance": true,
+    "bytesMediaTypeBound": true,
+    "roleOrderBound": true,
+    "additionalProviderCalls": 0
+  },
+  "originalPassThrough": {
+    "providerCalls": 0,
+    "orderedRoles": ["questionImages[]", "answerImages[]"],
+    "hashPreserved": true,
+    "mediaBundleKind": "image.original.bundle",
+    "provenanceKind": "image.processing.provenance",
+    "semanticsChanged": false
+  },
+  "ocrHumanDecision": {
+    "actions": ["accept", "correct"],
+    "defaultOcrRerun": false,
+    "requiresOriginalArtifactHashMatch": true,
+    "requiresSuccessfulOutputHashMatch": true,
+    "appendOnlyCorrection": true,
+    "sourceArtifactKinds": ["image.original", "image-ocr.markdown", "image-ocr.structured", "image.processing.provenance"]
+  },
+  "partialFailedItemsOnlyContinuation": {
+    "state": "available-core-v2.5",
+    "providerReceives": "failed item artifactRefs only",
+    "successfulItemsReusedByHash": true,
+    "partialBlocksDownstream": true
+  },
+  "downstreamIntegration": {
+    "coreAdmission": "pending-new-authority",
+    "waitingInputContinuation": "owned-by-core",
+    "destinationConsumers": "owned-by-destination-workers",
+    "claimedComplete": false
+  },
+  "retention": {
+    "requestMetadataDays": 30,
+    "executorState": "unsupported",
+    "automaticDeletionClaim": false
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "knowledge-clipper-portable-schema-closure-gate.v1",
+  "status": "passed",
+  "schemasChecked": 62,
+  "localRefsChecked": 188,
+  "failures": [],
+  "frozenArtifactSchemaPath": "contracts/v1/schemas/common/artifact.schema.json",
+  "frozenArtifactSchemaSha256": "14AAA3BA918B201280DF462677C39A373ACDF421C8DA06C1D4A7B6D619DA0E91",
+  "frozenArtifactSchemaPackedUnchanged": true
+}

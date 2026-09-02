@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ocr-proofread-bundle/1.0.0",
+  "type": "object",
+  "required": ["schema_version", "bundle_id", "package_id", "task_id", "input_version", "attempt_id", "created_at", "items", "release_state", "ai_trace_keys", "gates"],
+  "properties": {
+    "schema_version": { "const": "ocr-proofread-bundle/1.0.0" },
+    "bundle_id": { "type": "string", "minLength": 1 },
+    "package_id": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "input_version": { "type": "string", "minLength": 1 },
+    "attempt_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["item_id", "state", "provenance", "source_ref", "original_text", "original_text_sha256", "proofread_text", "proofread_text_sha256", "source_segments", "proofread_segments", "corrections", "unresolved", "gates"],
+        "properties": {
+          "item_id": { "type": "string", "minLength": 1 },
+          "state": { "enum": ["ready", "unresolved"] },
+          "provenance": { "type": "object" },
+          "source_ref": { "type": "object" },
+          "original_text": { "type": "string" },
+          "original_text_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "proofread_text": { "type": "string" },
+          "proofread_text_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "source_segments": { "type": "array" },
+          "proofread_segments": { "type": "array" },
+          "corrections": { "type": "array" },
+          "unresolved": { "type": "array" },
+          "gates": { "type": "array" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "release_state": { "enum": ["ready", "unresolved"] },
+    "ai_trace_keys": { "type": "array", "items": { "type": "string" } },
+    "gates": { "type": "array" }
+  },
+  "additionalProperties": false
+}

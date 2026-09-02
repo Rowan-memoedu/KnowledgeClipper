@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AssemblyName>KnowledgeClipper.Core.V3.TestHost</AssemblyName>
+    <RootNamespace>KnowledgeClipper.Core.V3.TestHost</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\KnowledgeClipper.Core.V3.Kernel\KnowledgeClipper.Core.V3.Kernel.csproj" />
+  </ItemGroup>
+</Project>

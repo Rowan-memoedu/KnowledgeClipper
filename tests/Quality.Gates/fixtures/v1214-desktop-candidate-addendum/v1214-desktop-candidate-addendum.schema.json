@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["candidate", "desktop", "authority", "evidence", "baseQualityReceipt", "manualBoundaryPolicy", "externalRerun"],
+  "properties": {
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "root", "manifestSha256", "sealedFileCount", "sealedTotalBytes", "sealedTreeSha256"],
+      "properties": {
+        "id": {"const": "kc-i-crq-v1214-20260830T105500Z"},
+        "root": {"const": "releases/kc-i-crq-v1214-20260830T105500Z/win-x64"},
+        "manifestSha256": {"const": "E4D18D1DE41AC6CC001B0E9D1E70F40BB8206A65D6573E1BC480B345D5886FDF"},
+        "sealedFileCount": {"const": 854},
+        "sealedTotalBytes": {"const": 430192317},
+        "sealedTreeSha256": {"const": "DEDDB7EA56CB410804A54FD376D4B4EF9D6D440CD3C39EEFF7D608C289A2CB9A"}
+      }
+    },
+    "desktop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidateId", "buildReceiptSha256", "fileCount", "totalBytes", "treeSha256", "equalityEvidence"],
+      "properties": {
+        "candidateId": {"const": "kc-i-crq-v1214-20260830T105500Z"},
+        "buildReceiptSha256": {"const": "66F8A54A69098D1B21C117C403DCC0F74E6FF714E5B0F062B2740E02B4807532"},
+        "fileCount": {"const": 544},
+        "totalBytes": {"const": 169218660},
+        "treeSha256": {"const": "69B4EA1BD04681826910AE1730A1ED909D6721E5EABD020F9DB692A00ABF80B6"},
+        "equalityEvidence": {"type": "string", "minLength": 1}
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceReleaseRoot", "checkpointPath", "checkpointSha256", "registryPath", "registrySha256", "releaseFileCount", "releaseTotalBytes", "releaseTreeSha256"],
+      "properties": {
+        "sourceReleaseRoot": {"type": "string", "minLength": 1},
+        "checkpointPath": {"type": "string", "minLength": 1},
+        "checkpointSha256": {"const": "C2DD2E6C2099E9D7A2D4C742A53BEDE28EA229CEF50D849A464F7C20314121D4"},
+        "registryPath": {"type": "string", "minLength": 1},
+        "registrySha256": {"const": "A1A95EE7FCBBBB3051777088E66389EC2C6578B30AD7562CFB0992DE4729897C"},
+        "releaseFileCount": {"const": 296},
+        "releaseTotalBytes": {"const": 260669250},
+        "releaseTreeSha256": {"const": "30F1A8E65A335811545114474573196B689657DA8BAFB511E7A2F84638DB9D3E"}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidateId", "candidateRoot", "ownerReceiptPath", "ownerReceiptSha256"],
+      "properties": {
+        "candidateId": {"const": "kc-i-crq-v1214-20260830T105500Z"},
+        "candidateRoot": {"const": "releases/kc-i-crq-v1214-20260830T105500Z/win-x64"},
+        "ownerReceiptPath": {"type": "string", "minLength": 1},
+        "ownerReceiptSha256": {"const": "17C1CD2CCD1E975893AA71E93ED6244E1F0B3D8D38D39A0832928561D38BACE6"}
+      }
+    },
+    "baseQualityReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"const": "26B197AF6A1E5F620099DD075604D81F9C4892F4549C7DAC0CBE2C6C9F155BDD"}
+      }
+    },
+    "manualBoundaryPolicy": {"const": "hand-test-not-release-failure"},
+    "externalRerun": {"const": false}
+  }
+}

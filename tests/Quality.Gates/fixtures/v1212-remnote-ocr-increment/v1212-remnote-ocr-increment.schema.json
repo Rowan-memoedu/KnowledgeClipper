@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "policy", "baseCandidateReceipt", "remnoteReceipt", "ocrReceipt", "candidate", "authority"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-v1212-remnote-ocr-increment-fixture.v1" },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["externalRerun", "ocrDownstream", "blocksPassedText"],
+      "properties": {
+        "externalRerun": { "const": false },
+        "ocrDownstream": { "const": "pending" },
+        "blocksPassedText": { "const": false }
+      }
+    },
+    "baseCandidateReceipt": { "$ref": "#/$defs/fileRef" },
+    "remnoteReceipt": { "$ref": "#/$defs/fileRef" },
+    "ocrReceipt": { "$ref": "#/$defs/fileRef" },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidateId", "manifestSha256", "sealedTreeSha256"],
+      "properties": {
+        "candidateId": { "const": "kc-integrated-settings-v1212-20260830T183500Z" },
+        "manifestSha256": { "$ref": "#/$defs/sha256" },
+        "sealedTreeSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registryVersion", "registrySha256", "checkpointSha256"],
+      "properties": {
+        "registryVersion": { "const": "1.2.12" },
+        "registrySha256": { "$ref": "#/$defs/sha256" },
+        "checkpointSha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+    "fileRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

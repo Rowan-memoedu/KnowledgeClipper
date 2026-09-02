@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "desktop-state.v1",
+  "revision": 0,
+  "foregroundState": "idle",
+  "contextMode": {"enabled": false, "granularity": "sentence"},
+  "originalImageMode": false,
+  "screenshotSession": {
+    "active": false,
+    "activeGroup": "question",
+    "questionImageCount": 0,
+    "answerImageCount": 0,
+    "canContinue": false,
+    "canFinish": false,
+    "canCancel": false,
+    "canUndo": false
+  },
+  "questionSession": {"open": false, "turnCount": 0, "answerAvailable": false},
+  "playback": "stopped",
+  "recentTask": {
+    "available": false,
+    "taskId": null,
+    "displayState": "not-queried",
+    "decisionKind": null
+  },
+  "lastAction": null,
+  "noticeCode": null
+}

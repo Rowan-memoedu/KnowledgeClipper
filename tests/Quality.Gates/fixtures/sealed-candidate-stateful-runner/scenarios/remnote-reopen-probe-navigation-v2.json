@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "knowledge-clipper-native-ui-scenario.v1",
+  "journey": "remnote",
+  "windowTimeoutMs": 30000,
+  "steps": [
+    { "id": "open-export", "operation": "select-item", "automationId": "knowledge-clipper.desktop.settings.navigation", "itemName": "导出", "waitAfterMs": 250 },
+    { "id": "wait-bound", "operation": "wait", "automationId": "knowledge-clipper.desktop.settings.export.remnote.bound-target" },
+    { "id": "persisted", "operation": "assert-contains", "automationId": "knowledge-clipper.desktop.settings.export.remnote.bound-target", "expected": "已绑定" },
+    { "id": "probe-after-restart", "operation": "invoke", "automationId": "knowledge-clipper.desktop.settings.export.remnote.probe-readonly", "waitAfterMs": 500 },
+    { "id": "probe-status", "operation": "assert-contains", "automationId": "knowledge-clipper.desktop.settings.export.remnote.probe-status", "expected": "writes=0", "timeoutMs": 60000 },
+    { "id": "close", "operation": "close-window" }
+  ]
+}

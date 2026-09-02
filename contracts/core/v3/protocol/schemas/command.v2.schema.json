@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.command/2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "commandId", "operationId", "operation", "subject", "idempotencyKey", "inputs", "body"],
+  "properties": {
+    "schema": {"const": "kc.command/2"},
+    "commandId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "operationId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "operation": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "subject": {
+      "type": "object", "additionalProperties": false, "required": ["type", "id"],
+      "properties": {"type": {"type": "string", "minLength": 1}, "id": {"type": "string", "minLength": 1}}
+    },
+    "idempotencyKey": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+    "expectedRevision": {"type": ["integer", "null"], "minimum": 0},
+    "authorization": {"type": ["object", "null"]},
+    "inputs": {"type": "array", "items": {"$ref": "../../artifacts/schemas/artifact-ref.v2.schema.json"}},
+    "body": {
+      "type": "object", "additionalProperties": false, "required": ["schema", "data"],
+      "properties": {"schema": {"type": "string", "minLength": 1}, "data": {}}
+    }
+  }
+}

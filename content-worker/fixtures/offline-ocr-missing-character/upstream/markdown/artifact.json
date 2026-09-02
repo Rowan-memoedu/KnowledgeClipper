@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0.0",
+  "artifactId": "fixture.ocr.missing.markdown",
+  "kind": "image-ocr.markdown",
+  "contractVersion": "1.0.0",
+  "mediaType": "text/markdown; charset=utf-8",
+  "files": [
+    {
+      "path": "upstream/markdown/content.md",
+      "sha256": "4fc90e9e634d9d193d9d728144cfcad05d064fec4c63480a9382bbe674256973",
+      "bytes": 110,
+      "mediaType": "text/markdown; charset=utf-8"
+    }
+  ],
+  "createdAt": "2026-08-30T00:00:00.000Z",
+  "producer": {
+    "stageId": "image-ocr",
+    "workerId": "image.ocr.mineru",
+    "workerVersion": "1.2.2",
+    "attemptId": "fixture-ocr-missing"
+  },
+  "inputRefs": [],
+  "dataClass": "public",
+  "metadata": { "entrypoint": "upstream/markdown/content.md", "synthetic": true }
+}

@@ -1,0 +1,15 @@
+{
+  "contractId": "knowledge-clipper.desktop-automation",
+  "contractVersion": "1.2.0",
+  "verifiedAt": "2026-08-26T05:43:01.237071Z",
+  "treeHashAlgorithm": "sha256(utf8(relativePath UTF-8 ordinal ascending|fileSha256 + LF))",
+  "treeSha256": "d105b10364e3015a85d4b6086a103e7094d7c3158e308280c3a31e06afb65637",
+  "receiptExcludedFromTreeHash": true,
+  "files": [
+    {
+      "path": "desktop-automation.contract.json",
+      "sha256": "2b93aab3ed4ef5571d2d6cf1a76b179d196e0560228536b86338005e219a28aa",
+      "bytes": 1640
+    }
+  ]
+}

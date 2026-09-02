@@ -1,0 +1,166 @@
+{
+  "schemaVersion": "export.anki.core-admission-packet.v1",
+  "status": "ready_for_core_admission",
+  "worker": {
+    "workerId": "export.anki",
+    "workerVersion": "1.4.0",
+    "entrypoint": "workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe",
+    "outputKinds": [
+      "anki-export-evidence",
+      "anki-connection-status",
+      "anki-managed-initialization-status"
+    ]
+  },
+  "release": {
+    "root": "releases/knowledge-clipper-anki-exporter-v1.4.0-20260901T050000Z/win-x64",
+    "treeSha256": "32848C3049C80607A6B742A56E0F597E06C7D95C676989DD118E6907730A60AF",
+    "releaseManifest": "releases/knowledge-clipper-anki-exporter-v1.4.0-20260901T050000Z/win-x64/workers/anki/release-manifest.v1.json",
+    "releaseManifestSha256": "11E0BAE7B3B62A344571E2E028AA531A22027EEC837AF8F3EE41CBA6DCFA9A7F",
+    "exe": "releases/knowledge-clipper-anki-exporter-v1.4.0-20260901T050000Z/win-x64/workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe",
+    "exeSha256": "B1F68947D8500766A8C63D30719BC849444F2533C2DB48DDC1065E2230C9751C",
+    "describe": "releases/knowledge-clipper-anki-exporter-v1.4.0-20260901T050000Z/win-x64/workers/anki/export.anki.describe.json",
+    "describeSha256": "C3085D9FA3046F68C5CE6141FFAEC3A4A13CB82BFFC7E02ECCD6FA606E73E5DE"
+  },
+  "companionContracts": {
+    "descriptor": {
+      "path": "releases/knowledge-clipper-anki-exporter-v1.4.0-20260901T050000Z/win-x64/workers/anki/contracts/anki-destination-settings-descriptor.v1.3.json",
+      "sha256": "F34C049D00225AFA72F220ECA69E304F818CFB091B226C7811475AEDC33938ED"
+    },
+    "descriptorSchema": {
+      "path": "releases/knowledge-clipper-anki-exporter-v1.4.0-20260901T050000Z/win-x64/workers/anki/contracts/anki-destination-settings-descriptor.v1.3.schema.json",
+      "sha256": "6ABDD94C4E72C100DC12B389A48B0455EFA59C6977C8DD640401C7AB093DA54C"
+    },
+    "initializationStatusSchema": {
+      "path": "releases/knowledge-clipper-anki-exporter-v1.4.0-20260901T050000Z/win-x64/workers/anki/contracts/anki-managed-initialization-status.v1.schema.json",
+      "sha256": "1431C8EA0F4FA1D7CA57D338BE9AF29CC3777C29BDB597D436D1D5055A9CE851"
+    }
+  },
+  "typedProbeAdmission": {
+    "operation": "probe",
+    "effectClass": "provider-read-only",
+    "externalMutation": false,
+    "executionPolicy": "explicit-user-action",
+    "inputKinds": ["anki-export-config"],
+    "requestedOutputs": ["anki-connection-status"],
+    "configSnapshotPolicy": "ankiConfigArtifactId-only",
+    "allowedProviderActions": [
+      "requestPermission",
+      "version",
+      "getActiveProfile",
+      "apiReflect",
+      "modelNames",
+      "modelFieldNames",
+      "modelTemplates",
+      "modelStyling",
+      "deckNames"
+    ],
+    "forbiddenProviderActions": [
+      "createModel",
+      "createDeck",
+      "storeMediaFile",
+      "addNote",
+      "updateNoteFields",
+      "addTags",
+      "changeDeck"
+    ]
+  },
+  "managedInitializationAdmission": {
+    "operation": "initialize-managed",
+    "standardCli": "run --request <absolute-request.json>",
+    "explicitCliAlias": "initialize-managed --request <absolute-request.json>",
+    "effectClass": "provider-write",
+    "externalMutation": true,
+    "executionPolicy": "explicit-user-action",
+    "inputKinds": ["anki-export-config"],
+    "requestedOutputs": ["anki-managed-initialization-status"],
+    "configRequirements": {
+      "shaBoundArtifact": true,
+      "configSnapshotPolicy": "ankiConfigArtifactId-only",
+      "provision_managed": true
+    },
+    "payload": {
+      "sideEffectAuthorization": {
+        "schemaVersion": "1.0.0",
+        "authorizationId": "<identifier-from-explicit-ui-action>",
+        "mode": "explicit-user-action",
+        "operation": "initialize-managed",
+        "scope": "managed-models-and-decks",
+        "taskId": "<exact-taskId>",
+        "configArtifactId": "<exact-ankiConfigArtifactId>",
+        "authorizedAt": "<RFC3339>"
+      }
+    },
+    "allowedProviderActions": [
+      "requestPermission",
+      "version",
+      "getActiveProfile",
+      "apiReflect",
+      "modelNames",
+      "modelFieldNames",
+      "modelTemplates",
+      "modelStyling",
+      "deckNames",
+      "createModel",
+      "createDeck"
+    ],
+    "forbiddenProviderActions": [
+      "storeMediaFile",
+      "addNote",
+      "updateNoteFields",
+      "addTags",
+      "changeDeck"
+    ],
+    "retryPolicy": {
+      "automaticRetry": false,
+      "responseLossStatus": "unknown_external_state",
+      "responseLossRetryable": false,
+      "reconcile": "new-explicit-action-query-then-create-missing"
+    }
+  },
+  "originalMediaMainline": {
+    "productDecision": "original-image-mode-destination-is-anki-only",
+    "status": "worker_ready_core_typed_route_required",
+    "projection": "ordered-original-images.v1",
+    "bundleKind": "CardBundle",
+    "bundleSchemaVersion": "1.1",
+    "orderedBindings": ["questionImages", "answerImages"],
+    "destination": "anki",
+    "otherDestinations": [],
+    "coreRequirements": [
+      "preserve source artifact sha256 and recursive ancestry",
+      "emit contiguous questionImages ordinals before answerImages ordinals",
+      "bind anki-export-config.v2 note type media_projection=ordered-original-images.v1",
+      "return destination conditional/unsupported when typed binding is absent; do not mark whole task succeeded"
+    ],
+    "workerGuarantees": [
+      "content-addressed media filenames",
+      "same-name different-content rejection",
+      "exact HTML field projection",
+      "media readback",
+      "idempotent card replay",
+      "unknown external state after uncertain write"
+    ]
+  },
+  "qualification": {
+    "unitTests": {"command": "python -m unittest discover -s workers/anki-exporter/tests -v", "passed": 67, "failed": 0},
+    "formalFakeCanary": {
+      "receipt": "workers/anki-exporter/canary/formal-managed-initialization/20260901T050008Z-formal-v140-managed-init/receipt.json",
+      "receiptSha256": "5F21CC77FF4A27C2B69173EC4F362B38041FEEDC0E4A8702A035BF0B10DAB864",
+      "unauthorizedProviderCalls": 0,
+      "firstRun": {"modelsCreated": 1, "decksCreated": 1, "exactReadback": true},
+      "explicitReplay": {"modelsCreated": 0, "decksCreated": 0, "outcome": "already_current"},
+      "forbiddenActionsObserved": [],
+      "realAnkiConnectCalls": 0
+    }
+  },
+  "promotion": {
+    "promotedToAuthority": false,
+    "requiresNewAppendOnlyAuthority": true,
+    "invalidatedNeverPromoteReleaseRoots": [
+      "releases/knowledge-clipper-anki-exporter-v1.4.0-20260901T045600Z/win-x64",
+      "releases/knowledge-clipper-anki-exporter-v1.4.0-20260901T045700Z/win-x64"
+    ],
+    "realInitialization": "not-run-awaiting-explicit-user-click-in-new-ui"
+  },
+  "createdAt": "2026-09-01T05:01:00Z"
+}

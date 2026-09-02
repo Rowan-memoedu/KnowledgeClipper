@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "knowledge-clipper-settings-control-owner-evidence.v1",
+  "evidenceId": "synthetic-shape-only",
+  "modules": {
+    "desktop": {
+      "status": "no-go",
+      "evidence": [],
+      "settingsSchema": {
+        "schema": { "path": "missing/settings.schema.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+        "valid": [{ "path": "missing/settings.valid.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" }],
+        "invalid": [{ "path": "missing/settings.invalid.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" }]
+      },
+      "profileSchema": {
+        "schema": { "path": "missing/profile.schema.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+        "valid": [{ "path": "missing/profile.valid.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" }],
+        "invalid": [{ "path": "missing/profile.invalid.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" }]
+      },
+      "observations": {
+        "corruptFallback": false,
+        "backupCreated": false,
+        "backupPreserved": false,
+        "adapterFieldsValid": false,
+        "guiPages": ["normal", "advanced", "diagnostics"],
+        "automationIds": ["settings.normal", "settings.advanced", "settings.diagnostics"],
+        "automationIdsUnique": false,
+        "saveCancel": false,
+        "restartHint": false,
+        "unsupportedConditionalReadOnly": false,
+        "secretGuiConfigurable": false,
+        "secretLeaks": 0
+      }
+    },
+    "core": {
+      "status": "no-go",
+      "evidence": [],
+      "snapshotBinding": {
+        "settings": { "path": "missing/settings.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+        "taskSnapshot": { "path": "missing/snapshot.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+        "resolvedPlan": { "path": "missing/plan.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+        "workerRequest": { "path": "missing/request.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+        "retryWorkerRequest": { "path": "missing/retry.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+        "activeTaskSnapshotAfterSettingsChange": { "path": "missing/active-after.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+        "newTaskSnapshot": { "path": "missing/new-snapshot.json", "sha256": "1111111111111111111111111111111111111111111111111111111111111111" },
+        "mappings": [{
+          "settingPointer": "/editable/value",
+          "snapshotPointer": "/editable/value",
+          "planConfigPointer": "/stages/0/configSnapshot/value",
+          "planPayloadPointer": "/stages/0/payload/settings/value",
+          "requestConfigPointer": "/configSnapshot/value",
+          "requestPayloadPointer": "/payload/settings/value"
+        }]
+      },
+      "observations": {
+        "stageConfigBound": false,
+        "stagePayloadBound": false,
+        "workerRequestBound": false,
+        "activeTaskFrozen": false,
+        "retryUsesOriginalSnapshot": false,
+        "newTaskUsesNewSnapshot": false
+      }
+    },
+    "content": {
+      "status": "no-go",
+      "evidence": [{ "path": "missing/content-receipt.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" }]
+    },
+    "remnote": {
+      "status": "no-go",
+      "evidence": [],
+      "clippingDateRoute": { "artifact": { "path": "missing/clipping.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" }, "pointer": "/dateRouting", "expected": true },
+      "cardsDateRoute": { "artifact": { "path": "missing/cards.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" }, "pointer": "/dateRouting", "expected": false }
+    },
+    "anki": { "status": "no-go", "evidence": [], "probeMode": "read-only", "mutatingActions": 0, "externalCalls": 0 },
+    "imageOcr": { "status": "no-go", "evidence": [], "probeMode": "validate-only", "realUploads": 0 },
+    "speech": { "status": "no-go", "evidence": [], "probeMode": "validate-only", "physicalSpeakerInvocations": 0 }
+  }
+}

@@ -1,0 +1,258 @@
+{
+  "schemaVersion": "knowledge-clipper-core-phase-b-followup-checkpoint.v1",
+  "checkpointVersion": "2.4.7",
+  "createdAt": "2026-08-28T09:29:41.8980001+00:00",
+  "status": "passed-core-runtime-authority-ready",
+  "supersedes": {
+    "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.6-20260828T091000Z/checkpoint.json",
+    "sha256": "c02bc9143a842cfdb1bde77e62d65f9300d6f168672212045ccf3b537ee342d3"
+  },
+  "core": {
+    "version": "2.4.6",
+    "executable": "dist/orchestrator/win-x64/v2.4.6/KnowledgeClipper.Orchestrator.exe",
+    "bytes": 68134048,
+    "sha256": "ed7c75975ff266d1fa40e1186f7e0ec15ab7fdf2fe285d17b0cd7b7279b54761"
+  },
+  "fixes": {
+    "ankiLegacyExecutionProfile": {
+      "source": "resolved destinations",
+      "anki": "cards-anki",
+      "learningRemNote": "parity-remnote",
+      "cardsRemNote": "cards-remnote",
+      "externalCallBeforePriorFailure": false
+    },
+    "remnoteLearningProjection": {
+      "route": "clip-daily-route",
+      "multilineWithoutBlankLines": "ordered stable v2 entries",
+      "textPerLineModified": false,
+      "blankLines": "fail-closed",
+      "reservedDelimiters": "fail-closed"
+    }
+  },
+  "validation": {
+    "publicContracts": {
+      "status": "passed",
+      "schemas": 59,
+      "validFixtures": 62,
+      "invalidFixtures": 50,
+      "receiptSha256": "1f225f709c4b2935a181450cf047e516e8db0448b404daf3ebc8d85ee44b5cf4"
+    },
+    "orchestrator": {
+      "status": "passed",
+      "tests": 23,
+      "receiptSha256": "275b8c1ca5a4840b52d63d3b60cead93902cff11f8a25a537479a22bb630170b"
+    },
+    "coreAdapter": {
+      "status": "passed",
+      "receiptSha256": "5fe990f071fcc01a8112c852903f9b5fd1eefab91351d68d0a69f46d2d539f90"
+    },
+    "settings": {
+      "status": "passed",
+      "externalCalls": 0,
+      "physicalSpeakerInvocations": 0,
+      "receiptSha256": "77df8f2eebddfa69200ec886663aef52c302da7c1af05a74ad2592ceca5e5c4b"
+    },
+    "remnoteContentAdapter": {
+      "status": "passed",
+      "receiptSha256": "87b415ca5bfe093c81d58d9ab827d2f7c326c03a37a55b012263c2e28e4dd581"
+    },
+    "build": {
+      "status": "passed",
+      "sdk": "8.0.424",
+      "warnings": 0,
+      "errors": 0,
+      "receiptSha256": "451c568e02274c16d1d6c0ff6be8fc7c6681583bcc0e3eea0c78ea8361523d5d"
+    }
+  },
+  "priorPhaseB": {
+    "authority": "1.2.8",
+    "authorityCheckpointSha256": "5c0cccba82743048126a4a1d56949661e7dae402d6deef6233e4b9db9b2512ae",
+    "executionReceipt": "canary/phase-b-v1.2.8/20260828T090400Z/execution-receipt.json",
+    "executionReceiptSha256": "66f71d43a59aeed8f594af773cbf6af10b9f805ff0d939c78e43dd7c3ce5794c",
+    "harnessExitCodes": "0/0/0/0",
+    "actualPathStatus": "partial/partial/partial/partial",
+    "final": false,
+    "dRemNoteUnknownExternalStateAutoRetried": false
+  },
+  "authorityBoundary": {
+    "currentAuthority": "1.2.9-invalidated",
+    "authorityBound": false,
+    "intendedAuthority": "1.2.10+",
+    "speechWorkerRequired": "speech.edge@1.2.3",
+    "speechPlaybackDeepPathReleasePending": false,
+    "phaseBFinal": false
+  },
+  "compatibility": {
+    "frozenContractsV1Modified": false,
+    "authorityV129Modified": false,
+    "oldFailureReceiptsModified": false
+  },
+  "tree": {
+    "algorithm": "sha256(path NUL sha256 NUL bytes LF, ordinal path order)",
+    "fileCount": 32,
+    "totalBytes": 68546259,
+    "treeSha256": "4b354958c5c6823aa9ec6b946a242b59ede12b4bd75fcf77122daa81bbe85e19",
+    "files": [
+      {
+        "path": "canary/phase-b-v1.2.8/20260828T090400Z/execution-receipt.json",
+        "bytes": 4237,
+        "sha256": "66f71d43a59aeed8f594af773cbf6af10b9f805ff0d939c78e43dd7c3ce5794c"
+      },
+      {
+        "path": "contracts/authority/worker-registry/v1.2.9-20260828T091100Z/checkpoint.json",
+        "bytes": 10919,
+        "sha256": "5c0cccba82743048126a4a1d56949661e7dae402d6deef6233e4b9db9b2512ae"
+      },
+      {
+        "path": "contracts/authority/worker-registry/v1.2.9-20260828T091100Z/invalidation-receipt.v1.json",
+        "bytes": 1418,
+        "sha256": "b7dd9eca93d71792aca5d9d41db5c9572b5f49951b54622b17b8241a1a96571e"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.6-20260828T091000Z/checkpoint.json",
+        "bytes": 7213,
+        "sha256": "c02bc9143a842cfdb1bde77e62d65f9300d6f168672212045ccf3b537ee342d3"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.6-20260828T091000Z/invalidation-receipt.json",
+        "bytes": 860,
+        "sha256": "ba047359921253387873433411b83a7ce616bafc26a7bdc0d7abf3d52d5f799c"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.7-20260828T092200Z/core-adapter.receipt.json",
+        "bytes": 3579,
+        "sha256": "5fe990f071fcc01a8112c852903f9b5fd1eefab91351d68d0a69f46d2d539f90"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.7-20260828T092200Z/orchestrator-regression.receipt.json",
+        "bytes": 7923,
+        "sha256": "275b8c1ca5a4840b52d63d3b60cead93902cff11f8a25a537479a22bb630170b"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.7-20260828T092200Z/phase-b-build.receipt.json",
+        "bytes": 148,
+        "sha256": "451c568e02274c16d1d6c0ff6be8fc7c6681583bcc0e3eea0c78ea8361523d5d"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.7-20260828T092200Z/public-contracts.receipt.json",
+        "bytes": 754,
+        "sha256": "1f225f709c4b2935a181450cf047e516e8db0448b404daf3ebc8d85ee44b5cf4"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.7-20260828T092200Z/remnote-content-adapter.receipt.json",
+        "bytes": 1754,
+        "sha256": "87b415ca5bfe093c81d58d9ab827d2f7c326c03a37a55b012263c2e28e4dd581"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.7-20260828T092200Z/settings-control.receipt.json",
+        "bytes": 3054,
+        "sha256": "77df8f2eebddfa69200ec886663aef52c302da7c1af05a74ad2592ceca5e5c4b"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/module-settings-adapter.v1.schema.json",
+        "bytes": 2272,
+        "sha256": "1f4930990b0705ea7e507b200baef0637f75d926f0544f5481866a0009c5a709"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/module-settings-adapter.v2.schema.json",
+        "bytes": 2026,
+        "sha256": "c130833b3c709a819deaeaabbd170e6486433d0857adad5d253f452288863c1e"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/task-settings-override.v1.schema.json",
+        "bytes": 1547,
+        "sha256": "d76c9803d962d116d4d5a5bbe251b7d3bb0d6a0c8dd7375544c5c66c1002f45f"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/task-settings-override.v2.schema.json",
+        "bytes": 787,
+        "sha256": "a1e86f41a1a0cc93b4c92458156749e8e5681507067b442b2931152774d44eb2"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/task-settings-snapshot.v1.schema.json",
+        "bytes": 5485,
+        "sha256": "cff2addccbed715fd9916ebaffc7ab1e4baa2a67658c85da023c9a85ed4c1944"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/task-settings-snapshot.v2.schema.json",
+        "bytes": 3889,
+        "sha256": "268f4b9b638d5227cb59fd9950e0a531b3d0ed13cc5d27128985453873fb9d53"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/workflow-settings.v1.schema.json",
+        "bytes": 2363,
+        "sha256": "e4fab209d12776b5254cec1ccb2db8af765a1c4c66c498c8afe4fcf3e9f21d86"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/schemas/workflow-settings.v2.schema.json",
+        "bytes": 3495,
+        "sha256": "50aaf86a0748f76f329f8f3fb5e91c61cf0fead74196c7d164068379d3f6e6b9"
+      },
+      {
+        "path": "dist/orchestrator/win-x64/v2.4.6/KnowledgeClipper.Orchestrator.exe",
+        "bytes": 68134048,
+        "sha256": "ed7c75975ff266d1fa40e1186f7e0ec15ab7fdf2fe285d17b0cd7b7279b54761"
+      },
+      {
+        "path": "orchestrator/Core/DesktopIntentResolver.cs",
+        "bytes": 48906,
+        "sha256": "6386fa1a2e2ae7484bde650f4e111071b7c5bc5105c01cc37d16f5a5a4d19944"
+      },
+      {
+        "path": "orchestrator/Core/SettingsControl.cs",
+        "bytes": 37033,
+        "sha256": "340de9aa8da458fbf91125de8a41ac6f7254da39f536dbaf8251b5b5847af591"
+      },
+      {
+        "path": "orchestrator/Core/StageInputResolver.cs",
+        "bytes": 65567,
+        "sha256": "73253ff3237283e0f86a8388813bd45bfca363a788e42572558c54931cb65a19"
+      },
+      {
+        "path": "tests/CoreAdapter.IntegrationTests/Program.cs",
+        "bytes": 57457,
+        "sha256": "a532ab4f11d18aae912b50705fc31800725afc99725a2dc3bdd5a367f87ac0a7"
+      },
+      {
+        "path": "tests/PhaseB.Canary/PhaseB.Canary.csproj",
+        "bytes": 413,
+        "sha256": "41700c9e77f927894a4ec2e196644612d19266fce2abf45c609cd48bab2fe62c"
+      },
+      {
+        "path": "tests/PhaseB.Canary/Program.cs",
+        "bytes": 22539,
+        "sha256": "6df62d0cb4e2cdcb4ad9135c48025123a30d2b8292b07a381aeaf4b00de27544"
+      },
+      {
+        "path": "tests/RemNoteQuickClipper.RemNoteExporter.Tests/ContentAdapterCompatibility/Program.cs",
+        "bytes": 60661,
+        "sha256": "99dd39840ca26bf777765aca1c320d188ffcca7b001de4fabb812799f9b84795"
+      },
+      {
+        "path": "tests/SettingsControl.IntegrationTests/Program.cs",
+        "bytes": 32097,
+        "sha256": "c8575c236987915e5de5d51d18c21b4855b822ec88409a1be0b04cb695920319"
+      },
+      {
+        "path": "tools/Invoke-KnowledgeClipperPhaseB.ps1",
+        "bytes": 9241,
+        "sha256": "4e347d161a8d86f5aab6d0efeaa90c8eaac3adf1f810d169122980afeb1ddffb"
+      },
+      {
+        "path": "tools/New-CorePhaseBFollowupCheckpoint.ps1",
+        "bytes": 8710,
+        "sha256": "841cef1483eb9b92bb32ce296ca7dca9fd9cbea02b01a77bb7f262462bc9f47f"
+      },
+      {
+        "path": "tools/New-CorePhaseBValidationReceipts.ps1",
+        "bytes": 4599,
+        "sha256": "13bcacb436aa13d491d10806762faaf75fd740d1368ecb06dd08828a3b3f7afb"
+      },
+      {
+        "path": "tools/Publish-CoreRuntime.ps1",
+        "bytes": 1265,
+        "sha256": "f57555496e830afebb9be3e97123fd2acc986151dafbc6be212e20ff6a31cf87"
+      }
+    ]
+  }
+}

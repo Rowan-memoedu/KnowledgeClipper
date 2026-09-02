@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./artifact.schema.json",
+  "title": "RemNote Quick Clipper Artifact v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactId",
+    "kind",
+    "contractVersion",
+    "mediaType",
+    "files",
+    "createdAt",
+    "producer",
+    "inputRefs",
+    "dataClass"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "artifactId": { "$ref": "#/$defs/identifier" },
+    "kind": { "$ref": "#/$defs/artifactKind" },
+    "contractVersion": { "$ref": "#/$defs/semanticVersion" },
+    "mediaType": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/hashedFile" }
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stageId", "workerId", "workerVersion", "attemptId"],
+      "properties": {
+        "stageId": { "$ref": "#/$defs/identifier" },
+        "workerId": { "$ref": "#/$defs/identifier" },
+        "workerVersion": { "$ref": "#/$defs/semanticVersion" },
+        "attemptId": { "$ref": "#/$defs/identifier" }
+      }
+    },
+    "inputRefs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifactReference" }
+    },
+    "dataClass": {
+      "type": "string",
+      "enum": ["public", "personal", "sensitive", "secret-prohibited"]
+    },
+    "metadata": { "type": "object" }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "artifactKind": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}$"
+    },
+    "jobRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^(?![A-Za-z]:[\\\\/])(?![\\\\/])(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$"
+    },
+    "hashedFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "bytes", "mediaType"],
+      "properties": {
+        "path": { "$ref": "#/$defs/jobRelativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "mediaType": { "type": "string", "minLength": 1, "maxLength": 255 }
+      }
+    },
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactRef", "kind", "contractVersion", "manifestPath", "expectedSha256"],
+      "properties": {
+        "artifactRef": { "$ref": "#/$defs/identifier" },
+        "kind": { "$ref": "#/$defs/artifactKind" },
+        "contractVersion": { "$ref": "#/$defs/semanticVersion" },
+        "manifestPath": { "$ref": "#/$defs/jobRelativePath" },
+        "expectedSha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "core-adapter-canary.v1",
+  "status": "passed",
+  "results": [
+    {
+      "name": "fake-worker-submit-profile-matrix",
+      "status": "passed",
+      "profiles": [
+        "cards-remnote",
+        "parity-remnote",
+        "cards-anki"
+      ],
+      "clip": "succeeded",
+      "read": "succeeded",
+      "screenshot": "succeeded",
+      "anki": "succeeded",
+      "remNoteWorker": "fake",
+      "realAnkiStrictLoader": true,
+      "ocrOrder": "question1-question2-answer1"
+    },
+    {
+      "name": "knowledge-clipper-destination-neutral-routing-v2",
+      "status": "passed",
+      "processingProfiles": [
+        "learning",
+        "cards"
+      ],
+      "destinations": [
+        "remnote",
+        "anki"
+      ],
+      "contentOnlyStages": [
+        "content.understand-and-card"
+      ],
+      "dualDestinationStages": [
+        "content.understand-and-card",
+        "export-remnote",
+        "anki-export"
+      ],
+      "legacyAliasAccepted": true,
+      "statusProjectionLegacyIdentityLeak": false,
+      "unsupportedLearningAnki": "rejected"
+    },
+    {
+      "name": "stage-scoped-playback-stop-and-replay",
+      "status": "passed",
+      "inputText": "read and keep clipping",
+      "stop": {
+        "taskState": "succeeded",
+        "runId": "run-20260828093443451",
+        "attemptId": "attempt-20260828093443794-f5d68cd1749f44cf8ebeb6fc15fdc915",
+        "publicStatus": "cancelled",
+        "playbackState": "stopped",
+        "cancelReason": "user_stop",
+        "receiptSchemaVersion": "2.3.0",
+        "resolvedOperationId": "operation-6e55eda4816b456c96066fe05f23a716",
+        "concurrentLoserCode": "control.playback_already_requested",
+        "runCancelRequested": false,
+        "contentStatus": "completed",
+        "exportStatus": "completed"
+      },
+      "replay": {
+        "runId": "run-20260828093444237-ba47d3922bb34f04a020ec1e9c553fbd",
+        "attemptId": "attempt-20260828093444272-dfa08416b359491883202eb6011ef96d",
+        "publicStatus": "completed",
+        "inputArtifactRef": "audio-speech",
+        "inputSha256": "5603b380640ca4b8914fe6d6298c1bb2cfe66f5181ebc50af25194df5530205d",
+        "stages": [
+          "speech-playback"
+        ],
+        "workerStarts": 2,
+        "synthesisRuns": 1,
+        "contentRuns": 1,
+        "exportRuns": 1
+      }
+    },
+    {
+      "name": "public-stage-control-fail-closed-and-recovery",
+      "status": "passed",
+      "noActive": "control.playback_not_active",
+      "terminal": "control.playback_terminal",
+      "ambiguous": "control.playback_ambiguous",
+      "ambiguitySignalsWritten": 0,
+      "recovery": "repaired-and-idempotent",
+      "resolvedOperationId": "operation-attempt-recovery",
+      "runCancelRequested": false
+    },
+    {
+      "name": "partial-blocks-all-downstream",
+      "status": "passed",
+      "taskStatus": "partial",
+      "contentStarted": false
+    },
+    {
+      "name": "resolver-negative-matrix",
+      "status": "passed",
+      "unknownIntent": "rejected",
+      "unknownProfile": "rejected",
+      "workerMissing": "rejected",
+      "originalMedia": "rejected"
+    },
+    {
+      "name": "remnote-v2-lossless-boundary",
+      "status": "passed",
+      "multiline": "ordered-entry-projection",
+      "reservedDelimiter": "explicit-failure",
+      "silentNormalization": false
+    },
+    {
+      "name": "completed-required-output-gate",
+      "status": "passed",
+      "downstreamStarted": false
+    }
+  ]
+}

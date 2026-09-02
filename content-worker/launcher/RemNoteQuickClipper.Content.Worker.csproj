@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>RemNoteQuickClipper.Content.Worker</AssemblyName>
+    <RootNamespace>RemNoteQuickClipper.Content.Worker</RootNamespace>
+    <Description>Legacy compatibility alias for KnowledgeClipper.Content.Worker. Not an authoritative product identity.</Description>
+    <IsLegacyCompatibilityAlias>true</IsLegacyCompatibilityAlias>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

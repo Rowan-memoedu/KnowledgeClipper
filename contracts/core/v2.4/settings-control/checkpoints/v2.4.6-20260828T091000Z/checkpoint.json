@@ -1,0 +1,186 @@
+{
+  "schemaVersion": "knowledge-clipper-core-phase-b-followup-checkpoint.v1",
+  "checkpointVersion": "2.4.6",
+  "createdAt": "2026-08-28T09:11:18.8278870+00:00",
+  "status": "passed-core-fixes-awaiting-speech-authority",
+  "supersedes": {
+    "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.5-20260828T085200Z/checkpoint.json",
+    "sha256": "55778934cd4a4323704dc028fa1e6e1880c2fa3e7a0178f4b1ba5032fc89b764"
+  },
+  "core": {
+    "version": "2.4.5",
+    "executable": "dist/orchestrator/win-x64/v2.4.5/KnowledgeClipper.Orchestrator.exe",
+    "bytes": 68134048,
+    "sha256": "b1f2c33d16303401c26355159fa21863a996a030539963f3475d66d3baeb1ee2"
+  },
+  "fixes": {
+    "ankiLegacyExecutionProfile": {
+      "source": "resolved destinations",
+      "anki": "cards-anki",
+      "learningRemNote": "parity-remnote",
+      "cardsRemNote": "cards-remnote",
+      "externalCallBeforePriorFailure": false
+    },
+    "remnoteLearningProjection": {
+      "route": "clip-daily-route",
+      "multilineWithoutBlankLines": "ordered stable v2 entries",
+      "textPerLineModified": false,
+      "blankLines": "fail-closed",
+      "reservedDelimiters": "fail-closed"
+    }
+  },
+  "validation": {
+    "publicContracts": {
+      "schemas": 59,
+      "validFixtures": 62,
+      "invalidFixtures": 50,
+      "status": "passed"
+    },
+    "orchestrator": {
+      "status": "passed",
+      "tests": 23,
+      "receiptSha256": "a77d8f371692e8e5d8bb44595ee1e5dfa825c1e39620339ac85bc385977ff5ff"
+    },
+    "coreAdapter": {
+      "status": "passed",
+      "receiptSha256": "b2e930edd0270a54aa4d9435abb2e3f778edbc4de073b9b9ff87c2e94a39f7e9"
+    },
+    "settings": {
+      "status": "passed",
+      "externalCalls": 0,
+      "physicalSpeakerInvocations": 0,
+      "receiptSha256": "af531221c83460e1bd855b27061119a78b7d959d8aecccbf883f50e89be02e86"
+    },
+    "remnoteContentAdapter": {
+      "status": "passed",
+      "receiptSha256": "f8d9bcb746a33962931515ac008947b79043b08b1921c9d840e505e34edb68ed"
+    },
+    "build": {
+      "status": "passed",
+      "sdk": "8.0.424",
+      "warnings": 0,
+      "errors": 0
+    }
+  },
+  "priorPhaseB": {
+    "authority": "1.2.8",
+    "authorityCheckpointSha256": "4d2997b2abee89e41dc3f77815ae43122079e2dafea7c773a22fcb29c5bbae11",
+    "executionReceipt": "canary/phase-b-v1.2.8/20260828T090400Z/execution-receipt.json",
+    "executionReceiptSha256": "66f71d43a59aeed8f594af773cbf6af10b9f805ff0d939c78e43dd7c3ce5794c",
+    "harnessExitCodes": "0/0/0/0",
+    "actualPathStatus": "partial/partial/partial/partial",
+    "final": false,
+    "dRemNoteUnknownExternalStateAutoRetried": false
+  },
+  "authorityBoundary": {
+    "currentAuthority": "1.2.8",
+    "authorityBound": false,
+    "intendedAuthority": "1.2.9+",
+    "speechWorkerRequired": "speech.edge@1.2.3+",
+    "speechPlaybackDeepPathReleasePending": true,
+    "phaseBFinal": false
+  },
+  "compatibility": {
+    "frozenContractsV1Modified": false,
+    "authorityV128Modified": false,
+    "oldFailureReceiptsModified": false
+  },
+  "tree": {
+    "algorithm": "sha256(path NUL sha256 NUL bytes LF, ordinal path order)",
+    "fileCount": 18,
+    "totalBytes": 0,
+    "treeSha256": "54a749af6392b659a408fc3e0a50e789ab6e591ed0d596af75f7e6a7380b89a0",
+    "files": [
+      {
+        "path": "canary/phase-b-v1.2.8/20260828T090400Z/execution-receipt.json",
+        "bytes": 4237,
+        "sha256": "66f71d43a59aeed8f594af773cbf6af10b9f805ff0d939c78e43dd7c3ce5794c"
+      },
+      {
+        "path": "contracts/authority/worker-registry/v1.2.8-20260828T090000Z/checkpoint.json",
+        "bytes": 10050,
+        "sha256": "4d2997b2abee89e41dc3f77815ae43122079e2dafea7c773a22fcb29c5bbae11"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.5-20260828T085200Z/checkpoint.json",
+        "bytes": 3458,
+        "sha256": "55778934cd4a4323704dc028fa1e6e1880c2fa3e7a0178f4b1ba5032fc89b764"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.6-20260828T091000Z/core-adapter.receipt.json",
+        "bytes": 3580,
+        "sha256": "b2e930edd0270a54aa4d9435abb2e3f778edbc4de073b9b9ff87c2e94a39f7e9"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.6-20260828T091000Z/orchestrator-regression.receipt.json",
+        "bytes": 7954,
+        "sha256": "a77d8f371692e8e5d8bb44595ee1e5dfa825c1e39620339ac85bc385977ff5ff"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.6-20260828T091000Z/remnote-content-adapter.receipt.json",
+        "bytes": 1770,
+        "sha256": "f8d9bcb746a33962931515ac008947b79043b08b1921c9d840e505e34edb68ed"
+      },
+      {
+        "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.6-20260828T091000Z/settings-control.receipt.json",
+        "bytes": 3055,
+        "sha256": "af531221c83460e1bd855b27061119a78b7d959d8aecccbf883f50e89be02e86"
+      },
+      {
+        "path": "dist/orchestrator/win-x64/v2.4.5/KnowledgeClipper.Orchestrator.exe",
+        "bytes": 68134048,
+        "sha256": "b1f2c33d16303401c26355159fa21863a996a030539963f3475d66d3baeb1ee2"
+      },
+      {
+        "path": "orchestrator/Core/DesktopIntentResolver.cs",
+        "bytes": 48906,
+        "sha256": "6386fa1a2e2ae7484bde650f4e111071b7c5bc5105c01cc37d16f5a5a4d19944"
+      },
+      {
+        "path": "orchestrator/Core/SettingsControl.cs",
+        "bytes": 37033,
+        "sha256": "340de9aa8da458fbf91125de8a41ac6f7254da39f536dbaf8251b5b5847af591"
+      },
+      {
+        "path": "orchestrator/Core/StageInputResolver.cs",
+        "bytes": 65567,
+        "sha256": "73253ff3237283e0f86a8388813bd45bfca363a788e42572558c54931cb65a19"
+      },
+      {
+        "path": "tests/CoreAdapter.IntegrationTests/Program.cs",
+        "bytes": 57457,
+        "sha256": "a532ab4f11d18aae912b50705fc31800725afc99725a2dc3bdd5a367f87ac0a7"
+      },
+      {
+        "path": "tests/PhaseB.Canary/PhaseB.Canary.csproj",
+        "bytes": 413,
+        "sha256": "41700c9e77f927894a4ec2e196644612d19266fce2abf45c609cd48bab2fe62c"
+      },
+      {
+        "path": "tests/PhaseB.Canary/Program.cs",
+        "bytes": 22539,
+        "sha256": "a008620e79582c66b01b1a428f331cd3519e84840fb8754277838e1cb3f79e46"
+      },
+      {
+        "path": "tests/RemNoteQuickClipper.RemNoteExporter.Tests/ContentAdapterCompatibility/Program.cs",
+        "bytes": 60661,
+        "sha256": "99dd39840ca26bf777765aca1c320d188ffcca7b001de4fabb812799f9b84795"
+      },
+      {
+        "path": "tests/SettingsControl.IntegrationTests/Program.cs",
+        "bytes": 32097,
+        "sha256": "c8575c236987915e5de5d51d18c21b4855b822ec88409a1be0b04cb695920319"
+      },
+      {
+        "path": "tools/Invoke-KnowledgeClipperPhaseB.ps1",
+        "bytes": 9241,
+        "sha256": "79cf8c5508642471cbed6c5b996efa1986bacfbc04f6ab5680f41ff44a1411a3"
+      },
+      {
+        "path": "tools/New-CorePhaseBFollowupCheckpoint.ps1",
+        "bytes": 6759,
+        "sha256": "a0e0cfa8bd12ae74bfc74ff4b1ec2a266b5fed5ed1fed8e31be1beb6b69a55d9"
+      }
+    ]
+  }
+}

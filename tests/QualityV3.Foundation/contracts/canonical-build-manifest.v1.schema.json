@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "quality-v3-canonical-build-manifest.v1",
+  "type": "object",
+  "required": ["schemaVersion", "buildId", "source", "selfContained", "runtimeIdentifier", "contracts", "entrypoints", "files", "tree", "startupSelfVerification"],
+  "properties": {
+    "schemaVersion": { "const": "quality-v3-canonical-build-manifest.v1" },
+    "source": { "type": "object", "required": ["repositoryCommit", "sourceSnapshotSha256", "dirty"] },
+    "selfContained": { "const": true },
+    "runtimeIdentifier": { "const": "win-x64" },
+    "startupSelfVerification": {
+      "type": "object",
+      "required": ["required", "mode", "failureMode"],
+      "properties": {
+        "required": { "const": true },
+        "mode": { "const": "full-manifest-before-service-start" },
+        "failureMode": { "const": "fail-closed" }
+      }
+    }
+  },
+  "additionalProperties": true
+}

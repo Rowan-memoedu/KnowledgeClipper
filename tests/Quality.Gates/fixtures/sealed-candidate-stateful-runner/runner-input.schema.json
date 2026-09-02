@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-sealed-stateful-runner.v1",
+  "type": "object",
+  "required": ["schemaVersion", "driver", "candidate", "sourceGate", "externalPolicy", "isolation", "journeys"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-sealed-stateful-runner.v1" },
+    "fixtureOnly": { "const": false },
+    "driver": { "const": "tools/Invoke-KnowledgeClipperStatefulUi.ps1" },
+    "candidate": {
+      "type": "object",
+      "required": ["root", "manifest"],
+      "properties": {
+        "root": { "type": "string", "pattern": "^releases/" },
+        "manifest": { "$ref": "#/$defs/evidence" }
+      }
+    },
+    "sourceGate": { "$ref": "#/$defs/evidence" },
+    "externalPolicy": {
+      "type": "object",
+      "required": ["remnote", "anki", "mineru", "deepseek", "speaker"],
+      "additionalProperties": false,
+      "properties": {
+        "remnote": { "const": false }, "anki": { "const": false }, "mineru": { "const": false }, "deepseek": { "const": false }, "speaker": { "const": false }
+      }
+    },
+    "isolation": {
+      "type": "object",
+      "required": ["persistenceMode", "singleInstanceIsolated", "pipeName", "environmentBindings"],
+      "properties": {
+        "persistenceMode": { "const": "real-filesystem" },
+        "singleInstanceIsolated": { "const": true },
+        "pipeName": { "type": "string", "pattern": "^KnowledgeClipper\\.Quality\\.Stateful\\." },
+        "environmentBindings": {
+          "type": "object",
+          "required": ["settingsRoot", "jobsRoot", "pipeName"],
+          "additionalProperties": false,
+          "properties": {
+            "settingsRoot": { "type": "string", "pattern": "^KNOWLEDGE_CLIPPER_" },
+            "jobsRoot": { "type": "string", "pattern": "^KNOWLEDGE_CLIPPER_" },
+            "pipeName": { "type": "string", "pattern": "^KNOWLEDGE_CLIPPER_" }
+          }
+        }
+      }
+    },
+    "journeys": { "type": "object", "required": ["anki", "remnote", "question"] }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "required": ["path", "bytes", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }
+      }
+    }
+  }
+}

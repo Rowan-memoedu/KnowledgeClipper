@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledgeclipper://speech/settings-companion/probe-output/v1",
+  "title": "Speech settings companion offline probe output v1",
+  "type": "object",
+  "required": ["schemaVersion", "companionVersion", "workerId", "workerVersion", "status", "mode", "scope", "effectiveAt", "readiness", "voiceCatalog", "routing", "fixedSettings", "bindings", "sideEffectsPerformed", "speakerPreview"],
+  "properties": {
+    "schemaVersion": { "const": "speech-settings-companion-probe-output.v1" },
+    "companionVersion": { "const": "1.1.0" },
+    "workerId": { "const": "speech.edge" },
+    "workerVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "status": { "enum": ["ready", "conditional"] },
+    "mode": { "const": "offline_validate_only" },
+    "scope": { "const": "project" },
+    "effectiveAt": { "const": "next_task" },
+    "readiness": { "type": "object" },
+    "voiceCatalog": { "type": "object" },
+    "routing": { "type": "object" },
+    "fixedSettings": { "type": "object" },
+    "bindings": { "type": "array", "minItems": 8 },
+    "sideEffectsPerformed": { "type": "array", "maxItems": 0 },
+    "speakerPreview": {
+      "type": "object",
+      "required": ["actionId", "status", "sideEffect", "requiresExplicitInvocation"],
+      "properties": {
+        "actionId": { "const": "speaker.preview" },
+        "status": { "const": "not_run" },
+        "sideEffect": { "const": "physical_audio" },
+        "requiresExplicitInvocation": { "const": true }
+      }
+    }
+  }
+}

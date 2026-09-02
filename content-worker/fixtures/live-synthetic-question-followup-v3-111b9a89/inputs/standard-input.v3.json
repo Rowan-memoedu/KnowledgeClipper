@@ -1,0 +1,48 @@
+{
+  "schema_version": "standard-input/3.0.0",
+  "package_id": "knowledge-clipper-live-synthetic-question",
+  "task_id": "live-synthetic-question-workflow",
+  "input_version": "2",
+  "mode": "question",
+  "questionWorkflow": {
+    "schemaVersion": "question-workflow-input/1.0.0",
+    "phase": "answer",
+    "questionTurns": [
+      {
+        "turnId": "turn-regression-0",
+        "turnIndex": 0,
+        "question": "为什么软件发布前需要进行回归测试？"
+      },
+      {
+        "turnId": "turn-regression-1",
+        "turnIndex": 1,
+        "question": "回归测试与重新运行全部测试有什么区别？",
+        "parentAnswerId": "answer-40a7d9e36f12afe45766e302"
+      }
+    ],
+    "answerAncestry": [
+      {
+        "answerId": "answer-40a7d9e36f12afe45766e302",
+        "artifactRef": "question-answer-653b76923521a49f781c04f5",
+        "turnId": "turn-regression-0",
+        "turnIndex": 0,
+        "questionSha256": "d98ac43df95f19de57e6797eb683ea0f90aeca0b5cc7bba84d310e61c2e3762f",
+        "answerText": "回归测试用于验证软件在修改或新增功能后，原有功能仍然正常，没有引入新的缺陷。发布前进行回归测试可以降低因代码变更导致已有功能失效的风险，确保软件整体质量达到发布标准。",
+        "answerTextSha256": "111b9a895d30c35000a119099babc6619d9bc0c8d707e4cb1569806ff776ead1"
+      }
+    ]
+  },
+  "items": [
+    {
+      "item_id": "item-regression-question",
+      "source": {
+        "kind": "question_workflow"
+      },
+      "hints": {
+        "requested_templates": [
+          "basic_qa"
+        ]
+      }
+    }
+  ]
+}

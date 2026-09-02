@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "policy", "baseExternalReceipt", "contentReceipt", "executionReceipt", "qualificationReceipt", "readableSummary", "candidate", "authority", "readbacks"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-v1212-language-anki-increment-fixture.v1" },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["externalRerun", "ocrStatus", "ocrBlocking", "desktopProcessE2E"],
+      "properties": {
+        "externalRerun": { "const": false },
+        "ocrStatus": { "const": "user-deferred" },
+        "ocrBlocking": { "const": false },
+        "desktopProcessE2E": { "const": false }
+      }
+    },
+    "baseExternalReceipt": { "$ref": "#/$defs/fileRef" },
+    "contentReceipt": { "$ref": "#/$defs/fileRef" },
+    "executionReceipt": { "$ref": "#/$defs/fileRef" },
+    "qualificationReceipt": { "$ref": "#/$defs/fileRef" },
+    "readableSummary": { "$ref": "#/$defs/fileRef" },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidateId", "manifestSha256", "sealedTreeSha256"],
+      "properties": {
+        "candidateId": { "const": "kc-integrated-settings-v1212-20260830T183500Z" },
+        "manifestSha256": { "$ref": "#/$defs/sha256" },
+        "sealedTreeSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registryVersion", "registrySha256", "checkpointSha256"],
+      "properties": {
+        "registryVersion": { "const": "1.2.12" },
+        "registrySha256": { "$ref": "#/$defs/sha256" },
+        "checkpointSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "readbacks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["E", "F", "G"],
+      "properties": {
+        "E": { "$ref": "#/$defs/fileRef" },
+        "F": { "$ref": "#/$defs/fileRef" },
+        "G": { "$ref": "#/$defs/fileRef" }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+    "fileRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

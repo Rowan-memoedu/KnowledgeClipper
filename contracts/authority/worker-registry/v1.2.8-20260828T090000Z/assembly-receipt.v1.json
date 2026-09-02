@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-assembly-receipt.v1",
+  "status": "candidate-built-offline",
+  "releaseId": "knowledge-clipper-authority-v1.2.8-20260828T090000Z",
+  "releaseRoot": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\releases\\knowledge-clipper-authority-v1.2.8-20260828T090000Z\\win-x64",
+  "authorityDirectory": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.8-20260828T090000Z",
+  "registryVersion": "1.2.8",
+  "release": {
+    "files": 192,
+    "bytes": 249613600,
+    "treeSha256": "0C89556014F69E775D1E9F9F9EF14D5EA20F57E2359E193DAC91720820A38121"
+  },
+  "registrySha256": "CAC29BBBBC614E4DC2B60A781CC0239D422775B212A9C2AF2201E3EC3B95D7AC",
+  "dependencyManifestSha256": "6B250A54F4634A4EDBC3646FD3592F8289C1C536FBA7B533C714D5F20D8F9B6D",
+  "core": {
+    "version": "2.4.4",
+    "executableSha256": "ECE6F35AC1E7E5EE1DE2CBFA3242648C8DF5580EEDA3857DE523E2CDBBCE421A",
+    "checkpointSha256": "55778934CD4A4323704DC028FA1E6E1880C2FA3E7A0178F4B1BA5032FC89B764"
+  },
+  "workers": {
+    "image.ocr.mineru": {
+      "workerVersion": "1.2.0",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.8-20260828T090000Z\\describe\\image.ocr.mineru.describe.json",
+      "bytes": 680,
+      "sha256": "3A73FC78A7E9E3A08CA26F78AC8DA5D583AF91C474C5181941920042E6F01600"
+    },
+    "content.deepseek": {
+      "workerVersion": "0.6.1",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.8-20260828T090000Z\\describe\\content.deepseek.describe.json",
+      "bytes": 724,
+      "sha256": "46464C262A47C109D6CD760501425E397AD5F55FC634EF779ED72E7D2A29E3CC"
+    },
+    "speech.edge": {
+      "workerVersion": "1.2.2",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.8-20260828T090000Z\\describe\\speech.edge.describe.json",
+      "bytes": 636,
+      "sha256": "8F1E2CE5EE0815F16F296AED1250AB7B399CD304A50D8AF5AD1D64AB8E3780AE"
+    },
+    "export.remnote": {
+      "workerVersion": "2.0.0",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.8-20260828T090000Z\\describe\\export.remnote.describe.json",
+      "bytes": 660,
+      "sha256": "B432F7CEC58F300E054572EE536601ACE40A923650ED34865CF8EE12EA8D49B0"
+    },
+    "export.anki": {
+      "workerVersion": "1.2.0",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.8-20260828T090000Z\\describe\\export.anki.describe.json",
+      "bytes": 680,
+      "sha256": "DAB97F0460DDD9AA7DC0037CA1AC1449F3DD1C7AA1CCA9E2252399CC1CD6DD28"
+    }
+  },
+  "registryValidation": {
+    "schemaVersion": "1.0.0",
+    "status": "valid",
+    "registryVersion": "1.2.8",
+    "workers": 5
+  },
+  "externalWrites": 0,
+  "physicalSpeakerInvocations": 0
+}

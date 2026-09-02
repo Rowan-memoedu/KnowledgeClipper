@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-ocr-core-continuation-evidence.v4.schema.json",
+  "title": "Image/OCR provenance and continuation boundary evidence v4",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "workerVersion", "publicContractReuse", "originalPassThrough", "ocrHumanDecision", "partialFailedItemsOnlyContinuation", "downstreamIntegration", "retention"],
+  "properties": {
+    "schemaVersion": {"const": "image-ocr-core-continuation-evidence.v4"},
+    "workerVersion": {"const": "1.2.3"},
+    "publicContractReuse": {"type": "object", "required": ["commonV1Modified", "moduleOwnedSchemas"]},
+    "originalPassThrough": {
+      "type": "object",
+      "required": ["providerCalls", "orderedRoles", "hashPreserved", "mediaBundleKind", "provenanceKind", "coreTerminalState"],
+      "properties": {
+        "providerCalls": {"const": 0},
+        "hashPreserved": {"const": true},
+        "mediaBundleKind": {"const": "image.original.bundle"},
+        "provenanceKind": {"const": "image.processing.provenance"},
+        "coreTerminalState": {"const": "unsupported"}
+      }
+    },
+    "ocrHumanDecision": {
+      "type": "object",
+      "required": ["actions", "defaultOcrRerun", "requiresOriginalArtifactHashMatch", "requiresSuccessfulOutputHashMatch", "appendOnlyCorrection", "sourceArtifactKinds"],
+      "properties": {
+        "actions": {"const": ["accept", "correct"]},
+        "defaultOcrRerun": {"const": false},
+        "requiresOriginalArtifactHashMatch": {"const": true},
+        "requiresSuccessfulOutputHashMatch": {"const": true},
+        "appendOnlyCorrection": {"const": true},
+        "sourceArtifactKinds": {"const": ["image.original", "image-ocr.markdown", "image-ocr.structured", "image.processing.provenance"]}
+      }
+    },
+    "partialFailedItemsOnlyContinuation": {"type": "object", "required": ["state", "providerReceives", "successfulItemsReusedByHash", "partialBlocksDownstream"]},
+    "downstreamIntegration": {
+      "type": "object",
+      "required": ["coreAdmission", "desktopReviewRenderer", "destinationMediaConsumers", "claimedComplete"],
+      "properties": {
+        "coreAdmission": {"const": "pending-new-checkpoint"},
+        "desktopReviewRenderer": {"const": "pending"},
+        "destinationMediaConsumers": {"const": "pending"},
+        "claimedComplete": {"const": false}
+      }
+    },
+    "retention": {"type": "object", "required": ["requestMetadataDays", "executorState", "automaticDeletionClaim"]}
+  }
+}

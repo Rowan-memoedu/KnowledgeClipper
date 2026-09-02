@@ -1,0 +1,11 @@
+{
+  "fixtureId": "candidate-no-self-verification",
+  "expectedRejectCode": "build.startup-self-verification-missing",
+  "mutation": {
+    "startupSelfVerification": {
+      "required": false,
+      "mode": "external-runner-only",
+      "failureMode": "continue"
+    }
+  }
+}

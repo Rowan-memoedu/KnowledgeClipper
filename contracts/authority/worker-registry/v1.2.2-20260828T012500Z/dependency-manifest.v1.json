@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "knowledge-clipper-release-dependency-manifest.v1",
+  "releaseId": "knowledge-clipper-authority-v1.2.2-20260828T012500Z",
+  "releaseRoot": "releases/knowledge-clipper-authority-v1.2.2-20260828T012500Z/win-x64",
+  "files": 79,
+  "bytes": 248977927.0,
+  "treeHashAlgorithm": "sort Windows relative paths ordinal; emit path<TAB>bytes<TAB>lowercase SHA-256; join LF; SHA-256 UTF-8",
+  "treeSha256": "F15F21E5489B4002086B0664144606A7E2EF5BD40E1AA02AB90F34EC277C2503",
+  "keyFiles": [
+    {
+      "path": "orchestrator/KnowledgeClipper.Orchestrator.exe",
+      "bytes": 68011168,
+      "sha256": "FAE5F351719234B03C0F4FD58555AF4BA800E4E83FFCEFAB46B15C69923BDA9D"
+    },
+    {
+      "path": "workers/image-ocr/KnowledgeClipper.ImageOcr.Worker.exe",
+      "bytes": 10235516,
+      "sha256": "3487C4D0FF8E5C5CA81ED2D2F85D957720DCAFE93F848337EE53EAAD4EC01BAD"
+    },
+    {
+      "path": "workers/content/KnowledgeClipper.Content.Worker.exe",
+      "bytes": 67490988,
+      "sha256": "F6EC35798F8948727B8664517FDBB096DB8A94C8DD079F612B05BAC4EA72D3B8"
+    },
+    {
+      "path": "workers/content/release-manifest.v1.json",
+      "bytes": 10292,
+      "sha256": "6A64E6104680CD61088C9E4A1EAD2AB90A630B66D0FF88C0AEF34FF46B967343"
+    },
+    {
+      "path": "workers/speech/KnowledgeClipper.Speech.Worker.exe",
+      "bytes": 74240,
+      "sha256": "51FF5937C297DAD562AB781D6114374649E1A965EDBB43D575264BEED3DFB19C"
+    },
+    {
+      "path": "workers/remnote/KnowledgeClipper.RemNoteExporter.Worker.exe",
+      "bytes": 74752,
+      "sha256": "0B01297E4345EFD07E50DDD90E23CD94F2A4AFA6DF731CF4252760BD05496B42"
+    },
+    {
+      "path": "workers/remnote/appsettings.json",
+      "bytes": 271,
+      "sha256": "E6BFA34FB11ACFA6A56822C9E2213D758C1F59B708EFD7E7EA1787E107975DF6"
+    },
+    {
+      "path": "workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe",
+      "bytes": 10209227,
+      "sha256": "850BACAB0F3C86D84AE3B3A415AE780C079C5F98475E76D9C9F3E2D25DDBA0DB"
+    },
+    {
+      "path": "contracts/core/v2.1/profile-resolver.v2.1.json",
+      "bytes": 3147,
+      "sha256": "F5C06A1F6EF75AE04DED89D64F8FC8FFD7B9F0242AF602B06D2F947A9BBBFB86"
+    }
+  ],
+  "workerOperations": {
+    "image.ocr.mineru": [
+      "image-ocr"
+    ],
+    "content.deepseek": [
+      "understand-and-card",
+      "question.answer",
+      "question.make-cards"
+    ],
+    "speech.edge": [
+      "speech.synthesize",
+      "speech.playback"
+    ],
+    "export.remnote": [
+      "remnote.export"
+    ],
+    "export.anki": [
+      "export"
+    ]
+  },
+  "legacyEntrypointsExcluded": true
+}

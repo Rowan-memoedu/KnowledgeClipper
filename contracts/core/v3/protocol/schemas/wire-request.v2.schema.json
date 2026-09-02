@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.wire-request/2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "correlationId", "messageType", "payload"],
+  "properties": {
+    "schema": {"const": "kc.wire-request/2"},
+    "correlationId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "messageType": {"enum": ["handshake", "command", "query"]},
+    "payload": {"type": "object"}
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "contractId": "knowledge-clipper.desktop-automation",
+  "contractVersion": "1.1.0",
+  "schemaVersion": "desktop-automation.v1.1",
+  "authorityPath": "contracts/desktop-automation/v1.1/",
+  "supersedesForNewCandidates": "../v1/desktop-automation.contract.json",
+  "legacyCompatibilityAliases": { "contract": "../v1/desktop-automation.contract.json", "automationIdPrefix": "rqc.desktop." },
+  "commonContractPolicy": "reference-only-no-private-payload",
+  "automationIds": [
+    { "automationId": "knowledge-clipper.desktop.clip", "semanticAction": "clip.capture" },
+    { "automationId": "knowledge-clipper.desktop.read", "semanticAction": "read.capture" },
+    { "automationId": "knowledge-clipper.desktop.screenshot", "semanticAction": "screenshot.session.start" },
+    { "automationId": "knowledge-clipper.desktop.screenshot.continue", "semanticAction": "screenshot.session.continue" },
+    { "automationId": "knowledge-clipper.desktop.screenshot.finish", "semanticAction": "screenshot.session.finish" },
+    { "automationId": "knowledge-clipper.desktop.screenshot.cancel", "semanticAction": "screenshot.session.cancel" },
+    { "automationId": "knowledge-clipper.desktop.screenshot.undo-last", "semanticAction": "screenshot.session.undo-last" },
+    { "automationId": "knowledge-clipper.desktop.screenshot.group.question", "semanticAction": "screenshot.group.set-question" },
+    { "automationId": "knowledge-clipper.desktop.screenshot.group.answer", "semanticAction": "screenshot.group.set-answer" },
+    { "automationId": "knowledge-clipper.desktop.mode.context", "semanticAction": "mode.context.set" },
+    { "automationId": "knowledge-clipper.desktop.mode.original-image", "semanticAction": "mode.original-image.set" },
+    { "automationId": "knowledge-clipper.desktop.context.continue-without", "semanticAction": "capture.context.continue-without" },
+    { "automationId": "knowledge-clipper.desktop.question.open", "semanticAction": "question.open" },
+    { "automationId": "knowledge-clipper.desktop.question.input", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.question.submit", "semanticAction": "question.submit" },
+    { "automationId": "knowledge-clipper.desktop.question.follow-up.input", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.question.follow-up.submit", "semanticAction": "question.follow-up" },
+    { "automationId": "knowledge-clipper.desktop.question.make-cards", "semanticAction": "question.make-cards" },
+    { "automationId": "knowledge-clipper.desktop.question.cancel", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.question.answer.status", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.question.answer", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.playback.replay", "semanticAction": "playback.replay" },
+    { "automationId": "knowledge-clipper.desktop.playback.stop", "semanticAction": "playback.stop" },
+    { "automationId": "knowledge-clipper.desktop.task.status.recent", "semanticAction": "task.status.query-recent" },
+    { "automationId": "knowledge-clipper.desktop.language-practice.meaning-reading", "semanticAction": "language-practice.select", "selection": "meaning-reading" },
+    { "automationId": "knowledge-clipper.desktop.language-practice.writing", "semanticAction": "language-practice.select", "selection": "writing" },
+    { "automationId": "knowledge-clipper.desktop.language-practice.both", "semanticAction": "language-practice.select", "selection": "both" },
+    { "automationId": "knowledge-clipper.desktop.language-practice.cancel", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.status", "semanticAction": null }
+  ],
+  "semanticActions": [
+    "clip.capture", "read.capture", "screenshot.session.start", "screenshot.session.continue", "screenshot.session.finish",
+    "screenshot.session.cancel", "screenshot.session.undo-last", "screenshot.group.set-question", "screenshot.group.set-answer",
+    "mode.context.set", "mode.original-image.set", "capture.context.continue-without", "question.open", "question.submit",
+    "question.follow-up", "question.make-cards", "playback.replay", "playback.stop", "task.status.query-recent", "language-practice.select"
+  ],
+  "schemas": { "semanticAction": "semantic-action.schema.json", "semanticState": "semantic-state.schema.json", "captureBundle": "../v1/capture-bundle.v1.schema.json" },
+  "languagePracticeInput": {
+    "trigger": "recentTask.decisionKind == language-practice and decisionTargetToken is non-empty",
+    "selectionValues": ["meaning-reading", "writing", "both"],
+    "submission": "common task.provide_input",
+    "bindingOwnership": "core-projected decisionTargetToken is forwarded opaquely; desktop does not construct a binding",
+    "productionPipeStatus": "wired-to-core-v2.1-language-practice-contract"
+  },
+  "questionAnswerDisplay": {
+    "automationId": "knowledge-clipper.desktop.question.answer",
+    "statusAutomationId": "knowledge-clipper.desktop.question.answer.status",
+    "states": ["loading", "waiting_input", "ready", "failed"],
+    "authoritativeKind": "question.answer.text",
+    "ancestry": "single inputRef points to the structured question.answer application/json bundle; desktop never parses that Content bundle",
+    "contentPolicy": "read-only text/plain; replace current display on each verified answer; never synthesize placeholder answer content",
+    "artifactSafety": "jobsRoot containment plus manifest expectedSha256 and payload bytes/sha256 verification",
+    "ipcProjectionStatus": "wired-to-core-v2.2-question-workflow task.get projection; desktop v1.1 does not copy public fields into its frozen semantic-state shape"
+  },
+  "questionWorkflowInput": {
+    "authority": "contracts/core/v2.2/question-workflow/",
+    "openAndRefresh": "task.get schemaVersion 2.2.0 for the current question task; v2.2 recent is used only to locate a current task when none is retained",
+    "followUp": "immutable question.turn text/plain ArtifactReference plus knowledge-clipper-question-action.v2 over common task.provide_input",
+    "makeCards": "knowledge-clipper-question-action.v2 over common task.provide_input with optional question.card-structure ArtifactReference",
+    "legacyPayloadPolicy": "desktop-action.v1 is not used for question.follow-up or question.make-cards"
+  }
+}

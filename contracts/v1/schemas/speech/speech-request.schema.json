@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./speech-request.schema.json",
+  "title": "RemNote Quick Clipper Speech Request v1",
+  "allOf": [
+    { "$ref": "../common/worker-request.schema.json" },
+    {
+      "properties": {
+        "workerId": { "const": "speech.edge" },
+        "operation": { "const": "speech.synthesize" },
+        "payload": { "$ref": "#/$defs/speechPayload" }
+      }
+    }
+  ],
+  "$defs": {
+    "speechPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "requestId", "operationId", "spokenText", "contextMode", "language", "voiceSnapshot", "playbackPolicy", "cachePolicy"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "requestId": { "$ref": "../common/artifact.schema.json#/$defs/identifier" },
+        "operationId": { "$ref": "../common/artifact.schema.json#/$defs/identifier" },
+        "spokenText": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["artifactRef", "path", "sha256", "bytes", "encoding", "mediaType"],
+          "properties": {
+            "artifactRef": { "$ref": "../common/artifact.schema.json#/$defs/identifier" },
+            "path": { "$ref": "../common/artifact.schema.json#/$defs/jobRelativePath" },
+            "sha256": { "$ref": "../common/artifact.schema.json#/$defs/sha256" },
+            "bytes": { "type": "integer", "minimum": 1 },
+            "encoding": { "const": "utf-8" },
+            "mediaType": { "const": "text/plain" }
+          }
+        },
+        "contextMode": { "type": "string", "enum": ["selection_only", "selection_plus_sentence", "selection_plus_paragraph"] },
+        "language": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["strategy", "override"],
+          "properties": {
+            "strategy": { "type": "string", "enum": ["auto", "override"] },
+            "override": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$" }] }
+          },
+          "allOf": [
+            { "if": { "properties": { "strategy": { "const": "auto" } }, "required": ["strategy"] }, "then": { "properties": { "override": { "type": "null" } } } },
+            { "if": { "properties": { "strategy": { "const": "override" } }, "required": ["strategy"] }, "then": { "properties": { "override": { "type": "string" } } } }
+          ]
+        },
+        "voiceSnapshot": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["provider", "voicesByLanguage", "ratePercent", "volumePercent", "pitchHz"],
+          "properties": {
+            "provider": { "const": "edge-tts" },
+            "voicesByLanguage": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "string", "minLength": 1 } },
+            "ratePercent": { "type": "integer", "minimum": -100, "maximum": 100 },
+            "volumePercent": { "type": "integer", "minimum": -100, "maximum": 100 },
+            "pitchHz": { "type": "integer", "minimum": -1000, "maximum": 1000 }
+          }
+        },
+        "playbackPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["autoPlay", "activePlayback", "replay", "naturalCompletion", "stopTerminal"],
+          "properties": {
+            "autoPlay": { "const": true },
+            "activePlayback": { "const": "supersede" },
+            "replay": { "const": "from_start" },
+            "naturalCompletion": { "const": "idle_replayable" },
+            "stopTerminal": { "const": "stopped" }
+          }
+        },
+        "cachePolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["scope", "reuseSuccessfulAudio", "crossTaskReuse"],
+          "properties": {
+            "scope": { "const": "task" },
+            "reuseSuccessfulAudio": { "const": true },
+            "crossTaskReuse": { "const": false }
+          }
+        }
+      }
+    }
+  }
+}

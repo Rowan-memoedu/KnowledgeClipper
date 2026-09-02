@@ -1,0 +1,54 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-no-answer": {
+      "cleaned_text": "为什么 0! 等于 1？\n",
+      "removed_fragments": [],
+      "format_anomalies": []
+    },
+    "classification:item-no-answer": {
+      "units": [
+        {
+          "unit_id": "unit-zero-factorial",
+          "source_segment_indexes": [0],
+          "category_id": "question_answer",
+          "subtype": "conceptual_question",
+          "answer_state": "missing",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "question": "为什么 0! 等于 1？",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "card_generation:item-no-answer:unit-zero-factorial": {
+      "generated_content": [
+        {
+          "kind": "answer",
+          "text": "因为空排列只有一种，且递推关系 n!=n×(n-1)! 在 n=1 时要求 0!=1。"
+        }
+      ],
+      "cards": [
+        {
+          "template": "basic_qa",
+          "front_blocks": [
+            {
+              "type": "text",
+              "text": "为什么 0! 等于 1？",
+              "provenance": "source"
+            }
+          ],
+          "back_blocks": [
+            {
+              "type": "text",
+              "text": "因为空排列只有一种，且递推关系 n!=n×(n-1)! 在 n=1 时要求 0!=1。",
+              "provenance": "generated"
+            }
+          ],
+          "answer_provenance": "generated"
+        }
+      ],
+      "unresolved_reasons": []
+    }
+  }
+}

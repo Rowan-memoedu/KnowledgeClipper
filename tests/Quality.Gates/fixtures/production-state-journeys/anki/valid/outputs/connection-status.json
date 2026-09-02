@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "anki-connection-status.v1",
+  "operation": "probe",
+  "effectClass": "provider-read-only",
+  "externalMutation": false,
+  "status": "needs_initialization",
+  "models": [],
+  "decks": []
+}

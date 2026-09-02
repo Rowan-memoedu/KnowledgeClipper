@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "knowledge-clipper-release-dependency-manifest.v2",
+  "releaseId": "knowledge-clipper-authority-v1.2.14-20260830T184700Z",
+  "releaseRoot": "releases/knowledge-clipper-authority-v1.2.14-20260830T184700Z/win-x64",
+  "files": 296,
+  "bytes": 260669250,
+  "treeSha256": "30F1A8E65A335811545114474573196B689657DA8BAFB511E7A2F84638DB9D3E",
+  "treeHashAlgorithm": "sort relative paths ordinal; path TAB bytes TAB lowercase SHA-256; LF; SHA-256 UTF-8",
+  "core": {
+    "version": "2.5.2",
+    "checkpoint": "contracts/core/v2.5/checkpoints/v2.5.3-20260830T184500Z/checkpoint.json",
+    "checkpointSha256": "16F39BAB63346AADEA83D1C66B1BE2520998BFE1A8341667D121CFCB84838D9A",
+    "executableSha256": "1491D70A3CCE57EC37672C209C9DA5D0738236ACC2D8BDDC3F2067530C917FF3"
+  },
+  "modules": {
+    "image.ocr.mineru": {
+      "version": "1.2.2",
+      "source": "workers/image-ocr/candidates/1.2.2",
+      "destination": "workers/image-ocr",
+      "executable": "workers/image-ocr/KnowledgeClipper.ImageOcr.Worker.exe",
+      "sha256": "8F99C403AF250E0BD2BB62CEECAA74A768860C10B3C582236BA0A6B3B0D73F78",
+      "treeSha256": "F0F8FA5D5BC3210D8CA01CEC8707B29891A8ECFFBE6B533982990BE15FC03B89"
+    },
+    "content.deepseek": {
+      "version": "0.8.0",
+      "source": "content-worker/releases/content.deepseek-0.8.0-win-x64-formal-20260830T095330Z",
+      "destination": "workers/content",
+      "executable": "workers/content/KnowledgeClipper.Content.Worker.exe",
+      "sha256": "F6EC35798F8948727B8664517FDBB096DB8A94C8DD079F612B05BAC4EA72D3B8",
+      "treeSha256": "9A6A50F4A31EF2D2F194B2F69F9FAE7B22192DC013CDD2FCBD6B82A423139E45"
+    },
+    "speech.edge": {
+      "version": "1.2.4",
+      "source": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260830T073825Z-c0980038/win-x64/workers/speech",
+      "destination": "workers/speech",
+      "executable": "workers/speech/KnowledgeClipper.Speech.Worker.exe",
+      "sha256": "C098003823B5217C3A4F7267A57E69128AE5F6DF7BCC8083BA92B4CC56C34EE2",
+      "treeSha256": "985E678EEFD7335F772F21483BF39763544B57260E4449DFC3C017B2E31FB38"
+    },
+    "export.remnote": {
+      "version": "2.1.0",
+      "source": "releases/knowledge-clipper-remnote-exporter-v2.1.0-20260830T073620Z/win-x64",
+      "destination": "workers/remnote",
+      "executable": "workers/remnote/KnowledgeClipper.RemNoteExporter.Worker.exe",
+      "sha256": "443835ECA91E5F68C97070777C250FD95E4A2E4873C9EFC7FBF45A528EF2CAD2",
+      "treeSha256": "A2C5F932B79F2528F2F1B8E30E9B68D3C15AEE07FE7F3AE8E834BF698C675CA8"
+    },
+    "export.anki": {
+      "version": "1.2.2",
+      "source": "releases/knowledge-clipper-anki-exporter-v1.2.2-20260830T182623Z/win-x64/workers/anki",
+      "destination": "workers/anki",
+      "executable": "workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe",
+      "sha256": "0D6F18DD6CD10828C0139183D7D84712378FCDDE0AFFCABFCAFD19C228316449",
+      "treeSha256": "F9FF222B9144F1CF56E0059225E0E1448639D23C06852733B4ADB3DB865CB66C"
+    }
+  },
+  "moduleEvidence": {
+    "image-core-admission.json": "workers/image-ocr/canary/core-admission-1.2.2-20260830T074207Z/core-admission-receipt.v1.json",
+    "content-ocr-admission.json": "content-worker/receipts/content-ocr-proofreading-0.8.0-admission-20260830T101000Z.json",
+    "content-formal-release.json": "content-worker/canary/formal-release/content.deepseek-0.8.0-win-x64-formal-20260830T095330Z/20260830T095352921Z-settings-snapshot-replay/formal-release-offline-receipt.v1.json",
+    "speech-formal-release.json": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260830T073825Z-c0980038/speech-formal-win-x64-release-receipt.json",
+    "speech-independent-validation.json": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260830T073825Z-c0980038/speech-formal-win-x64-independent-validation-receipt.json",
+    "remnote-formal-release.json": "releases/knowledge-clipper-remnote-exporter-v2.1.0-20260830T073620Z/win-x64/release-receipt.json",
+    "remnote-offline-canary.json": "canary/remnote-exporter-v2.1-offline/20260830T153548/receipt.json",
+    "anki-cross-run-admission.json": "canary/anki-v122-xrun/20260830T182803Z/receipt.json",
+    "anki-offline-probe.json": "workers/anki-exporter/canary/formal-release-settings-probe/20260830T074140Z-2b55687b/receipt.json",
+    "core-settings.json": "canary/core-v2.5.3-offline/20260830T184300Z/settings-control.receipt.json",
+    "core-adapter.json": "canary/core-v2.5.3-offline/20260830T184300Z/core-adapter.receipt.json",
+    "core-contracts.json": "canary/core-v2.5.3-offline/20260830T184300Z/orchestrator-contract-tests.receipt.json",
+    "core-question-workflow.json": "canary/core-v2.5.3-offline/20260830T184300Z/question-workflow.receipt.json",
+    "core-public-contracts.json": "canary/core-v2.5.3-offline/20260830T184300Z/public-contracts.receipt.json"
+  },
+  "baseAuthority": "1.2.13",
+  "supersedesCheckpointSha256": "AF9D8494A47ACE7CF28ACAD561CCA648D1D4EC7BDCBABB305A3FE31FCA608BE7"
+}

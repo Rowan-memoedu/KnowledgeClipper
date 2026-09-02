@@ -1,0 +1,1 @@
+{ "schemaVersion": "1.0.0", "commandId": "command-001", "operationId": "operation-001", "taskId": "task-001", "type": "task.cancel", "issuedAt": "2026-08-25T11:00:00Z", "idempotencyKey": "1111111111111111111111111111111111111111111111111111111111111111", "payloadRef": "cancel.json" }

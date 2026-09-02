@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "knowledge-clipper-core-checkpoint-invalidation.v1",
+  "status": "invalidated-never-authority-bound",
+  "checkpoint": "contracts/core/v2.5/checkpoints/v2.5.0-20260830T075200Z/checkpoint.json",
+  "checkpointSha256": "52119B00F9D548B70B09FF5F5B54904B66DAB85D674D75E9CB8FE9A2D68B4B42",
+  "reason": "tree.totalBytes was emitted as zero although the file entries have non-zero byte lengths.",
+  "authorityBound": false,
+  "runtimeModified": false
+}

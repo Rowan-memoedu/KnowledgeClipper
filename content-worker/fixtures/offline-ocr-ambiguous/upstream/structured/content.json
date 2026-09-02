@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "markdownArtifactRef": "fixture.ocr.ambiguous.markdown",
+  "sourceImageRef": "fixture.image.ambiguous",
+  "blocks": [],
+  "imageRefs": []
+}

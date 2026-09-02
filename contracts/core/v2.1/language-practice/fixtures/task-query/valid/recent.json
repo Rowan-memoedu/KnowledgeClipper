@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "2.0.0",
+  "queryId": "query-language-recent",
+  "type": "task.query_recent",
+  "limit": 20,
+  "cursor": null,
+  "statusFilter": ["waiting_input"]
+}

@@ -1,0 +1,46 @@
+# Secrets and machine-local state
+.env
+.env.*
+!.env.example
+**/credentials.json
+**/credentials.json.bak
+**/*cookie*.json
+**/*token*.json
+
+# Generated dependencies and build output
+**/node_modules/
+**/bin/
+**/obj/
+**/__pycache__/
+**/.pytest_cache/
+**/.cache/
+*.log
+*.exe
+*.dll
+*.pdb
+*.zip
+*.nupkg
+
+# Generated validation and release history (preserved in D:\Quarantine)
+canary/
+releases/
+dist/
+artifacts/
+receipts/
+**/receipts/
+**/releases/
+
+# Local runtime data
+runtime/
+**/runtime/
+localappdata/
+**/localappdata/
+c/e2e/
+
+# Generated speech canary/run trees (source tests remain tracked)
+tests/RemNoteQuickClipper.Speech.Tests/pc/
+tests/RemNoteQuickClipper.Speech.Tests/formal/
+tests/RemNoteQuickClipper.Speech.Tests/bc/
+tests/RemNoteQuickClipper.Speech.Tests/publish/
+tests/RemNoteQuickClipper.Speech.Tests/backend-canary/
+tests/RemNoteQuickClipper.Speech.Tests/playback-canary/

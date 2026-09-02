@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-invalidation-receipt.v1",
+  "registryVersion": "1.2.5",
+  "releaseId": "knowledge-clipper-authority-v1.2.5-20260828T074800Z",
+  "status": "invalidated-never-promoted",
+  "authorityBound": false,
+  "checkpointWritten": false,
+  "assemblyReceipt": "contracts/authority/worker-registry/v1.2.5-20260828T074800Z/assembly-receipt.v1.json",
+  "assemblyReceiptSha256": "bf5578b95381a972823ccaf0e6b2329ad2a3b1162005d19ad10ce27930870a57",
+  "reason": "All five workers.*.path values in the assembly receipt reference the removed staging authority directory instead of the final authority describe directory.",
+  "runtimeGatesPassedButInsufficient": "canary/core-authority-v1.2.5/core-authority-v1.2.5-20260828T075100Z/runtime-gates.json",
+  "supersededBy": "pending-v1.2.6",
+  "frozenV1Modified": false,
+  "priorAuthorityModified": false,
+  "externalWrites": 0,
+  "physicalSpeakerInvocations": 0
+}

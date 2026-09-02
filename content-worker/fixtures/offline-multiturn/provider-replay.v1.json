@@ -1,0 +1,54 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-multiturn": {
+      "cleaned_text": "我想记住：TCP 建立连接为什么需要三次握手？\n\n因为需要确认双方的发送和接收能力。\n\n请把前两轮合并成一张卡，答案强调双方都能收发。",
+      "removed_fragments": [],
+      "format_anomalies": []
+    },
+    "classification:item-multiturn": {
+      "units": [
+        {
+          "unit_id": "unit-tcp-handshake",
+          "source_segment_indexes": [0, 1, 2],
+          "category_id": "question_answer",
+          "subtype": "multiturn_synthesis",
+          "answer_state": "missing",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "question": "TCP 建立连接为什么需要三次握手？",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "card_generation:item-multiturn:unit-tcp-handshake": {
+      "generated_content": [
+        {
+          "kind": "multiturn_answer",
+          "text": "三次握手让双方分别确认自己和对方都具备发送与接收能力，并同步初始序列号。"
+        }
+      ],
+      "cards": [
+        {
+          "template": "basic_qa",
+          "front_blocks": [
+            {
+              "type": "text",
+              "text": "TCP 建立连接为什么需要三次握手？",
+              "provenance": "source"
+            }
+          ],
+          "back_blocks": [
+            {
+              "type": "text",
+              "text": "三次握手让双方分别确认自己和对方都具备发送与接收能力，并同步初始序列号。",
+              "provenance": "generated"
+            }
+          ],
+          "answer_provenance": "generated"
+        }
+      ],
+      "unresolved_reasons": []
+    }
+  }
+}

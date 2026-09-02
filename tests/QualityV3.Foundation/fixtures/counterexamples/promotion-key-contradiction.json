@@ -1,0 +1,6 @@
+{
+  "fixtureId": "promotion-key-contradiction",
+  "expectedRejectCode": "runner.promotion-key-contradiction",
+  "emittedEvidenceKeys": ["startup", "namedPipe", "persistence", "artifactParser", "actionLog", "processCleanup", "failFastAssertion"],
+  "acceptedEvidenceKeys": ["startup", "namedPipe", "persistence", "artifactParser", "actionLog", "processCleanup"]
+}

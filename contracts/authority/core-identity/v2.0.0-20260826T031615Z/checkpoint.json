@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "knowledge-clipper-core-identity-checkpoint.v2",
+  "checkpointId": "core-identity-v2.0.0-20260826T031615Z",
+  "publishedAt": "2026-08-26T03:16:15Z",
+  "status": "passed",
+  "identity": {
+    "productId": "knowledge-clipper",
+    "productName": "零碎知识剪藏",
+    "assemblyRoot": "KnowledgeClipper",
+    "namespaceRoot": "KnowledgeClipper",
+    "desktopEntrypoint": "KnowledgeClipper.exe",
+    "orchestratorComponentId": "knowledge-clipper.orchestrator",
+    "architecture": "destination-neutral",
+    "processingProfiles": ["learning", "cards"],
+    "destinations": ["remnote", "anki"],
+    "defaultDestinations": []
+  },
+  "publishedOrchestrator": {
+    "path": "dist/orchestrator/win-x64/v2.0.0/KnowledgeClipper.Orchestrator.exe",
+    "version": "2.0.0.0",
+    "bytes": 67904672,
+    "sha256": "E5F047843E1C000FD3A737CDA1A039B231BF9FDFDE7DE0C49657A6912E6D400A"
+  },
+  "legacyCompatibility": {
+    "projectFileAlias": "orchestrator/RemNoteQuickClipper.Orchestrator.csproj",
+    "assemblyAlias": "RemNoteQuickClipper.Orchestrator",
+    "componentIdAlias": "orchestrator.core",
+    "profileAliases": ["parity-remnote", "cards-remnote", "cards-anki"],
+    "routingAuditField": "routing.source",
+    "canonicalNewIdentity": "KnowledgeClipper"
+  },
+  "validation": {
+    "warningsAsErrorsBuild": { "status": "passed", "warnings": 0, "errors": 0 },
+    "orchestratorContractTests": { "status": "passed" },
+    "coreAdapterIntegration": { "status": "passed", "resultGroups": 7 },
+    "contractValidation": { "status": "passed", "schemasChecked": 30, "validFixturesAccepted": 41, "invalidFixturesRejected": 29 },
+    "registryAdmission": { "status": "passed", "registryVersion": "1.1.0", "workers": 5 },
+    "publishedExeDispatcherCanary": {
+      "status": "passed",
+      "runId": "run-002",
+      "terminalState": "succeeded",
+      "externalProductionApisInvoked": false
+    },
+    "invalidFixtureRun": {
+      "status": "retained",
+      "runId": "run-001",
+      "terminalState": "failed",
+      "cause": "fake content worker fixture omitted required content material",
+      "orchestratorDefect": false
+    },
+    "remnoteConsumerCompatibility": {
+      "status": "passed",
+      "receiptPath": "canary/rwa/260826031035/receipt.json",
+      "receiptSha256": "9325287F2237E7767603FFFEE4C682186E9BB94414247497EDEE44AD66039185",
+      "checks": 11,
+      "externalProductionApisInvoked": false
+    },
+    "ankiConsumerCompatibility": {
+      "status": "passed",
+      "receiptPath": "workers/anki-exporter/canary/ca/260826031038-28b0/receipt.json",
+      "receiptSha256": "D77E2E432060920AB129ED5CF2A046EB8DE39903F4AC0E534CF9E61B798A4906",
+      "checks": 3,
+      "externalProductionWrites": false
+    }
+  },
+  "immutableBoundaries": {
+    "frozenV1Checkpoint": "receipts/contracts-v1-stable-checkpoint-20260825T115938Z.json",
+    "frozenV1FilesChecked": 21,
+    "frozenV1Mismatches": 0,
+    "oldEmptyRegistry": {
+      "path": "contracts/v1/registry/worker-registry.v1.json",
+      "sha256": "ACB4BA01ADBC0A410AAE7050FEC04F527C47EE6D0A98F30B73E7AC2B0E35F6E1",
+      "modified": false
+    },
+    "previousAuthorityRegistryCheckpoint": "contracts/authority/worker-registry/v1.1.0-20260826T023054Z/checkpoint.json",
+    "modified": false
+  },
+  "migrationBoundary": {
+    "coreIdentity": "GO",
+    "destinationNeutralRouting": "GO",
+    "publishedOrchestratorCanary": "GO",
+    "fullRebrandedWorkerRelease": "NO-GO",
+    "desktopKnowledgeClipperEntrypoint": "NO-GO",
+    "reason": "Worker and desktop modules must publish their own KnowledgeClipper-named release entrypoints before a full new-brand release can be sealed. Stable worker IDs and target-specific exporter boundaries remain unchanged."
+  },
+  "files": [
+    { "path": "contracts/core/v2/fixtures/clip-intent/invalid/legacy-version.json", "bytes": 176, "sha256": "ED5B238086FC0B81708ADD1F218808E65E807539B6EA01452B965BDF0B6CDC52" },
+    { "path": "contracts/core/v2/fixtures/clip-intent/valid/clip-card.json", "bytes": 186, "sha256": "F378AFCC911435D8F8DB220E401E6DC7F0DEBFA358D4AC302FFA356EAFC90101" },
+    { "path": "contracts/core/v2/fixtures/pipeline-plan/invalid/unknown-destination.json", "bytes": 611, "sha256": "E104C2422C0E6E0ABE706FA2C27A05B1200D2D095D2F5655F24DFF60A32B88CE" },
+    { "path": "contracts/core/v2/fixtures/pipeline-plan/valid/content-only.json", "bytes": 761, "sha256": "3FE0D08A9E828A81EA73E48948CF24ABDD4C41A85C1EA11F40E42670CBDB9399" },
+    { "path": "contracts/core/v2/fixtures/task-manifest/invalid/legacy-profile.json", "bytes": 586, "sha256": "27C64B526440CE5DBF4A9B08771CD613B987D2E25BCADBBAA218DA3F1EA9A275" },
+    { "path": "contracts/core/v2/fixtures/task-manifest/valid/content-only.json", "bytes": 613, "sha256": "B8A4FB3594CAB15CF12518BC278A0FE142E9B8423549BDEC31529B57F429C00B" },
+    { "path": "contracts/core/v2/fixtures/task-manifest/valid/dual-destination.json", "bytes": 619, "sha256": "47EB0261944096C1B0CD93614294CBB50E9DA0374AEE30E465F0AB3C7D5060BF" },
+    { "path": "contracts/core/v2/legacy-aliases.v2.json", "bytes": 1302, "sha256": "D4BDD0B978FEC40B8B51D1AB4ECC5A0BBBB4D5B8F9A631BBA9676C5CE3B90068" },
+    { "path": "contracts/core/v2/product-identity.v2.json", "bytes": 445, "sha256": "3D7D32265A553F9DB71C9BCD2FDA48E2D57D0A7C83F6EC0CD9B7EB5515305DBE" },
+    { "path": "contracts/core/v2/profile-resolver.v2.json", "bytes": 2911, "sha256": "F440275058DB5764A1EBDE6483E37720B5C7A4C7196AFF3FBC871F8A7BB97800" },
+    { "path": "contracts/core/v2/schemas/clip-intent.v2.schema.json", "bytes": 1355, "sha256": "2FED900FFA24562D470822E94DD68505526EE45A23872C7E3E849A8C291FF118" },
+    { "path": "contracts/core/v2/schemas/pipeline-plan.v2.schema.json", "bytes": 4236, "sha256": "46E0510D96F564A0FB4CF602A01970FBA8C4A43C9CC91DD4D955C30DB9EBFE41" },
+    { "path": "contracts/core/v2/schemas/product-identity.v2.schema.json", "bytes": 1160, "sha256": "D4F695231B4995B42A939E55E228EF0A67E12D2A5DE41EF81E2826786ECE9592" },
+    { "path": "contracts/core/v2/schemas/profile-resolver.v2.schema.json", "bytes": 6976, "sha256": "EC1CBD085B00D9D82911EF67208CDBC31AF1D8B6DF7CABF063DAAE18D8137072" },
+    { "path": "contracts/core/v2/schemas/task-manifest.v2.schema.json", "bytes": 2279, "sha256": "597BFC2A67DF7A7525F239F4E8291294E84C349AE0C64A6A57E550751A39C9E8" },
+    { "path": "orchestrator/KnowledgeClipper.Orchestrator.csproj", "bytes": 584, "sha256": "CD1C079817DA2453FE81C22F0A469588A395E45B19AA0CB4D8E41D90EE31792F" },
+    { "path": "tools/build-knowledge-clipper-orchestrator.ps1", "bytes": 1730, "sha256": "8B182D302CD3E3CBF4F46AD66B5A1FCFB03524FC30D3AB24A5DAC92122770AAA" },
+    { "path": "tools/verify_core_identity_v2_checkpoint.py", "bytes": 5727, "sha256": "DBF08FB98B2AC584E1D39610D26E0530163E8F246557DBA2F3BC53C1DE005FEC" },
+    { "path": "dist/orchestrator/win-x64/v2.0.0/KnowledgeClipper.Orchestrator.exe", "bytes": 67904672, "sha256": "E5F047843E1C000FD3A737CDA1A039B231BF9FDFDE7DE0C49657A6912E6D400A" },
+    { "path": "contracts/authority/core-identity/v2.0.0-20260826T031615Z/describe.json", "bytes": 489, "sha256": "5A204AA46AB4D112ACFFAD560C7E788FF52CEAC139D1D9217B21F67266951ED7" },
+    { "path": "canary/core-identity/knowledge-clipper-core-v2-20260826T031231Z/fake-registry.corrected.v1.json", "bytes": 605, "sha256": "6AD4CF0C15077E704F00D3FF31C91EAF9A7BD096FF2E14FB1470F729BD9B7A38" },
+    { "path": "canary/core-identity/knowledge-clipper-core-v2-20260826T031231Z/job/pipeline.corrected.v2.json", "bytes": 699, "sha256": "3643ECB2DD539037AD25F2D4A052B41B6AD3593C8C868A2C41B9EFB512988CDC" },
+    { "path": "canary/core-identity/knowledge-clipper-core-v2-20260826T031231Z/job/runs/run-001/events/000006-task-state.json", "bytes": 313, "sha256": "1D8774DD9C92C61F7395D57D9046E4B25BA2361B54AC6A79415F27B3766DD1A8" },
+    { "path": "canary/core-identity/knowledge-clipper-core-v2-20260826T031231Z/job/runs/run-002/events/000006-task-state.json", "bytes": 316, "sha256": "599E9E9BD060137BB7543C512D62BE3EBD6B22DD7CD48E226343DFD7E1592DBC" },
+    { "path": "canary/rwa/260826031035/receipt.json", "bytes": 4608, "sha256": "9325287F2237E7767603FFFEE4C682186E9BB94414247497EDEE44AD66039185" },
+    { "path": "workers/anki-exporter/canary/ca/260826031038-28b0/receipt.json", "bytes": 4302, "sha256": "D77E2E432060920AB129ED5CF2A046EB8DE39903F4AC0E534CF9E61B798A4906" }
+  ],
+  "externalProductionApisInvoked": false
+}

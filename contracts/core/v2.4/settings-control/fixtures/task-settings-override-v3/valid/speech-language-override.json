@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "knowledge-clipper-task-settings-override.v3",
+  "speech": {
+    "languageStrategy": "override",
+    "languageOverride": "en-US",
+    "voicesByLanguage": {
+      "zh-CN": "zh-CN-XiaoxiaoNeural",
+      "en-US": "en-US-AvaMultilingualNeural",
+      "es-ES": "es-ES-XimenaNeural",
+      "ja-JP": "ja-JP-NanamiNeural",
+      "ko-KR": "ko-KR-SunHiNeural"
+    },
+    "deployment": {
+      "edgeTtsPath": "C:\\Tools\\edge-tts.exe",
+      "ffplayPath": "C:\\Tools\\ffplay.exe"
+    }
+  }
+}

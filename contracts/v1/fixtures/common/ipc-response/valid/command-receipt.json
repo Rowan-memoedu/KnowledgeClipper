@@ -1,0 +1,5 @@
+{
+  "protocolVersion": "1.0", "correlationId": "correlation-001", "messageType": "task-command-receipt", "ok": true,
+  "payload": { "schemaVersion": "1.0.0", "commandId": "command-001", "accepted": true, "taskId": "task-001", "operationId": "operation-001", "status": "running", "timestamp": "2026-08-25T11:00:00Z", "error": null, "durableEventRef": "runs/run-001/events/000001-command-accepted.json" },
+  "error": null
+}

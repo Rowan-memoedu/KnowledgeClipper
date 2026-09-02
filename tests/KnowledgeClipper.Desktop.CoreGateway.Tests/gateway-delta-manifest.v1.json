@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "knowledge-clipper-desktop-gateway-delta-manifest.v1",
+  "manifestId": "desktop-v3-core-gateway-20260902T071113Z",
+  "createdAt": "2026-09-02T07:11:13.3373688Z",
+  "workspaceRoot": ".",
+  "sourceSnapshot": {
+  "algorithm": "SHA-256 over UTF-8 records sorted by StringComparer.Ordinal path; each record is path NUL decimal-bytes NUL lowercase-sha256 LF; final record includes LF",
+  "files": 9,
+  "bytes": 59149,
+  "treeSha256": "87f4044341ffe8020f9727e98156de44cb09094e3a3f10e8c901625f7818ebce",
+  "entries": [
+    {
+      "path": "desktop/RemNoteQuickClipper.Desktop.WindowsCanary.csproj",
+      "bytes": 4767,
+      "sha256": "e31046e26ab27c3789c97d735ddc12b46c8f4698fe8d78bc45da41d412bbe97b"
+    },
+    {
+      "path": "desktop/RemNoteQuickClipper.Desktop.csproj",
+      "bytes": 6514,
+      "sha256": "093390e82cb4b842fa7bd8e805225b81cf16e0fc4042e9b732638da834c45c2d"
+    },
+    {
+      "path": "src/KnowledgeClipper.Desktop.Adapters/NamedPipeCoreGateway.cs",
+      "bytes": 17165,
+      "sha256": "f5e670b55dc754b15d7860fbb66bfa45cb0f7b3da002b3c11e0d7a59de41bdbd"
+    },
+    {
+      "path": "src/KnowledgeClipper.Desktop.Application/ApplicationContracts.cs",
+      "bytes": 2020,
+      "sha256": "8c0c048862c139f2d55ea251af2463135c9f04ca9780e06563fdd0a683ced941"
+    },
+    {
+      "path": "src/KnowledgeClipper.Desktop.Application/README.md",
+      "bytes": 3337,
+      "sha256": "6633b694e4db0af5a08a6c351df91a18e0384259820f3222ab7b101c74ea3132"
+    },
+    {
+      "path": "src/KnowledgeClipper.Desktop.Application/UseCases.cs",
+      "bytes": 7677,
+      "sha256": "fae2365196ed4d987cfcd77579606c312e35b212bd0287be802afbce76a00997"
+    },
+    {
+      "path": "tests/KnowledgeClipper.Desktop.CoreGateway.Tests/KnowledgeClipper.Desktop.CoreGateway.Tests.csproj",
+      "bytes": 1207,
+      "sha256": "0fb477aefca80904c3b0390ea190a70564038a460d695f51bade97de68134557"
+    },
+    {
+      "path": "tests/KnowledgeClipper.Desktop.CoreGateway.Tests/Program.cs",
+      "bytes": 15250,
+      "sha256": "7def1009c9f39d25a43ad3d25b47b05d77f55b066f5a8ffea919d9b3c26773ea"
+    },
+    {
+      "path": "tests/KnowledgeClipper.Desktop.CoreGateway.Tests/README.md",
+      "bytes": 1212,
+      "sha256": "97a2aa87fecf6dd8847af7858414f37d28df4efc9532b9afbaaa5382c4adf8c2"
+    }
+  ]
+  },
+  "supersedes": {
+    "declaredTreeSha256": "4420b555f7588620b0a990e6bee677b2291e57735c356bcb9a0ed2bb2d6965ba",
+    "status": "evidence-drift-superseded",
+    "reason": "The prior message used a newline/tab payload instead of the workspace-standard Ordinal/NUL source snapshot algorithm."
+  }
+}

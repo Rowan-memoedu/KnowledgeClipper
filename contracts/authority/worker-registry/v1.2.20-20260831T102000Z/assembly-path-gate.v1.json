@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-assembly-path-gate.v1",
+  "status": "passed",
+  "authorityDirectory": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.20-20260831T102000Z",
+  "releaseRoot": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\releases\\knowledge-clipper-authority-v1.2.20-20260831T102000Z\\win-x64",
+  "assemblyReceipt": {
+    "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.20-20260831T102000Z\\assembly-receipt.v1.json",
+    "bytes": 4312,
+    "sha256": "DD2761AB9F7C52320B56F98B75AFC1E78CF9D52874F8A8E86CB5D9BB75292C46",
+    "containsTempPath": false
+  },
+  "pathCount": 5,
+  "paths": [
+    {
+      "workerId": "image.ocr.mineru",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.20-20260831T102000Z\\describe\\image.ocr.mineru.describe.json",
+      "bytes": 746,
+      "sha256": "B63C0B41D1EC91629CA50A6AF64625BD6DEA397232382981C1C5B73A4E8D2DF1",
+      "status": "matched"
+    },
+    {
+      "workerId": "content.deepseek",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.20-20260831T102000Z\\describe\\content.deepseek.describe.json",
+      "bytes": 789,
+      "sha256": "D2971925B5FBC72ADF1D75F1D0D4D30C31F383BCD4C784F9EE6277B7A8BAF019",
+      "status": "matched"
+    },
+    {
+      "workerId": "speech.edge",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.20-20260831T102000Z\\describe\\speech.edge.describe.json",
+      "bytes": 636,
+      "sha256": "84F82677E81BC123F5B45D92E0B794BA88342407AD16CDD955DCE091A6162745",
+      "status": "matched"
+    },
+    {
+      "workerId": "export.remnote",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.20-20260831T102000Z\\describe\\export.remnote.describe.json",
+      "bytes": 660,
+      "sha256": "763135CF8C4B8D443F4710FDFE2985EEF0ADB4885F856078CCB6FF2056EB12BF",
+      "status": "matched"
+    },
+    {
+      "workerId": "export.anki",
+      "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.20-20260831T102000Z\\describe\\export.anki.describe.json",
+      "bytes": 680,
+      "sha256": "BF8201456E0041EC1D510B90EE325766C253B21619BB9BBD4A99F42BEAC652AE",
+      "status": "matched"
+    }
+  ],
+  "allExist": true,
+  "allWithinFinalRoots": true,
+  "allBytesAndHashesMatch": true,
+  "externalWrites": 0,
+  "physicalSpeakerInvocations": 0
+}

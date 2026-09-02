@@ -1,0 +1,1 @@
+{"schemaVersion":"remnote-public-probe-request.v2","probeId":"probe-v2-formal","authorizationScope":"isolated-canary","timeoutMs":15000,"operations":["status","search","list","read"],"target":{"rootRemId":"formal-root-id","rootTitle":"剪藏"}}

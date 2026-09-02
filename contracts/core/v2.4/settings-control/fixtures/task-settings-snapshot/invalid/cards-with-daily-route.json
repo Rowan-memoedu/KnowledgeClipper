@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "knowledge-clipper-task-settings-snapshot.v1",
+  "taskId": "task-invalid",
+  "frozenAt": "2026-08-27T16:30:00Z",
+  "source": { "activeProfileId": "bad", "settingsSha256": "1111111111111111111111111111111111111111111111111111111111111111", "precedence": ["taskOverride", "activeProfile", "moduleDefault"] },
+  "workflow": { "processingProfile": "cards", "destinations": ["remnote"] },
+  "modules": {
+    "capture": { "contextEnabled": false, "contextGranularity": "sentence", "imageHandling": "ocr" },
+    "content": { "promptSet": "open-md-v2", "categoryRegistry": "category-registry/2.0.0", "providerMode": "live" },
+    "remnote": {
+      "settings": { "schemaVersion": "remnote-destination-settings-snapshot.v1", "destinationType": "remnote", "enabled": true, "target": { "rootRemId": "clip-root", "rootTitle": "剪藏" }, "advanced": { "sink": "markdown-zip", "clipRouting": "clip-daily-route", "cardRouting": "card-export", "timeZone": "Asia/Shanghai", "dateFormat": "yyyy-MM-dd" }, "secretReferences": [] },
+      "route": { "kind": "clip-daily-route", "timeZone": "Asia/Shanghai", "localDate": "2026-08-28", "dateFormat": "yyyy-MM-dd" }
+    }
+  },
+  "secretReferences": []
+}

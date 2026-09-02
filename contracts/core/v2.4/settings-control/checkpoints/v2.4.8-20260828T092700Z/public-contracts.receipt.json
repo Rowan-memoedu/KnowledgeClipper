@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "knowledge-clipper-public-contract-validation-receipt.v1",
+  "status": "passed",
+  "schemas": 59,
+  "validFixtures": 62,
+  "invalidFixtures": 50,
+  "raw": "{\"schemaVersion\": \"1.0.0\", \"schemasChecked\": 59, \"validFixturesAccepted\": 62, \"invalidFixturesRejected\": 50, \"authoritativeRegistryEntries\": 0, \"workerCliDescriptorChecked\": true, \"speechEdgeRegistryState\": \"authority-pending\", \"imageOcrRegistryState\": \"authority-pending\", \"ipcFramingChecked\": true, \"stageControlIpcVersion\": \"1.1\", \"stageControlReceiptVersion\": \"2.3.0\", \"coreAdapterContractVersion\": \"2.0.0\", \"dynamicPipelineSchemaVersion\": \"2.0.0\", \"productIdentity\": \"knowledge-clipper\", \"destinationNeutral\": true}"
+}

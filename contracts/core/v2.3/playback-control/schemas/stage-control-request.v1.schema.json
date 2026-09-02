@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./stage-control-request.v1.schema.json",
+  "title": "KnowledgeClipper Stage Control Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["taskId", "operation", "selector", "reason"],
+  "properties": {
+    "taskId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "operation": { "const": "speech.playback" },
+    "selector": { "const": "current-active" },
+    "reason": { "const": "user_stop" }
+  }
+}

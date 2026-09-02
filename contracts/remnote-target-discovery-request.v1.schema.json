@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledgeclipper://contracts/remnote-target-discovery-request.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "discoveryId", "authorizationScope", "timeoutMs", "operations", "selector"],
+  "properties": {
+    "schemaVersion": { "const": "remnote-target-discovery-request.v1" },
+    "discoveryId": { "type": "string", "minLength": 1 },
+    "authorizationScope": { "const": "configured-destination" },
+    "timeoutMs": { "const": 15000 },
+    "operations": { "const": ["status", "search", "list", "read"] },
+    "selector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rootTitle", "expectedType", "match", "uniqueness"],
+      "properties": {
+        "rootTitle": { "type": "string", "minLength": 1 },
+        "expectedType": { "const": "document" },
+        "match": { "const": "exact" },
+        "uniqueness": { "const": "required" }
+      }
+    }
+  }
+}

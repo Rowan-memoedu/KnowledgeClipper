@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-task-settings-snapshot.v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "taskId", "frozenAt", "source", "workflow", "modules", "secretReferences"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-task-settings-snapshot.v3" },
+    "taskId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "frozenAt": { "type": "string", "format": "date-time" },
+    "source": { "type": "object", "additionalProperties": false, "required": ["activeProfileId", "settingsSha256", "precedence"], "properties": { "activeProfileId": { "type": "string", "minLength": 1 }, "settingsSha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }, "precedence": { "const": ["taskOverride", "activeProfile", "moduleDefault"] } } },
+    "workflow": { "$ref": "workflow-settings.v2.schema.json#/$defs/workflow" },
+    "modules": {
+      "type": "object", "additionalProperties": false, "required": ["capture", "content"],
+      "properties": {
+        "capture": { "type": "object", "additionalProperties": false, "required": ["contextEnabled", "contextGranularity", "imageHandling"], "properties": { "contextEnabled": { "type": "boolean" }, "contextGranularity": { "enum": ["sentence", "paragraph"] }, "imageHandling": { "enum": ["ocr", "original"] } } },
+        "imageOcr": { "$ref": "workflow-settings.v2.schema.json#/$defs/imageOcr" },
+        "content": {
+          "type": "object", "additionalProperties": false,
+          "required": ["promptSet", "categoryRegistry", "providerMode"],
+          "properties": {
+            "promptSet": { "type": "string", "minLength": 1 },
+            "categoryRegistry": { "const": "category-registry/2.0.0" },
+            "providerMode": { "const": "live" },
+            "configArtifactRef": { "type": ["string", "null"], "minLength": 1 },
+            "expectedSha256": { "type": ["string", "null"], "pattern": "^[A-Fa-f0-9]{64}$" },
+            "settingsRevisionId": { "type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+            "configSchemaVersion": { "enum": ["content-config-snapshot/1.0.0", "content-config-snapshot/1.1.0"] },
+            "promptSetSha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+            "categoryRegistrySha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+            "runtimePolicy": {
+              "type": "object", "additionalProperties": false,
+              "required": ["profileId", "profileVersion", "languagePracticeDefault", "providerModel", "providerMaxRetries"],
+              "properties": {
+                "profileId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+                "profileVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$" },
+                "languagePracticeDefault": { "enum": ["ask", "meaning-reading", "writing", "both"] },
+                "providerModel": { "enum": ["deepseek-chat", "deepseek-reasoner"] },
+                "providerMaxRetries": { "type": "integer", "minimum": 1, "maximum": 5 }
+              }
+            }
+          },
+          "allOf": [
+            { "if": { "required": ["configSchemaVersion"], "properties": { "configSchemaVersion": { "const": "content-config-snapshot/1.1.0" } } }, "then": { "required": ["runtimePolicy", "promptSetSha256", "categoryRegistrySha256"] } },
+            { "if": { "required": ["configSchemaVersion"], "properties": { "configSchemaVersion": { "const": "content-config-snapshot/1.0.0" } } }, "then": { "not": { "required": ["runtimePolicy"] } } }
+          ]
+        },
+        "speech": {
+          "type": "object", "additionalProperties": false,
+          "required": ["voicesByLanguage", "ratePercent", "volumePercent", "pitchHz", "autoPlay", "languageStrategy"],
+          "properties": {
+            "languageStrategy": { "enum": ["auto", "override"] },
+            "languageOverride": { "type": ["string", "null"], "pattern": "^[a-z]{2}-[A-Z]{2}$" },
+            "voicesByLanguage": { "type": "object", "minProperties": 1, "propertyNames": { "pattern": "^[a-z]{2}-[A-Z]{2}$" }, "additionalProperties": { "type": "string", "minLength": 1 }, "required": ["zh-CN", "en-US", "es-ES", "ja-JP", "ko-KR"] },
+            "ratePercent": { "type": "integer", "minimum": -100, "maximum": 100 },
+            "volumePercent": { "type": "integer", "minimum": -100, "maximum": 100 },
+            "pitchHz": { "type": "integer", "minimum": -100, "maximum": 100 },
+            "autoPlay": { "const": true },
+            "deployment": { "type": "object", "additionalProperties": false, "properties": { "edgeTtsPath": { "type": ["string", "null"], "pattern": "^[A-Za-z]:\\\\" }, "ffplayPath": { "type": ["string", "null"], "pattern": "^[A-Za-z]:\\\\" } } }
+          },
+          "allOf": [
+            { "if": { "properties": { "languageStrategy": { "const": "override" } } }, "then": { "required": ["languageOverride"] } },
+            { "if": { "properties": { "languageStrategy": { "const": "auto" } } }, "then": { "properties": { "languageOverride": { "type": "null" } } } }
+          ]
+        },
+        "remnote": { "$ref": "task-settings-snapshot.v2.schema.json#/properties/modules/properties/remnote" },
+        "anki": { "$ref": "task-settings-snapshot.v2.schema.json#/properties/modules/properties/anki" }
+      }
+    },
+    "secretReferences": { "const": [] }
+  },
+  "allOf": [
+    { "if": { "properties": { "modules": { "properties": { "capture": { "properties": { "imageHandling": { "const": "ocr" } } } } } } }, "then": { "properties": { "modules": { "required": ["imageOcr"] } } } },
+    { "if": { "properties": { "workflow": { "properties": { "destinations": { "contains": { "const": "remnote" } } } } } }, "then": { "properties": { "modules": { "required": ["remnote"] } } }, "else": { "properties": { "modules": { "not": { "required": ["remnote"] } } } } },
+    { "if": { "properties": { "workflow": { "properties": { "destinations": { "contains": { "const": "anki" } } } } } }, "then": { "properties": { "workflow": { "properties": { "processingProfile": { "const": "cards" } } }, "modules": { "required": ["anki"] } } }, "else": { "properties": { "modules": { "not": { "required": ["anki"] } } } } }
+  ]
+}

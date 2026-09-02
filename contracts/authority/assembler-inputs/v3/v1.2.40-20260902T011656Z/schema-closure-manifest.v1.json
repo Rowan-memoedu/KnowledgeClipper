@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "knowledge-clipper-core-schema-closure-manifest.v1",
+  "checkpoint": {
+    "path": "contracts/core/v2.10/checkpoints/v2.10.3-20260902T010816Z/checkpoint.json",
+    "sha256": "3D943E1BCCC1570816EA2753E37277D1A3FC68B799D2F8DC7E64F90E485EFCDC"
+  },
+  "dependencies": [
+    {
+      "path": "contracts/core/v2.10/module-control/schemas/module-action-request.v4.schema.json",
+      "bytes": 662,
+      "sha256": "8037F8190C1BE98144EC974B8C36C1138D8825AE97973B52F06EA4932CB30198",
+      "referencedBy": "contracts/core/v2.10/module-control/schemas/ipc-request.v1.5.schema.json"
+    },
+    {
+      "path": "contracts/core/v2.3/playback-control/schemas/stage-control-request.v1.schema.json",
+      "bytes": 528,
+      "sha256": "B717994985275623719C09C93D04A4F05A5B23BAE6AB240191E00898908182E8",
+      "referencedBy": "contracts/core/v2.10/module-control/schemas/ipc-request.v1.5.schema.json"
+    },
+    {
+      "path": "contracts/core/v2.10/module-control/schemas/module-action-receipt.v4.schema.json",
+      "bytes": 2942,
+      "sha256": "EA41A434A1CC40475F0E6EFAC2ACE691073AC44F50E7EDB8D3E29CDC56A1023B",
+      "referencedBy": "contracts/core/v2.10/module-control/schemas/ipc-response.v1.5.schema.json"
+    },
+    {
+      "path": "contracts/core/v2.10/module-control/schemas/module-action-request.v5.schema.json",
+      "bytes": 755,
+      "sha256": "8EF9E7B9E1B2EC50242C02996D05BCE451D5C5AC51517D743B95ACBCAEC672F1",
+      "referencedBy": "contracts/core/v2.10/module-control/schemas/ipc-request.v1.6.schema.json"
+    },
+    {
+      "path": "contracts/core/v2.10/module-control/schemas/module-action-receipt.v5.schema.json",
+      "bytes": 3084,
+      "sha256": "70558ECA43E68FF928CDB395D5325BA2AE8FD9D107FD72EC973AF923DF019104",
+      "referencedBy": "contracts/core/v2.10/module-control/schemas/ipc-response.v1.6.schema.json"
+    },
+    {
+      "path": "contracts/core/v2.10/module-control/schemas/module-action-request.v6.schema.json",
+      "bytes": 699,
+      "sha256": "1FFC6811E1671B4568C213BE7132753070852D88E43A5700DAB927612FEC5788",
+      "referencedBy": "contracts/core/v2.10/module-control/schemas/ipc-request.v1.7.schema.json"
+    },
+    {
+      "path": "contracts/core/v2.10/module-control/schemas/module-action-receipt.v6.schema.json",
+      "bytes": 4237,
+      "sha256": "BF6064FFB9D0EDFA0080A8C716B8434103E6E3F2C67572B03A5C668BC7B9FAC9",
+      "referencedBy": "contracts/core/v2.10/module-control/schemas/ipc-response.v1.7.schema.json"
+    }
+  ]
+}

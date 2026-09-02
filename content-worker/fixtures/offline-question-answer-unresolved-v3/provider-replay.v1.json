@@ -1,0 +1,9 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "question_answer:item-question:question-1": {
+      "answer_state": "unresolved",
+      "unresolved_reasons": ["missing_required_context"]
+    }
+  }
+}

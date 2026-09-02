@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-invalidation-receipt.v1",
+  "generatedAt": "2026-08-28T08:59:00.0000000+00:00",
+  "registryVersion": "1.2.7",
+  "releaseId": "knowledge-clipper-authority-v1.2.7-20260828T085600Z",
+  "status": "invalidated-never-promoted",
+  "authorityBound": false,
+  "checkpointCreated": false,
+  "reason": "The dependency manifest recorded an incorrect v1.2.6 base release tree SHA-256. The assembled worker payloads passed their own path and hash gate, but the base-authority evidence chain was not exact.",
+  "evidence": {
+    "recordedBaseTreeSha256": "1DF642E232B87948D4CBBC21684ED765D1658108613DF4AE4A8F136F21C97DC3",
+    "actualBaseTreeSha256": "1DF64264BB69F4039C3B58956AA9612B98E45C2DF38B12D396B4813377E512EE",
+    "actualBaseCheckpoint": "contracts/authority/worker-registry/v1.2.6-20260828T074944Z/checkpoint.json",
+    "affectedManifest": "contracts/authority/worker-registry/v1.2.7-20260828T085600Z/dependency-manifest.v1.json"
+  },
+  "immutability": {
+    "v1_2_7ReleaseModified": false,
+    "v1_2_7AssemblyReceiptModified": false,
+    "v1_2_6Modified": false,
+    "frozenV1Modified": false
+  },
+  "replacement": {
+    "minimumRegistryVersion": "1.2.8",
+    "rebuildFromOriginalFinalInputs": true
+  }
+}

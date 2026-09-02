@@ -1,0 +1,86 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-language-zh": {
+      "cleaned_text": "他阅读完补充材料后，对这个结论仍然心存疑窦。\n",
+      "removed_fragments": [],
+      "format_anomalies": []
+    },
+    "classification:item-language-zh": {
+      "units": [
+        {
+          "unit_id": "unit-doubt",
+          "source_segment_indexes": [0],
+          "category_id": "language_zh",
+          "subtype": "contextual_vocabulary",
+          "answer_state": "not_applicable",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "target_term": "疑窦",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "card_generation:item-language-zh:unit-doubt": {
+      "generated_content": [
+        { "kind": "explanation", "text": "疑窦 yí dòu：疑问；疑惑。" }
+      ],
+      "cards": [
+        {
+          "template": "language_context",
+          "front_blocks": [
+            { "type": "markdown", "text": "他阅读完补充材料后，对这个结论仍然心存**疑窦**。", "provenance": "source" }
+          ],
+          "back_blocks": [
+            { "type": "text", "text": "疑窦 yí dòu：疑问；疑惑。", "provenance": "generated" }
+          ],
+          "answer_provenance": "not_applicable"
+        }
+      ],
+      "unresolved_reasons": []
+    },
+    "cleaning:item-language-en": {
+      "cleaned_text": "The committee reached a tentative conclusion after reviewing the evidence.\n",
+      "removed_fragments": [],
+      "format_anomalies": []
+    },
+    "classification:item-language-en": {
+      "units": [
+        {
+          "unit_id": "unit-tentative",
+          "source_segment_indexes": [0],
+          "category_id": "language_en",
+          "subtype": "contextual_vocabulary",
+          "answer_state": "not_applicable",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "target_term": "tentative",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "card_generation:item-language-en:unit-tentative": {
+      "generated_content": [
+        { "kind": "explanation", "text": "tentative /ˈtentətɪv/：暂定的；尚未最终确定的。" }
+      ],
+      "cards": [
+        {
+          "template": "language_context",
+          "front_blocks": [
+            { "type": "markdown", "text": "The committee reached a **tentative** conclusion after reviewing the evidence.", "provenance": "source" }
+          ],
+          "back_blocks": [
+            { "type": "text", "text": "tentative /ˈtentətɪv/：暂定的；尚未最终确定的。", "provenance": "generated" }
+          ],
+          "answer_provenance": "not_applicable"
+        }
+      ],
+      "unresolved_reasons": []
+    },
+    "language_writing:item-language-en:unit-tentative": {
+      "pronunciation": { "value": "/ˈtentətɪv/", "reliability": "reliable", "evidence": "标准词典读音" },
+      "meaning": { "value": "暂定的", "reliability": "reliable", "evidence": "当前语境表示尚未最终确定" },
+      "unresolved_reasons": []
+    }
+  }
+}

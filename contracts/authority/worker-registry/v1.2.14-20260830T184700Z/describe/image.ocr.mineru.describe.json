@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "workerId": "image.ocr.mineru",
+  "workerVersion": "1.2.2",
+  "contractVersion": "1.0.0",
+  "stages": [
+    "image-ocr"
+  ],
+  "inputKinds": [
+    "capture-bundle"
+  ],
+  "outputKinds": [
+    "image.original",
+    "image-ocr.markdown",
+    "image-ocr.structured",
+    "image-ocr.image"
+  ],
+  "concurrency": {
+    "model": "parallel",
+    "maxParallelAttempts": 4
+  },
+  "sideEffectLevel": "external",
+  "idempotencyLevel": "reconcilable",
+  "cancellation": {
+    "protocol": "attempt-signal-file-v1",
+    "supportedReasons": [
+      "user_stop",
+      "superseded",
+      "task_cancel",
+      "timeout"
+    ]
+  }
+}

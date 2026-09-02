@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-invalidation-receipt.v1",
+  "generatedAt": "2026-08-28T09:36:00.0000000+00:00",
+  "registryVersion": "1.2.10",
+  "releaseId": "knowledge-clipper-authority-v1.2.10-20260828T092300Z",
+  "status": "invalidated-never-promoted",
+  "authorityBound": false,
+  "checkpointCreated": true,
+  "reason": "The authority checkpoint binds Core checkpoint v2.4.7 whose prior Phase B authority/checkpoint identity tuple is inconsistent. Worker, release-tree, IPC and dependency-drift admissions remain forensic evidence only.",
+  "evidence": {
+    "affectedCoreCheckpoint": "contracts/core/v2.4/settings-control/checkpoints/v2.4.7-20260828T092200Z/checkpoint.json",
+    "affectedCoreCheckpointSha256": "C80097B4D29BE23DA9776F92C046BB6B2A2E2DFE0B39EEDEE9ED9845883CFC86",
+    "affectedAuthorityCheckpoint": "contracts/authority/worker-registry/v1.2.10-20260828T092300Z/checkpoint.json",
+    "affectedAuthorityCheckpointSha256": "C19995D2AB6BDCAE3D35C61E3305554A15ADB906A4C3F98BED9015FEAFDD95CF",
+    "authorityReceipt": "receipts/knowledge-clipper-authority-1.2.10-20260828T092500Z.json",
+    "authorityReceiptSha256": "DC17E4F7B11E08093509E10787C8C75043124A3202DBAE5331C7807A9CB542FD"
+  },
+  "immutability": {
+    "v1_2_10ReleaseModified": false,
+    "v1_2_10CheckpointModified": false,
+    "v1_2_9Modified": false,
+    "frozenV1Modified": false
+  },
+  "replacement": {
+    "minimumRegistryVersion": "1.2.11",
+    "rebuildFromOriginalFinalInputs": true
+  }
+}

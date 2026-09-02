@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "knowledge-clipper-product-identity.v1",
+  "displayName": "RemNote Quick Clipper",
+  "asciiRoot": "RemNoteQuickClipper",
+  "desktopEntrypoint": "desktop/RemNoteQuickClipper.exe",
+  "primaryProcess": "RemNoteQuickClipper",
+  "coreIdentities": [
+    {"componentId": "desktop", "assemblyName": "RemNoteQuickClipper.Desktop", "namespaceRoot": "RemNoteQuickClipper.Desktop"},
+    {"componentId": "orchestrator.core", "assemblyName": "RemNoteQuickClipper.Orchestrator", "namespaceRoot": "RemNoteQuickClipper.Orchestrator"},
+    {"componentId": "image.ocr.mineru", "assemblyName": "RemNoteQuickClipper.ImageOcr.Worker", "namespaceRoot": "RemNoteQuickClipper.ImageOcr"},
+    {"componentId": "content.deepseek", "assemblyName": "RemNoteQuickClipper.Content.Worker", "namespaceRoot": "RemNoteQuickClipper.Content"},
+    {"componentId": "speech.edge", "assemblyName": "RemNoteQuickClipper.Speech.Worker", "namespaceRoot": "RemNoteQuickClipper.Speech"}
+  ],
+  "exporters": ["export.remnote", "export.anki"],
+  "legacyCompatibilityAliases": []
+}

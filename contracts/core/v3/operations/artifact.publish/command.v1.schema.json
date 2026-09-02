@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.artifact-publish-command/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["purpose", "contentBase64", "dataClass"],
+  "properties": {
+    "purpose": {"enum": ["question", "question-context", "question-follow-up", "question-answer"]},
+    "contentBase64": {"type": "string", "contentEncoding": "base64"},
+    "dataClass": {"type": "string", "minLength": 1}
+  }
+}

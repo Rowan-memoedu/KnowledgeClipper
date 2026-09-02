@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "knowledge-clipper-core-checkpoint-assembly-invalidation.v1",
+  "createdAt": "2026-09-02T01:31:41.489762Z",
+  "status": "invalidated-for-v3-input-generation",
+  "checkpoint": {
+    "path": "contracts/core/v2.10/checkpoints/v2.10.4-20260902T011656Z/checkpoint.json",
+    "sha256": "6722DC6FBEBE2E96A06042E0EA14E0CD8A79C6266D358C058875E143DFC33A65"
+  },
+  "runtimeVerificationStillValid": true,
+  "authorityTargetsCreated": 0,
+  "candidateTargetsCreated": 0,
+  "reason": "Authority package fileBindings were broader than the frozen V3 assembler requires and caused non-linear schema-closure scanning.",
+  "observed": "Two progress-aware runs reached 120s and 300s idle ceilings with sustained CPU and no committed output directory.",
+  "supersededBy": "contracts/core/v2.10/checkpoints/v2.10.5-20260902T012600Z/checkpoint.json"
+}

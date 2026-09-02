@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "knowledge-clipper-core-settings-checkpoint.v1",
+  "checkpointVersion": "2.4.1",
+  "supersedes": "contracts/core/v2.4/settings-control/checkpoints/v2.4.0-20260828T063609Z/checkpoint.json",
+  "createdAt": "2026-08-28T06:42:00Z",
+  "status": "passed-with-conditional-runtime-dependency",
+  "contractRoot": "contracts/core/v2.4/settings-control",
+  "publicVersions": {
+    "workflowSettings": "knowledge-clipper-workflow-settings.v1",
+    "taskOverride": "knowledge-clipper-task-settings-override.v1",
+    "taskSnapshot": "knowledge-clipper-task-settings-snapshot.v1",
+    "moduleAdapter": "knowledge-clipper-module-settings-adapter.v1",
+    "taskManifest": "2.0.0",
+    "pipelinePlan": "2.0.0",
+    "workerRequestEnvelope": "1.0.0",
+    "remnotePayload": "2.0.0"
+  },
+  "authorityBoundary": {
+    "frozenContractsV1Modified": false,
+    "priorAuthorityModified": false,
+    "currentAuthority": "contracts/authority/worker-registry/v1.2.4-20260828T032500Z",
+    "remnoteV2Admission": "conditional-pending-new-authority-registry-checkpoint",
+    "reason": "Authority v1.2.4 still describes export.remnote workerVersion 1.0.1; settings-bound RemNote routes require the additive exporter v2 runtime."
+  },
+  "validation": {
+    "contractFixtures": { "status": "passed", "schemasChecked": 55, "validAccepted": 59, "invalidRejected": 47 },
+    "settingsFakeWorkerCanary": {
+      "status": "passed",
+      "receipt": "contracts/core/v2.4/settings-control/checkpoints/v2.4.1-20260828T064200Z/settings-control-canary.receipt.json",
+      "sha256": "43980edcbe9a86a64aed150d500cf464b35fa375cced359532ee6c2064f7c5db",
+      "externalCalls": 0,
+      "physicalSpeakerInvocations": 0,
+      "routeMatrix": ["none", "remnote", "anki", "dual"],
+      "unsupported": ["learning+anki", "question+export"]
+    },
+    "coreAdapterRegression": { "status": "passed", "matrix": 8 },
+    "orchestratorRegression": { "status": "passed", "tests": 22 },
+    "settingsQualityGateUnitTests": { "status": "passed", "tests": 8 },
+    "build": { "status": "passed", "warnings": 0, "errors": 0, "sdk": "8.0.424" }
+  },
+  "tree": {
+    "algorithm": "sha256(path NUL sha256 NUL bytes LF, ordinal path order)",
+    "fileCount": 21,
+    "totalBytes": 145626,
+    "treeSha256": "91513a5aefc9afa719b3c7e824a169976e59217f4de2f2e4ad7490001e646763",
+    "files": [
+      { "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.1-20260828T064200Z/settings-control-canary.receipt.json", "sha256": "43980edcbe9a86a64aed150d500cf464b35fa375cced359532ee6c2064f7c5db", "bytes": 2114 },
+      { "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-override/invalid/learning-anki-unknown.json", "sha256": "1f5335ac20f17ec463b612606aebb719ae5a490d944874bc7f5372470f9deaf9", "bytes": 179 },
+      { "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-override/valid/content-only.json", "sha256": "d4b4836067c94d3d6762af498e08ab1eccfe88ee58240d762324ebbcd0507a2b", "bytes": 172 },
+      { "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-snapshot/invalid/cards-with-daily-route.json", "sha256": "ff5e8c56d468ab3e9a906d94b46f71ad965cf33755352c02079d43fcfe7ce97a", "bytes": 1203 },
+      { "path": "contracts/core/v2.4/settings-control/fixtures/task-settings-snapshot/valid/learning-remnote.json", "sha256": "bda1dfa33fdc4b6b6caebd39e37f6310c32d34f6526cf7b39ae5a5c636d97ff4", "bytes": 1272 },
+      { "path": "contracts/core/v2.4/settings-control/fixtures/workflow-settings/invalid/secret-and-unknown-field.json", "sha256": "37a834bc910f7a94f7efb8116dc219694efcfa614e0e33bcd4ab7e9b653aee07", "bytes": 208 },
+      { "path": "contracts/core/v2.4/settings-control/fixtures/workflow-settings/valid/default-and-dual.json", "sha256": "7a9becc3351d316615d0677981ba4425db229fb7b1e6f6445b58f89409a91b74", "bytes": 870 },
+      { "path": "contracts/core/v2.4/settings-control/module-settings-adapter.v1.json", "sha256": "be948b59485328f629ff79c4ec87b6fe4699169b57e6de34195abed1605ee99a", "bytes": 5603 },
+      { "path": "contracts/core/v2.4/settings-control/readable-settings-to-plan.md", "sha256": "aaf7791cd7191851c6c0e7252c5799e376a3e0ff5481022f86c206daf7efdcf4", "bytes": 3207 },
+      { "path": "contracts/core/v2.4/settings-control/schemas/module-settings-adapter.v1.schema.json", "sha256": "1f4930990b0705ea7e507b200baef0637f75d926f0544f5481866a0009c5a709", "bytes": 2272 },
+      { "path": "contracts/core/v2.4/settings-control/schemas/task-settings-override.v1.schema.json", "sha256": "d76c9803d962d116d4d5a5bbe251b7d3bb0d6a0c8dd7375544c5c66c1002f45f", "bytes": 1547 },
+      { "path": "contracts/core/v2.4/settings-control/schemas/task-settings-snapshot.v1.schema.json", "sha256": "cff2addccbed715fd9916ebaffc7ab1e4baa2a67658c85da023c9a85ed4c1944", "bytes": 5485 },
+      { "path": "contracts/core/v2.4/settings-control/schemas/workflow-settings.v1.schema.json", "sha256": "e4fab209d12776b5254cec1ccb2db8af765a1c4c66c498c8afe4fcf3e9f21d86", "bytes": 2363 },
+      { "path": "contracts/remnote-destination-settings-snapshot.v1.schema.json", "sha256": "8a257ac5a86f8ba5a592aeeec434ad449d4bde6d0f44ff0d19bd2f6eff039cba", "bytes": 1181 },
+      { "path": "contracts/remnote-destination-settings.v1.schema.json", "sha256": "50d514ba217a77f5f6d851ee34c07fbe770d9dbbe4c5a42380b8e0996cf51f7f", "bytes": 1345 },
+      { "path": "contracts/remnote-export-payload.v2.schema.json", "sha256": "dab1196eea8739c213e363d808d6eddf169acd0a962f62fb15d48d71e82529db", "bytes": 1285 },
+      { "path": "orchestrator/Core/DesktopIntentResolver.cs", "sha256": "7b6c7bd9c63cbf43a07cd2b3c270aafcf1bb59b9a1b3480479e4114fce6dbcf2", "bytes": 45928 },
+      { "path": "orchestrator/Core/SettingsControl.cs", "sha256": "d6942c47598ff257d0966d45263ed13247b053fd0f2c6b1b01bfc4c238979446", "bytes": 29224 },
+      { "path": "tests/SettingsControl.IntegrationTests/Program.cs", "sha256": "60fb79394014bc5ae3bd10450767cd139a97f344be77f35fb42a2a95a31fe5e9", "bytes": 22350 },
+      { "path": "tests/SettingsControl.IntegrationTests/SettingsControl.IntegrationTests.csproj", "sha256": "f7353e4a3c2ba46299b8fe602dc67cd2a6f33a61d282dfdd02e5aca2e0aaeaea", "bytes": 413 },
+      { "path": "tools/validate_contracts.py", "sha256": "ac96cb2840c4a6b7e8c4ab99273b1dad0c7650aa9ac54125659fffa201ccedff", "bytes": 17405 }
+    ]
+  }
+}

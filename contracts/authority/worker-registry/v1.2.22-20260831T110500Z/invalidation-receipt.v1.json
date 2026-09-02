@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-invalidation-receipt.v1",
+  "generatedAt": "2026-08-31T11:17:00+08:00",
+  "registryVersion": "1.2.22",
+  "releaseId": "knowledge-clipper-authority-v1.2.22-20260831T110500Z",
+  "status": "invalidated-never-promoted",
+  "authorityBound": false,
+  "checkpointCreated": false,
+  "reason": "The candidate passed registry and IPC runtime gates, but the Core v2.7.7 checkpoint's aggregate tree hash did not match its own 114 immutable file entries. The mismatch was detected before authority admission and before any worker or external write ran.",
+  "evidence": {
+    "registrySha256": "4520C1039AC5F79DDAA8A7C87CC9C90218F48CDAFDEFE7E684AB198DA7B214A6",
+    "releaseTreeSha256": "57955E5D410B2A0C059B614D788EBB508CB7DC4EC476EF99A27A7B9261F5BB66",
+    "runtimeGates": "canary/core-authority-v1.2.22/20260831T111000Z/runtime-gates.json",
+    "failedCoreCheckpoint": "contracts/core/v2.7/checkpoints/v2.7.7-20260831T100400Z/checkpoint.json",
+    "failedCoreCheckpointSha256": "97EE259998C8DC875BF4CBF438E58F8E963C083B0125EC94A4C46EBF4FEDF498"
+  },
+  "immutability": {
+    "v1_2_22ReleaseModified": false,
+    "v1_2_20Modified": false,
+    "frozenV1Modified": false
+  },
+  "replacement": {
+    "minimumRegistryVersion": "1.2.23",
+    "rebuildFromOriginalFinalInputs": true
+  }
+}

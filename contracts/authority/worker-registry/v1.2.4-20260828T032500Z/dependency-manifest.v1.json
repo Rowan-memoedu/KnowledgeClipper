@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "knowledge-clipper-release-dependency-manifest.v1",
+  "releaseId": "knowledge-clipper-authority-v1.2.4-20260828T032500Z",
+  "releaseRoot": "releases/knowledge-clipper-authority-v1.2.4-20260828T032500Z/win-x64",
+  "files": 91,
+  "bytes": 249015447.0,
+  "treeHashAlgorithm": "sort Windows relative paths ordinal; emit path<TAB>bytes<TAB>lowercase SHA-256; join LF; SHA-256 UTF-8",
+  "treeSha256": "6CA2D59E66DF9F15CC1BE46890ABDA04F5FAFB98507716D91E568818A37882CE",
+  "keyFiles": [
+    {
+      "path": "orchestrator/KnowledgeClipper.Orchestrator.exe",
+      "bytes": 68035744,
+      "sha256": "9C6FD23EE4CB83AECD6EB09E58DB1799408AB9C46FC05913C399A372BA9A1A53"
+    }
+  ],
+  "workerOperations": {
+    "image.ocr.mineru": [
+      "image-ocr"
+    ],
+    "content.deepseek": [
+      "understand-and-card",
+      "question.answer",
+      "question.make-cards"
+    ],
+    "speech.edge": [
+      "speech.synthesize",
+      "speech.playback"
+    ],
+    "export.remnote": [
+      "remnote.export"
+    ],
+    "export.anki": [
+      "export"
+    ]
+  },
+  "legacyEntrypointsExcluded": true,
+  "baseAuthority": {
+    "registryVersion": "1.2.3",
+    "releaseId": "knowledge-clipper-authority-v1.2.3-20260828T021300Z",
+    "treeSha256": "7B27BACDB1DBB56991272972A5F9309B1D6F782787EB0B99EBD21248F7959574"
+  },
+  "coreWorkflow": {
+    "checkpointId": "core-workflows-v2.3.0-20260828T030800Z",
+    "checkpointSha256": "483385EF31F990FD67D6FFFC8A4B7ED9186912C1B417A3F1156D71FABEA4F26A",
+    "ipcProtocolVersion": "1.1",
+    "receiptSchemaVersion": "2.3.0"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": "standard-input/1.0.0",
+  "package_id": "clipper-content-offline-multiturn",
+  "task_id": "offline-multiturn-canary",
+  "input_version": "1",
+  "mode": "card",
+  "items": [
+    {
+      "item_id": "item-multiturn",
+      "source": {
+        "kind": "conversation",
+        "material_path": "materials/conversation.v1.json"
+      },
+      "hints": {
+        "category_id": "question_answer",
+        "answer_state": "missing",
+        "risk_state": "ordinary",
+        "requested_templates": ["basic_qa"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": "task-manifest/1.0.0",
+  "package_id": "clipper-content-offline-qa",
+  "package_version": "1",
+  "created_at": "2026-08-25T00:00:00.000Z",
+  "files": [
+    {
+      "path": "inputs/standard-input.v1.json",
+      "sha256": "f86653632e8117c4035acecee0093f2a176d24b2b0eed1de4c77496884164cd9",
+      "size": 470,
+      "media_type": "application/json"
+    },
+    {
+      "path": "materials/clip.md",
+      "sha256": "3eced1924e9424ba085798eac5b36d331bf2a9a4cfdeb8a044eef4370462a485",
+      "size": 213,
+      "media_type": "text/markdown; charset=utf-8"
+    }
+  ]
+}

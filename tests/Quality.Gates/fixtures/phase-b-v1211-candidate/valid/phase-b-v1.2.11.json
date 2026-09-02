@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "knowledge-clipper-phase-b-v1211-candidate-gate-fixture.v1",
+  "authority": {
+    "checkpoint": { "path": "contracts/authority/worker-registry/v1.2.11-20260828T092800Z/checkpoint.json", "sha256": "A01D0E65DEABA5078D7A57EF57FFFFF547DB3F5BBD03074247135DF463CA7F1C" },
+    "receipt": { "path": "receipts/knowledge-clipper-authority-1.2.11-20260828T093000Z.json", "sha256": "B56EF33D95BC4D5086F9E4B04020932F22FCDFB83CF4699ADF913390C14A3DB3" },
+    "registry": { "path": "contracts/authority/worker-registry/v1.2.11-20260828T092800Z/worker-registry.v1.json", "sha256": "7DFB0B2EC80FD88142C7DB352A69DA027B2E80F8D7584FBA5C7CD9EE85D9E364" },
+    "dependencyManifest": { "path": "contracts/authority/worker-registry/v1.2.11-20260828T092800Z/dependency-manifest.v1.json", "sha256": "01AEC92E8567E7876928776E39A656E6BEB31C2AA897D6D4235CCDBA39E0A418" },
+    "runtimeGate": { "path": "canary/core-authority-v1.2.11/core-authority-v1.2.11-20260828T092900Z/runtime-gates.json", "sha256": "3EE29E4FA78C755E27EE5BD7B25F2896D6EC5558DCB4B45F717D34D0C5EB2617" },
+    "registryVersion": "1.2.11",
+    "registrySha256": "7DFB0B2EC80FD88142C7DB352A69DA027B2E80F8D7584FBA5C7CD9EE85D9E364",
+    "releaseTreeSha256": "ACE70D34A5689CAD65C2FB9BFF81BC9E23F0C24650698A43FED8AD502D42F754",
+    "releaseFiles": 214,
+    "releaseBytes": 249697213,
+    "coreCheckpointSha256": "3306DF313EB6AACF52AE1A447F3F095C95295605A2D68A451ADA5D00AE41C846"
+  },
+  "invalidations": {
+    "v129": { "path": "contracts/authority/worker-registry/v1.2.9-20260828T091100Z/invalidation-receipt.v1.json", "sha256": "B7DD9ECA93D71792ACA5D9D41DB5C9572B5F49951B54622B17B8241A1A96571E" },
+    "v1210": { "path": "contracts/authority/worker-registry/v1.2.10-20260828T092300Z/invalidation-receipt.v1.json", "sha256": "DF35B4D21CC4CE248D1C54ADCDCA914049839AE068709F5C9BD8B8ABD9FFB435" }
+  },
+  "core": {
+    "checkpoint": { "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.8-20260828T092700Z/checkpoint.json", "sha256": "3306DF313EB6AACF52AE1A447F3F095C95295605A2D68A451ADA5D00AE41C846" },
+    "treeFiles": 37,
+    "treeBytes": 68581140,
+    "treeSha256": "BDA58C84FB2CEC77C7E59B6DC1B3EA553EE91EF296BB014AA4EFA0981D8B6F6C"
+  },
+  "paths": {
+    "A": {
+      "executionReceipt": { "path": "canary/phase-b-v1.2.11-non-remnote/20260828T095000Z/execution-receipt.json", "sha256": "B017FB05F9E5DE45F44C94F43E818DC9B4C2CDB4AF459FB91AC32E5043A42619" },
+      "receipt": { "path": "canary/phase-b-v1.2.11-non-remnote/20260828T095000Z/a/path-receipt.json", "sha256": "590CA2D8EF3896D1BC398D578B1285361B3EBD448AE4AF35E2E321971D659882" },
+      "readable": { "path": "canary/phase-b-v1.2.11-non-remnote/20260828T095000Z/a/readable-output.md", "sha256": "530C1C33A57BAFB27EBA9EA8B6E19676FA80A3A8BD008D56AF9D7929FB848E05" }
+    },
+    "D": {
+      "executionReceipt": { "path": "canary/phase-b-v1.2.11-non-remnote/20260828T095200Z/execution-receipt.json", "sha256": "D6B6BD86FAE8AA71382A70A0F2564ACA6E6EABDFF9919652B1EBADC3D3BCBB61" },
+      "receipt": { "path": "canary/phase-b-v1.2.11-non-remnote/20260828T095200Z/d/path-receipt.json", "sha256": "6D5226B80D03DD9934C0A0969FCABBCBD8B76D1FF8E4C9E7C7B07B27F4A7E097" },
+      "readable": { "path": "canary/phase-b-v1.2.11-non-remnote/20260828T095200Z/d/readable-output.md", "sha256": "1AE77C45E7279569114EFA990409AE39E6B563E6D2393E4AA7D973117AC2421B" }
+    },
+    "qualificationReceipt": { "path": "canary/phase-b-v1.2.11-non-remnote/qualification-20260828T095701Z/qualification-receipt.json", "sha256": "40590910238E78C84E9FD70A3564ADFE8BD1BBA32D048396CBDD88E76F07AF6A" },
+    "qualificationReadable": { "path": "canary/phase-b-v1.2.11-non-remnote/qualification-20260828T095701Z/readable.md", "sha256": "AA9DCBA07D02352C926A5D20C2B8AB6B258761B5DC3EE16D7F363D07D522083A" }
+  },
+  "desktop": {
+    "expectedAuthorityVersion": "1.2.11",
+    "integratedReady": true,
+    "candidateId": "kc-i-dpapi-v1211-20260828T183000Z",
+    "candidateRoot": "releases/kc-i-dpapi-v1211-20260828T183000Z/win-x64",
+    "manifest": { "path": "releases/kc-i-dpapi-v1211-20260828T183000Z/win-x64/candidate-file-manifest.v1.json", "sha256": "FAB6BA4C1D2B05B316D9416CF3E43D2D0099DA68222E1CABAA1B56C4B8F96953" },
+    "buildReceipt": { "path": "releases/kc-i-dpapi-v1211-20260828T183000Z/win-x64/desktop-build-receipt.v1.json", "sha256": "97FA02162774B2E99B8EE480935B4A5A952BB20BD6B5CA30FC4C2ED91042E47C" },
+    "integrationConfig": { "path": "releases/kc-i-dpapi-v1211-20260828T183000Z/win-x64/candidate-integration.json", "sha256": "1C523923CC4BF09557C06BF869D8C6281D80A1B0488553235BCC4FCE48E08ACD" },
+    "ownerReceipt": { "path": "receipts/desktop-integrated-dpapi-v1.2.11-20260828T183000Z-module-checkpoint.json", "sha256": "60E208ECE9271B7F96DD1744AAD9F5DEA4BFE6E19C4E0462B7B7DDDD7DB551A8" },
+    "manifestGate": { "path": "canary/desktop-integrated/kc-i-dpapi-v1211-20260828T183000Z/manifest-tree-gate.json", "sha256": "6CB507E0A91A14FCCE59B487D4ECBA19D3C63F3AAED76C475C556BBA3E86E634" },
+    "payloadDrift": { "path": "canary/desktop-integrated/kc-i-dpapi-v1211-20260828T183000Z/desktop-payload-drift.json", "sha256": "2972079D9BFBFAFBE1D63B79E93365914458CC7A3AF20432E90D5DA249E1B17B" },
+    "startupLog": { "path": "canary/desktop-integrated/kc-i-dpapi-v1211-20260828T183000Z/startup-diagnostic.stdout.log", "sha256": "DC4E330BC0735544437B133DC143D405B37455C8874C84A6C647578C324302FD" },
+    "singleInstanceLog": { "path": "canary/desktop-integrated/kc-i-dpapi-v1211-20260828T183000Z/single-instance-diagnostic.stdout.log", "sha256": "93EA82B1D4B2998DFBBD652D1CD082C595F306B80B12FE1467E632BDAC5797A5" },
+    "integrationLog": { "path": "canary/desktop-integrated/kc-i-dpapi-v1211-20260828T183000Z/integration-startup-canary.stdout.log", "sha256": "8F6A6B24AE42975275055163F66E6BB7608BAB4EC60D82B6CF0C933BE1233D6C" },
+    "registryLog": { "path": "canary/desktop-integrated/kc-i-dpapi-v1211-20260828T183000Z/authority-validate-registry.log", "sha256": "DC85063574AECFE31FEA9ECA2682DE6264A8B739FC6F4B49C723B568A5F786FF" },
+    "candidateFiles": 472,
+    "candidateBytes": 402158662,
+    "candidateTreeSha256": "E9452D8F670CD7476CB750DD731B28337A800B71D46CCB4BF780944828970592",
+    "payloadFiles": 471,
+    "payloadBytes": 402060350,
+    "payloadTreeSha256": "34B27695938CEA456A1A5088ABCEE2DFDC100906497D005EA2A091D112DC8635",
+    "desktopFiles": 244,
+    "desktopBytes": 152286189,
+    "desktopTreeSha256": "1E68F42B20FA92AE35AAB617DA109790D26787EB38FB72CA88971AE0DABE546D",
+    "exeSha256": "29320D1CCAA252057D011490866CC7533901740C5C6921359B7A2F9F58C4720C",
+    "dllSha256": "B90DA79C11B3CC067D1E1581A637EC97176F47070BFA38DE202AA578C598B437",
+    "deprecatedCandidateId": "kc-i-settings-v1211-20260828T095200Z",
+    "deprecatedInvalidation": { "path": "releases/kc-i-settings-v1211-20260828T095200Z/INVALIDATED-NEVER-PROMOTED.json", "sha256": "020562ABB354B39E1F25395B7EF8DFCCBDF30EC5F620E2209C49E4AA0B3F23BB" },
+    "deprecatedManifestGate": { "path": "canary/desktop-integrated/kc-i-settings-v1211-20260828T095200Z/manifest-tree-gate.json", "sha256": "C0EB3B80BADFFAB67FEDCF4005E992F45AC7E67BFC17AB5DDE4DE316A8CCD296" }
+  },
+  "desktopCredential": {
+    "receipt": { "path": "canary/desktop-windows/credential-dpapi-v1211-20260828T181500Z/receipt.json", "sha256": "23CBC25724D4FC6768F89A57CB7C420EA8229D3BD073F6BBD327B536F41A7736" },
+    "automationLog": { "path": "canary/desktop-windows/credential-dpapi-v1211-20260828T181500Z/windows-ui-automation.log", "sha256": "E09ACE200D565793D23064501AED9DB3E455E8BD62CC30121C1C3F0C9180BE38" },
+    "ctrlCLog": { "path": "canary/desktop-windows/credential-dpapi-v1211-20260828T181500Z/ctrl-c-focused-selection.log", "sha256": "F050A21763227C504BAD83D519F1BDB07F6A92D10209E02F0D14ACB9C8A21D1B" },
+    "assertions": 131
+  },
+  "supersededEvidence": {
+    "qualityReceipt": { "path": "canary/settings-control-quality/settings-control-native-20260828T152727Z/quality-receipt.json", "sha256": "94282C7D6BBD4C48C6FE076312B6F5C5A818156F45877E730EED27FDE2719023" },
+    "eligible": false,
+    "reason": "predates RemNote 2.0 authority admission"
+  },
+  "policy": {
+    "oldAuthorityEvidenceMayQualify": false,
+    "pendingPathsAreFailures": false,
+    "modulePassImpliesFullE2E": false,
+    "retryUnknownExternalState": false,
+    "desktopRequiredForCandidateIdentity": true
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "cancellation": {
+    "protocol": "attempt-signal-file-v1",
+    "supportedReasons": [
+      "user_stop",
+      "superseded",
+      "task_cancel",
+      "timeout"
+    ]
+  },
+  "concurrency": {
+    "maxParallelAttempts": 1,
+    "model": "serial"
+  },
+  "contractVersion": "1.0.0",
+  "idempotencyLevel": "reconcilable",
+  "inputKinds": [
+    "card-bundle",
+    "learning-bundle",
+    "anki-export-config"
+  ],
+  "outputKinds": [
+    "anki-export-evidence",
+    "anki-connection-status"
+  ],
+  "schemaVersion": "1.0.0",
+  "sideEffectLevel": "external",
+  "stages": [
+    "anki-export"
+  ],
+  "workerId": "export.anki",
+  "workerVersion": "1.2.1"
+}

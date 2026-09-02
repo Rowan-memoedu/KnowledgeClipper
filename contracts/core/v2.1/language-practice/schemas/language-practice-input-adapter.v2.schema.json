@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./language-practice-input-adapter.v2.schema.json",
+  "title": "KnowledgeClipper operation-level language choice input adapter snapshot v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "choice"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-language-practice-input-adapter.v2" },
+    "choice": { "enum": ["meaning-reading", "writing", "both"] }
+  }
+}

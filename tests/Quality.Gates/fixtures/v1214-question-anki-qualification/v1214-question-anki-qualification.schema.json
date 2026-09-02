@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "authority", "core", "sealed", "content081Rejection", "supersedes", "desktopCandidate", "policy"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-v1214-question-anki-qualification-fixture.v1" },
+    "authority": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "checkpointSha256", "registrySha256", "receiptSha256", "releaseTreeSha256"],
+      "properties": {
+        "version": { "const": "1.2.14" },
+        "checkpointSha256": { "$ref": "#/$defs/sha" },
+        "registrySha256": { "$ref": "#/$defs/sha" },
+        "receiptSha256": { "$ref": "#/$defs/sha" },
+        "releaseTreeSha256": { "$ref": "#/$defs/sha" }
+      }
+    },
+    "core": { "$ref": "#/$defs/fileRef" },
+    "sealed": {
+      "type": "object", "additionalProperties": false,
+      "required": ["root", "receiptSha256", "readableSha256"],
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "receiptSha256": { "$ref": "#/$defs/sha" },
+        "readableSha256": { "$ref": "#/$defs/sha" }
+      }
+    },
+    "content081Rejection": { "$ref": "#/$defs/fileRef" },
+    "supersedes": { "$ref": "#/$defs/fileRef" },
+    "desktopCandidate": { "const": "pending-final-rebase" },
+    "policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["externalWriteByQuality", "allowedLiveActions", "oldAttemptRetry", "content081Promotion", "desktopCandidateBound"],
+      "properties": {
+        "externalWriteByQuality": { "const": 0 },
+        "allowedLiveActions": { "const": ["notesInfo", "cardsInfo"] },
+        "oldAttemptRetry": { "const": false },
+        "content081Promotion": { "const": false },
+        "desktopCandidateBound": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "sha": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+    "fileRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": { "path": { "type": "string", "minLength": 1 }, "sha256": { "$ref": "#/$defs/sha" } }
+    }
+  }
+}

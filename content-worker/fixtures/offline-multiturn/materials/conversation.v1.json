@@ -1,0 +1,20 @@
+{
+  "schema_version": "conversation/1.0.0",
+  "turns": [
+    {
+      "turn_id": "turn-1",
+      "role": "user",
+      "text": "我想记住：TCP 建立连接为什么需要三次握手？"
+    },
+    {
+      "turn_id": "turn-2",
+      "role": "assistant",
+      "text": "因为需要确认双方的发送和接收能力。"
+    },
+    {
+      "turn_id": "turn-3",
+      "role": "user",
+      "text": "请把前两轮合并成一张卡，答案强调双方都能收发。"
+    }
+  ]
+}

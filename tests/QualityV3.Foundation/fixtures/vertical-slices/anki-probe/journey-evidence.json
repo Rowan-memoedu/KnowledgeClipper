@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "quality-v3-anki-probe-journey.v1",
+  "uiAction": {
+    "schemaVersion": "quality-v3-ui-action-evidence.v1",
+    "trigger": {
+      "driver": "Windows.UIAutomation",
+      "automationId": "knowledge-clipper.desktop.settings.export.anki.probe-readonly",
+      "discovered": true,
+      "invokePattern": true,
+      "invoked": true,
+      "actionId": "quality-v3-anki-probe-fixture"
+    },
+    "typedEvents": [
+      { "eventType": "command.accepted", "actionId": "quality-v3-anki-probe-fixture" },
+      { "eventType": "command.completed", "actionId": "quality-v3-anki-probe-fixture" }
+    ]
+  },
+  "typedProjection": {
+    "actionId": "quality-v3-anki-probe-fixture",
+    "operation": "anki.probe",
+    "terminalStatus": "needs_initialization",
+    "externalWriteCount": 0
+  },
+  "artifact": { "manifest": "artifact-manifest.json", "root": "artifact-root" },
+  "sideEffectAudits": [
+    {
+      "schemaVersion": "quality-v3-side-effect-audit.v1",
+      "provider": "anki",
+      "mode": "live-read-only",
+      "auditor": "independent-proxy-call-log",
+      "allowlist": ["version", "deckNames"],
+      "observedCalls": [
+        { "action": "version", "effect": "read" },
+        { "action": "deckNames", "effect": "read" }
+      ],
+      "observedCallCount": 2,
+      "observedWriteCount": 0,
+      "callLog": "logs/anki.ndjson",
+      "callLogSha256": "BE9134D75B2F337AB1424957999D14E3DF4D0363C7F73C97876E130139FA2A98"
+    },
+    { "schemaVersion": "quality-v3-side-effect-audit.v1", "provider": "remnote", "mode": "disabled", "auditor": "independent-proxy-call-log", "allowlist": [], "observedCalls": [], "observedCallCount": 0, "observedWriteCount": 0, "callLog": "logs/remnote.ndjson", "callLogSha256": "01BA4719C80B6FE911B091A7C05124B64EEECE964E09C058EF8F9805DACA546B" },
+    { "schemaVersion": "quality-v3-side-effect-audit.v1", "provider": "deepseek", "mode": "disabled", "auditor": "independent-proxy-call-log", "allowlist": [], "observedCalls": [], "observedCallCount": 0, "observedWriteCount": 0, "callLog": "logs/deepseek.ndjson", "callLogSha256": "01BA4719C80B6FE911B091A7C05124B64EEECE964E09C058EF8F9805DACA546B" },
+    { "schemaVersion": "quality-v3-side-effect-audit.v1", "provider": "mineru", "mode": "disabled", "auditor": "independent-proxy-call-log", "allowlist": [], "observedCalls": [], "observedCallCount": 0, "observedWriteCount": 0, "callLog": "logs/mineru.ndjson", "callLogSha256": "01BA4719C80B6FE911B091A7C05124B64EEECE964E09C058EF8F9805DACA546B" }
+  ]
+}

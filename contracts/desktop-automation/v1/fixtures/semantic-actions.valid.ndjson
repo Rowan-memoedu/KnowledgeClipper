@@ -1,0 +1,17 @@
+{"schemaVersion":"desktop-automation.v1","requestId":"a01","action":"mode.context.set","arguments":{"enabled":true,"granularity":"sentence"}}
+{"schemaVersion":"desktop-automation.v1","requestId":"a02","action":"clip.capture"}
+{"schemaVersion":"desktop-automation.v1","requestId":"a03","action":"capture.context.continue-without"}
+{"schemaVersion":"desktop-automation.v1","requestId":"a04","action":"mode.original-image.set","arguments":{"enabled":true}}
+{"schemaVersion":"desktop-automation.v1","requestId":"a05","action":"screenshot.session.start"}
+{"schemaVersion":"desktop-automation.v1","requestId":"a06","action":"screenshot.group.set-answer"}
+{"schemaVersion":"desktop-automation.v1","requestId":"a07","action":"screenshot.session.continue"}
+{"schemaVersion":"desktop-automation.v1","requestId":"a08","action":"screenshot.group.set-question"}
+{"schemaVersion":"desktop-automation.v1","requestId":"a09","action":"screenshot.session.continue"}
+{"schemaVersion":"desktop-automation.v1","requestId":"a10","action":"screenshot.session.finish"}
+{"schemaVersion":"desktop-automation.v1","requestId":"a11","action":"question.open"}
+{"schemaVersion":"desktop-automation.v1","requestId":"a12","action":"question.submit","arguments":{"text":"为什么间隔重复有效？"}}
+{"schemaVersion":"desktop-automation.v1","requestId":"a13","action":"question.follow-up","arguments":{"text":"给一个反例。"}}
+{"schemaVersion":"desktop-automation.v1","requestId":"a14","action":"question.make-cards","arguments":{"cardStructureRef":"fixture.card-structure.basic"}}
+{"schemaVersion":"desktop-automation.v1","requestId":"a15","action":"playback.replay"}
+{"schemaVersion":"desktop-automation.v1","requestId":"a16","action":"playback.stop"}
+{"schemaVersion":"desktop-automation.v1","requestId":"a17","action":"task.status.query-recent"}

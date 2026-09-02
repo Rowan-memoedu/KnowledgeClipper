@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "capture-bundle.v1",
+  "captureId": "fixture-invalid-answer-only",
+  "createdAt": "2026-08-25T12:00:00Z",
+  "intent": "screenshot",
+  "source": "screenshot",
+  "modeSnapshot": {
+    "workflow": "card",
+    "contextEnabled": false,
+    "contextGranularity": "sentence",
+    "contextApplied": false,
+    "imageHandling": "ocr"
+  },
+  "artifacts": [],
+  "selectedTextArtifactRef": null,
+  "contextSegments": null,
+  "questionImages": [],
+  "answerImages": ["capture.image.answer.0001"],
+  "questionTurns": []
+}

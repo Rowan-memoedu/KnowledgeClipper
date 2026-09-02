@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./speech-result.schema.json",
+  "title": "RemNote Quick Clipper Speech Result v1",
+  "allOf": [
+    { "$ref": "../common/worker-result.schema.json" },
+    {
+      "required": ["payload"],
+      "properties": {
+        "worker": {
+          "type": "object",
+          "properties": { "id": { "const": "speech.edge" } },
+          "required": ["id", "version"]
+        },
+        "payload": { "$ref": "#/$defs/speechResultPayload" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "payload": { "properties": { "playbackState": { "const": "idle_replayable" } }, "required": ["playbackState"] } }, "required": ["payload"] },
+          "then": { "properties": { "status": { "const": "completed" } } }
+        },
+        {
+          "if": { "properties": { "payload": { "properties": { "playbackState": { "enum": ["stopped", "superseded", "cancelled"] } }, "required": ["playbackState"] } }, "required": ["payload"] },
+          "then": { "properties": { "status": { "const": "cancelled" } } }
+        },
+        {
+          "if": { "properties": { "payload": { "properties": { "playbackState": { "enum": ["timed_out", "failed"] } }, "required": ["playbackState"] } }, "required": ["payload"] },
+          "then": { "properties": { "status": { "const": "failed" } } }
+        }
+      ]
+    }
+  ],
+  "$defs": {
+    "speechResultPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operationId", "languageTag", "voiceId", "cacheHit", "playbackState"],
+      "properties": {
+        "operationId": { "$ref": "../common/artifact.schema.json#/$defs/identifier" },
+        "languageTag": { "type": "string", "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$" },
+        "voiceId": { "type": "string", "minLength": 1 },
+        "cacheHit": { "type": "boolean" },
+        "playbackState": { "type": "string", "enum": ["idle_replayable", "stopped", "superseded", "cancelled", "timed_out", "failed"] },
+        "reusedFromAttemptId": { "$ref": "../common/artifact.schema.json#/$defs/identifier" }
+      }
+    }
+  }
+}

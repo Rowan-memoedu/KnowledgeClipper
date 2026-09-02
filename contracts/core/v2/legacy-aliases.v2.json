@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "knowledge-clipper-legacy-aliases.v2",
+  "aliases": [
+    {
+      "legacy": "RemNoteQuickClipper.Orchestrator",
+      "canonical": "KnowledgeClipper.Orchestrator",
+      "scope": "assembly-and-cli",
+      "status": "compatibility-only"
+    },
+    {
+      "legacy": "RemNoteQuickClipper.Orchestrator.Core",
+      "canonical": "KnowledgeClipper.Orchestrator.Core",
+      "scope": "namespace",
+      "status": "source-migration-only"
+    },
+    {
+      "legacy": "orchestrator.core",
+      "canonical": "knowledge-clipper.orchestrator",
+      "scope": "component-id",
+      "status": "compatibility-only"
+    },
+    {
+      "legacy": "parity-remnote",
+      "canonical": {
+        "processingProfile": "learning",
+        "destinations": ["remnote"]
+      },
+      "scope": "execution-profile",
+      "status": "compatibility-only"
+    },
+    {
+      "legacy": "cards-remnote",
+      "canonical": {
+        "processingProfile": "cards",
+        "destinations": ["remnote"]
+      },
+      "scope": "execution-profile",
+      "status": "compatibility-only"
+    },
+    {
+      "legacy": "cards-anki",
+      "canonical": {
+        "processingProfile": "cards",
+        "destinations": ["anki"]
+      },
+      "scope": "execution-profile",
+      "status": "compatibility-only"
+    }
+  ]
+}

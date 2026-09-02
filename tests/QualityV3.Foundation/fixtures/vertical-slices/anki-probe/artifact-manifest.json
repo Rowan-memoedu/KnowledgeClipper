@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "quality-v3-artifact-manifest.v1",
+  "consumerMode": "metadata-entrypoint-all-files-hashed",
+  "files": [
+    { "path": "connection-status.json", "bytes": 103, "sha256": "DD3EEFB6CE948BA057F97F24D1E29439276235C7B247322A54B1B6ACD2E00570" },
+    { "path": "operations.ndjson", "bytes": 76, "sha256": "BE9134D75B2F337AB1424957999D14E3DF4D0363C7F73C97876E130139FA2A98" },
+    { "path": "preflight.json", "bytes": 31, "sha256": "BC5C167F8A84F4482C13166848D331D5E1037D5663456DA357434D33CC3DBCAD" },
+    { "path": "receipt.json", "bytes": 57, "sha256": "D3770B27C3FF3A52CBD809D47B3C7269457DAA890C7786D3050B6DC7BCE1D3E3" }
+  ],
+  "metadata": { "entrypoint": "connection-status.json" }
+}

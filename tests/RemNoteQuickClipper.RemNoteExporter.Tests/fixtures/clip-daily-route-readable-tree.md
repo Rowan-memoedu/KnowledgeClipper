@@ -1,0 +1,4 @@
+- 剪藏 [root-rem-id]
+  - 2026-08-28 [seed-node-2]
+    - 摘录 · fixture-v2 [seed-node-3]
+      - 第一条摘录 [seed-node-3-child-1]

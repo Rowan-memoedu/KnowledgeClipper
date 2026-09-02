@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "knowledge-clipper-v1212-external-phase-b-fixture.v1",
+  "policy": {
+    "classification": "backend-harness-candidate-worker-bound",
+    "desktopProcessE2E": true,
+    "userHandTestEntrypoint": false,
+    "rerunExternalServices": false
+  },
+  "baseQualityReceipt": { "path": "x", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "executionReceipt": { "path": "x", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "candidate": { "candidateId": "kc-integrated-settings-v1212-20260830T183500Z", "manifestSha256": "0000000000000000000000000000000000000000000000000000000000000000", "sealedTreeSha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "authority": { "registryVersion": "1.2.12", "registrySha256": "0000000000000000000000000000000000000000000000000000000000000000", "checkpointSha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "expectedPaths": { "A": "succeeded", "B": "succeeded", "C": "credential-unavailable", "D": "succeeded" }
+}

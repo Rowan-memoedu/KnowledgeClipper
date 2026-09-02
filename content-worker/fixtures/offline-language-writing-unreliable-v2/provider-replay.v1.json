@@ -1,0 +1,30 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-language-en": {
+      "cleaned_text": "Please review the draft before Friday.\n",
+      "removed_fragments": [],
+      "format_anomalies": []
+    },
+    "classification:item-language-en": {
+      "units": [
+        {
+          "unit_id": "unit-draft",
+          "source_segment_indexes": [0],
+          "category_id": "language_en",
+          "subtype": "contextual_vocabulary",
+          "answer_state": "not_applicable",
+          "context_state": "ambiguous",
+          "risk_state": "ordinary",
+          "target_term": "draft",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "language_writing:item-language-en:unit-draft": {
+      "pronunciation": { "value": "/drɑːft/", "reliability": "reliable", "evidence": "标准读音" },
+      "meaning": { "reliability": "unreliable", "evidence": "上下文不足以区分草稿与征召等语义" },
+      "unresolved_reasons": ["meaning_requires_human"]
+    }
+  }
+}

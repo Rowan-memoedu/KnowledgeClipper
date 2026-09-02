@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "language-practice-decision/1.0.0",
+  "title": "Versioned human decision request for language practice",
+  "type": "object",
+  "required": ["schema_version", "decision_bundle_id", "package_id", "task_id", "input_version", "attempt_id", "created_at", "learning_bundle_path", "learning_bundle_sha256", "state", "decisions"],
+  "properties": {
+    "schema_version": { "const": "language-practice-decision/1.0.0" },
+    "decision_bundle_id": { "type": "string", "minLength": 1 },
+    "package_id": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "input_version": { "type": "string", "minLength": 1 },
+    "attempt_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "learning_bundle_path": { "type": "string", "minLength": 1 },
+    "learning_bundle_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "state": { "const": "requires_human" },
+    "decisions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["decision_id", "item_id", "unit_id", "category_id", "state", "reasons", "allowed_modes", "requested_override_paths", "source_segment_ids"],
+        "properties": {
+          "decision_id": { "type": "string", "minLength": 1 },
+          "item_id": { "type": "string", "minLength": 1 },
+          "unit_id": { "type": "string", "minLength": 1 },
+          "category_id": { "enum": ["language_zh", "language_en"] },
+          "state": { "const": "requires_human" },
+          "reasons": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "enum": ["language_practice_mode_required", "language_writing_target_not_unique", "language_writing_details_required"] }
+          },
+          "allowed_modes": {
+            "type": "array",
+            "const": ["meaning-reading", "writing", "both"]
+          },
+          "requested_override_paths": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "source_segment_ids": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "target_term": { "type": "string", "minLength": 1 },
+          "target_occurrence_count": { "type": "integer", "minimum": 0 },
+          "current_mode": { "enum": ["meaning-reading", "writing", "both"] },
+          "pronunciation_state": { "enum": ["missing", "unreliable"] },
+          "meaning_state": { "enum": ["missing", "unreliable"] }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

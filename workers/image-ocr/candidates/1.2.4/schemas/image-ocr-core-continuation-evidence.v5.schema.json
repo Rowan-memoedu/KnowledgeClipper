@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-ocr-core-continuation-evidence.v5.schema.json",
+  "title": "Image/OCR same-run original provenance and continuation evidence v5",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "workerVersion", "publicContractReuse", "ocrSameRunOriginal", "originalPassThrough", "ocrHumanDecision", "partialFailedItemsOnlyContinuation", "downstreamIntegration", "retention"],
+  "properties": {
+    "schemaVersion": {"const": "image-ocr-core-continuation-evidence.v5"},
+    "workerVersion": {"const": "1.2.4"},
+    "publicContractReuse": {"type": "object", "required": ["commonV1Modified", "moduleOwnedSchemas"]},
+    "ocrSameRunOriginal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commonOutputKind", "publishedInCompletedOcrResult", "payloadHashBoundToProvenance", "bytesMediaTypeBound", "roleOrderBound", "additionalProviderCalls"],
+      "properties": {
+        "commonOutputKind": {"const": "image.original"},
+        "publishedInCompletedOcrResult": {"const": true},
+        "payloadHashBoundToProvenance": {"const": true},
+        "bytesMediaTypeBound": {"const": true},
+        "roleOrderBound": {"const": true},
+        "additionalProviderCalls": {"const": 0}
+      }
+    },
+    "originalPassThrough": {
+      "type": "object",
+      "required": ["providerCalls", "orderedRoles", "hashPreserved", "mediaBundleKind", "provenanceKind", "semanticsChanged"],
+      "properties": {
+        "providerCalls": {"const": 0},
+        "hashPreserved": {"const": true},
+        "mediaBundleKind": {"const": "image.original.bundle"},
+        "provenanceKind": {"const": "image.processing.provenance"},
+        "semanticsChanged": {"const": false}
+      }
+    },
+    "ocrHumanDecision": {
+      "type": "object",
+      "required": ["actions", "defaultOcrRerun", "requiresOriginalArtifactHashMatch", "requiresSuccessfulOutputHashMatch", "appendOnlyCorrection", "sourceArtifactKinds"]
+    },
+    "partialFailedItemsOnlyContinuation": {"type": "object", "required": ["state", "providerReceives", "successfulItemsReusedByHash", "partialBlocksDownstream"]},
+    "downstreamIntegration": {
+      "type": "object",
+      "required": ["coreAdmission", "waitingInputContinuation", "destinationConsumers", "claimedComplete"],
+      "properties": {
+        "coreAdmission": {"const": "pending-new-authority"},
+        "waitingInputContinuation": {"const": "owned-by-core"},
+        "destinationConsumers": {"const": "owned-by-destination-workers"},
+        "claimedComplete": {"const": false}
+      }
+    },
+    "retention": {"type": "object", "required": ["requestMetadataDays", "executorState", "automaticDeletionClaim"]}
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./task-query.schema.json",
+  "title": "RemNote Quick Clipper Task Query v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "queryId", "type"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "queryId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "type": { "type": "string", "enum": ["task.query_recent", "task.get"] },
+    "taskId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "limit": { "type": "integer", "minimum": 1, "maximum": 200 },
+    "cursor": { "type": ["string", "null"], "maxLength": 512 },
+    "statusFilter": { "type": "array", "uniqueItems": true, "items": { "$ref": "./task-status.schema.json" } }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "task.query_recent" } }, "required": ["type"] },
+      "then": { "required": ["limit"] },
+      "else": { "required": ["taskId"] }
+    }
+  ]
+}

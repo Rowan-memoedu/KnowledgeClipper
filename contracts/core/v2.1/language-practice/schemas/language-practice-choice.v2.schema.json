@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./language-practice-choice.v2.schema.json",
+  "title": "KnowledgeClipper task.provide_input language-practice choice v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "decisionKind", "targetToken", "choice"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-language-practice-choice.v2" },
+    "decisionKind": { "const": "language-practice" },
+    "targetToken": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "choice": { "enum": ["meaning-reading", "writing", "both"] }
+  }
+}

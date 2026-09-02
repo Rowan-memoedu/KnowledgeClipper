@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "knowledge-clipper-phase-b-v1211-candidate-gate-fixture.v1",
+  "authority": { "placeholder": "invalid fixture" },
+  "invalidations": { "placeholder": "invalid fixture" },
+  "core": { "placeholder": "invalid fixture" },
+  "paths": {
+    "A": { "placeholder": "invalid fixture" },
+    "D": { "placeholder": "invalid fixture" },
+    "qualificationReceipt": { "path": "x", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+    "qualificationReadable": { "path": "x", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" }
+  },
+  "desktop": { "placeholder": "invalid fixture" },
+  "desktopCredential": { "placeholder": "invalid fixture" },
+  "supersededEvidence": { "placeholder": "invalid fixture" },
+  "policy": {
+    "oldAuthorityEvidenceMayQualify": false,
+    "pendingPathsAreFailures": true,
+    "modulePassImpliesFullE2E": false,
+    "retryUnknownExternalState": false,
+    "desktopRequiredForCandidateIdentity": true
+  }
+}

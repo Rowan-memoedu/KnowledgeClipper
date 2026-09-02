@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "preseal-chain-run.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "createdAt", "status", "workerId", "mode", "releaseBinding", "entrypoint", "result", "checks", "externalProductionApisInvoked"],
+  "properties": {
+    "schemaVersion": {"const": "preseal-chain-run.v1"},
+    "runId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "createdAt": {"type": "string", "format": "date-time"},
+    "status": {"const": "passed"},
+    "workerId": {"enum": ["image.ocr.mineru", "content.deepseek", "speech.edge", "export.remnote", "export.anki"]},
+    "mode": {"enum": ["fake", "validate-only", "offline-replay"]},
+    "releaseBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["releaseRoot", "stateReceiptSha256", "presealTreeSha256"],
+      "properties": {
+        "releaseRoot": {"type": "string", "pattern": "^releases/[^/]+/win-x64$"},
+        "stateReceiptSha256": {"$ref": "#/$defs/sha256"},
+        "presealTreeSha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "entrypoint": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {"path": {"$ref": "#/$defs/path"}, "sha256": {"$ref": "#/$defs/sha256"}}
+    },
+    "result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "commonStatus", "outputs"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "commonStatus": {"enum": ["completed", "partial", "failed", "cancelled", "unknown_external_state"]},
+        "outputs": {"type": "integer", "minimum": 0}
+      }
+    },
+    "checks": {
+      "type": "object", "additionalProperties": false,
+      "required": ["describePassed", "requestSchemaValid", "resultSchemaValid", "noHiddenWrites"],
+      "properties": {
+        "describePassed": {"const": true},
+        "requestSchemaValid": {"const": true},
+        "resultSchemaValid": {"const": true},
+        "noHiddenWrites": {"const": true}
+      }
+    },
+    "externalProductionApisInvoked": {"const": false}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+    "path": {"type": "string", "minLength": 1, "pattern": "^(?![A-Za-z]:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"}
+  }
+}

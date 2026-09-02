@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./ipc-response.v1.1.schema.json",
+  "title": "KnowledgeClipper IPC Response Envelope with Stage Control v1.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "correlationId", "messageType", "ok", "payload", "error"],
+  "properties": {
+    "protocolVersion": { "enum": ["1.0", "1.1"] },
+    "correlationId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "messageType": { "enum": ["task-command-receipt", "task-query-result", "stage-control-receipt", "protocol-error"] },
+    "ok": { "type": "boolean" },
+    "payload": { "oneOf": [{ "type": "null" }, { "type": "object" }] },
+    "error": { "oneOf": [{ "type": "null" }, { "type": "object" }] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "messageType": { "const": "stage-control-receipt" } }, "required": ["messageType"] },
+      "then": { "properties": { "protocolVersion": { "const": "1.1" }, "ok": { "const": true }, "payload": { "$ref": "./stage-control-receipt.v1.schema.json" }, "error": { "type": "null" } } }
+    }
+  ]
+}

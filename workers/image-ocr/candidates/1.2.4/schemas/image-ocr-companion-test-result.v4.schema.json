@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-ocr-companion-test-result.v4.schema.json",
+  "title": "Image/OCR offline Fake Provider, credential inheritance, and same-run original binding result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "actionId", "status", "worker", "formalWorkerRequest", "credentialGate", "processInheritance", "fakeProvider", "terminalResult", "leakScan", "safety"],
+  "properties": {
+    "schemaVersion": {"const": "image-ocr-companion-test-result.v4"},
+    "actionId": {"const": "image.ocr.test.offline-fake-provider"},
+    "status": {"enum": ["passed", "failed"]},
+    "worker": {"type": "object", "required": ["id", "version"]},
+    "formalWorkerRequest": {"type": "object"},
+    "credentialGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["credentialId", "configured", "verified", "sourceType", "valueObservedByCompanion"],
+      "properties": {
+        "credentialId": {"const": "local-credential://image-ocr/mineru-api-token"},
+        "configured": {"const": true},
+        "verified": {"const": true},
+        "sourceType": {"pattern": "^desktop-dpapi-"},
+        "valueObservedByCompanion": {"const": false}
+      }
+    },
+    "processInheritance": {"type": "object", "required": ["workerStarted", "workerObservedInjectedCredential", "injectionBoundary"]},
+    "fakeProvider": {"type": "object", "required": ["calls", "observedProviderSettings", "exactMatch"]},
+    "terminalResult": {
+      "type": "object",
+      "required": ["status", "outputKinds", "itemDiagnostics", "provenanceOutput", "originalOutput", "originalBinding"],
+      "properties": {
+        "originalBinding": {
+          "type": "object",
+          "required": ["hashBytesMediaTypeRoleOrderMatch", "sameCompletedResult"],
+          "properties": {
+            "hashBytesMediaTypeRoleOrderMatch": {"const": true},
+            "sameCompletedResult": {"const": true}
+          }
+        }
+      }
+    },
+    "leakScan": {
+      "type": "object",
+      "required": ["taskPackageLogReceiptSecretOccurrences", "filesContainingSecret", "passed"],
+      "properties": {
+        "taskPackageLogReceiptSecretOccurrences": {"const": 0},
+        "filesContainingSecret": {"const": []},
+        "passed": {"const": true}
+      }
+    },
+    "safety": {"type": "object"}
+  }
+}

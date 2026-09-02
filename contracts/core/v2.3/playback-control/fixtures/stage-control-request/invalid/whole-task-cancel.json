@@ -1,0 +1,6 @@
+{
+  "taskId": "task-playback-001",
+  "operation": "task.cancel",
+  "selector": "current-active",
+  "reason": "user_stop"
+}

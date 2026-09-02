@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "2.1.0",
+  "planVersion": "2.1.0",
+  "taskId": "task-ocr-partial-retry",
+  "maxConcurrency": 4,
+  "stages": [
+    {
+      "stageId": "image-ocr",
+      "workerId": "image.ocr.mineru",
+      "operation": "process-images",
+      "dependsOn": [],
+      "inputRefs": [],
+      "outputKinds": ["image-ocr.markdown"],
+      "timeoutMs": 600000,
+      "retryPolicy": { "maxAttempts": 2, "backoffMs": 1000 },
+      "partialRetryPolicy": { "strategy": "failed-items-only", "maxContinuationAttempts": 1 },
+      "configSnapshot": {},
+      "payload": {},
+      "inputBindings": []
+    }
+  ],
+  "routing": { "processingProfile": "cards", "destinations": [], "source": "task-manifest.v2" }
+}

@@ -1,0 +1,1 @@
+{"schemaVersion":"desktop-automation.v1.3","requestId":"ocr-correct-1","action":"ocr-human-resolution.submit-correction","arguments":{"text":"用户修正文","candidateText":"AI 候选"}}

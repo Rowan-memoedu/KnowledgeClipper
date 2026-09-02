@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "desktop-intent.v1",
+  "taskId": "task-read-001",
+  "intent": "clip.read-aloud",
+  "inputArtifactRef": "capture.bundle-001",
+  "requestedOutputs": ["audio.speech"]
+}

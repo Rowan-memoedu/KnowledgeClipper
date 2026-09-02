@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "image-processing-provenance.v1",
+  "mode": "ocr_mineru",
+  "terminalStatus": "completed",
+  "sourceOrder": {"questionImages": ["capture.image.question.0001"], "answerImages": []},
+  "items": [
+    {
+      "artifactRef": "capture.image.question.0001",
+      "role": "question",
+      "groupIndex": 0,
+      "imageIndex": 0,
+      "representations": {
+        "original": {
+          "artifactRef": "capture.image.question.0001",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "bytes": 68,
+          "mediaType": "image/png"
+        }
+      }
+    }
+  ],
+  "continuation": {
+    "defaultOcrRerun": false,
+    "requiresOriginalArtifactHashMatch": true,
+    "requiresSuccessfulOutputHashMatch": true
+  }
+}

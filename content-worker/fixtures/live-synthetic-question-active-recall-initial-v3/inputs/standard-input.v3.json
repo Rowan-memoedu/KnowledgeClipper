@@ -1,0 +1,32 @@
+{
+  "schema_version": "standard-input/3.0.0",
+  "package_id": "knowledge-clipper-live-synthetic-active-recall",
+  "task_id": "live-synthetic-active-recall-workflow",
+  "input_version": "1",
+  "mode": "question",
+  "questionWorkflow": {
+    "schemaVersion": "question-workflow-input/1.0.0",
+    "phase": "answer",
+    "questionTurns": [
+      {
+        "turnId": "turn-regression-0",
+        "turnIndex": 0,
+        "question": "为什么主动回忆通常比反复阅读更有利于巩固长期记忆？"
+      }
+    ],
+    "answerAncestry": []
+  },
+  "items": [
+    {
+      "item_id": "item-active-recall-question",
+      "source": {
+        "kind": "question_workflow"
+      },
+      "hints": {
+        "requested_templates": [
+          "basic_qa"
+        ]
+      }
+    }
+  ]
+}

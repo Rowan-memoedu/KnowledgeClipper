@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Version>2.10.6</Version>
+    <AssemblyName>KnowledgeClipper.Orchestrator</AssemblyName>
+    <RootNamespace>KnowledgeClipper.Orchestrator</RootNamespace>
+    <Product>零碎知识剪藏</Product>
+    <Description>Destination-neutral task orchestration for KnowledgeClipper.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Orchestrator.ContractTests" />
+  </ItemGroup>
+</Project>

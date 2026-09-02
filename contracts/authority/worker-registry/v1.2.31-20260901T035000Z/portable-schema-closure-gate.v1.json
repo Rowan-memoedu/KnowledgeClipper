@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "knowledge-clipper-portable-schema-closure-gate.v1",
+  "status": "passed",
+  "releaseRoot": ".",
+  "registrySha256": "1DAE3C242254BFB86C717F8734A8F7DC24CD8B1E15DE0E52EFAE312FF5BF7776",
+  "dependencyManifestSha256": "C72CD75B4260C4715DE752D99E148E0183B46036557A73B03D75622C785644B8",
+  "schemasChecked": 62,
+  "localRefsChecked": 188,
+  "failures": [],
+  "frozenArtifactSchemaPath": "contracts\\v1\\schemas\\common\\artifact.schema.json",
+  "frozenArtifactSchemaSha256": "14AAA3BA918B201280DF462677C39A373ACDF421C8DA06C1D4A7B6D619DA0E91",
+  "frozenArtifactSchemaPackedUnchanged": true
+}

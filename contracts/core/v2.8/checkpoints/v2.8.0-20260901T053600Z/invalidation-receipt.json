@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "knowledge-clipper-core-checkpoint-invalidation.v1",
+  "status": "invalidated-never-authority-bound",
+  "checkpoint": "contracts/core/v2.8/checkpoints/v2.8.0-20260901T053600Z/checkpoint.json",
+  "checkpointSha256": "036B3DF0F9F6D000567FB99663D6DBAA2FEB7CE088E9B8A0AC843D0DBA561AAD",
+  "reason": "tree.totalBytes was emitted as zero although every immutable tree entry has a positive byte count; no authority release or registry references this checkpoint.",
+  "replacement": "contracts/core/v2.8/checkpoints/v2.8.1-20260901T054000Z/checkpoint.json",
+  "generatedAt": "2026-09-01T05:40:00+08:00"
+}

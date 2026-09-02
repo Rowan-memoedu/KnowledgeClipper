@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-task-query-result.v2.4",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "queryId", "type", "items"],
+  "properties": {
+    "schemaVersion": {"const": "2.4.0"},
+    "queryId": {"$ref": "./task-query.v2.4.schema.json#/$defs/identifier"},
+    "type": {"enum": ["task.query_recent", "task.get"]},
+    "nextCursor": {"type": ["string", "null"], "maxLength": 512},
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["taskId", "operationId", "intent", "status", "createdAt", "updatedAt", "attentionRequired", "replayable", "summaryCode", "decisionKind", "decisionTargetToken", "answerAvailable", "questionTargetToken", "questionTurnCount", "questionAnswerRef", "ocrHumanResolution", "activeQuestionSession"],
+        "properties": {
+          "taskId": {"$ref": "./task-query.v2.4.schema.json#/$defs/identifier"},
+          "operationId": {"$ref": "./task-query.v2.4.schema.json#/$defs/identifier"},
+          "intent": {"type": "string", "minLength": 1},
+          "status": {"$ref": "./task-query.v2.4.schema.json#/$defs/status"},
+          "createdAt": {"type": "string", "format": "date-time"},
+          "updatedAt": {"type": "string", "format": "date-time"},
+          "attentionRequired": {"type": "boolean"},
+          "replayable": {"type": "boolean"},
+          "summaryCode": {"type": "string", "minLength": 1},
+          "decisionKind": {"type": ["string", "null"]},
+          "decisionTargetToken": {"type": ["string", "null"]},
+          "answerAvailable": {"type": "boolean"},
+          "questionTargetToken": {"type": ["string", "null"]},
+          "questionTurnCount": {"type": ["integer", "null"], "minimum": 1},
+          "questionAnswerRef": {"oneOf": [{"type": "null"}, {"$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/artifactReference"}]},
+          "ocrHumanResolution": {"type": ["object", "null"]},
+          "activeQuestionSession": {
+            "oneOf": [
+              {"type": "null"},
+              {
+                "type": "object", "additionalProperties": false,
+                "required": ["targetToken", "binding", "sessionRef", "sourceAnswerRef", "displayAnswerRef", "answeredTurnCount"],
+                "properties": {
+                  "targetToken": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                  "binding": {
+                    "type": "object", "additionalProperties": false,
+                    "required": ["taskId", "runId", "stageId", "attemptId", "operationId"],
+                    "properties": {
+                      "taskId": {"$ref": "./task-query.v2.4.schema.json#/$defs/identifier"},
+                      "runId": {"$ref": "./task-query.v2.4.schema.json#/$defs/identifier"},
+                      "stageId": {"$ref": "./task-query.v2.4.schema.json#/$defs/identifier"},
+                      "attemptId": {"$ref": "./task-query.v2.4.schema.json#/$defs/identifier"},
+                      "operationId": {"$ref": "./task-query.v2.4.schema.json#/$defs/identifier"}
+                    }
+                  },
+                  "sessionRef": {"type": "string", "minLength": 1},
+                  "sourceAnswerRef": {"$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/artifactReference"},
+                  "displayAnswerRef": {"$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/artifactReference"},
+                  "answeredTurnCount": {"type": "integer", "minimum": 1}
+                }
+              }
+            ]
+          }
+        },
+        "allOf": [
+          {"if": {"properties": {"answerAvailable": {"const": true}}, "required": ["answerAvailable"]}, "then": {"properties": {"status": {"const": "waiting_input"}, "questionTargetToken": {"type": "string"}, "questionTurnCount": {"type": "integer"}, "questionAnswerRef": {"type": "object"}, "activeQuestionSession": {"type": "object"}}}, "else": {"properties": {"questionTargetToken": {"type": "null"}, "questionTurnCount": {"type": "null"}, "questionAnswerRef": {"type": "null"}, "activeQuestionSession": {"type": "null"}}}}
+        ]
+      }
+    }
+  }
+}

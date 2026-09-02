@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "knowledge-clipper-remnote-stateful-journey.v1",
+  "steps": [
+    { "name": "initial", "revision": "settings-r1", "profile": { "enabled": false, "rootRemId": null, "rootTitle": "剪藏" } },
+    { "name": "discovery", "bindingState": "verified_pending", "exactReadback": true, "writes": 0, "target": { "rootRemId": "resolved-root-001", "rootTitle": "剪藏" } },
+    { "name": "probe-same-window", "target": { "rootRemId": "resolved-root-001", "rootTitle": "剪藏" }, "displayedTarget": { "rootRemId": "resolved-root-001", "rootTitle": "剪藏" }, "writes": 0 },
+    { "name": "save", "revision": "settings-r2", "persistedTarget": { "rootRemId": "resolved-root-001", "rootTitle": "剪藏" } },
+    { "name": "reopen-after-restart", "persistedTarget": { "rootRemId": "resolved-root-001", "rootTitle": "剪藏" }, "activeProfileTarget": { "rootRemId": "resolved-root-001", "rootTitle": "剪藏" } },
+    { "name": "probe-after-restart", "target": { "rootRemId": "resolved-root-001", "rootTitle": "剪藏" }, "writes": 0 },
+    { "name": "next-task-snapshot", "settingsRevision": "settings-r2", "target": { "rootRemId": "resolved-root-001", "rootTitle": "剪藏" } }
+  ],
+  "cancelScenario": { "persistedBeforeCancel": { "rootRemId": "stable-root", "rootTitle": "剪藏" }, "persistedAfterCancel": { "rootRemId": "stable-root", "rootTitle": "剪藏" } },
+  "ambiguousScenario": { "admission": "blocked", "persistedBeforeAmbiguous": { "rootRemId": "stable-root", "rootTitle": "剪藏" }, "persistedAfterAmbiguous": { "rootRemId": "stable-root", "rootTitle": "剪藏" } }
+}

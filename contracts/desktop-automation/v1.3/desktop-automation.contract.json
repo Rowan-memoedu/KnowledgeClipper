@@ -1,0 +1,43 @@
+{
+  "contractId": "knowledge-clipper.desktop-automation",
+  "contractVersion": "1.3.0",
+  "schemaVersion": "desktop-automation.v1.3",
+  "authorityPath": "contracts/desktop-automation/v1.3/",
+  "changeType": "additive-ocr-human-resolution",
+  "extends": {
+    "contract": "../v1.2/desktop-automation.contract.json",
+    "receipt": "../v1.2/contract-receipt.json",
+    "receiptSha256": "33a3526c367ba14f623888be8bbad1429c3f99dfbb9bac586d7794af2f3d371d",
+    "treeSha256": "d105b10364e3015a85d4b6086a103e7094d7c3158e308280c3a31e06afb65637"
+  },
+  "semanticActionSchemaVersion": "desktop-automation.v1.3",
+  "semanticActions": [
+    "ocr-human-resolution.accept-original",
+    "ocr-human-resolution.submit-correction",
+    "ocr-human-resolution.cancel"
+  ],
+  "automationIds": [
+    { "automationId": "knowledge-clipper.desktop.ocr-resolution.window", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.ocr-resolution.original-text", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.ocr-resolution.ai-candidate", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.ocr-resolution.markdown", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.ocr-resolution.structured", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.ocr-resolution.difference", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.ocr-resolution.unresolved-reason", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.ocr-resolution.edit-text", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.ocr-resolution.validation", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.ocr-resolution.use-original", "semanticAction": "ocr-human-resolution.accept-original" },
+    { "automationId": "knowledge-clipper.desktop.ocr-resolution.use-edited", "semanticAction": "ocr-human-resolution.submit-correction" },
+    { "automationId": "knowledge-clipper.desktop.ocr-resolution.cancel", "semanticAction": "ocr-human-resolution.cancel" }
+  ],
+  "schemas": {
+    "semanticAction": "semantic-action.schema.json",
+    "semanticState": "../v1.1/semantic-state.schema.json",
+    "captureBundle": "../v1/capture-bundle.v1.schema.json"
+  },
+  "coreAuthority": "contracts/core/v2.6/ocr-human-resolution/",
+  "projectionPolicy": "Only task-query v2.3 waiting_input with attentionRequired=true, decisionKind=ocr-human-resolution and an opaque 64hex target token may open the dialog. New fields remain internal and are not serialized into frozen desktop semantic-state v1/v1.1.",
+  "artifactPolicy": "Desktop reads only jobsRoot-contained, manifest- and payload-hash-verified ocr.original.text, ocr.candidate.text and sourceProofreadRef ancestry. Markdown and structured tabs open only after their nested manifests, bytes and SHA-256 values verify.",
+  "submissionPolicy": "All three actions use common task.provide_input. Desktop never calls Content, Image/OCR or exporters directly; accept/correct resumes downstream without requesting OCR rerun; cancel is distinct from whole-task task.cancel.",
+  "displayPolicy": "Original, AI candidate, Markdown, structured payload, diff and unresolved reason are read-only. The editable field is labeled as user correction and is never presented as autonomous AI repair."
+}

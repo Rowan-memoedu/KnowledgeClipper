@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "content-companion-settings/1.0.0",
+  "profileId": "builtin-language-practice-v1",
+  "profileVersion": "1.0.0",
+  "languagePractice": { "defaultChoice": "ask" },
+  "interaction": { "promptAfterRecognition": true },
+  "promptProfile": { "promptSetId": "open-md-v3", "profileVersion": "3.0.0" },
+  "provider": { "model": "deepseek-chat", "maxRetries": 3 },
+  "security": { "credentials": "local-secret-only", "taskPackageSecrets": "forbidden" }
+}

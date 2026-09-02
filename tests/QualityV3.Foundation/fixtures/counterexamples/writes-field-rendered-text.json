@@ -1,0 +1,11 @@
+{
+  "fixtureId": "writes-field-rendered-text",
+  "expectedRejectCode": "ui.display-text-contract",
+  "subject": {
+    "assertions": ["discoverable", "invoke-pattern", "action-id-correlated"],
+    "businessAssertion": {
+      "source": "displayText",
+      "contains": "writes=0"
+    }
+  }
+}

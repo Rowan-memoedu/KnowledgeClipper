@@ -1,0 +1,58 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-qa": {
+      "cleaned_text": "为什么天空在晴朗白天通常呈蓝色？\n\n太阳光进入大气后，短波长蓝光被空气分子瑞利散射得更强，因此从各方向进入眼睛的蓝光较多。",
+      "removed_fragments": [
+        {
+          "segment_index": 2,
+          "exact_text": "分享 收藏\nCopyright Example",
+          "occurrence": 0,
+          "reason": "site_footer",
+          "evidence": "统一分享控件与版权尾注"
+        }
+      ],
+      "format_anomalies": []
+    },
+    "classification:item-qa": {
+      "units": [
+        {
+          "unit_id": "unit-sky-blue",
+          "source_segment_indexes": [0, 1],
+          "category_id": "question_answer",
+          "subtype": "factual_question",
+          "answer_state": "provided",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "question": "为什么天空在晴朗白天通常呈蓝色？",
+          "supplied_answer": "太阳光进入大气后，短波长蓝光被空气分子瑞利散射得更强，因此从各方向进入眼睛的蓝光较多。",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "card_generation:item-qa:unit-sky-blue": {
+      "generated_content": [],
+      "cards": [
+        {
+          "template": "basic_qa",
+          "front_blocks": [
+            {
+              "type": "markdown",
+              "text": "为什么天空在晴朗白天通常呈蓝色？",
+              "provenance": "source"
+            }
+          ],
+          "back_blocks": [
+            {
+              "type": "markdown",
+              "text": "太阳光进入大气后，短波长蓝光被空气分子瑞利散射得更强，因此从各方向进入眼睛的蓝光较多。",
+              "provenance": "source"
+            }
+          ],
+          "answer_provenance": "source"
+        }
+      ],
+      "unresolved_reasons": []
+    }
+  }
+}

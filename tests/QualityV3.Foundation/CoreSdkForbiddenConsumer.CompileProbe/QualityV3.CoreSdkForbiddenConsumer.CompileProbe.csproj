@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AssemblyName>QualityV3.CoreSdkForbiddenConsumer.CompileProbe</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="KnowledgeClipper.Core.V3.Client">
+      <HintPath>$(CoreV3ReleaseRoot)\artifacts\net8.0\KnowledgeClipper.Core.V3.Client.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+  <Target Name="RequireImmutableCoreV3Release" BeforeTargets="ResolveReferences">
+    <Error Condition="'$(CoreV3ReleaseRoot)' == ''" Text="CoreV3ReleaseRoot is required." />
+  </Target>
+</Project>

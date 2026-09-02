@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "quality-v3-question-to-anki-journey.v1",
+  "uiAction": {
+    "schemaVersion": "quality-v3-ui-action-evidence.v1",
+    "trigger": {
+      "driver": "Windows.UIAutomation",
+      "automationId": "knowledge-clipper.desktop.question.submit",
+      "discovered": true,
+      "invokePattern": true,
+      "invoked": true,
+      "actionId": "quality-v3-question-anki-fixture"
+    },
+    "typedEvents": [
+      { "eventType": "command.accepted", "actionId": "quality-v3-question-anki-fixture" },
+      { "eventType": "command.completed", "actionId": "quality-v3-question-anki-fixture" }
+    ]
+  },
+  "typedChain": [
+    { "eventType": "question.accepted", "rootActionId": "quality-v3-question-anki-fixture", "taskId": "fixture-task-one" },
+    { "eventType": "answer.ready", "rootActionId": "quality-v3-question-anki-fixture", "taskId": "fixture-task-one" },
+    { "eventType": "cards.created", "rootActionId": "quality-v3-question-anki-fixture", "taskId": "fixture-task-one" },
+    { "eventType": "anki.export.completed", "rootActionId": "quality-v3-question-anki-fixture", "taskId": "fixture-task-one" }
+  ],
+  "sideEffectAudits": [
+    {
+      "schemaVersion": "quality-v3-side-effect-audit.v1",
+      "provider": "anki",
+      "mode": "live-bounded-write",
+      "auditor": "independent-proxy-call-log",
+      "allowlist": ["addNotes", "notesInfo"],
+      "observedCalls": [
+        { "action": "addNotes", "effect": "write" },
+        { "action": "notesInfo", "effect": "read" }
+      ],
+      "observedCallCount": 2,
+      "observedWriteCount": 1,
+      "expectedWriteCount": 1,
+      "destinationIsolation": "ephemeral-quality-owned",
+      "callLog": "logs/anki.ndjson",
+      "callLogSha256": "F7473F7EDD9D40F36068D1AE357C9F7D2FCE7101FA9A6926DF617680462C3E03"
+    },
+    {
+      "schemaVersion": "quality-v3-side-effect-audit.v1",
+      "provider": "deepseek",
+      "mode": "live-compute",
+      "auditor": "independent-proxy-call-log",
+      "allowlist": ["chat.completions"],
+      "observedCalls": [{ "action": "chat.completions", "effect": "compute" }],
+      "observedCallCount": 1,
+      "observedWriteCount": 0,
+      "callLog": "logs/deepseek.ndjson",
+      "callLogSha256": "B13A441AF44F605C4208BF03D277BA40745B5A75954CC968DA31435A1B1788DD"
+    },
+    { "schemaVersion": "quality-v3-side-effect-audit.v1", "provider": "remnote", "mode": "disabled", "auditor": "independent-proxy-call-log", "allowlist": [], "observedCalls": [], "observedCallCount": 0, "observedWriteCount": 0, "callLog": "logs/remnote.ndjson", "callLogSha256": "01BA4719C80B6FE911B091A7C05124B64EEECE964E09C058EF8F9805DACA546B" },
+    { "schemaVersion": "quality-v3-side-effect-audit.v1", "provider": "mineru", "mode": "disabled", "auditor": "independent-proxy-call-log", "allowlist": [], "observedCalls": [], "observedCallCount": 0, "observedWriteCount": 0, "callLog": "logs/mineru.ndjson", "callLogSha256": "01BA4719C80B6FE911B091A7C05124B64EEECE964E09C058EF8F9805DACA546B" }
+  ],
+  "exportReadback": {
+    "destinationIsolation": "ephemeral-quality-owned",
+    "createdNoteCount": 1,
+    "readBackCount": 1,
+    "createdNoteIdentitySha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+  }
+}

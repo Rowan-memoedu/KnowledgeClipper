@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "knowledge-clipper-task-settings-override.v2",
+  "imageOcr": {
+    "schemaVersion": "image-ocr-settings.v1",
+    "providerSettings": { "modelVersion": "MinerU-HTML", "language": "ch", "enableTable": true, "enableFormula": false, "timeoutSeconds": 300, "pollIntervalSeconds": 5 }
+  },
+  "content": { "configArtifactRef": "content-config-001", "expectedSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "settingsRevisionId": "revision-001" }
+}

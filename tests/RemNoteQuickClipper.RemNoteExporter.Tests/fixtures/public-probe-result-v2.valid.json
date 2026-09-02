@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "remnote-public-probe-result.v2", "probeId": "probe-v2-fixture",
+  "destination": { "type": "remnote", "optional": true, "peerDestinationTypes": ["anki"] },
+  "worker": { "id": "export.remnote", "version": "2.2.0", "contractVersion": "1.0.0" },
+  "state": "healthy", "admission": "ready", "timeoutMs": 15000, "externalCall": true, "externalCallCount": 4, "externalWriteCount": 0,
+  "connection": { "connected": true, "acceptWriteOperations": true, "serverVersion": "0.17.0", "pluginVersion": "0.17.0", "endpointClass": "loopback-local" },
+  "targetBinding": { "authority": "rootRemId+exact-readback", "authorizationScope": "isolated-canary", "rootRemId": "canary-root-id", "expectedTitle": "零碎知识剪藏 Canary", "observedTitle": "零碎知识剪藏 Canary", "expectedType": "document", "observedType": "document", "matched": true, "rootTitleRole": "readback-only-not-authority", "changeEffectiveAt": "next-task" },
+  "routeCapabilities": {
+    "clip": { "kind": "clip-daily-route", "supported": true, "timeZone": "Asia/Shanghai", "dateFormat": "yyyy-MM-dd", "preflight": "ready" },
+    "cards": { "kind": "card-export", "supported": true, "dateRouting": false },
+    "originalMedia": { "contractVersion": "remnote-original-media.v2", "readCapability": "media.images.v1", "writeCapability": null, "status": "unsupported", "reasonCode": "mcp.media_write_unavailable" }
+  },
+  "fixedSemantics": { "readback": "exact", "idempotency": "reconcilable", "unknownExternalStateRetry": "manual-only", "automaticRetryAllowed": false },
+  "toolChecks": [
+    { "operation": "status", "outcome": "passed", "durationMs": 1, "reasonCode": "ok" },
+    { "operation": "search", "outcome": "passed", "durationMs": 1, "reasonCode": "ok" },
+    { "operation": "list", "outcome": "passed", "durationMs": 1, "reasonCode": "ok" },
+    { "operation": "read", "outcome": "passed", "durationMs": 1, "reasonCode": "ok" }
+  ],
+  "reasonCodes": [], "sanitized": true, "generatedAt": "2026-08-30T00:00:00Z"
+}

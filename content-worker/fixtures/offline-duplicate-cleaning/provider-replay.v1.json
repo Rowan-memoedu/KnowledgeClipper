@@ -1,0 +1,62 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-duplicate-cleaning": {
+      "cleaned_text": "课程页眉\n\n核心结论：重复清洗必须至少保留一个完整副本。\n",
+      "removed_fragments": [
+        {
+          "segment_index": 0,
+          "exact_text": "课程页眉",
+          "occurrence": 0,
+          "reason": "duplicate",
+          "evidence": "segment 0 与 segment 1 逐字相同，删除一份并保留一份"
+        }
+      ],
+      "format_anomalies": []
+    },
+    "classification:item-duplicate-cleaning": {
+      "units": [
+        {
+          "unit_id": "unit-duplicate-cleaning",
+          "source_segment_indexes": [1, 2],
+          "category_id": "general_learning",
+          "subtype": "cleaning_rule",
+          "answer_state": "provided",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "supplied_answer": "核心结论：重复清洗必须至少保留一个完整副本。",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "card_generation:item-duplicate-cleaning:unit-duplicate-cleaning": {
+      "generated_content": [
+        {
+          "kind": "question_wording",
+          "text": "清洗完全重复的分段时，至少要保留多少个副本？"
+        }
+      ],
+      "cards": [
+        {
+          "template": "basic_qa",
+          "front_blocks": [
+            {
+              "type": "text",
+              "text": "清洗完全重复的分段时，至少要保留多少个副本？",
+              "provenance": "generated"
+            }
+          ],
+          "back_blocks": [
+            {
+              "type": "text",
+              "text": "核心结论：重复清洗必须至少保留一个完整副本。",
+              "provenance": "source"
+            }
+          ],
+          "answer_provenance": "source"
+        }
+      ],
+      "unresolved_reasons": []
+    }
+  }
+}

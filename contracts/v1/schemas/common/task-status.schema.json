@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./task-status.schema.json",
+  "title": "RemNote Quick Clipper Task Status v1",
+  "type": "string",
+  "enum": ["created", "validating", "queued", "running", "waiting_input", "retry_wait", "cancelling", "succeeded", "partial", "failed", "cancelled"]
+}

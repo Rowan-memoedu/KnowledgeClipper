@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./task-cancel-payload.schema.json",
+  "title": "RemNote Quick Clipper Task Cancel Payload v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "taskId", "operationId", "reason"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "taskId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "operationId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "reason": { "$ref": "./worker-cancel-signal.schema.json#/properties/reason" }
+  }
+}

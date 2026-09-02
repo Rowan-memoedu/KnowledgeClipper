@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>KnowledgeClipper.Content.Worker</AssemblyName>
+    <RootNamespace>KnowledgeClipper.Content.Worker</RootNamespace>
+    <Description>Destination-neutral content understanding and card generation worker for 零碎知识剪藏.</Description>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

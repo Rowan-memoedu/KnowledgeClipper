@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-ocr-core-continuation-evidence.v1.schema.json",
+  "title": "Image/OCR Core continuation evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "publicContractReuse", "originalPassThrough", "partialFailedItemsOnlyContinuation", "retention"],
+  "properties": {
+    "schemaVersion": {"const": "image-ocr-core-continuation-evidence.v1"},
+    "publicContractReuse": {
+      "type": "object",
+      "required": ["newPublicContractCreated", "captureBundle", "workerRequest", "workerResult", "artifact"],
+      "properties": {"newPublicContractCreated": {"const": false}}
+    },
+    "originalPassThrough": {
+      "type": "object",
+      "required": ["input", "workerOutput", "coreConnection"],
+      "properties": {
+        "input": {"type": "object"},
+        "workerOutput": {"type": "object"},
+        "coreConnection": {"type": "object", "required": ["state", "requiredFields", "reason"]}
+      }
+    },
+    "partialFailedItemsOnlyContinuation": {
+      "type": "object",
+      "required": ["firstAttemptOutput", "retryInput", "workerRetryOutput", "coreConnection"],
+      "properties": {
+        "firstAttemptOutput": {"type": "object"},
+        "retryInput": {"type": "object"},
+        "workerRetryOutput": {"type": "object"},
+        "coreConnection": {"type": "object", "required": ["state", "blockDownstreamWhileStatusPartial", "scheduleOnlyFailedItems", "releaseDownstreamOnlyAfterCompleted", "reason"]}
+      }
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestMetadataDays", "executorState", "automaticDeletionClaim"],
+      "properties": {
+        "requestMetadataDays": {"const": 30},
+        "executorState": {"const": "unsupported"},
+        "automaticDeletionClaim": {"const": false}
+      }
+    }
+  }
+}

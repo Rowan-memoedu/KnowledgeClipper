@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./profile-resolver.v1.schema.json",
+  "title": "Desktop profile resolver configuration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "defaultProfile", "profiles", "remNoteExport", "remNoteProjection", "ankiProjection", "speech"],
+  "properties": {
+    "schemaVersion": { "const": "desktop-profile-resolver.v1" },
+    "defaultProfile": { "enum": ["parity-remnote", "cards-remnote", "cards-anki"] },
+    "profiles": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": { "enum": ["parity-remnote", "cards-remnote", "cards-anki"] },
+      "allOf": [
+        { "contains": { "const": "parity-remnote" } },
+        { "contains": { "const": "cards-remnote" } },
+        { "contains": { "const": "cards-anki" } }
+      ]
+    },
+    "remNoteExport": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sink", "rootRemId", "rootTitle", "documentTitlePrefix"],
+          "properties": {
+            "sink": { "enum": ["mcp-direct", "markdown-zip"] },
+            "rootRemId": { "type": "string", "minLength": 1 },
+            "rootTitle": { "type": "string", "minLength": 1 },
+            "documentTitlePrefix": { "type": "string", "minLength": 1, "maxLength": 100 }
+          }
+        }
+      ]
+    },
+    "remNoteProjection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["categoryRegistryVersion", "templateMappings", "allowedTextBlockTypes", "blockRendering", "assetRefPolicy"],
+      "properties": {
+        "categoryRegistryVersion": { "const": "category-registry/1.0.0" },
+        "templateMappings": {
+          "type": "object", "additionalProperties": false,
+          "required": ["basic_qa", "media_qa", "language_context", "concept_transfer", "procedure"],
+          "properties": {
+            "basic_qa": { "$ref": "#/$defs/remnoteProject" },
+            "media_qa": { "$ref": "#/$defs/mediaReject" },
+            "language_context": { "$ref": "#/$defs/remnoteProject" },
+            "concept_transfer": { "$ref": "#/$defs/remnoteProject" },
+            "procedure": { "$ref": "#/$defs/remnoteProject" }
+          }
+        },
+        "allowedTextBlockTypes": { "const": ["text", "markdown"] },
+        "blockRendering": { "const": "single-block-verbatim-inline" },
+        "assetRefPolicy": { "const": "reject-media-deferred" }
+      }
+    },
+    "ankiProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["categoryRegistryVersion", "categoryToDeckRoute", "templateMappings", "revisionPolicy", "contentHashPolicy", "tags", "assetRefPolicy"],
+      "properties": {
+        "categoryRegistryVersion": { "const": "category-registry/1.0.0" },
+        "categoryToDeckRoute": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["question_answer", "language_zh", "language_en", "general_learning"],
+          "properties": {
+            "question_answer": { "const": "question" },
+            "language_zh": { "const": "language.zh" },
+            "language_en": { "const": "language.en" },
+            "general_learning": { "const": "other" }
+          }
+        },
+        "templateMappings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["basic_qa", "media_qa", "language_context", "concept_transfer", "procedure"],
+          "properties": {
+            "basic_qa": { "$ref": "#/$defs/ankiBasic" },
+            "media_qa": { "$ref": "#/$defs/ankiMediaReject" },
+            "language_context": { "$ref": "#/$defs/ankiLanguage" },
+            "concept_transfer": { "$ref": "#/$defs/ankiBasic" },
+            "procedure": { "$ref": "#/$defs/ankiBasic" }
+          }
+        },
+        "revisionPolicy": { "const": "initial-revision-1" },
+        "contentHashPolicy": { "const": "sha256-canonical-projection-v1" },
+        "tags": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "assetRefPolicy": { "const": "reject-media-deferred" }
+      }
+    },
+    "speech": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["voicesByLanguage", "ratePercent", "volumePercent", "pitchHz", "edgeTtsPath", "ffplayPath"],
+      "properties": {
+        "voicesByLanguage": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "string", "minLength": 1 } },
+        "ratePercent": { "type": "integer", "minimum": -100, "maximum": 100 },
+        "volumePercent": { "type": "integer", "minimum": -100, "maximum": 100 },
+        "pitchHz": { "type": "integer", "minimum": -1000, "maximum": 1000 },
+        "edgeTtsPath": { "type": ["string", "null"] },
+        "ffplayPath": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "$defs": {
+    "remnoteProject": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policy", "cardType", "direction"],
+      "properties": { "policy": { "const": "project" }, "cardType": { "const": "basic" }, "direction": { "enum": ["forward", "reverse", "bidirectional"] } }
+    },
+    "mediaReject": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policy", "cardType", "direction"],
+      "properties": { "policy": { "const": "reject-media-deferred" }, "cardType": { "type": "null" }, "direction": { "type": "null" } }
+    },
+    "ankiBasic": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policy", "noteTypeKey", "frontField", "backField"],
+      "properties": { "policy": { "const": "project" }, "noteTypeKey": { "const": "basic_qa" }, "frontField": { "const": "question" }, "backField": { "const": "answer" } }
+    },
+    "ankiLanguage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policy", "noteTypeKey", "frontField", "backField"],
+      "properties": { "policy": { "const": "project" }, "noteTypeKey": { "const": "language_item" }, "frontField": { "const": "context_sentence" }, "backField": { "const": "reading_and_meaning" } }
+    },
+    "ankiMediaReject": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policy", "noteTypeKey", "frontField", "backField"],
+      "properties": { "policy": { "const": "reject-media-deferred" }, "noteTypeKey": { "type": "null" }, "frontField": { "type": "null" }, "backField": { "type": "null" } }
+    }
+  }
+}

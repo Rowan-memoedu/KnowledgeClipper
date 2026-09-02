@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./worker-cancel-signal.schema.json",
+  "title": "RemNote Quick Clipper Worker Cancel Signal v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "attemptId", "operationId", "reason", "requestedAt", "graceDeadline"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "attemptId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "reason": {
+      "type": "string",
+      "enum": ["user_stop", "superseded", "task_cancel", "timeout"]
+    },
+    "requestedAt": { "type": "string", "format": "date-time" },
+    "graceDeadline": { "type": "string", "format": "date-time" },
+    "commandId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "operationId": { "$ref": "./artifact.schema.json#/$defs/identifier" }
+  },
+  "$comment": "graceDeadline MUST be requestedAt plus worker-request.cancelSignal.gracePeriodMs. The worker may atomically publish result.json until this deadline; after it the orchestrator may kill the process tree."
+}

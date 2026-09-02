@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "content-companion-descriptor/1.1.0",
+  "title": "KnowledgeClipper Content companion descriptor",
+  "type": "object",
+  "required": ["schemaVersion", "companionId", "companionVersion", "worker", "settingsSchema", "taskSnapshot", "languageRecognition", "languagePractice", "ocrHumanResolution", "promptProfile", "providerParameters", "safety", "commands"],
+  "properties": {
+    "schemaVersion": { "const": "content-companion-descriptor/1.1.0" },
+    "companionId": { "const": "content.language-practice-settings" },
+    "companionVersion": { "const": "1.1.0" },
+    "worker": { "type": "object" },
+    "settingsSchema": { "type": "object" },
+    "taskSnapshot": { "type": "object" },
+    "languageRecognition": { "type": "object" },
+    "languagePractice": { "type": "object" },
+    "ocrHumanResolution": {
+      "type": "object",
+      "required": ["status", "unresolvedInput", "resumeCommand", "taskSnapshot", "runtime", "outputs", "ownership", "testAction"]
+    },
+    "promptProfile": { "type": "object" },
+    "providerParameters": { "type": "object" },
+    "safety": { "type": "object" },
+    "commands": { "type": "object" }
+  },
+  "additionalProperties": false
+}

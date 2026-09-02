@@ -1,0 +1,5 @@
+{
+  "protocolVersion": "1.0", "correlationId": "correlation-002", "messageType": "task-query-result", "ok": true,
+  "payload": { "schemaVersion": "1.0.0", "queryId": "query-001", "type": "task.query_recent", "nextCursor": null, "items": [] },
+  "error": null
+}

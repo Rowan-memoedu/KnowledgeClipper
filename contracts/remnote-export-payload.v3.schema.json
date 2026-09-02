@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledgeclipper://contracts/remnote-export-payload.v3",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "documentTitle", "sink", "target", "route", "originalMedia"],
+  "properties": {
+    "schemaVersion": { "const": "3.0.0" },
+    "documentTitle": { "type": "string", "minLength": 1, "maxLength": 180 },
+    "sink": { "enum": ["mcp-direct", "markdown-zip"] },
+    "target": {
+      "type": "object", "additionalProperties": false, "required": ["rootRemId", "rootTitle"],
+      "properties": { "rootRemId": { "type": "string", "minLength": 1 }, "rootTitle": { "type": "string", "minLength": 1 } }
+    },
+    "route": { "const": { "kind": "card-export" } },
+    "originalMedia": { "$ref": "knowledgeclipper://contracts/remnote-original-media.v2" }
+  }
+}

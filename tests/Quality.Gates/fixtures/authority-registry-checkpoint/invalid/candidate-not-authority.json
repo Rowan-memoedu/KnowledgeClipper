@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "authority-registry-checkpoint.v1",
+  "checkpointId": "candidate-only",
+  "createdAt": "2026-08-26T03:00:00Z",
+  "status": "passed-authority",
+  "releaseRoot": "releases/fixture/win-x64",
+  "releaseBinding": {"stateReceiptPath": "receipts/state.json", "stateReceiptSha256": "1111111111111111111111111111111111111111111111111111111111111111", "presealTreeSha256": "2222222222222222222222222222222222222222222222222222222222222222"},
+  "registry": {"sourcePath": "candidate/registry.json", "releasePath": "registry-candidate/v1/worker-registry.v1.json", "sha256": "3333333333333333333333333333333333333333333333333333333333333333", "registryVersion": "1.1.0", "workerCount": 5, "authority": false},
+  "workers": [],
+  "stableContracts": {"checkpointId": "contracts-v1-20260825T115938Z", "receiptPath": "receipts/contracts-v1-stable-checkpoint-20260825T115938Z.json", "receiptSha256": "1CB738FE133F6645B9757E246E2FBC210785086342F70BAD32B5015BD19E1B1E", "filesChecked": 21, "mismatches": 0, "modified": false},
+  "frozenAuthorityRegistry": {"path": "contracts/v1/registry/worker-registry.v1.json", "sha256": "ACB4BA01ADBC0A410AAE7050FEC04F527C47EE6D0A98F30B73E7AC2B0E35F6E1", "workerCount": 0, "modified": false},
+  "externalProductionApisInvoked": false
+}

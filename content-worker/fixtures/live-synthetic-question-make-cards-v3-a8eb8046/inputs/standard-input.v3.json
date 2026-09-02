@@ -1,0 +1,58 @@
+{
+  "schema_version": "standard-input/3.0.0",
+  "package_id": "knowledge-clipper-live-synthetic-question",
+  "task_id": "live-synthetic-question-workflow",
+  "input_version": "3",
+  "mode": "question",
+  "questionWorkflow": {
+    "schemaVersion": "question-workflow-input/1.0.0",
+    "phase": "make-cards",
+    "questionTurns": [
+      {
+        "turnId": "turn-regression-0",
+        "turnIndex": 0,
+        "question": "为什么软件发布前需要进行回归测试？"
+      },
+      {
+        "turnId": "turn-regression-1",
+        "turnIndex": 1,
+        "question": "回归测试与重新运行全部测试有什么区别？",
+        "parentAnswerId": "answer-40a7d9e36f12afe45766e302"
+      }
+    ],
+    "answerAncestry": [
+      {
+        "answerId": "answer-40a7d9e36f12afe45766e302",
+        "artifactRef": "question-answer-653b76923521a49f781c04f5",
+        "turnId": "turn-regression-0",
+        "turnIndex": 0,
+        "questionSha256": "d98ac43df95f19de57e6797eb683ea0f90aeca0b5cc7bba84d310e61c2e3762f",
+        "answerText": "回归测试用于验证软件在修改或新增功能后，原有功能仍然正常，没有引入新的缺陷。发布前进行回归测试可以降低因代码变更导致已有功能失效的风险，确保软件整体质量达到发布标准。",
+        "answerTextSha256": "111b9a895d30c35000a119099babc6619d9bc0c8d707e4cb1569806ff776ead1"
+      },
+      {
+        "answerId": "answer-3a351e3758f3e0c2a33819fc",
+        "artifactRef": "question-answer-e45837a46ba2c590ed67949e",
+        "turnId": "turn-regression-1",
+        "turnIndex": 1,
+        "questionSha256": "3217d23bb9dc4e8d7e154067c072e3af96601873d22ac927b1a66712fe3e7b91",
+        "answerText": "回归测试是重新运行全部测试的一种具体应用场景，但两者并不等同。回归测试的重点在于验证代码变更（如修复缺陷、新增功能或重构）后，原有功能是否仍然正常，通常选择与变更相关的测试用例以及关键回归用例来执行，目的是发现变更引入的新缺陷。而重新运行全部测试是指执行整个测试套件中的所有测试用例，覆盖范围更广，可能包含与本次变更无关的测试，用于全面确认系统整体状态。回归测试可以只运行部分相关测试，也可以包含全部测试，具体范围取决于变更影响分析和风险控制策略。",
+        "answerTextSha256": "a8eb8046a526792f3ae9fd0921e13043f0a47f921d379a0ef2458e086524ee9a",
+        "parentAnswerId": "answer-40a7d9e36f12afe45766e302"
+      }
+    ]
+  },
+  "items": [
+    {
+      "item_id": "item-regression-question",
+      "source": {
+        "kind": "question_workflow"
+      },
+      "hints": {
+        "requested_templates": [
+          "basic_qa"
+        ]
+      }
+    }
+  ]
+}

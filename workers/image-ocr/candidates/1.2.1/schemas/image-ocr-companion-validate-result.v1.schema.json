@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-ocr-companion-validate-result.v1.schema.json",
+  "title": "KnowledgeClipper image/OCR validate-only result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "actionId", "status", "worker", "captureModeSnapshot", "workerRequestProjection", "credentialReference", "validation", "safety"],
+  "properties": {
+    "schemaVersion": {"const": "image-ocr-companion-validate-result.v1"},
+    "actionId": {"const": "image.ocr.test.validate-only"},
+    "status": {"const": "passed"},
+    "worker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": {"const": "image.ocr.mineru"},
+        "version": {"const": "1.2.1"}
+      }
+    },
+    "captureModeSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["imageHandling"],
+      "properties": {"imageHandling": {"enum": ["ocr", "original"]}}
+    },
+    "workerRequestProjection": {
+      "type": "object",
+      "required": ["workerId", "operation", "configSnapshot", "derivedInternalRequest"]
+    },
+    "credentialReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["configured", "reference", "requiredForSelectedMode", "secretValueProhibited"],
+      "properties": {
+        "configured": {"type": "boolean"},
+        "reference": {"type": ["string", "null"]},
+        "requiredForSelectedMode": {"type": "boolean"},
+        "secretValueProhibited": {"const": true}
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["providerSettingsEnumTypeRange", "cloudUploadAuthorizationDerivedFromMode", "unknownFieldsRejected"],
+      "properties": {
+        "providerSettingsEnumTypeRange": {"const": "passed"},
+        "cloudUploadAuthorizationDerivedFromMode": {"const": true},
+        "unknownFieldsRejected": {"const": true}
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["networkAccessPerformed", "externalUploadPerformed", "providerInvoked", "credentialResolved", "secretValuePersisted"],
+      "properties": {
+        "networkAccessPerformed": {"const": false},
+        "externalUploadPerformed": {"const": false},
+        "providerInvoked": {"const": false},
+        "credentialResolved": {"const": false},
+        "secretValuePersisted": {"const": false}
+      }
+    }
+  }
+}

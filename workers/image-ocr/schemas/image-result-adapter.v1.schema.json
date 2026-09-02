@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/rqc/image-result-adapter.v1.schema.json",
+  "title": "RQC Image/OCR worker result adapter v1",
+  "description": "Module adapter only. The core common worker-result schema remains authoritative.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "operationId",
+    "worker",
+    "workerVersion",
+    "attemptId",
+    "status",
+    "mode",
+    "cardId",
+    "startedAt",
+    "finishedAt",
+    "outputs",
+    "itemDiagnostics",
+    "details",
+    "error"
+  ],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "requestId": {"type": "string", "minLength": 1},
+    "operationId": {"type": "string", "minLength": 1},
+    "worker": {"const": "image.ocr.mineru"},
+    "workerVersion": {"type": "string", "minLength": 1},
+    "attemptId": {"type": "string", "minLength": 1},
+    "status": {"enum": ["completed", "partial", "failed", "cancelled", "unknown_external_state"]},
+    "mode": {"type": "string"},
+    "cardId": {"type": ["string", "null"]},
+    "startedAt": {"type": "string", "minLength": 1},
+    "finishedAt": {"type": "string", "minLength": 1},
+    "outputs": {"type": "array", "items": {"type": "object"}},
+    "itemDiagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["artifactRef", "status", "code", "retryable"],
+        "properties": {
+          "artifactRef": {"type": ["string", "null"]},
+          "status": {"enum": ["completed", "failed"]},
+          "code": {"type": ["string", "null"]},
+          "retryable": {"type": "boolean"}
+        }
+      }
+    },
+    "details": {
+      "type": "object",
+      "required": ["partialBlocksDownstream", "items"],
+      "properties": {
+        "captureBundleId": {"type": "string"},
+        "retentionDays": {"type": "integer"},
+        "cloudUploadAuthorized": {"type": "boolean"},
+        "partialBlocksDownstream": {"const": true},
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["artifactRef", "role", "groupIndex", "imageIndex", "status", "source", "ocr", "error"],
+            "properties": {
+              "artifactRef": {"type": "string", "minLength": 1},
+              "groupId": {"enum": ["question", "answer"]},
+              "role": {"enum": ["question", "answer"]},
+              "groupIndex": {"type": "integer", "minimum": 0},
+              "imageIndex": {"type": "integer", "minimum": 0},
+              "status": {"enum": ["completed", "failed"]},
+              "source": {"type": "object"},
+              "ocr": {"type": ["object", "null"]},
+              "error": {"type": ["object", "null"]},
+              "reusedFromAttempt": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "type": ["object", "null"],
+      "properties": {
+        "code": {"type": "string"},
+        "message": {"type": "string"},
+        "retryable": {"type": "boolean"}
+      }
+    }
+  }
+}

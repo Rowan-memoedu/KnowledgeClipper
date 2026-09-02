@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "quality-v3-private-runner-plan.v1",
+  "type": "object",
+  "required": ["schemaVersion", "runId", "runnerSnapshot", "isolation", "commonPreflight", "aggregation", "promotionContract", "journeys"],
+  "properties": {
+    "schemaVersion": { "const": "quality-v3-private-runner-plan.v1" },
+    "aggregation": {
+      "type": "object",
+      "properties": { "businessJourneyMode": { "const": "independent-collect-all" } }
+    }
+  },
+  "additionalProperties": true
+}

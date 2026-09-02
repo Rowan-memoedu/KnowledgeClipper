@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledgeclipper://contracts/remnote-export-task.v3",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "taskPackageId", "documentTitle", "defaultSink", "target", "route", "inputs", "originalMedia"],
+  "properties": {
+    "schemaVersion": { "const": "remnote-export-task.v3" },
+    "taskPackageId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "documentTitle": { "type": "string", "minLength": 1, "maxLength": 180 },
+    "defaultSink": { "enum": ["mcp-direct", "markdown-zip"] },
+    "target": {
+      "type": "object", "additionalProperties": false, "required": ["rootRemId", "rootTitle", "dateRouting"],
+      "properties": { "rootRemId": { "type": "string", "minLength": 1 }, "rootTitle": { "type": "string", "minLength": 1 }, "dateRouting": { "const": false } }
+    },
+    "route": { "const": { "kind": "card-export" } },
+    "inputs": {
+      "type": "object", "additionalProperties": false, "required": ["learningBundle", "cardBundle"],
+      "properties": {
+        "learningBundle": { "type": "null" },
+        "cardBundle": {
+          "type": "object", "additionalProperties": false, "required": ["path", "sha256"],
+          "properties": { "path": { "type": "string", "minLength": 1 }, "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" } }
+        }
+      }
+    },
+    "originalMedia": { "$ref": "knowledgeclipper://contracts/remnote-original-media.v2" }
+  }
+}

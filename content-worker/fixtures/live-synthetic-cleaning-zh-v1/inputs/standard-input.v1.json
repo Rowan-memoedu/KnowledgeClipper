@@ -1,0 +1,20 @@
+{
+  "schema_version": "standard-input/1.0.0",
+  "package_id": "knowledge-clipper-live-synthetic-cleaning-zh",
+  "task_id": "live-synthetic-cleaning-zh",
+  "input_version": "1",
+  "mode": "card",
+  "items": [
+    {
+      "item_id": "item-spacing-effect",
+      "source": { "kind": "text", "material_path": "materials/clip.md" },
+      "hints": {
+        "category_id": "general_learning",
+        "answer_state": "provided",
+        "context_state": "provided",
+        "risk_state": "ordinary",
+        "requested_templates": ["procedure"]
+      }
+    }
+  ]
+}

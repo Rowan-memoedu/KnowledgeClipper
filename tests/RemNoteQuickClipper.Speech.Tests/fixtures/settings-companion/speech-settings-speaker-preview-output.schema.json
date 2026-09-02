@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledgeclipper://speech/settings-companion/speaker-preview-output/v1",
+  "title": "Speech explicit speaker preview output v1",
+  "type": "object",
+  "required": ["schemaVersion", "companionVersion", "workerId", "workerVersion", "status", "action", "scope", "effectiveAt", "explicitAuthorizationConsumed", "sampleSource", "sampleText", "languageTag", "voiceId", "voiceSnapshot", "naturalCompletion", "playbackState", "activePlayback", "manualStopRequired", "temporaryArtifactsRetained", "previewAttemptCount", "audioPlayerInvocationCount", "taskCreation", "sideEffectsPerformed"],
+  "properties": {
+    "schemaVersion": { "const": "speech-settings-speaker-preview-output.v1" },
+    "companionVersion": { "const": "1.1.0" },
+    "workerId": { "const": "speech.edge" },
+    "workerVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "status": { "const": "completed" },
+    "action": { "const": "speaker.preview" },
+    "scope": { "const": "project" },
+    "effectiveAt": { "const": "preview_only" },
+    "explicitAuthorizationConsumed": { "const": true },
+    "sampleSource": { "const": "worker_built_in_short_sample" },
+    "sampleText": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "languageTag": { "type": "string" },
+    "voiceId": { "type": "string" },
+    "voiceSnapshot": { "type": "object" },
+    "naturalCompletion": { "const": true },
+    "playbackState": { "const": "idle" },
+    "activePlayback": { "const": false },
+    "manualStopRequired": { "const": false },
+    "temporaryArtifactsRetained": { "const": false },
+    "previewAttemptCount": { "const": 1 },
+    "audioPlayerInvocationCount": { "const": 1 },
+    "taskCreation": { "type": "object" },
+    "sideEffectsPerformed": { "type": "array", "minItems": 2, "maxItems": 2 }
+  }
+}

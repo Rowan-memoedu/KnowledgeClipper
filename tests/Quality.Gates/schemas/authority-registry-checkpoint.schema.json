@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "authority-registry-checkpoint.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "checkpointId", "createdAt", "status", "releaseRoot", "releaseBinding", "registry", "workers", "stableContracts", "frozenAuthorityRegistry", "externalProductionApisInvoked"],
+  "properties": {
+    "schemaVersion": {"const": "authority-registry-checkpoint.v1"},
+    "checkpointId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "createdAt": {"type": "string", "format": "date-time"},
+    "status": {"const": "passed-authority"},
+    "releaseRoot": {"type": "string", "pattern": "^releases/[^/]+/win-x64$"},
+    "releaseBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["stateReceiptPath", "stateReceiptSha256", "presealTreeSha256"],
+      "properties": {
+        "stateReceiptPath": {"$ref": "#/$defs/path"},
+        "stateReceiptSha256": {"$ref": "#/$defs/sha256"},
+        "presealTreeSha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "registry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourcePath", "releasePath", "sha256", "registryVersion", "workerCount", "authority"],
+      "properties": {
+        "sourcePath": {"$ref": "#/$defs/path"},
+        "releasePath": {"$ref": "#/$defs/path"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "registryVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "workerCount": {"const": 5},
+        "authority": {"const": true}
+      }
+    },
+    "workers": {
+      "type": "array", "minItems": 5, "maxItems": 5,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["workerId", "workerVersion", "entrypoint", "bytes", "sha256", "describeSha256", "describeExitCode"],
+        "properties": {
+          "workerId": {"type": "string"},
+          "workerVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+          "entrypoint": {"$ref": "#/$defs/path"},
+          "bytes": {"type": "integer", "minimum": 1},
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "describeSha256": {"$ref": "#/$defs/sha256", "description": "SHA-256 of the UTF-8 canonical JSON descriptor (sorted keys, compact separators)."},
+          "describeExitCode": {"const": 0}
+        }
+      }
+    },
+    "stableContracts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["checkpointId", "receiptPath", "receiptSha256", "filesChecked", "mismatches", "modified"],
+      "properties": {
+        "checkpointId": {"const": "contracts-v1-20260825T115938Z"},
+        "receiptPath": {"const": "receipts/contracts-v1-stable-checkpoint-20260825T115938Z.json"},
+        "receiptSha256": {"const": "1CB738FE133F6645B9757E246E2FBC210785086342F70BAD32B5015BD19E1B1E"},
+        "filesChecked": {"const": 21},
+        "mismatches": {"const": 0},
+        "modified": {"const": false}
+      }
+    },
+    "frozenAuthorityRegistry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "workerCount", "modified"],
+      "properties": {
+        "path": {"const": "contracts/v1/registry/worker-registry.v1.json"},
+        "sha256": {"const": "ACB4BA01ADBC0A410AAE7050FEC04F527C47EE6D0A98F30B73E7AC2B0E35F6E1"},
+        "workerCount": {"const": 0},
+        "modified": {"const": false}
+      }
+    },
+    "externalProductionApisInvoked": {"const": false}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+    "path": {"type": "string", "minLength": 1, "pattern": "^(?![A-Za-z]:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"}
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./language-practice-decision.v2.schema.json",
+  "title": "KnowledgeClipper durable language-practice decision v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "decisionKind", "targetToken", "binding", "sourceDecisionArtifact", "decisionCount", "categoryIds", "choices", "requestedAt"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-language-practice-decision.v2" },
+    "decisionKind": { "const": "language-practice" },
+    "targetToken": { "$ref": "#/$defs/targetToken" },
+    "binding": { "$ref": "#/$defs/binding" },
+    "sourceDecisionArtifact": { "$ref": "#/$defs/artifactReference" },
+    "decisionCount": { "type": "integer", "minimum": 1 },
+    "categoryIds": { "type": "array", "minItems": 1, "maxItems": 2, "uniqueItems": true, "items": { "enum": ["language_zh", "language_en"] } },
+    "choices": { "const": ["meaning-reading", "writing", "both"] },
+    "requestedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+    "targetToken": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactRef", "kind", "contractVersion", "manifestPath", "expectedSha256"],
+      "properties": {
+        "artifactRef": { "$ref": "#/$defs/identifier" },
+        "kind": { "const": "language-practice-decision" },
+        "contractVersion": { "const": "1.0.0" },
+        "manifestPath": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "expectedSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["taskId", "runId", "stageId", "attemptId", "operationId"],
+      "properties": {
+        "taskId": { "$ref": "#/$defs/identifier" },
+        "runId": { "$ref": "#/$defs/identifier" },
+        "stageId": { "$ref": "#/$defs/identifier" },
+        "attemptId": { "$ref": "#/$defs/identifier" },
+        "operationId": { "$ref": "#/$defs/identifier" }
+      }
+    }
+  }
+}

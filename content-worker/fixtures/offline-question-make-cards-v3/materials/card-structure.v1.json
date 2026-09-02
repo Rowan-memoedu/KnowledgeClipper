@@ -1,0 +1,5 @@
+{
+  "schema_version": "card-structure/1.0.0",
+  "requested_templates": ["basic_qa"],
+  "instructions": "保留最终追问与已持久化答案的逐字内容；完整问答链仅作为上下文。"
+}

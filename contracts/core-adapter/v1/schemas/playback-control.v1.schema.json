@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./playback-control.v1.schema.json",
+  "title": "Desktop playback stage control compatibility payload v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "action"],
+  "properties": {
+    "schemaVersion": { "const": "desktop-action.v1" },
+    "action": { "type": "string", "enum": ["playback.stop", "playback.replay"] }
+  }
+}

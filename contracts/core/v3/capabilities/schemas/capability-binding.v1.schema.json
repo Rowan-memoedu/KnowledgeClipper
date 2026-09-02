@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.capability-binding/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "catalogPath", "catalogSha256", "authorityAnchor"],
+  "properties": {
+    "schema": {"const": "kc.capability-binding/1"},
+    "catalogPath": {"const": "contracts/core/v3/capabilities/capability-catalog.v1.json"},
+    "catalogSha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+    "authorityAnchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authorityVersion", "checkpointPath", "checkpointSha256"],
+      "properties": {
+        "authorityVersion": {"const": "1.2.41"},
+        "checkpointPath": {"const": "contracts/core/v2.10/checkpoints/v2.10.6-20260902T041800Z/checkpoint.json"},
+        "checkpointSha256": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"}
+      }
+    }
+  }
+}

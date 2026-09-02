@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-module-action-receipt.v4",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "actionId", "operation", "accepted", "status", "inputRef", "inputSha256", "outputRef", "outputSha256", "externalWriteCount", "physicalAudio", "automaticRetryAllowed", "idempotencyKey", "completedAt", "executionStatus", "taskId", "runId", "artifactRootRef", "outputRefs"],
+  "properties": {
+    "schemaVersion": {"const": "knowledge-clipper-module-action-receipt.v4"},
+    "actionId": {"type": "string", "minLength": 1},
+    "operation": {"const": "anki.probe"},
+    "accepted": {"type": "boolean"},
+    "status": {"enum": ["ready", "needs_initialization", "migration_required", "failed"]},
+    "inputRef": {"type": "string"},
+    "inputSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "outputRef": {"type": ["string", "null"]},
+    "outputSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "catalogSnapshotRef": {"type": "null"},
+    "catalogSnapshotSha256": {"type": "null"},
+    "externalWriteCount": {"const": 0},
+    "physicalAudio": {"const": false},
+    "automaticRetryAllowed": {"const": false},
+    "idempotencyKey": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+    "completedAt": {"type": "string", "format": "date-time"},
+    "error": {"type": ["object", "null"]},
+    "executionStatus": {"enum": ["completed", "failed", "cancelled", "partial", "unknown_external_state"]},
+    "taskId": {"type": "string", "minLength": 1},
+    "runId": {"type": "string", "minLength": 1},
+    "artifactRootRef": {"type": "string", "pattern": "^module-actions/.+/package$"},
+    "outputRefs": {
+      "type": "array", "maxItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["referenceType", "kind", "contractVersion", "rootRef", "path", "expectedSha256"],
+        "properties": {
+          "referenceType": {"const": "artifact"},
+          "kind": {"const": "anki-connection-status"},
+          "contractVersion": {"type": "string", "minLength": 1},
+          "rootRef": {"type": "string"},
+          "path": {"type": "string", "minLength": 1},
+          "expectedSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    }
+  },
+  "allOf": [
+    {"if": {"properties": {"accepted": {"const": true}}, "required": ["accepted"]}, "then": {"properties": {"status": {"enum": ["ready", "needs_initialization", "migration_required"]}, "executionStatus": {"const": "completed"}, "outputRef": {"type": "string"}, "outputSha256": {"type": "string"}, "outputRefs": {"minItems": 1}, "error": {"type": "null"}}}},
+    {"if": {"properties": {"accepted": {"const": false}}, "required": ["accepted"]}, "then": {"required": ["error"], "properties": {"status": {"const": "failed"}, "outputRefs": {"maxItems": 0}, "error": {"type": "object"}}}}
+  ]
+}

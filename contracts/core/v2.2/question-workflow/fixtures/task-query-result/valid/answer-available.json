@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "2.2.0",
+  "queryId": "query-question",
+  "type": "task.get",
+  "nextCursor": null,
+  "items": [{
+    "taskId": "task-question", "operationId": "operation-question", "intent": "clip.question", "status": "waiting_input",
+    "createdAt": "2026-08-26T04:00:00Z", "updatedAt": "2026-08-26T04:01:00Z", "attentionRequired": true,
+    "replayable": false, "summaryCode": "task.answer_available", "decisionKind": null, "decisionTargetToken": null,
+    "answerAvailable": true, "questionTargetToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "questionTurnCount": 1,
+    "questionAnswerRef": {
+      "artifactRef": "question-answer-text-001", "kind": "question.answer.text", "contractVersion": "1.0.0",
+      "manifestPath": "runs/run-1/adapters/question-answer/question-answer-text-001/v0001/artifact.json",
+      "expectedSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  }]
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "question_answer:item-question:question-2": {
+      "answer_state": "answered",
+      "answer_text": "服务端无法确认客户端是否收到了自己的确认，历史失效连接请求也可能造成半开连接和资源浪费。",
+      "unresolved_reasons": []
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "knowledge-clipper-workflow-settings.v2",
+  "activeProfileId": "study",
+  "profiles": {
+    "study": {
+      "displayName": "Study",
+      "workflow": { "processingProfile": "cards", "destinations": [] },
+      "capture": { "imageHandling": "ocr" },
+      "imageOcr": {
+        "schemaVersion": "image-ocr-settings.v1",
+        "providerSettings": { "modelVersion": "pipeline", "language": "en", "enableTable": false, "enableFormula": true, "timeoutSeconds": 120, "pollIntervalSeconds": 3 }
+      },
+      "content": { "configArtifactRef": "content-config-canary", "expectedSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "settingsRevisionId": "content-settings-canary-v1" }
+    }
+  }
+}

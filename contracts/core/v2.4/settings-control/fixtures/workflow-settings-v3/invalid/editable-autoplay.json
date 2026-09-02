@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "knowledge-clipper-workflow-settings.v3",
+  "activeProfileId": "invalid",
+  "profiles": { "invalid": { "displayName": "Invalid", "speech": { "autoPlay": false } } }
+}

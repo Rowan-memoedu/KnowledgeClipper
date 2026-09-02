@@ -1,0 +1,1 @@
+{"schemaVersion":"remnote-public-probe-request.v2","probeId":"typed-remnote-probe-fixture","authorizationScope":"isolated-canary","timeoutMs":15000,"operations":["status","search","list","read"],"target":{"rootRemId":"canary-root-id","rootTitle":"Knowledge Clipper Canary"}}

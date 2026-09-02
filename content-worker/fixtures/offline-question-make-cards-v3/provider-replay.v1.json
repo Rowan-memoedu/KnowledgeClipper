@@ -1,0 +1,29 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "card_generation:item-question:unit-question-chain": {
+      "generated_content": [],
+      "cards": [
+        {
+          "template": "basic_qa",
+          "front_blocks": [
+            {
+              "type": "text",
+              "text": "如果只有两次握手，会留下什么风险？",
+              "provenance": "source"
+            }
+          ],
+          "back_blocks": [
+            {
+              "type": "text",
+              "text": "服务端无法确认客户端是否收到了自己的确认，历史失效连接请求也可能造成半开连接和资源浪费。",
+              "provenance": "source"
+            }
+          ],
+          "answer_provenance": "source"
+        }
+      ],
+      "unresolved_reasons": []
+    }
+  }
+}

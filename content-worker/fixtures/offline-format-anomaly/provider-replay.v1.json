@@ -1,0 +1,38 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-format-anomaly": {
+      "cleaned_text": "计算记录：\n\n| 步骤 | 结果\n| 去括号 | x + 2 = 5\n\n公式：$$x + = 5\n",
+      "removed_fragments": [],
+      "format_anomalies": [
+        {
+          "segment_index": 1,
+          "kind": "broken_table",
+          "severity": "requires_human",
+          "evidence": "表格缺少表头分隔行且两行均缺少闭合列分隔符"
+        },
+        {
+          "segment_index": 2,
+          "kind": "broken_formula",
+          "severity": "requires_human",
+          "evidence": "数学内容只有起始 $$ 且表达式在加号后缺少操作数"
+        }
+      ]
+    },
+    "classification:item-format-anomaly": {
+      "units": [
+        {
+          "unit_id": "unit-format-anomaly",
+          "source_segment_indexes": [0, 1, 2],
+          "category_id": "general_learning",
+          "subtype": "worked_procedure",
+          "answer_state": "provided",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "supplied_answer": "| 去括号 | x + 2 = 5",
+          "unresolved_reasons": []
+        }
+      ]
+    }
+  }
+}

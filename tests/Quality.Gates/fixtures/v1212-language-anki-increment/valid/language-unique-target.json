@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "knowledge-clipper-v1212-language-anki-increment-fixture.v1",
+  "policy": { "externalRerun": false, "ocrStatus": "user-deferred", "ocrBlocking": false, "desktopProcessE2E": false },
+  "baseExternalReceipt": {
+    "path": "canary/v1212-external-qualification/20260830T085347Z-backend-harness-candidate-worker-bound/external-qualification-receipt.json",
+    "sha256": "A9192E7F723E4FC44004A5690D43427801346CA086A013FDAB019F1CB4C72C70"
+  },
+  "contentReceipt": {
+    "path": "content-worker/canary/authority/content.deepseek-live-text-v070-authority-v1212-20260830T0858Z/authority-receipt.json",
+    "sha256": "32D544F71180B2A7308275FF0F48FD54FF2B005179F22D93E3C404E86E4AED9E"
+  },
+  "executionReceipt": {
+    "path": "canary/phase-b-candidate-v1.2.12/20260830T092000Z-language-unique-target/execution-receipt.json",
+    "sha256": "1C1C6DB2B16599661E9C9B55A7374B28C1958D086A4CA7A9247CF18EACD60A80"
+  },
+  "qualificationReceipt": {
+    "path": "canary/phase-b-candidate-v1.2.12/qualification-20260830T092500Z-content-anki/qualification-receipt.json",
+    "sha256": "2E92A5A3DADC93D4DBA8CF1DD90922405220FA498A87C5BBC8DA76EEE3D0ED9D"
+  },
+  "readableSummary": {
+    "path": "canary/phase-b-candidate-v1.2.12/qualification-20260830T092500Z-content-anki/READABLE.md",
+    "sha256": "9A6DD0AEDAFC9503EE53678DBE1A4999C2D8A2B4FC99278E036E15C7C5F4324D"
+  },
+  "candidate": {
+    "candidateId": "kc-integrated-settings-v1212-20260830T183500Z",
+    "manifestSha256": "5D03C90D42FA2A1145FF6DCC4874BD059AC3EE072628F0A8DC81FB23983B4F3C",
+    "sealedTreeSha256": "4F1021038635984154290467011FBB25AB9D88DD7A1A035F059CFF309231416A"
+  },
+  "authority": {
+    "registryVersion": "1.2.12",
+    "registrySha256": "FC105AB65FD80B72779D1601E2C4B6FAA7ECCAF5F5C1BADC774060D8F685495A",
+    "checkpointSha256": "552151B3EDBEED94FD1B4ECC7B49F78CD7503321119235BBF3ECAA2A0EEE8580"
+  },
+  "readbacks": {
+    "E": { "path": "canary/phase-b-candidate-v1.2.12/20260830T092000Z-language-unique-target/anki-exact-readback-e-receipt.json", "sha256": "29CDF9B1C2554FE96537557CC4D96F415A528A0162DCE83DC7F6E86D72476F24" },
+    "F": { "path": "canary/phase-b-candidate-v1.2.12/20260830T092000Z-language-unique-target/anki-exact-readback-f-receipt.json", "sha256": "325C2B0704BE78DCF9E40EBFE51848FBADE2F0AAA0331283A124913D50DE82FE" },
+    "G": { "path": "canary/phase-b-candidate-v1.2.12/20260830T092000Z-language-unique-target/anki-exact-readback-g-receipt.json", "sha256": "3D2A179B7D35E2F30F8B4C26F06E3C279BABDABEEF04B4E0FAC263BD24A79333" }
+  }
+}

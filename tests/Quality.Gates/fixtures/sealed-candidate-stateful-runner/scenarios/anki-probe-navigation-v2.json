@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "knowledge-clipper-native-ui-scenario.v1",
+  "journey": "anki",
+  "windowTimeoutMs": 30000,
+  "steps": [
+    { "id": "open-export", "operation": "select-item", "automationId": "knowledge-clipper.desktop.settings.navigation", "itemName": "导出", "waitAfterMs": 250 },
+    { "id": "wait-probe", "operation": "wait", "automationId": "knowledge-clipper.desktop.settings.export.anki.probe-readonly" },
+    { "id": "invoke-probe", "operation": "invoke", "automationId": "knowledge-clipper.desktop.settings.export.anki.probe-readonly", "waitAfterMs": 500 },
+    { "id": "read-status", "operation": "assert-contains", "automationId": "knowledge-clipper.desktop.settings.export.anki.probe-status", "expected": "writes=0", "timeoutMs": 60000 },
+    { "id": "close", "operation": "close-window" }
+  ]
+}

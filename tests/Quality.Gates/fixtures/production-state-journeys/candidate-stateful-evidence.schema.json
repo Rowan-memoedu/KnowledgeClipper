@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-candidate-stateful-evidence.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "evidenceLevel", "candidate", "runtime", "journeys", "promotion"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-candidate-stateful-evidence.v1" },
+    "fixtureOnly": { "type": "boolean" },
+    "sourceGate": { "$ref": "#/$defs/evidence" },
+    "evidenceLevel": { "const": "sealed-candidate-process-stateful" },
+    "candidate": {
+      "type": "object",
+      "required": ["root", "manifest", "sealed"],
+      "properties": {
+        "root": { "type": "string", "pattern": "^releases/" },
+        "manifest": { "$ref": "#/$defs/evidence" },
+        "sealed": {
+          "type": "object",
+          "required": ["fileCount", "totalBytes", "treeSha256", "treeHashAlgorithm"],
+          "properties": {
+            "fileCount": { "type": "integer", "minimum": 1 },
+            "totalBytes": { "type": "integer", "minimum": 1 },
+            "treeSha256": { "$ref": "#/$defs/sha256" },
+            "treeHashAlgorithm": { "const": "path-tab-bytes-tab-sha256-lower-lf" }
+          }
+        }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["desktopProcess", "orchestratorProcess", "transport", "persistenceStore", "artifactReader", "injectedHost", "sharedTestCoreDll", "manualDisplayState", "evidence"],
+      "properties": {
+        "desktopProcess": { "const": "KnowledgeClipper.exe" },
+        "orchestratorProcess": { "type": "string", "pattern": "^authority/.+/KnowledgeClipper\\.Orchestrator\\.exe$" },
+        "transport": { "const": "NamedPipe" },
+        "persistenceStore": { "const": "isolated-real" },
+        "artifactReader": { "const": "production-unified" },
+        "injectedHost": { "const": false },
+        "sharedTestCoreDll": { "const": false },
+        "manualDisplayState": { "const": false },
+        "evidence": {
+          "type": "object",
+          "required": ["startup", "namedPipe", "persistence", "artifactParser", "actionLog", "processCleanup"],
+          "additionalProperties": { "$ref": "#/$defs/evidence" }
+        }
+      }
+    },
+    "journeys": {
+      "type": "object",
+      "required": ["anki", "remnote", "question"],
+      "additionalProperties": false,
+      "properties": {
+        "anki": { "$ref": "#/$defs/journey" },
+        "remnote": { "$ref": "#/$defs/journey" },
+        "question": { "$ref": "#/$defs/journey" }
+      }
+    },
+    "promotion": {
+      "type": "object",
+      "required": ["userHandTestEntrypoint"],
+      "properties": { "userHandTestEntrypoint": { "const": true } }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "fixtureOnly": { "const": true } }, "required": ["fixtureOnly"] },
+      "then": {},
+      "else": { "required": ["sourceGate"] }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+    "evidence": {
+      "type": "object",
+      "required": ["path", "bytes", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "journey": {
+      "type": "object",
+      "required": ["status", "receipt"],
+      "properties": {
+        "status": { "const": "passed" },
+        "receipt": { "$ref": "#/$defs/evidence" }
+      }
+    }
+  }
+}

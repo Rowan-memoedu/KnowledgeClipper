@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-invalidation-receipt.v1",
+  "generatedAt": "2026-08-31T11:02:00+08:00",
+  "registryVersion": "1.2.21",
+  "releaseId": "knowledge-clipper-authority-v1.2.21-20260831T105000Z",
+  "status": "invalidated-never-promoted",
+  "authorityBound": false,
+  "checkpointCreated": false,
+  "reason": "The assembled candidate passed validate-registry for five workers, but the attempted authority checkpoint used the Core v2.7.7 settings checkpoint as the playback-control workflow checkpoint and failed before admission. No sealed task or external write was started from this candidate.",
+  "evidence": {
+    "candidateRegistry": "contracts/authority/worker-registry/v1.2.21-20260831T105000Z/worker-registry.v1.json",
+    "candidateRelease": "releases/knowledge-clipper-authority-v1.2.21-20260831T105000Z/win-x64",
+    "checkpointGateFailure": "Core workflow checkpoint does not identify the required playback-control authority.",
+    "workerCount": 5,
+    "validateRegistry": "valid"
+  },
+  "immutability": {
+    "v1_2_21ReleaseModified": false,
+    "v1_2_20Modified": false,
+    "frozenV1Modified": false
+  },
+  "replacement": {
+    "minimumRegistryVersion": "1.2.22",
+    "rebuildFromOriginalFinalInputs": true
+  }
+}

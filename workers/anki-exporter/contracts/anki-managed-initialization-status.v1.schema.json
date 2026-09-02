@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./anki-managed-initialization-status.v1.schema.json",
+  "title": "KnowledgeClipper Anki managed initialization status v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "checkedAt", "operation", "effectClass", "networkScope", "externalMutation", "permission", "apiVersion", "activeProfileSha256", "authorization", "models", "decks", "writes", "actionsObserved", "mutatingActionsObserved", "forbiddenActionsObserved", "automaticRetryAllowed", "replayPolicy", "notesMediaAndExistingResourcesModified"],
+  "properties": {
+    "schemaVersion": {"const": "anki-managed-initialization-status.v1"},
+    "status": {"enum": ["initialized", "already_current"]},
+    "checkedAt": {"type": "string", "format": "date-time"},
+    "operation": {"const": "initialize-managed"},
+    "effectClass": {"const": "provider-write"},
+    "networkScope": {"const": "loopback-only"},
+    "externalMutation": {"type": "boolean"},
+    "permission": {"const": "granted"},
+    "apiVersion": {"type": "integer", "minimum": 6},
+    "activeProfileSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "authorization": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "scope"],
+      "properties": {"mode": {"const": "explicit-user-action"}, "scope": {"const": "managed-models-and-decks"}}
+    },
+    "models": {"type": "array", "items": {"$ref": "#/$defs/model"}},
+    "decks": {"type": "array", "items": {"$ref": "#/$defs/deck"}},
+    "writes": {
+      "type": "object", "additionalProperties": false,
+      "required": ["modelsCreated", "decksCreated"],
+      "properties": {"modelsCreated": {"type": "integer", "minimum": 0}, "decksCreated": {"type": "integer", "minimum": 0}}
+    },
+    "actionsObserved": {"type": "array", "items": {"type": "string"}},
+    "mutatingActionsObserved": {"type": "array", "items": {"enum": ["createModel", "createDeck"]}},
+    "forbiddenActionsObserved": {"const": []},
+    "automaticRetryAllowed": {"const": false},
+    "replayPolicy": {"const": "explicit-reconcile-query-then-create-missing"},
+    "notesMediaAndExistingResourcesModified": {"const": false}
+  },
+  "$defs": {
+    "model": {
+      "type": "object", "additionalProperties": false,
+      "required": ["modelNameSha256", "noteTypeKeys", "status", "readback"],
+      "properties": {
+        "modelNameSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "noteTypeKeys": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "status": {"enum": ["created", "already_current"]},
+        "readback": {"const": "exact"}
+      }
+    },
+    "deck": {
+      "type": "object", "additionalProperties": false,
+      "required": ["deckNameSha256", "status", "readback"],
+      "properties": {
+        "deckNameSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "status": {"enum": ["created", "already_current"]},
+        "readback": {"const": "exact"}
+      }
+    }
+  }
+}

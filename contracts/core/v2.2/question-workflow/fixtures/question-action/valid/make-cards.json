@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "knowledge-clipper-question-action.v2",
+  "action": "question.make-cards",
+  "targetToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

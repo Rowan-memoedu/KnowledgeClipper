@@ -1,0 +1,32 @@
+{
+  "contractId": "knowledge-clipper.desktop-automation",
+  "contractVersion": "1.2.0",
+  "schemaVersion": "desktop-automation.v1.2",
+  "authorityPath": "contracts/desktop-automation/v1.2/",
+  "changeType": "additive-ui-automation",
+  "extends": {
+    "contract": "../v1.1/desktop-automation.contract.json",
+    "receipt": "../v1.1/contract-receipt.json",
+    "receiptSha256": "b0d491b99a37315583efc27a22592c5af13ae150bd9f10f96bdb7a3d1d353953",
+    "treeSha256": "a05c8720c0ee8a493c403225957f497072e97fe36f836dc566c7d584d44c2276"
+  },
+  "semanticActionSchemaVersion": "desktop-automation.v1.1",
+  "automationIds": [
+    { "automationId": "knowledge-clipper.desktop.question.inline-input", "semanticAction": null }
+  ],
+  "semanticActions": [],
+  "schemas": {
+    "semanticAction": "../v1.1/semantic-action.schema.json",
+    "semanticState": "../v1.1/semantic-state.schema.json",
+    "captureBundle": "../v1/capture-bundle.v1.schema.json"
+  },
+  "inlineQuestionInput": {
+    "control": "dedicated single-line TextBox below the independent status/replay strip",
+    "hint": "输入问题，按 Enter 提问",
+    "enter": "reuses question.open then question.submit; accepted input produces exactly one common task.submit",
+    "blank": "no semantic action and no IPC",
+    "escape": "clear locally, emit no command, restore WS_EX_NOACTIVATE",
+    "submissionResult": "clear only after accepted submission; preserve original text after failure",
+    "focus": "on direct click, temporarily remove WS_EX_NOACTIVATE and activate the TextBox; on submit, Escape, or focus loss, restore no-activate and the prior foreground window when valid"
+  }
+}

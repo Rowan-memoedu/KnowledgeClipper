@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-ocr-capability-config-descriptor.v2.schema.json",
+  "title": "KnowledgeClipper image/OCR capability config descriptor v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "moduleId", "companionVersion", "workerBinding", "capabilities", "actions", "readOnlyFacts", "statusSemantics"],
+  "properties": {
+    "schemaVersion": {"const": "image-ocr-capability-config-descriptor.v2"},
+    "moduleId": {"const": "image-ocr"},
+    "companionVersion": {"const": "1.1.0"},
+    "workerBinding": {"$ref": "#/$defs/workerBinding"},
+    "capabilities": {"type": "array", "minItems": 14, "items": {"$ref": "#/$defs/capability"}},
+    "actions": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/action"}},
+    "readOnlyFacts": {"type": "object"},
+    "statusSemantics": {"type": "object"}
+  },
+  "$defs": {
+    "workerBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workerId", "workerVersionRange", "contractVersionRange"],
+      "properties": {
+        "workerId": {"const": "image.ocr.mineru"},
+        "workerVersionRange": {"type": "string", "minLength": 1},
+        "contractVersionRange": {"type": "string", "minLength": 1}
+      }
+    },
+    "sideEffects": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["externalUpload", "localWrite", "requiresConsent"],
+      "properties": {
+        "externalUpload": {"type": "boolean"},
+        "localWrite": {"type": "boolean"},
+        "requiresConsent": {"type": "boolean"}
+      }
+    },
+    "probeReference": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["actionId", "trigger", "resultJsonPointer"],
+      "properties": {
+        "actionId": {"type": "string", "pattern": "^image\\.ocr\\.(status|test)\\."},
+        "trigger": {"enum": ["manual", "on-open-or-manual"]},
+        "resultJsonPointer": {"const": ""}
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capabilityId", "moduleId", "workerBinding", "display", "controlKind", "scope", "valueSchema", "sensitivity", "effectiveAt", "snapshotBinding", "availability", "compatibility", "sideEffects", "statusProbe"],
+      "properties": {
+        "capabilityId": {"type": "string", "pattern": "^image\\."},
+        "moduleId": {"const": "image-ocr"},
+        "workerBinding": {"$ref": "#/$defs/workerBinding"},
+        "display": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["title", "tier"],
+          "properties": {
+            "title": {"type": "string", "minLength": 1},
+            "tier": {"enum": ["common", "advanced", "developer-diagnostics"]}
+          }
+        },
+        "controlKind": {"enum": ["selectable", "read-only-status", "deployment-path", "secret-reference", "diagnostic-action"]},
+        "scope": {"enum": ["project", "device", "deployment", "task", "attempt", "process"]},
+        "valueSchema": {"type": "object"},
+        "defaultValue": {},
+        "sensitivity": {"enum": ["public-config", "local-path", "secret-reference", "secret-value-prohibited"]},
+        "effectiveAt": {"enum": ["immediate", "next-capture-session", "next-task", "next-attempt", "process-start", "release-bind"]},
+        "snapshotBinding": {"type": ["object", "null"]},
+        "availability": {"type": "object", "required": ["state"]},
+        "compatibility": {"type": "object"},
+        "sideEffects": {"$ref": "#/$defs/sideEffects"},
+        "statusProbe": {"$ref": "#/$defs/probeReference"}
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actionId", "title", "kind", "availability", "invocation", "networkAccess", "executionPolicy", "resultSchemaVersion", "sideEffects", "secretValueProhibited"],
+      "properties": {
+        "actionId": {"enum": ["image.ocr.status.offline-readiness", "image.ocr.test.offline-fake-provider", "image.ocr.test.live-connectivity"]},
+        "title": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["status-probe", "diagnostic-test", "live-connectivity-test"]},
+        "availability": {"type": "object", "required": ["state"]},
+        "invocation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["protocol", "executable", "argumentsTemplate"],
+          "properties": {
+            "protocol": {"enum": ["command-json-v1", "delegated-external-upload-v1"]},
+            "executable": {"type": ["string", "null"]},
+            "argumentsTemplate": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "networkAccess": {"enum": ["prohibited", "required"]},
+        "executionPolicy": {"enum": ["safe-read-only", "explicit-safe-action", "explicit-user-action-only"]},
+        "resultSchemaVersion": {"enum": ["image-ocr-capability-status.v1", "image-ocr-companion-test-result.v1"]},
+        "sideEffects": {"$ref": "#/$defs/sideEffects"},
+        "secretValueProhibited": {"const": true}
+      }
+    }
+  }
+}

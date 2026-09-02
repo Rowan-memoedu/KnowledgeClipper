@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-anki-managed-initialization-action.v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "taskId", "configReference", "sideEffectAuthorization"],
+  "properties": {
+    "schemaVersion": {"const": "knowledge-clipper-anki-managed-initialization-action.v1"},
+    "taskId": {"type": "string", "minLength": 1},
+    "configReference": {"$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/artifactReference"},
+    "sideEffectAuthorization": {"type": "object", "additionalProperties": false, "required": ["schemaVersion", "authorizationId", "mode", "operation", "scope", "taskId", "configArtifactId", "authorizedAt"], "properties": {"schemaVersion": {"const": "1.0.0"}, "authorizationId": {"type": "string", "minLength": 1}, "mode": {"const": "explicit-user-action"}, "operation": {"const": "initialize-managed"}, "scope": {"const": "managed-models-and-decks"}, "taskId": {"type": "string", "minLength": 1}, "configArtifactId": {"type": "string", "minLength": 1}, "authorizedAt": {"type": "string", "format": "date-time"}}}
+  }
+}

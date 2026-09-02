@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledgeclipper://contracts/remnote-target-discovery-result.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "discoveryId", "destination", "worker", "state", "admission", "timeoutMs", "externalCall", "externalCallCount", "externalWriteCount", "connection", "selection", "fixedSemantics", "toolChecks", "reasonCodes", "sanitized", "generatedAt"],
+  "properties": {
+    "schemaVersion": { "const": "remnote-target-discovery-result.v1" },
+    "discoveryId": { "type": "string", "minLength": 1 },
+    "destination": {
+      "type": "object", "additionalProperties": false, "required": ["type", "optional", "peerDestinationTypes"],
+      "properties": { "type": { "const": "remnote" }, "optional": { "const": true }, "peerDestinationTypes": { "const": ["anki"] } }
+    },
+    "worker": {
+      "type": "object", "additionalProperties": false, "required": ["id", "version", "contractVersion"],
+      "properties": { "id": { "const": "export.remnote" }, "version": { "const": "2.3.0" }, "contractVersion": { "const": "1.0.0" } }
+    },
+    "state": { "enum": ["healthy", "degraded", "blocked"] },
+    "admission": { "enum": ["ready", "blocked"] },
+    "timeoutMs": { "const": 15000 },
+    "externalCall": { "const": true },
+    "externalCallCount": { "type": "integer", "minimum": 1, "maximum": 4 },
+    "externalWriteCount": { "const": 0 },
+    "connection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["connected", "acceptWriteOperations", "serverVersion", "pluginVersion", "endpointClass"],
+      "properties": {
+        "connected": { "type": ["boolean", "null"] }, "acceptWriteOperations": { "type": ["boolean", "null"] },
+        "serverVersion": { "type": ["string", "null"] }, "pluginVersion": { "type": ["string", "null"] }, "endpointClass": { "const": "loopback-local" }
+      }
+    },
+    "selection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["authorizationScope", "selector", "candidateCount", "resolution", "resolvedRootRemId", "observedTitle", "observedType", "exactReadback", "authority", "rootTitleRole", "persistableBinding", "changeEffectiveAt"],
+      "properties": {
+        "authorizationScope": { "const": "configured-destination" },
+        "selector": {
+          "type": "object", "additionalProperties": false, "required": ["rootTitle", "expectedType", "match", "uniqueness"],
+          "properties": { "rootTitle": { "type": "string", "minLength": 1 }, "expectedType": { "const": "document" }, "match": { "const": "exact" }, "uniqueness": { "const": "required" } }
+        },
+        "candidateCount": { "type": "integer", "minimum": 0 },
+        "resolution": { "enum": ["unique", "not_found", "ambiguous", "unavailable"] },
+        "resolvedRootRemId": { "type": ["string", "null"], "minLength": 1 },
+        "observedTitle": { "type": ["string", "null"] }, "observedType": { "type": ["string", "null"] },
+        "exactReadback": { "type": "boolean" }, "authority": { "const": "resolved-rootRemId+exact-readback" },
+        "rootTitleRole": { "const": "discovery-selector-not-authority" }, "persistableBinding": { "type": "boolean" }, "changeEffectiveAt": { "const": "next-task" }
+      }
+    },
+    "fixedSemantics": {
+      "type": "object", "additionalProperties": false, "required": ["automaticRetryAllowed", "unknownExternalStateRetry"],
+      "properties": { "automaticRetryAllowed": { "const": false }, "unknownExternalStateRetry": { "const": "manual-only" } }
+    },
+    "toolChecks": {
+      "type": "array", "minItems": 4, "maxItems": 4,
+      "prefixItems": [
+        { "$ref": "#/$defs/checkStatus" }, { "$ref": "#/$defs/checkSearch" }, { "$ref": "#/$defs/checkList" }, { "$ref": "#/$defs/checkRead" }
+      ], "items": false
+    },
+    "reasonCodes": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "sanitized": { "const": true }, "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "state": { "const": "healthy" } } },
+      "then": {
+        "properties": {
+          "admission": { "const": "ready" }, "reasonCodes": { "maxItems": 0 },
+          "connection": { "properties": { "connected": { "const": true }, "acceptWriteOperations": { "const": true } } },
+          "selection": { "properties": { "candidateCount": { "const": 1 }, "resolution": { "const": "unique" }, "resolvedRootRemId": { "type": "string", "minLength": 1 }, "observedType": { "const": "document" }, "exactReadback": { "const": true }, "persistableBinding": { "const": true } } }
+        }
+      },
+      "else": { "properties": { "admission": { "const": "blocked" }, "reasonCodes": { "minItems": 1 }, "selection": { "properties": { "persistableBinding": { "const": false } } } } }
+    }
+  ],
+  "$defs": {
+    "check": {
+      "type": "object", "additionalProperties": false, "required": ["operation", "outcome", "durationMs", "reasonCode"],
+      "properties": { "operation": { "type": "string" }, "outcome": { "enum": ["passed", "failed", "timeout", "not_run"] }, "durationMs": { "type": "integer", "minimum": 0 }, "reasonCode": { "type": "string", "minLength": 1 } }
+    },
+    "checkStatus": { "allOf": [{ "$ref": "#/$defs/check" }, { "properties": { "operation": { "const": "status" } } }] },
+    "checkSearch": { "allOf": [{ "$ref": "#/$defs/check" }, { "properties": { "operation": { "const": "search" } } }] },
+    "checkList": { "allOf": [{ "$ref": "#/$defs/check" }, { "properties": { "operation": { "const": "list" } } }] },
+    "checkRead": { "allOf": [{ "$ref": "#/$defs/check" }, { "properties": { "operation": { "const": "read" } } }] }
+  }
+}

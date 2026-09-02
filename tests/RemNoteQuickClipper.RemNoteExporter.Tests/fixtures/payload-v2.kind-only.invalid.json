@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "2.0.0",
+  "documentTitle": "摘录 · kind-only",
+  "sink": "mcp-direct",
+  "target": { "rootRemId": "root-rem-id", "rootTitle": "剪藏" },
+  "route": { "kind": "clip-daily-route" }
+}

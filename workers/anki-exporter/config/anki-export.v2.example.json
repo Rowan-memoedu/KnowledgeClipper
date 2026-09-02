@@ -1,0 +1,27 @@
+{
+  "schema_version": "anki-export-config.v2",
+  "endpoint": "http://127.0.0.1:8765",
+  "expected_profile": "REPLACE_WITH_EXACT_ANKI_PROFILE",
+  "timeout_seconds": 15,
+  "max_media_bytes": 26214400,
+  "provision_managed": false,
+  "deck_routes": {
+    "question": "零碎知识剪藏::题目",
+    "canary": "零碎知识剪藏::Canary"
+  },
+  "note_types": {
+    "original_image_qa": {
+      "model_name": "KnowledgeClipper Original Media v1",
+      "field_map": {
+        "question": "Front",
+        "answer": "Back",
+        "source": "Source"
+      },
+      "required_fields": ["question"],
+      "media_projection": "ordered-original-images.v1",
+      "css": ".card { font-family: arial; font-size: 20px; text-align: left; }\n.kc-original-media img { max-width: 100%; height: auto; display: block; }",
+      "front_template": "<div class=\"kc-original-media kc-question-images\">{{Front}}</div><div class=\"context\">{{Context}}</div>",
+      "back_template": "{{FrontSide}}<hr id=answer><div class=\"kc-original-media kc-answer-images\">{{Back}}</div><div class=\"extra\">{{Extra}}</div><div class=\"source\">{{Source}}</div><div class=\"user-notes\">{{UserNotes}}</div>"
+    }
+  }
+}

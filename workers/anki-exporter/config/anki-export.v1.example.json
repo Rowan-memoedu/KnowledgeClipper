@@ -1,0 +1,71 @@
+{
+  "schema_version": "anki-export-config.v1",
+  "endpoint": "http://127.0.0.1:8765",
+  "expected_profile": "REPLACE_WITH_EXACT_ANKI_PROFILE",
+  "timeout_seconds": 15,
+  "max_media_bytes": 26214400,
+  "provision_managed": false,
+  "deck_routes": {
+    "question": "零碎知识剪藏::题目",
+    "language.zh": "零碎知识剪藏::语言::中文",
+    "language.en": "零碎知识剪藏::语言::英语",
+    "math": "零碎知识剪藏::数学",
+    "life": "零碎知识剪藏::生活",
+    "other": "零碎知识剪藏::其他",
+    "canary": "零碎知识剪藏::Canary"
+  },
+  "note_types": {
+    "basic_qa": {
+      "model_name": "RQC Basic v1",
+      "field_map": {
+        "question": "Front",
+        "answer": "Back",
+        "context": "Context",
+        "extra": "Extra",
+        "source": "Source"
+      },
+      "required_fields": [
+        "question",
+        "answer"
+      ]
+    },
+    "language_item": {
+      "model_name": "RQC Basic v1",
+      "field_map": {
+        "context_sentence": "Front",
+        "reading_and_meaning": "Back",
+        "selected_term": "Context",
+        "extra": "Extra",
+        "source": "Source"
+      },
+      "required_fields": [
+        "context_sentence",
+        "reading_and_meaning"
+      ]
+    },
+    "language_writing": {
+      "model_name": "RQC Basic v1",
+      "field_map": {
+        "front": "Front",
+        "back": "Back"
+      },
+      "required_fields": [
+        "front",
+        "back"
+      ]
+    },
+    "image_qa": {
+      "model_name": "RQC Basic v1",
+      "field_map": {
+        "question": "Front",
+        "answer": "Back",
+        "context": "Context",
+        "source": "Source"
+      },
+      "required_fields": [
+        "question",
+        "answer"
+      ]
+    }
+  }
+}

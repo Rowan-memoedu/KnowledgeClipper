@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "remnote-destination-companion-descriptor.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "destinationType", "displayName", "optional", "peerDestinationTypes", "secretReferences", "settings", "routes", "fixedSemantics", "diagnostics", "probe"],
+  "properties": {
+    "schemaVersion": { "const": "remnote-destination-companion-descriptor.v1" },
+    "destinationType": { "const": "remnote" },
+    "displayName": { "const": "RemNote" },
+    "optional": { "const": true },
+    "peerDestinationTypes": { "const": ["anki"] },
+    "secretReferences": { "const": [] },
+    "settings": {
+      "type": "object", "additionalProperties": false,
+      "required": ["inputSchemaVersion", "snapshotSchemaVersion", "enabledPath", "target"],
+      "properties": {
+        "inputSchemaVersion": { "const": "remnote-destination-settings.v1" },
+        "snapshotSchemaVersion": { "const": "remnote-destination-settings-snapshot.v1" },
+        "enabledPath": { "const": "enabled" },
+        "target": {
+          "type": "object", "additionalProperties": false,
+          "required": ["rootRemIdPath", "rootTitlePath", "authority", "rootTitleRole", "isolatedCanaryRequiresAuthorizedRoot", "formalRootTitle", "formalRootAllowedForCanary"],
+          "properties": {
+            "rootRemIdPath": { "const": "target.rootRemId" },
+            "rootTitlePath": { "const": "target.rootTitle" },
+            "authority": { "const": "rootRemId+exact-readback" },
+            "rootTitleRole": { "const": "readback-only-not-authority" },
+            "isolatedCanaryRequiresAuthorizedRoot": { "const": true },
+            "formalRootTitle": { "const": "剪藏" },
+            "formalRootAllowedForCanary": { "const": false }
+          }
+        }
+      }
+    },
+    "routes": {
+      "type": "object", "additionalProperties": false, "required": ["clip", "cards"],
+      "properties": {
+        "clip": {
+          "type": "object", "additionalProperties": false, "required": ["kind", "timeZone", "dateFormat"],
+          "properties": { "kind": { "const": "clip-daily-route" }, "timeZone": { "const": "Asia/Shanghai" }, "dateFormat": { "const": "yyyy-MM-dd" } }
+        },
+        "cards": {
+          "type": "object", "additionalProperties": false, "required": ["kind", "dateRouting"],
+          "properties": { "kind": { "const": "card-export" }, "dateRouting": { "const": false } }
+        }
+      }
+    },
+    "fixedSemantics": {
+      "type": "object", "additionalProperties": false, "required": ["readback", "idempotency", "unknownExternalStateRetry", "automaticRetryAllowed"],
+      "properties": {
+        "readback": { "const": "exact" }, "idempotency": { "const": "reconcilable" },
+        "unknownExternalStateRetry": { "const": "manual-only" }, "automaticRetryAllowed": { "const": false }
+      }
+    },
+    "diagnostics": {
+      "type": "object", "additionalProperties": false,
+      "required": ["readOnly", "workerVersion", "contractVersion", "nodePath", "remnoteCliJsPath", "remnoteMcpEndpoint", "connectionPermissionSource"],
+      "properties": {
+        "readOnly": { "const": true }, "workerVersion": { "type": "string" }, "contractVersion": { "type": "string" },
+        "nodePath": { "type": ["string", "null"] }, "remnoteCliJsPath": { "type": ["string", "null"] },
+        "remnoteMcpEndpoint": { "type": ["string", "null"] }, "connectionPermissionSource": { "const": "probe.status" }
+      }
+    },
+    "probe": {
+      "type": "object", "additionalProperties": false,
+      "required": ["requestSchemaVersion", "resultSchemaVersion", "cli", "operations", "timeoutMs", "externalCall", "externalWriteCount", "connectedToolTimeoutState", "admissionOnDegraded"],
+      "properties": {
+        "requestSchemaVersion": { "const": "remnote-readonly-probe-request.v1" },
+        "resultSchemaVersion": { "const": "remnote-readonly-probe-result.v1" },
+        "cli": { "const": "probe --request <absolute-probe-request.json> --json" },
+        "operations": { "const": ["status", "search", "list", "read"] },
+        "timeoutMs": { "const": 15000 }, "externalCall": { "const": true }, "externalWriteCount": { "const": 0 },
+        "connectedToolTimeoutState": { "const": "degraded" }, "admissionOnDegraded": { "const": "blocked" }
+      }
+    }
+  }
+}

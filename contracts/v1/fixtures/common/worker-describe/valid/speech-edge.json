@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0.0",
+  "workerId": "speech.edge",
+  "workerVersion": "1.2.3",
+  "contractVersion": "1.0.0",
+  "stages": ["speech.synthesize", "speech.playback"],
+  "inputKinds": ["text.spoken", "audio.speech"],
+  "outputKinds": ["audio.speech"],
+  "concurrency": { "model": "serial", "maxParallelAttempts": 1 },
+  "sideEffectLevel": "local",
+  "idempotencyLevel": "idempotent",
+  "cancellation": {
+    "protocol": "attempt-signal-file-v1",
+    "supportedReasons": ["user_stop", "superseded", "task_cancel", "timeout"]
+  }
+}

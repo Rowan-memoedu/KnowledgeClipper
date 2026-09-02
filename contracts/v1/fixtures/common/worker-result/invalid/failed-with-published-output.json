@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "request-invalid-003",
+  "operationId": "operation-invalid-003",
+  "taskId": "task-invalid",
+  "runId": "run-invalid",
+  "stageId": "image-ocr",
+  "attemptId": "attempt-001",
+  "worker": { "id": "image.ocr.mineru", "version": "1.0.0" },
+  "contractVersion": "1.0.0",
+  "idempotencyKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "status": "failed",
+  "outputs": [{
+    "artifactRef": "unverified-output",
+    "kind": "text.ocr",
+    "contractVersion": "1.0.0",
+    "manifestPath": "runs/run-invalid/stages/image-ocr/attempts/attempt-001/outputs/unverified-output/v0001/artifact.json",
+    "expectedSha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+  }],
+  "error": { "code": "worker.failed", "category": "worker", "retryable": true, "detailsRef": "runs/run-invalid/stages/image-ocr/attempts/attempt-001/error.json" },
+  "startedAt": "2026-08-25T10:00:00Z",
+  "finishedAt": "2026-08-25T10:00:01Z",
+  "warnings": []
+}

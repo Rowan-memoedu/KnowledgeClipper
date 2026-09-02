@@ -1,0 +1,6 @@
+[CmdletBinding()]
+param([string]$EvidenceRoot=('C:\Users\fy\Desktop\新建文件夹\04 Projects\RemNote Quick Clipper\canary\sealed-live-ocr-anki-v1.2.28\{0}' -f [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ')),[string]$AnkiDeck='零碎知识剪藏::Canary::PhaseB-20260828T081109Z')
+$ErrorActionPreference='Stop';$template=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'Invoke-AuthorityV1226LiveOcrInitial.ps1') -Raw
+$replacements=[ordered]@{'v1.2.26-20260901T013500Z'='v1.2.28-20260901T022000Z';'AuthorityV1226'='AuthorityV1228';'v1226'='v1228';'1.2.26'='1.2.28';'8adc3d3e7ea8a149bea71a851e4f0de11af65bd02e9d4426520b909879b65ede'='f7989a49a2f348031efea488fa7de8885894494f8773e71a241c5698a7a66cb4'}
+foreach($pair in $replacements.GetEnumerator()){if(-not $template.Contains($pair.Key,[StringComparison]::Ordinal)){throw "v1.2.28 initial runner marker missing: $($pair.Key)"};$template=$template.Replace($pair.Key,$pair.Value,[StringComparison]::Ordinal)}
+$tmp=Join-Path $PSScriptRoot ('.Invoke-AuthorityV1228.'+[Guid]::NewGuid().ToString('N')+'.tmp.ps1');try{[IO.File]::WriteAllText($tmp,$template,[Text.UTF8Encoding]::new($false));& $tmp -EvidenceRoot $EvidenceRoot -AnkiDeck $AnkiDeck;if($LASTEXITCODE){throw "v1.2.28 live task failed: $LASTEXITCODE"}}finally{if(Test-Path $tmp){[IO.File]::Delete($tmp)}}

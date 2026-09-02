@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./product-identity.v2.schema.json",
+  "title": "KnowledgeClipper product identity v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "productId", "productName", "assemblyRoot", "namespaceRoot", "desktopEntrypoint", "orchestratorComponentId", "architecture", "destinations", "legacyAliasesRef"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-identity.v2" },
+    "productId": { "const": "knowledge-clipper" },
+    "productName": { "const": "零碎知识剪藏" },
+    "assemblyRoot": { "const": "KnowledgeClipper" },
+    "namespaceRoot": { "const": "KnowledgeClipper" },
+    "desktopEntrypoint": { "const": "KnowledgeClipper.exe" },
+    "orchestratorComponentId": { "const": "knowledge-clipper.orchestrator" },
+    "architecture": { "const": "destination-neutral" },
+    "destinations": { "type": "array", "uniqueItems": true, "items": { "enum": ["remnote", "anki"] }, "allOf": [{ "contains": { "const": "remnote" } }, { "contains": { "const": "anki" } }] },
+    "legacyAliasesRef": { "const": "legacy-aliases.v2.json" }
+  }
+}

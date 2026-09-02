@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-additive-offline-backlog-gate-fixture.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "baseline", "requirementAudit", "originalMode", "imagePartialRetry", "imageSettings", "settingsHonesty", "speechSettings", "ankiSettings", "remnoteSettings", "contentSettings", "languageCards", "desktopAutomation", "retentionSafety", "legacyCanarySafety", "ownerEvidence", "policy"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-additive-offline-backlog-gate-fixture.v1" },
+    "baseline": { "$ref": "#/$defs/group" },
+    "requirementAudit": { "$ref": "#/$defs/group" },
+    "originalMode": { "$ref": "#/$defs/group" },
+    "imagePartialRetry": { "$ref": "#/$defs/group" },
+    "imageSettings": { "$ref": "#/$defs/group" },
+    "settingsHonesty": { "$ref": "#/$defs/group" },
+    "speechSettings": { "$ref": "#/$defs/group" },
+    "ankiSettings": { "$ref": "#/$defs/group" },
+    "remnoteSettings": { "$ref": "#/$defs/group" },
+    "contentSettings": { "$ref": "#/$defs/group" },
+    "languageCards": { "$ref": "#/$defs/group" },
+    "desktopAutomation": { "$ref": "#/$defs/group" },
+    "retentionSafety": { "$ref": "#/$defs/group" },
+    "legacyCanarySafety": { "$ref": "#/$defs/group" },
+    "ownerEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["core", "content", "image", "desktop", "speech", "anki", "remnote"],
+      "properties": {
+        "core": { "const": "pending" },
+        "content": { "const": "module-passed-integration-conditional" },
+        "image": { "const": "module-passed-integration-pending" },
+        "desktop": { "const": "pending" },
+        "speech": { "const": "module-passed-integration-pending" },
+        "anki": { "const": "module-passed-integration-pending" },
+        "remnote": { "const": "module-passed-authority-pending" }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["externalCalls", "workerStarts", "pendingIsFailure", "candidateBound", "bAndCRemainPending"],
+      "properties": {
+        "externalCalls": { "const": 0 },
+        "workerStarts": { "const": 0 },
+        "pendingIsFailure": { "const": false },
+        "candidateBound": { "const": false },
+        "bAndCRemainPending": { "const": true }
+      }
+    }
+  },
+  "$defs": {
+    "group": { "type": "object", "minProperties": 1 },
+    "fileEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }
+      }
+    }
+  }
+}

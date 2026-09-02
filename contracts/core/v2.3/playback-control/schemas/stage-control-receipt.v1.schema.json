@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./stage-control-receipt.v1.schema.json",
+  "title": "KnowledgeClipper Stage Control Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "controlId", "accepted", "taskId", "operation", "selector", "reason", "status", "resolved", "timestamp", "durableEventRef", "receiptRef", "error"],
+  "properties": {
+    "schemaVersion": { "const": "2.3.0" },
+    "controlId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "accepted": { "type": "boolean" },
+    "taskId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "operation": { "const": "speech.playback" },
+    "selector": { "const": "current-active" },
+    "reason": { "const": "user_stop" },
+    "status": { "enum": ["requested", "rejected"] },
+    "resolved": { "oneOf": [{ "$ref": "#/$defs/resolution" }, { "type": "null" }] },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "durableEventRef": { "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+    "receiptRef": { "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+    "error": { "oneOf": [{ "$ref": "#/$defs/error" }, { "type": "null" }] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "accepted": { "const": true } }, "required": ["accepted"] },
+      "then": { "properties": { "status": { "const": "requested" }, "resolved": { "$ref": "#/$defs/resolution" }, "durableEventRef": { "type": "string", "minLength": 1 }, "receiptRef": { "type": "string", "minLength": 1 }, "error": { "type": "null" } } }
+    },
+    {
+      "if": { "properties": { "accepted": { "const": false } }, "required": ["accepted"] },
+      "then": { "properties": { "status": { "const": "rejected" }, "resolved": { "type": "null" }, "durableEventRef": { "type": "null" }, "receiptRef": { "type": "null" }, "error": { "$ref": "#/$defs/error" } } }
+    }
+  ],
+  "$defs": {
+    "resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runId", "stageId", "attemptId", "operationId", "cancelSignalRef"],
+      "properties": {
+        "runId": { "type": "string", "minLength": 1 },
+        "stageId": { "type": "string", "minLength": 1 },
+        "attemptId": { "type": "string", "minLength": 1 },
+        "operationId": { "type": "string", "minLength": 1 },
+        "cancelSignalRef": { "type": "string", "minLength": 1 }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "category", "retryable", "message"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "category": { "enum": ["contract", "input", "state"] },
+        "retryable": { "const": false },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

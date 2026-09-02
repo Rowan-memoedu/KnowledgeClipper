@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "planned-only-not-runnable",
+  "workers": [
+    { "workerId": "image.ocr.mineru", "plannedEntrypoint": "workers/image-ocr/RemNoteQuickClipper.ImageOcr.Worker.exe" },
+    { "workerId": "content.deepseek", "plannedEntrypoint": "workers/content/RemNoteQuickClipper.Content.Worker.exe" },
+    { "workerId": "speech.edge", "plannedEntrypoint": "workers/speech/RemNoteQuickClipper.Speech.Worker.exe" },
+    { "workerId": "export.remnote", "plannedEntrypoint": "workers/remnote/RemNoteQuickClipper.RemNoteExporter.Worker.exe" },
+    { "workerId": "export.anki", "plannedEntrypoint": "workers/anki/RemNoteQuickClipper.AnkiExporter.Worker.exe" }
+  ]
+}

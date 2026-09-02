@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "remnote-export-task.v2",
+  "taskPackageId": "fixture-v2-card-date",
+  "documentTitle": "卡片 · invalid",
+  "defaultSink": "mcp-direct",
+  "target": { "rootRemId": "root-rem-id", "rootTitle": "卡片 Canary", "dateRouting": true },
+  "route": { "kind": "card-export" },
+  "inputs": { "cardBundle": { "path": "inputs/card-bundle.json", "sha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789" } }
+}

@@ -1,0 +1,27 @@
+{
+  "utcNow": "2026-08-25T12:00:00Z",
+  "captures": [
+    {
+      "hasContent": true,
+      "source": "clipboard-text",
+      "artifacts": [
+        { "artifactRef": "capture.text.selection.0001", "relativePath": "inputs/text/selection-0001.txt", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bytes": 12, "mediaType": "text/plain", "encoding": "utf-8" }
+      ],
+      "selectedTextArtifactRef": "capture.text.selection.0001",
+      "contextAvailable": false,
+      "contextSegments": null
+    }
+  ],
+  "screenshots": [
+    { "outcome": "captured", "artifact": { "artifactRef": "capture.image.question.0001", "relativePath": "inputs/images/question-0001.png", "sha256": "1111111111111111111111111111111111111111111111111111111111111111", "bytes": 101, "mediaType": "image/png", "encoding": null }, "noticeCode": "fake.captured" },
+    { "outcome": "captured", "artifact": { "artifactRef": "capture.image.answer.0001", "relativePath": "inputs/images/answer-0001.png", "sha256": "2222222222222222222222222222222222222222222222222222222222222222", "bytes": 202, "mediaType": "image/png", "encoding": null }, "noticeCode": "fake.captured" },
+    { "outcome": "captured", "artifact": { "artifactRef": "capture.image.question.0002", "relativePath": "inputs/images/question-0002.png", "sha256": "3333333333333333333333333333333333333333333333333333333333333333", "bytes": 303, "mediaType": "image/png", "encoding": null }, "noticeCode": "fake.captured" }
+  ],
+  "orchestrator": {
+    "acceptSubmissions": true,
+    "answerImmediately": true,
+    "replayState": "playing",
+    "stopState": "stopped",
+    "recentTask": { "available": true, "taskId": "fixture-recent-task", "displayState": "running" }
+  }
+}

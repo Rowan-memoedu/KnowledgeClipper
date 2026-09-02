@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "request-invalid-language",
+  "operationId": "operation-invalid-language",
+  "taskId": "task-invalid",
+  "runId": "run-invalid",
+  "stageId": "speech-synthesize",
+  "attemptId": "attempt-003",
+  "workerId": "speech.edge",
+  "operation": "speech.synthesize",
+  "idempotencyKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "attemptPath": "runs/run-invalid/stages/speech-synthesize/attempts/attempt-003",
+  "outputPath": "runs/run-invalid/stages/speech-synthesize/attempts/attempt-003/outputs",
+  "progressPath": "runs/run-invalid/stages/speech-synthesize/attempts/attempt-003/progress.ndjson",
+  "resultPath": "runs/run-invalid/stages/speech-synthesize/attempts/attempt-003/result.json",
+  "cancelSignal": { "schemaVersion": "1.0.0", "path": "runs/run-invalid/stages/speech-synthesize/attempts/attempt-003/cancel.json", "gracePeriodMs": 2000 },
+  "inputRefs": [],
+  "configSnapshot": {},
+  "payload": {
+    "schemaVersion": "1.0.0",
+    "requestId": "request-invalid-language",
+    "operationId": "operation-invalid-language",
+    "spokenText": { "artifactRef": "spoken-text", "path": "inputs/spoken.txt", "sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB", "bytes": 4, "encoding": "utf-8", "mediaType": "text/plain" },
+    "contextMode": "selection_only",
+    "language": { "strategy": "override", "override": null },
+    "voiceSnapshot": { "provider": "edge-tts", "voicesByLanguage": { "zh-CN": "voice" }, "ratePercent": 0, "volumePercent": 0, "pitchHz": 0 },
+    "playbackPolicy": { "autoPlay": true, "activePlayback": "supersede", "replay": "from_start", "naturalCompletion": "idle_replayable", "stopTerminal": "stopped" },
+    "cachePolicy": { "scope": "task", "reuseSuccessfulAudio": true, "crossTaskReuse": false }
+  }
+}

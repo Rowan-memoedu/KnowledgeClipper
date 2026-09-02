@@ -1,0 +1,151 @@
+{
+  "schemaVersion": "1.0.0",
+  "registryVersion": "1.2.16",
+  "profiles": [
+    "parity-remnote",
+    "cards-remnote",
+    "cards-anki"
+  ],
+  "workers": [
+    {
+      "workerId": "image.ocr.mineru",
+      "contractVersionRange": ">=1.0.0 <2.0.0",
+      "entrypoint": {
+        "path": "workers/image-ocr/KnowledgeClipper.ImageOcr.Worker.exe",
+        "args": []
+      },
+      "stages": [
+        "image-ocr"
+      ],
+      "inputKinds": [
+        "capture-bundle"
+      ],
+      "outputKinds": [
+        "image.original",
+        "image.original.bundle",
+        "image-ocr.markdown",
+        "image-ocr.structured",
+        "image-ocr.image",
+        "image.processing.provenance"
+      ],
+      "requiredForProfiles": [
+        "parity-remnote",
+        "cards-remnote",
+        "cards-anki"
+      ],
+      "sideEffectLevel": "external",
+      "idempotencyLevel": "reconcilable",
+      "enabledByDefault": true
+    },
+    {
+      "workerId": "content.deepseek",
+      "contractVersionRange": ">=1.0.0 <2.0.0",
+      "entrypoint": {
+        "path": "workers/content/KnowledgeClipper.Content.Worker.exe",
+        "args": []
+      },
+      "stages": [
+        "content.understand-and-card"
+      ],
+      "inputKinds": [
+        "content-input",
+        "content-config-snapshot"
+      ],
+      "outputKinds": [
+        "ocr-proofread-bundle",
+        "ocr-human-resolution-bundle",
+        "learning-bundle",
+        "card-bundle",
+        "language-practice-decision",
+        "question.answer"
+      ],
+      "requiredForProfiles": [
+        "parity-remnote",
+        "cards-remnote",
+        "cards-anki"
+      ],
+      "sideEffectLevel": "local",
+      "idempotencyLevel": "idempotent",
+      "enabledByDefault": true
+    },
+    {
+      "workerId": "speech.edge",
+      "contractVersionRange": ">=1.0.0 <2.0.0",
+      "entrypoint": {
+        "path": "workers/speech/KnowledgeClipper.Speech.Worker.exe",
+        "args": []
+      },
+      "stages": [
+        "speech.synthesize",
+        "speech.playback"
+      ],
+      "inputKinds": [
+        "text.spoken",
+        "audio.speech"
+      ],
+      "outputKinds": [
+        "audio.speech"
+      ],
+      "requiredForProfiles": [
+        "parity-remnote",
+        "cards-remnote",
+        "cards-anki"
+      ],
+      "sideEffectLevel": "local",
+      "idempotencyLevel": "idempotent",
+      "enabledByDefault": true
+    },
+    {
+      "workerId": "export.remnote",
+      "contractVersionRange": ">=1.0.0 <2.0.0",
+      "entrypoint": {
+        "path": "workers/remnote/KnowledgeClipper.RemNoteExporter.Worker.exe",
+        "args": []
+      },
+      "stages": [
+        "export-remnote"
+      ],
+      "inputKinds": [
+        "learning.bundle",
+        "card.bundle"
+      ],
+      "outputKinds": [
+        "remnote.write-receipt",
+        "remnote.import-package"
+      ],
+      "requiredForProfiles": [
+        "parity-remnote",
+        "cards-remnote"
+      ],
+      "sideEffectLevel": "external",
+      "idempotencyLevel": "reconcilable",
+      "enabledByDefault": true
+    },
+    {
+      "workerId": "export.anki",
+      "contractVersionRange": ">=1.0.0 <2.0.0",
+      "entrypoint": {
+        "path": "workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe",
+        "args": []
+      },
+      "stages": [
+        "anki-export"
+      ],
+      "inputKinds": [
+        "card-bundle",
+        "learning-bundle",
+        "anki-export-config"
+      ],
+      "outputKinds": [
+        "anki-export-evidence",
+        "anki-connection-status"
+      ],
+      "requiredForProfiles": [
+        "cards-anki"
+      ],
+      "sideEffectLevel": "external",
+      "idempotencyLevel": "reconcilable",
+      "enabledByDefault": true
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "protocolVersion": "1.0",
+  "correlationId": "correlation-playback-001",
+  "messageType": "stage-control",
+  "payload": {
+    "taskId": "task-playback-001",
+    "operation": "speech.playback",
+    "selector": "current-active",
+    "reason": "user_stop"
+  }
+}

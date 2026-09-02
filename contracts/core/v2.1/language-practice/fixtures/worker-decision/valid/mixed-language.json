@@ -1,0 +1,26 @@
+{
+  "schema_version": "language-practice-decision/1.0.0",
+  "decision_bundle_id": "language-decision-mixed-001",
+  "package_id": "package-language-mixed",
+  "task_id": "task-language-001",
+  "input_version": "2.0.0",
+  "attempt_id": "attempt-language-001",
+  "created_at": "2026-08-26T03:30:00Z",
+  "learning_bundle_path": "runs/run-language-001/stages/content-understand/attempts/attempt-language-001/outputs/learning-bundle/v0001/learning.json",
+  "learning_bundle_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "state": "requires_human",
+  "decisions": [
+    {
+      "decision_id": "decision-zh-001", "item_id": "item-zh", "unit_id": "unit-zh", "category_id": "language_zh",
+      "state": "requires_human", "reasons": ["language_practice_mode_required"],
+      "allowed_modes": ["meaning-reading", "writing", "both"],
+      "requested_override_paths": ["human_overrides.languagePracticeMode"], "source_segment_ids": ["segment-zh"]
+    },
+    {
+      "decision_id": "decision-en-001", "item_id": "item-en", "unit_id": "unit-en", "category_id": "language_en",
+      "state": "requires_human", "reasons": ["language_practice_mode_required"],
+      "allowed_modes": ["meaning-reading", "writing", "both"],
+      "requested_override_paths": ["human_overrides.languagePracticeMode"], "source_segment_ids": ["segment-en"]
+    }
+  ]
+}

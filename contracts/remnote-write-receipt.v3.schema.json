@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledgeclipper://contracts/remnote-write-receipt.v3",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "sink", "outcome", "documentRemId", "documentTitle", "rootRemId", "idempotencyKey", "contentSha256", "route", "readbackVerified", "duplicateCount", "dateRouting", "imagesHandled", "originalMedia"],
+  "properties": {
+    "schemaVersion": { "const": "3.0.0" }, "sink": { "const": "mcp-direct" },
+    "outcome": { "enum": ["created", "already_applied", "recovered_after_uncertain_commit"] },
+    "documentRemId": { "type": "string", "minLength": 1 }, "documentTitle": { "type": "string", "minLength": 1 }, "rootRemId": { "type": "string", "minLength": 1 },
+    "idempotencyKey": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }, "contentSha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+    "route": { "const": "card-export" }, "readbackVerified": { "const": true }, "duplicateCount": { "const": 0 }, "dateRouting": { "const": false }, "imagesHandled": { "const": true },
+    "originalMedia": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["mediaId", "assetId", "role", "ordinal", "sha256", "bytes", "mediaType"],
+        "properties": {
+          "mediaId": { "type": "string", "minLength": 1 }, "assetId": { "type": "string", "minLength": 1 }, "role": { "enum": ["question", "answer"] }, "ordinal": { "type": "integer", "minimum": 1 },
+          "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }, "bytes": { "type": "integer", "minimum": 1 }, "mediaType": { "enum": ["image/png", "image/jpeg", "image/gif", "image/webp"] }
+        }
+      }
+    }
+  }
+}

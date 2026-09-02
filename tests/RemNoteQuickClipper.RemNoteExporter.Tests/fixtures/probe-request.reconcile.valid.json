@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "remnote-readonly-probe-request.v1",
+  "probeId": "reconcile-fixture",
+  "mode": "reconcile",
+  "timeoutMs": 15000,
+  "authorizationScope": "configured-destination",
+  "target": { "rootRemId": "configured-root-id", "rootTitle": "剪藏" },
+  "operations": ["status", "search", "list", "read"],
+  "evidence": {
+    "settingsSnapshot": { "path": "C:/fixtures/settings-snapshot.json", "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" },
+    "workerRequest": { "path": "C:/fixtures/worker-request.json", "sha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789" },
+    "workerResult": { "path": "C:/fixtures/worker-result.json", "sha256": "1111111111111111111111111111111111111111111111111111111111111111" }
+  }
+}

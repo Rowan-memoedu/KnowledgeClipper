@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-candidate-invalidation.v1",
+  "status": "invalidated-never-authority-admitted",
+  "generatedAt": "2026-09-01T06:24:00Z",
+  "registryVersion": "1.2.35",
+  "candidateRelease": {
+    "root": "releases/knowledge-clipper-authority-v1.2.35-20260901T062000Z/win-x64",
+    "files": 402,
+    "bytes": 262120144,
+    "treeSha256": "2DE0BB65B2C618A28E30E4406B2DE3B37A342415B6F98DBBAF49060112CFD39A"
+  },
+  "registry": {
+    "path": "contracts/authority/worker-registry/v1.2.35-20260901T062000Z/worker-registry.v1.json",
+    "sha256": "1D246F2888082E9A88A6C6EBA2D8B45EA2E77EE59E396DFF3B204EC9203AD05D"
+  },
+  "dependencyManifest": {
+    "path": "contracts/authority/worker-registry/v1.2.35-20260901T062000Z/dependency-manifest.v1.json",
+    "sha256": "D9F8D29895F77D9C5B91B9E8C0E6416E6AD9B9673691003FEAEA78CFAF393553"
+  },
+  "passedCandidateGates": {
+    "portableSchemaClosureSha256": "450AA104E6F87D94233D67BD7818433ACD5E62B0680D4D7114BEBA9EF8C8268E",
+    "workerMonotonicitySha256": "A31EB7F39911D2167E2FE6A47865375ACAF870EA43F7AD56FA9FB0824A31123D",
+    "runtimeGatesPath": "canary/core-authority-v1.2.35/20260901T062100Z/runtime-gates.json",
+    "runtimeGatesSha256": "350C91FD9BB6C6F8C19B8080928CD3DD676C4FC13E5346EF1FF3427094B80D5F",
+    "workerRunInvocations": 0,
+    "externalWrites": 0
+  },
+  "reason": {
+    "code": "core-checkpoint-admission-metadata-incomplete",
+    "checkpoint": "contracts/core/v2.9/checkpoints/v2.9.2-20260901T061900Z/checkpoint.json",
+    "checkpointSha256": "8593A9537ED98CBFF39B1953245A0B4B5C73CE3E8A171630E6E012066D588E50",
+    "detail": "contracts validation status and frozenV1Modified admission fields were omitted; no authority checkpoint or authority receipt was issued"
+  },
+  "additionalFailedCanary": {
+    "scope": "non-admission authority-registry FakeWorker overlay",
+    "path": "canary/core-authority-v1.2.35/20260901T062200Z-authority-bound-core-adapter/core-adapter.stderr.log",
+    "sha256": "6C9BBE86699E8F4BED775D94635488CA7857D32376828CA0EFB3D3905C488907",
+    "reason": "fake content.deepseek describe metadata did not match the formal authority registry",
+    "productionWorkerInvocations": 0,
+    "externalWrites": 0
+  },
+  "replacement": {
+    "coreCheckpoint": "contracts/core/v2.9/checkpoints/v2.9.3-20260901T062500Z/checkpoint.json",
+    "coreCheckpointSha256": "9838422164F4A161A0D16AA8F94F4D4DBEAE8F12D8D92F10191D0D7EFFD08C20",
+    "intendedRegistryVersion": "1.2.36"
+  },
+  "authorityCheckpointIssued": false,
+  "authorityReceiptIssued": false,
+  "immutableEvidenceRetained": true
+}

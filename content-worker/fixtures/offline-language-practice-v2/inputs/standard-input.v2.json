@@ -1,0 +1,37 @@
+{
+  "schema_version": "standard-input/2.0.0",
+  "package_id": "knowledge-clipper-language-practice-v2",
+  "task_id": "language-practice-v2",
+  "input_version": "2",
+  "mode": "card",
+  "human_overrides": {
+    "languagePracticeMode": "both",
+    "languageWriting": {
+      "units": {
+        "unit-doubt": { "pronunciation": "yí dòu", "meaning": "疑问或疑惑", "confirmed": true }
+      }
+    }
+  },
+  "items": [
+    {
+      "item_id": "item-language-zh",
+      "source": { "kind": "text", "material_path": "materials/zh.md" },
+      "hints": {
+        "category_id": "language_zh",
+        "answer_state": "not_applicable",
+        "target_term": "疑窦",
+        "context_state": "provided"
+      }
+    },
+    {
+      "item_id": "item-language-en",
+      "source": { "kind": "text", "material_path": "materials/en.md" },
+      "hints": {
+        "category_id": "language_en",
+        "answer_state": "not_applicable",
+        "target_term": "tentative",
+        "context_state": "provided"
+      }
+    }
+  ]
+}

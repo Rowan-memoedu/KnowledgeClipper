@@ -1,0 +1,89 @@
+{
+  "fixtureType": "quality-observation-fixture-not-business-schema",
+  "fixtureVersion": "1.0.0",
+  "desktopIntegration": {
+    "visibleTextQuestionEntry": {
+      "semanticActions": ["question.open", "question.submit"],
+      "followUpCommandType": "task.provide_input"
+    },
+    "choicePopup": {
+      "trigger": "language-detected",
+      "options": ["meaning-reading", "writing", "both"]
+    }
+  },
+  "source": {
+    "visibleText": "他踌躇了片刻。",
+    "targetTerm": "踌躇",
+    "pronunciation": "chóu chú",
+    "meaning": "犹豫不决。"
+  },
+  "baselineExistingCard": {
+    "front": "他踌躇了片刻。",
+    "back": "踌躇；chóu chú；犹豫不决。"
+  },
+  "cases": [
+    {
+      "id": "meaning-reading-byte-equivalent",
+      "choice": "meaning-reading",
+      "taskStatus": "succeeded",
+      "releaseState": "ready",
+      "cards": [
+        {"variant": "meaning-reading", "front": "他踌躇了片刻。", "back": "踌躇；chóu chú；犹豫不决。"}
+      ]
+    },
+    {
+      "id": "writing-unique-replacement",
+      "choice": "writing",
+      "taskStatus": "succeeded",
+      "releaseState": "ready",
+      "cards": [
+        {"variant": "writing", "front": "他（chóu chú；犹豫不决。）了片刻。", "back": "踌躇"}
+      ]
+    },
+    {
+      "id": "both-original-first-exactly-two",
+      "choice": "both",
+      "taskStatus": "succeeded",
+      "releaseState": "ready",
+      "cards": [
+        {"variant": "meaning-reading", "front": "他踌躇了片刻。", "back": "踌躇；chóu chú；犹豫不决。"},
+        {"variant": "writing", "front": "他（chóu chú；犹豫不决。）了片刻。", "back": "踌躇"}
+      ]
+    },
+    {
+      "id": "ambiguous-target-waits",
+      "choice": "writing",
+      "override": {"visibleText": "踌躇时不要反复踌躇。"},
+      "taskStatus": "waiting_input",
+      "releaseState": "unresolved",
+      "cards": [],
+      "unresolvedReasons": ["target_term_ambiguous"]
+    },
+    {
+      "id": "missing-pronunciation-waits",
+      "choice": "writing",
+      "override": {"pronunciation": null},
+      "taskStatus": "waiting_input",
+      "releaseState": "unresolved",
+      "cards": [],
+      "unresolvedReasons": ["pronunciation_missing"]
+    },
+    {
+      "id": "missing-meaning-waits",
+      "choice": "meaning-reading",
+      "override": {"meaning": null},
+      "taskStatus": "waiting_input",
+      "releaseState": "unresolved",
+      "cards": [],
+      "unresolvedReasons": ["meaning_missing"]
+    }
+  ],
+  "candidateBoundPolicy": {
+    "allowedModes": ["fake", "offline", "validate-only"],
+    "externalProductionApisInvoked": false
+  },
+  "exporterBoundary": {
+    "forbiddenFields": ["choice", "decisionKind", "targetToken", "binding"],
+    "targets": ["export.remnote", "export.anki"]
+  }
+}

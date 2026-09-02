@@ -1,0 +1,38 @@
+{
+  "schema_version": "standard-input/4.0.0",
+  "package_id": "content-fixture-ocr-ambiguous",
+  "task_id": "task-fixture-ocr-ambiguous",
+  "input_version": "1",
+  "mode": "card",
+  "items": [
+    {
+      "item_id": "item-ocr-ambiguous",
+      "source": {
+        "kind": "ocr_text",
+        "material_path": "upstream/markdown/content.md",
+        "provenance": {
+          "schema_version": "ocr-provenance/1.0.0",
+          "producer_worker_id": "image.ocr.mineru",
+          "markdown_artifact": {
+            "artifactRef": "fixture.ocr.ambiguous.markdown",
+            "kind": "image-ocr.markdown",
+            "contractVersion": "1.0.0",
+            "manifestPath": "upstream/markdown/artifact.json",
+            "expectedSha256": "0b422a172d07b8cd58b682bee67a891d443fcf3ee4b1ea5a6c14ed3f3a0a68d4",
+            "payload_path": "upstream/markdown/content.md",
+            "payload_sha256": "9e36ebeeef0747b1aa89297538df39ae361fac3064303e997ba36610511f7228"
+          },
+          "structured_artifact": {
+            "artifactRef": "fixture.ocr.ambiguous.structured",
+            "kind": "image-ocr.structured",
+            "contractVersion": "1.0.0",
+            "manifestPath": "upstream/structured/artifact.json",
+            "expectedSha256": "d8bb6b6963c1cbeab22c132b59c8ca1393781d010860544caa3f3f95c5d08c51",
+            "payload_path": "upstream/structured/content.json",
+            "payload_sha256": "c4daeffff7019909aef20243462d888625a9c6fb003017ec8e69adb7e09dc1e3"
+          }
+        }
+      }
+    }
+  ]
+}

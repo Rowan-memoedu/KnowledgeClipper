@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-invalidation-receipt.v1",
+  "generatedAt": "2026-09-01T01:35:54.3337778+00:00",
+  "status": "invalidated-after-failed-canary-not-for-reuse",
+  "authority": {
+    "registryVersion": "1.2.26",
+    "checkpoint": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.26-20260901T013500Z\\checkpoint.json",
+    "checkpointSha256": "3CE6DCE711558EEDBD841F98385DE4AF71F42761A2DBBFBEC83CD634886F731E"
+  },
+  "failedCanary": {
+    "receipt": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\canary\\sealed-live-ocr-anki-v1.2.26\\20260901T015500Z\\initial-receipt.json",
+    "receiptSha256": "0EE2469EB9687702CA7E9A514642785CD7CD1CAF4A1D8809CD093BFF9AEB3F3A",
+    "taskId": "live-ocr-anki-v1226-20260901013322790",
+    "failureCode": "binding.ocr_proofread_segment_invalid",
+    "workerStarted": {
+      "imageOcr": 1,
+      "content": 1,
+      "anki": 0
+    },
+    "sideEffects": {
+      "mineruSubmissions": 1,
+      "deepSeekCalls": "recorded-by-content-attempt",
+      "ankiWrites": 0,
+      "remnoteWrites": 0,
+      "physicalSpeakerInvocations": 0
+    }
+  },
+  "reason": "Content 0.9.2 emitted the same pseg identifier in active source_segments and proofread audit segments; Core strict collision guard correctly blocked Anki before worker start. Supersede only with a formal Content producer fix.",
+  "frozenV1Modified": false
+}

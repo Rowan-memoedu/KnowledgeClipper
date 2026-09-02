@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./ipc-request.schema.json",
+  "title": "RemNote Quick Clipper IPC Request Envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "correlationId", "messageType", "payload"],
+  "properties": {
+    "protocolVersion": { "const": "1.0" },
+    "correlationId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "messageType": { "type": "string", "enum": ["task-command", "task-query"] },
+    "payload": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "messageType": { "const": "task-command" } }, "required": ["messageType"] },
+      "then": { "properties": { "payload": { "$ref": "./task-command.schema.json" } } }
+    },
+    {
+      "if": { "properties": { "messageType": { "const": "task-query" } }, "required": ["messageType"] },
+      "then": { "properties": { "payload": { "$ref": "./task-query.schema.json" } } }
+    }
+  ]
+}

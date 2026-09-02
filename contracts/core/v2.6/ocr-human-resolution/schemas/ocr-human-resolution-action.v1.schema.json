@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-ocr-human-resolution-action.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "decisionKind", "targetToken", "action", "reason"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-ocr-human-resolution-action.v1" },
+    "decisionKind": { "const": "ocr-human-resolution" },
+    "targetToken": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "action": { "enum": ["accept_original", "submit_correction", "cancel"] },
+    "reason": { "type": "string", "minLength": 1, "maxLength": 2048 },
+    "correctionRef": {
+      "allOf": [
+        { "$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/artifactReference" },
+        { "properties": { "kind": { "const": "ocr.human-correction.text" }, "contractVersion": { "const": "1.0.0" } } }
+      ]
+    },
+    "diffs": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["segmentIndex", "operation", "start", "end", "before", "after"],
+        "properties": {
+          "segmentIndex": { "type": "integer", "minimum": 0 },
+          "operation": { "enum": ["substitution", "insertion", "deletion"] },
+          "start": { "type": "integer", "minimum": 0 },
+          "end": { "type": "integer", "minimum": 0 },
+          "before": { "type": "string" },
+          "after": { "type": "string" }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "action": { "const": "submit_correction" } }, "required": ["action"] },
+      "then": { "required": ["correctionRef", "diffs"] },
+      "else": { "not": { "anyOf": [{ "required": ["correctionRef"] }, { "required": ["diffs"] }] } }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "quality-v3-ui-action-evidence.v1",
+  "type": "object",
+  "required": ["schemaVersion", "trigger", "typedEvents"],
+  "properties": {
+    "schemaVersion": { "const": "quality-v3-ui-action-evidence.v1" },
+    "trigger": {
+      "type": "object",
+      "required": ["driver", "automationId", "discovered", "invokePattern", "invoked", "actionId"]
+    },
+    "typedEvents": { "type": "array", "minItems": 2 }
+  },
+  "additionalProperties": true
+}

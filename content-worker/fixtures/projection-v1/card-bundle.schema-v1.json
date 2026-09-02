@@ -1,0 +1,183 @@
+{
+  "schema_version": "card-bundle/1.0.0",
+  "bundle_id": "cards-projection-fixture-v1",
+  "package_id": "projection-fixture-v1",
+  "task_id": "content-to-exporter-projection-fixture",
+  "attempt_id": "attempt-projection-fixture-v1",
+  "created_at": "2026-08-25T15:00:01Z",
+  "learning_bundle_path": "learning-bundle.schema-v1.json",
+  "learning_bundle_sha256": "808f83083d73efede414f9795bb304b789b221ac5405e2709915b6b68b800554",
+  "cards": [
+    {
+      "card_id": "card-zh-language-context",
+      "item_id": "item-zh",
+      "unit_id": "unit-zh",
+      "variant_group_id": "variant-unit-zh",
+      "category_id": "language_zh",
+      "subtype": "contextual_vocabulary",
+      "template": "language_context",
+      "front_blocks": [
+        {
+          "block_id": "block-zh-front-1",
+          "type": "markdown",
+          "text": "他心中仍有**疑窦**。",
+          "provenance": "source"
+        }
+      ],
+      "back_blocks": [
+        {
+          "block_id": "block-zh-back-1",
+          "type": "text",
+          "text": "疑窦（yí dòu）：心里的疑问。",
+          "provenance": "generated"
+        }
+      ],
+      "answer_provenance": "not_applicable",
+      "source_segment_ids": ["seg-zh"]
+    },
+    {
+      "card_id": "card-en-language-context",
+      "item_id": "item-en",
+      "unit_id": "unit-en",
+      "variant_group_id": "variant-unit-en",
+      "category_id": "language_en",
+      "subtype": "contextual_vocabulary",
+      "template": "language_context",
+      "front_blocks": [
+        {
+          "block_id": "block-en-front-1",
+          "type": "markdown",
+          "text": "The plan is **tentative**.",
+          "provenance": "source"
+        }
+      ],
+      "back_blocks": [
+        {
+          "block_id": "block-en-back-1",
+          "type": "text",
+          "text": "tentative /ˈtentətɪv/：暂定的；尚未最终确定的。",
+          "provenance": "generated"
+        }
+      ],
+      "answer_provenance": "not_applicable",
+      "source_segment_ids": ["seg-en"]
+    },
+    {
+      "card_id": "card-qa-basic",
+      "item_id": "item-qa",
+      "unit_id": "unit-qa",
+      "variant_group_id": "variant-unit-qa",
+      "category_id": "question_answer",
+      "subtype": "conceptual_question",
+      "template": "basic_qa",
+      "front_blocks": [
+        {
+          "block_id": "block-qa-front-1",
+          "type": "text",
+          "text": "为什么 0! 等于 1？",
+          "provenance": "source"
+        }
+      ],
+      "back_blocks": [
+        {
+          "block_id": "block-qa-back-1",
+          "type": "text",
+          "text": "因为空排列只有一种，且递推关系 n!=n×(n-1)! 在 n=1 时要求 0!=1。",
+          "provenance": "generated"
+        }
+      ],
+      "answer_provenance": "generated",
+      "source_segment_ids": ["seg-qa"]
+    },
+    {
+      "card_id": "card-media-pair",
+      "item_id": "item-media",
+      "unit_id": "unit-media",
+      "variant_group_id": "variant-unit-media",
+      "category_id": "question_answer",
+      "subtype": "media_problem",
+      "template": "media_qa",
+      "front_blocks": [
+        {
+          "block_id": "block-media-front-1",
+          "type": "asset_ref",
+          "material_path": "materials/question.svg",
+          "provenance": "source"
+        }
+      ],
+      "back_blocks": [
+        {
+          "block_id": "block-media-back-1",
+          "type": "asset_ref",
+          "material_path": "materials/answer.svg",
+          "provenance": "source"
+        }
+      ],
+      "answer_provenance": "source",
+      "source_segment_ids": []
+    },
+    {
+      "card_id": "card-concept-transfer",
+      "item_id": "item-concept-transfer",
+      "unit_id": "unit-concept-transfer",
+      "variant_group_id": "variant-unit-concept-transfer",
+      "category_id": "general_learning",
+      "subtype": "transfer_strategy",
+      "template": "concept_transfer",
+      "front_blocks": [
+        {
+          "block_id": "block-concept-front-1",
+          "type": "text",
+          "text": "遇到表面相似但规则不同的新情境时，如何减少负迁移？",
+          "provenance": "generated"
+        }
+      ],
+      "back_blocks": [
+        {
+          "block_id": "block-concept-back-1",
+          "type": "text",
+          "text": "当两个情境表面相似但规则不同时，先比较适用条件可以减少误用。",
+          "provenance": "source"
+        }
+      ],
+      "answer_provenance": "source",
+      "source_segment_ids": ["seg-concept-transfer"]
+    },
+    {
+      "card_id": "card-procedure",
+      "item_id": "item-procedure",
+      "unit_id": "unit-procedure",
+      "variant_group_id": "variant-unit-procedure",
+      "category_id": "general_learning",
+      "subtype": "worked_procedure",
+      "template": "procedure",
+      "front_blocks": [
+        {
+          "block_id": "block-procedure-front-1",
+          "type": "text",
+          "text": "解一元一次方程的操作顺序和不变原则是什么？",
+          "provenance": "generated"
+        }
+      ],
+      "back_blocks": [
+        {
+          "block_id": "block-procedure-back-1",
+          "type": "text",
+          "text": "解一元一次方程时，先去括号，再移项并合并同类项，最后把未知数的系数化为 1。每一步都要保持等式两边同作相同变换。",
+          "provenance": "source"
+        }
+      ],
+      "answer_provenance": "source",
+      "source_segment_ids": ["seg-procedure"]
+    }
+  ],
+  "withheld_units": [],
+  "release_state": "ready",
+  "gates": [
+    {
+      "gate_id": "bundle-ready",
+      "status": "pass",
+      "evidence": "all representative cards passed content gates"
+    }
+  ]
+}

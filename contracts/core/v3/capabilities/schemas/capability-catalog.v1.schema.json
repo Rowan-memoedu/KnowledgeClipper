@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.capability-catalog/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "catalogId", "catalogVersion", "authorityAnchor", "operations"],
+  "properties": {
+    "schema": {"const": "kc.capability-catalog/1"},
+    "catalogId": {"type": "string", "minLength": 1},
+    "catalogVersion": {"type": "string", "minLength": 1},
+    "authorityAnchor": {"type": "object"},
+    "operations": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["operationId", "available", "availabilityReason", "commandSchema", "resultArtifactKind", "resultContract", "effectClass", "authorizationPolicy", "retryPolicy", "idempotencyPolicy", "timeoutMilliseconds", "workerBinding", "uiAffordance"],
+        "properties": {
+          "operationId": {"type": "string", "minLength": 1},
+          "available": {"type": "boolean"},
+          "availabilityReason": {"type": ["string", "null"]},
+          "commandSchema": {"type": "string", "minLength": 1},
+          "resultArtifactKind": {"type": ["string", "null"]},
+          "resultContract": {"type": ["string", "null"]},
+          "effectClass": {"enum": ["none", "read-only-external", "external-write"]},
+          "authorizationPolicy": {"enum": ["none", "explicit"]},
+          "retryPolicy": {"enum": ["safe", "never", "conditional"]},
+          "idempotencyPolicy": {"enum": ["required", "optional"]},
+          "timeoutMilliseconds": {"type": "integer", "minimum": 1},
+          "workerBinding": {"type": "object"},
+          "uiAffordance": {"type": "object"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-module-action.v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "actionId", "operation", "payloadRef", "idempotencyKey"],
+  "properties": {
+    "schemaVersion": {"const": "knowledge-clipper-module-action.v2"},
+    "actionId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "operation": {"enum": ["speech.voices", "speech.preview", "remnote.probe", "remnote.discover-target"]},
+    "payloadRef": {"type": "string", "pattern": "^module-actions/[A-Za-z0-9][A-Za-z0-9._-]{0,127}/input\\.json$"},
+    "idempotencyKey": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"}
+  }
+}

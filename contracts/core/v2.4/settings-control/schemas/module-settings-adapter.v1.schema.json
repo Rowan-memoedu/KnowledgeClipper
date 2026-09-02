@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-module-settings-adapter.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profileSchema", "overrideSchema", "snapshotSchema", "credentialStorageBoundary", "modules"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-module-settings-adapter.v1" },
+    "profileSchema": { "const": "schemas/workflow-settings.v1.schema.json" },
+    "overrideSchema": { "const": "schemas/task-settings-override.v1.schema.json" },
+    "snapshotSchema": { "const": "schemas/task-settings-snapshot.v1.schema.json" },
+    "credentialStorageBoundary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profileAllowsSecrets", "taskSnapshotAllowsSecrets", "allowedMechanisms"],
+      "properties": {
+        "profileAllowsSecrets": { "const": false },
+        "taskSnapshotAllowsSecrets": { "const": false },
+        "allowedMechanisms": { "const": ["worker-owned-environment", "sha256-bound-task-artifact-reference"] }
+      }
+    },
+    "modules": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["moduleId", "status", "reason", "fields"],
+        "properties": {
+          "moduleId": { "type": "string", "pattern": "^[a-z][a-z0-9.-]*$" },
+          "status": { "enum": ["supported", "conditional", "unsupported"] },
+          "reason": { "type": "string", "minLength": 1 },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["settingPointer", "editable", "defaultSource", "snapshotPointer", "effectTargets"],
+              "properties": {
+                "settingPointer": { "type": "string", "pattern": "^/" },
+                "editable": { "type": "boolean" },
+                "defaultSource": { "enum": ["moduleDefault", "resolverDefault", "fixedContract", "taskArtifact"] },
+                "snapshotPointer": { "type": ["string", "null"] },
+                "effectTargets": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

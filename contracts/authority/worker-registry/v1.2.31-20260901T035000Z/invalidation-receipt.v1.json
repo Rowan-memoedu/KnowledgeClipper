@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-invalidation-receipt.v1",
+  "status": "invalidated-never-promoted",
+  "authorityBound": false,
+  "reason": "Portable closure gate used a relative releaseRoot and failed the common authority checkpoint ValidateOnly gate. No authority checkpoint or authority receipt was written.",
+  "supersededBy": "pending-v1.2.32"
+}

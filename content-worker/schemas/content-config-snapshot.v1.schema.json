@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "content-config-snapshot/1.0.0",
+  "title": "KnowledgeClipper immutable Content resource snapshot",
+  "$comment": "Credentials are forbidden. This document and every referenced resource must be declared and hashed by one content-config-snapshot common Artifact.",
+  "type": "object",
+  "required": ["schemaVersion", "settingsRevisionId", "workerCompatibility", "promptSet", "categoryRegistry", "providerBoundary"],
+  "properties": {
+    "schemaVersion": { "const": "content-config-snapshot/1.0.0" },
+    "settingsRevisionId": { "$ref": "#/$defs/identifier" },
+    "workerCompatibility": {
+      "type": "object",
+      "required": ["workerId", "minimumVersion"],
+      "properties": {
+        "workerId": { "const": "content.deepseek" },
+        "minimumVersion": { "$ref": "#/$defs/version" }
+      },
+      "additionalProperties": false
+    },
+    "promptSet": {
+      "type": "object",
+      "required": ["id", "source", "promptRootPath", "sha256", "files"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "source": { "const": "user-copy" },
+        "promptRootPath": { "$ref": "#/$defs/relativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "allOf": [
+              { "$ref": "#/$defs/file" },
+              {
+                "type": "object",
+                "required": ["packagePath"],
+                "properties": { "packagePath": { "$ref": "#/$defs/relativePath" } }
+              }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "categoryRegistry": {
+      "type": "object",
+      "required": ["id", "schemaVersion", "packagePath", "sha256", "bytes"],
+      "properties": {
+        "id": { "const": "category-registry/2.0.0" },
+        "schemaVersion": { "const": "category-registry/2.0.0" },
+        "packagePath": { "$ref": "#/$defs/relativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "providerBoundary": {
+      "type": "object",
+      "required": ["provider", "credentials"],
+      "properties": {
+        "provider": { "const": "deepseek" },
+        "credentials": { "const": "process-injected-only" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "relativePath": { "type": "string", "minLength": 1, "not": { "pattern": "^(?:[A-Za-z]:|/|\\\\)|(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)" } },
+    "file": {
+      "type": "object",
+      "required": ["path", "sha256", "bytes"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "packagePath": { "$ref": "#/$defs/relativePath" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

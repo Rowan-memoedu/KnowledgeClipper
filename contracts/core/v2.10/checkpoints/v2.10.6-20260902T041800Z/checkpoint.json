@@ -1,0 +1,189 @@
+{
+  "schemaVersion": "knowledge-clipper-core-checkpoint.v1",
+  "checkpointVersion": "2.10.6",
+  "createdAt": "2026-09-02T04:19:25.134695Z",
+  "status": "passed-shared-verified-entrypoint-resolution",
+  "scope": "Source-neutral strict Artifact metadata.entrypoint resolution with all-file integrity verification and four-file Anki module-action regression",
+  "repositoryHeadAtCheckpoint": "6fc44e18637e00d394227ec4b15ad4c06054102a",
+  "extendsCheckpoint": "contracts/core/v2.10/checkpoints/v2.10.5-20260902T012600Z/checkpoint.json",
+  "authority": {
+    "ipc": {
+      "schemaVersion": "1.7.0",
+      "protocolVersion": "1.7",
+      "configuration": "contracts/core/v2.10/module-control/orchestrator-ipc.v1.7.json",
+      "request": "knowledge-clipper-module-action.v6",
+      "receipt": "knowledge-clipper-module-action-receipt.v6",
+      "startupRegressions": [
+        "1.5",
+        "1.6",
+        "1.7"
+      ]
+    },
+    "runtime": {
+      "componentVersion": "2.10.6.0",
+      "coreContractVersion": "2.10.6",
+      "selfContained": true,
+      "runtimeIdentifier": "win-x64",
+      "entrypoint": "KnowledgeClipper.Orchestrator.exe",
+      "testedExeSha256": "C71AA9701C3D818BE9C37524E164443C7E369C5B9AA426D7A31AB22A8D613A61",
+      "authorityPackageBindingsBounded": true
+    },
+    "artifactEntrypoint": {
+      "resolver": "VerifiedArtifactEntrypointResolver",
+      "allFilesVerifiedBeforeConsumption": true,
+      "singleFilePositive": true,
+      "fourFilePositive": true,
+      "missingDuplicateUndeclaredNoncanonicalEscapeRejected": true,
+      "moduleActionConsumersUnified": [
+        "anki.probe",
+        "anki.initialize-managed"
+      ],
+      "otherModuleActionsWithArtifactManifestConsumer": []
+    },
+    "compatibility": {
+      "frozenContractsV1Modified": false,
+      "frozenContractsV1FilesChecked": 21,
+      "frozenContractsV1Mismatches": 0,
+      "ankiProbeIpc15Preserved": true,
+      "contentSettingsIpc16Preserved": true,
+      "typedPublicIpc17Preserved": true
+    }
+  },
+  "verification": {
+    "warningsAsErrors": {
+      "status": "passed",
+      "projectsBuilt": 5,
+      "warnings": 0,
+      "errors": 0
+    },
+    "orchestratorContracts": {
+      "status": "passed",
+      "path": "receipts/core-phase1/20260902T041800Z-v2106-entrypoint-resolver/orchestrator-contract.receipt.json",
+      "bytes": 8288,
+      "sha256": "0EDD77E3DD571709B9A5E056DBC9B612AF6E397FE74A8FCFD9B653304AD05B87"
+    },
+    "finalProcessProtocolMatrix": {
+      "status": "passed",
+      "path": "receipts/core-phase1/20260902T041800Z-v2106-entrypoint-resolver/core-process-named-pipe.receipt.json",
+      "bytes": 6189,
+      "sha256": "E0A3174B15C8A8D73CB8E291283F582266D651B78A99507327DCAEB16D0B21A5",
+      "protocols": [
+        "1.5",
+        "1.6",
+        "1.7"
+      ],
+      "declaredAnkiFiles": 4
+    },
+    "runtimeBinding": {
+      "status": "passed",
+      "path": "receipts/core-phase1/20260902T041800Z-v2106-entrypoint-resolver/runtime-binding.receipt.json",
+      "bytes": 4655,
+      "sha256": "AC4C4A433CB2C8AF0B5275BDC891B8EE5F6D0E306D7D18B6DEA3CDE64A9F937B"
+    },
+    "frozenV1": {
+      "status": "passed",
+      "path": "receipts/core-phase1/20260902T041800Z-v2106-entrypoint-resolver/frozen-v1-verification.receipt.json",
+      "bytes": 318,
+      "sha256": "F94E81239620C14EC8AF183180828721E87A9DE5FC96E8A9E9A7945A7E82BAF0"
+    },
+    "qualityBlocker": {
+      "status": "confirmed-and-fixed",
+      "receipt": "receipts/quality-integrated-candidate/20260902T040142Z-v1240-shared-protocol-no-go/candidate-stateful-no-go.receipt.json",
+      "receiptSha256": "16A419037B1DB096D88DFD46B7CD1449B97A94E711C496B5A64399E6D3A6A51D"
+    }
+  },
+  "qualityAuditInput": [
+    "Re-hash every checkpoint fileBinding and the sealed runtime before execution.",
+    "Run the published EXE with IPC 1.5, 1.6, and 1.7 and require a four-file Anki typed status artifact to resolve metadata.entrypoint.",
+    "Independently mutate missing, duplicate, undeclared, noncanonical, and escaping entrypoints and require fail-closed behavior.",
+    "Keep v1.2.40 immutable and NO-GO; rebuild the candidate only from the new authority."
+  ],
+  "releaseDecision": {
+    "coreRuntimeInputReady": true,
+    "authorityV1241Required": true,
+    "integratedCandidateGo": false,
+    "releaseGo": false
+  },
+  "fileBindings": [
+    {
+      "path": "orchestrator/KnowledgeClipper.Orchestrator.csproj",
+      "sha256": "83095b9ecea287d33fc2dcfbf2e5346a59bad21b807dcd006427cf9167521c64"
+    },
+    {
+      "path": "orchestrator/Program.cs",
+      "sha256": "f5844644f688fea02c5f56ea676b958ea9f520359b66d4cb11e50551afe0575d"
+    },
+    {
+      "path": "orchestrator/Core/DesktopIntentResolver.cs",
+      "sha256": "3bf456ec3a2e4b260ec113b96263e7dfb09ed6e1400d3214d10fa2bc0417a119"
+    },
+    {
+      "path": "orchestrator/Core/ModuleActionControl.cs",
+      "sha256": "a30803e03c4d2333452f21a1063e96d3d96d1c891edd8303117f7f45b71783cd"
+    },
+    {
+      "path": "orchestrator/Core/VerifiedArtifactEntrypointResolver.cs",
+      "sha256": "08cb4d49b5922bf0fcff571b75a032d7ec66ddfcd699c65cdf8ae5c6d27a2b13"
+    },
+    {
+      "path": "tests/Orchestrator.ContractTests/Program.cs",
+      "sha256": "955e59619b0312d4af4a83b5051adce85016662b2158354d24d78488acd247ef"
+    },
+    {
+      "path": "tests/CoreProcessNamedPipe.IntegrationTests/Program.cs",
+      "sha256": "25eb6add06f037955d02c6e3ce3dc1bc822d92f6f0e999ee489452b380d21c39"
+    },
+    {
+      "path": "tests/FakeWorker/Program.cs",
+      "sha256": "9a95bf9a48cdf1d1bc332f029ab16feb3f93842a871648c105999ebc95426eb8"
+    },
+    {
+      "path": "contracts/core/v2.10/module-control/orchestrator-ipc.v1.7.json",
+      "sha256": "5121c02069bd8b23263aaf0695096e40843205fef82be288107a6b523b2370a1"
+    },
+    {
+      "path": "contracts/core/v2.10/module-control/schemas/ipc-request.v1.7.schema.json",
+      "sha256": "2302965353b8f0a4bda7926e1755af0b541f8805e246b3f3c51cb79dcdd1a47b"
+    },
+    {
+      "path": "contracts/core/v2.10/module-control/schemas/ipc-response.v1.7.schema.json",
+      "sha256": "7110a8e77800e21d78add9e08fccc60a88ee691faa6f30333012857dcf6c7e3d"
+    },
+    {
+      "path": "contracts/core/v2.10/module-control/schemas/module-action-request.v6.schema.json",
+      "sha256": "1ffc6811e1671b4568c213be7132753070852d88e43a5700dab927612fec5788"
+    },
+    {
+      "path": "contracts/core/v2.10/module-control/schemas/module-action-receipt.v6.schema.json",
+      "sha256": "bf6064ffb9d0edfa0080a8c716b8434103e6e3f2c67572b03a5c668bc7b9fac9"
+    },
+    {
+      "path": "artifacts/core-v2.10.6/20260902T041800Z/orchestrator/KnowledgeClipper.Orchestrator.exe",
+      "sha256": "c71aa9701c3d818be9c37524e164443c7e369c5b9aa426d7a31ab22a8d613a61"
+    },
+    {
+      "path": "artifacts/core-v2.10.6/20260902T041800Z/orchestrator/KnowledgeClipper.Orchestrator.dll",
+      "sha256": "82e93f54c2938b094f2c2b4c6588512f57fe72066ec26d68708715f904c8c20e"
+    },
+    {
+      "path": "artifacts/core-v2.10.6/20260902T041800Z/orchestrator-describe.json",
+      "sha256": "99491c7db1a2bcd04a8b9018a0201bcf70da75d802c864357731adbb0a5cf6c1"
+    },
+    {
+      "path": "receipts/core-phase1/20260902T041800Z-v2106-entrypoint-resolver/core-process-named-pipe.receipt.json",
+      "sha256": "e0a3174b15c8a8d73cb8e291283f582266d651b78a99507327dcaeb16d0b21a5"
+    },
+    {
+      "path": "receipts/core-phase1/20260902T041800Z-v2106-entrypoint-resolver/orchestrator-contract.receipt.json",
+      "sha256": "0edd77e3dd571709b9a5e056dbc9b612af6e397fe74a8fcfd9b653304ad05b87"
+    },
+    {
+      "path": "receipts/core-phase1/20260902T041800Z-v2106-entrypoint-resolver/runtime-binding.receipt.json",
+      "sha256": "ac4c4a433cb2c8af0b5275bdc891b8ee5f6d0e306d7d18b6dea3cde64a9f937b"
+    },
+    {
+      "path": "receipts/core-phase1/20260902T041800Z-v2106-entrypoint-resolver/frozen-v1-verification.receipt.json",
+      "sha256": "f94e81239620c14ec8af183180828721e87a9de5fc96e8a9e9a7945a7e82baf0"
+    }
+  ]
+}

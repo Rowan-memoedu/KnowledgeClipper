@@ -1,0 +1,226 @@
+{
+  "schemaVersion": "knowledge-clipper-additive-offline-backlog-gate-fixture.v1",
+  "baseline": {
+    "qualityReceipt": { "path": "canary/phase-b-quality/phase-b-v1.2.11-dpapi-candidate-final-20260828T101922Z/quality-receipt.json", "sha256": "9F09CACFB6A36146F18D41C9D96B52F8136B3363D2C7D92A20CC5AC73AD92329" },
+    "candidateHash": "FAB6BA4C1D2B05B316D9416CF3E43D2D0099DA68222E1CABAA1B56C4B8F96953"
+  },
+  "requirementAudit": {
+    "path": "receipts/knowledge-clipper-requirement-audit-20260828T103725Z.md",
+    "sha256": "9B05CCD170C73D763F0A6A9581F7D5D66EB1742809D3AAAA5F65EE4A72680606"
+  },
+  "originalMode": {
+    "currentCoreSource": "orchestrator/Core/DesktopIntentResolver.cs",
+    "input": { "hasImages": true, "imageHandling": "original" },
+    "resolver": { "status": "accepted" },
+    "imageOriginalPassthroughWorkerStarts": 1,
+    "ocrProviderCalls": 0,
+    "mineruProviderCalls": 0,
+    "terminal": { "status": "unsupported", "code": "media.downstream_unsupported", "succeeded": false }
+  },
+  "imagePartialRetry": {
+    "firstAttempt": {
+      "attemptId": "attempt-image-first",
+      "status": "partial",
+      "providerItemIds": ["question-1", "answer-1"],
+      "items": [
+        { "itemId": "question-1", "status": "completed", "sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" },
+        { "itemId": "answer-1", "status": "failed", "sha256": null }
+      ],
+      "partialBlocksDownstream": true,
+      "downstreamStarts": 0
+    },
+    "retryAttempt": {
+      "attemptId": "attempt-image-retry",
+      "priorAttemptId": "attempt-image-first",
+      "providerItemIds": ["answer-1"],
+      "reusedItems": [
+        { "itemId": "question-1", "sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "reusedFromAttemptId": "attempt-image-first" }
+      ],
+      "newItems": [
+        { "itemId": "answer-1", "status": "completed", "sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" }
+      ]
+    },
+    "unknownExternalState": { "status": "unknown_external_state", "retryable": false, "retryAttempts": 0 }
+  },
+  "imageSettings": {
+    "admissionReceipt": { "path": "workers/image-ocr/canary/core-admission-1.2.2-20260830T074207Z/core-admission-receipt.v1.json", "sha256": "8833618214090F8871A86F2693B74B3C996E7DCD0570441D2D17C0214228FBA7" },
+    "expected": {
+      "candidateRoot": "workers/image-ocr/candidates/1.2.2",
+      "workerVersion": "1.2.2",
+      "companionVersion": "1.2.0",
+      "files": 12,
+      "bytes": 20636240,
+      "treeSha256": "F0F8FA5D5BC3210D8CA01CEC8707B29891A8ECFFBE6B533982990BE15FC03B89",
+      "workerExeSha256": "8F99C403AF250E0BD2BB62CEECAA74A768860C10B3C582236BA0A6B3B0D73F78",
+      "settingsExeSha256": "3F88DE61DAFE7BF2996C86A2173F38EC7D259BC2616CDF35C1404B14C1F63FAA",
+      "descriptorSha256": "6DAFC948D563A9991C640BC7B674015FF88CC5A70F6550E90456B7B00B0EBE7C",
+      "providerSettingsKeys": ["modelVersion", "language", "enableTable", "enableFormula", "timeoutSeconds", "pollIntervalSeconds"],
+      "unitTests": 52
+    }
+  },
+  "settingsHonesty": {
+    "coveragePolicy": "all-editable-descriptor-items",
+    "editable": [
+      {
+        "settingId": "image.ocr.language",
+        "descriptorRevision": "image-ocr-settings.v1",
+        "adapterAvailable": true,
+        "editable": true,
+        "valueChain": { "descriptorDefault": "en", "settingsRevision": "en", "taskSnapshot": "en", "resolvedPlan": "en", "configSnapshot": "en", "workerRequest": "en" }
+      },
+      {
+        "settingId": "speech.ratePercent",
+        "descriptorRevision": "speech-settings.v1",
+        "adapterAvailable": true,
+        "editable": true,
+        "valueChain": { "descriptorDefault": 15, "settingsRevision": 15, "taskSnapshot": 15, "resolvedPlan": 15, "configSnapshot": 15, "workerRequest": 15 }
+      }
+    ],
+    "conditional": [
+      { "settingId": "module.future.unsupported", "adapterAvailable": false, "editable": false, "status": "conditional" }
+    ],
+    "plaintextSensitiveValueCount": 0
+  },
+  "speechSettings": {
+    "offlineReceipt": { "path": "tests/RemNoteQuickClipper.Speech.Tests/bin/out/r103308cb4b/settings-companion/offline-receipt.json", "sha256": "FA9753F0109BBA094B27980F5F5F1D796F58E01738B60ECF89B0F9BBDD37B18C" },
+    "descriptor": { "path": "tests/RemNoteQuickClipper.Speech.Tests/bin/out/r103308cb4b/settings-companion/descriptor.json", "sha256": "31197FB21F8C101E73282496F3BE19732BC23245A3AD40BE059FFDBC5A4E0F71" },
+    "languageOverrideFixture": { "path": "tests/RemNoteQuickClipper.Speech.Tests/fixtures/settings-companion/language-override-binding.json", "sha256": "EFE7A5D56B4343409999304B00AECD3964FAB6A4507C4E62B9EC9F532536CB6B" },
+    "probeInput": { "path": "tests/RemNoteQuickClipper.Speech.Tests/bin/out/r103308cb4b/settings-companion/probe-input.json", "sha256": "CD1066DB6514E2590A3BB94AE3DA3CDE6B4635608A5F64642DC5204E015056FE" },
+    "probeOutput": { "path": "tests/RemNoteQuickClipper.Speech.Tests/bin/out/r103308cb4b/settings-companion/probe-output.json", "sha256": "5E222FCEE8E1DF15106721B27A21A1952F3E69DDE9A730A871AC3E2E1D2581A0" },
+    "workerRequest": { "path": "tests/RemNoteQuickClipper.Speech.Tests/bin/out/r103308cb4b/settings-companion/worker-request.json", "sha256": "C31D17831E7D6B139933BE71621940DFAA1AD56E3F3AFBD7F1B4C3E495C9D6DD" },
+    "formalReleaseReceipt": { "path": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260830T073825Z-c0980038/speech-formal-win-x64-release-receipt.json", "sha256": "91250CAB1E4441EBC5EE9324B114A27D1CE3D84BC3B95C26F374003CDA3B7E70" },
+    "formalValidationReceipt": { "path": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260830T073825Z-c0980038/speech-formal-win-x64-independent-validation-receipt.json", "sha256": "C9FDEF03C4AFD02996F3A0BB7BE001B042B39DF0AA631D44F5EFC3E0F9D05586" },
+    "formalManifest": { "path": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260830T073825Z-c0980038/win-x64/workers/speech/release-manifest.json", "sha256": "CE5E94892F2AB6D15F692487BB723536A117A2AB17CDA018CACE1E90A2F82DED" },
+    "formalExe": { "path": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260830T073825Z-c0980038/win-x64/workers/speech/KnowledgeClipper.Speech.Worker.exe", "sha256": "C098003823B5217C3A4F7267A57E69128AE5F6DF7BCC8083BA92B4CC56C34EE2" },
+    "liveDeepPathReceipt": { "path": "tests/RemNoteQuickClipper.Speech.Tests/canary/r20260830-073828-o-b38aad/deep-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/canary-receipt.json", "sha256": "48D934CE474837FAF17C4BF7F9437EEC6E45E8944B9BC15673656ADDDD8CC0D0" },
+    "expected": {
+      "companionVersion": "1.0.0",
+      "workerVersion": "1.2.4",
+      "scope": "project",
+      "effectiveAt": "next_task",
+      "languageStrategy": "override",
+      "languageOverrideInput": "en-us",
+      "languageOverrideCanonical": "en-US",
+      "voiceId": "en-US-AvaMultilingualNeural",
+      "currentTaskEffect": "none_snapshot_frozen",
+      "speakerPreviewInvocation": "explicit_only",
+      "speakerPreviewStatus": "conditional",
+      "formalReleaseRoot": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260830T073825Z-c0980038/win-x64",
+      "formalFiles": 7,
+      "formalBytes": 130346,
+      "formalTreeSha256": "985E678EEEFD7335F772F21483BF39763544B57260E4449DFC3C017B2E31FB38",
+      "formalManifestSha256": "CE5E94892F2AB6D15F692487BB723536A117A2AB17CDA018CACE1E90A2F82DED",
+      "unitTests": 49,
+      "liveLanguages": 5,
+      "minimumDeepPathLength": 268
+    }
+  },
+  "ankiSettings": {
+    "moduleReceipt": { "path": "workers/anki-exporter/canary/formal-release-settings-probe/20260830T074140Z-2b55687b/receipt.json", "sha256": "8E0499277E9F5FBCC531B085DD895905DA6C36C5E58A8BA496FA77BF935AFC30" },
+    "releaseManifest": { "path": "releases/knowledge-clipper-anki-exporter-v1.2.1-20260828T104000Z/win-x64/workers/anki/release-manifest.v1.json", "sha256": "D339AB92D98CDD861378652E5DCF401A3BDB8C1CFE4FB02C047A3B991B42891A" },
+    "workerExe": { "path": "releases/knowledge-clipper-anki-exporter-v1.2.1-20260828T104000Z/win-x64/workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe", "sha256": "135B7BC31DA93389819E4F802226600CD3879F6527ED4194555D613A32CC4EE1" },
+    "compatibilityReceipt": { "path": "workers/anki-exporter/canary/shared-consumer-compatibility/20260830T074135Z-28e90aac/receipt.json", "sha256": "3474DF53E79744A69F49CEB8F2009EC9B76A1120C77EB8BD2400227A2D20EB5F" },
+    "expected": {
+      "workerVersion": "1.2.1",
+      "authorityWorkerVersion": "1.2.0",
+      "candidateWorkerVersion": "1.2.1",
+      "consumerOnboardingStatus": "no-go",
+      "releaseTreeSha256": "E7EBA348C344865B0F403D34187831BABDEADC4818451084ACB86CC37A3E161D",
+      "manifestRelativePath": "workers/anki/release-manifest.v1.json",
+      "probeInvocation": "explicit_user_action_only",
+      "probeNetworkScope": "loopback-only",
+      "probeReadOnly": true
+    }
+  },
+  "remnoteSettings": {
+    "releaseReceipt": { "path": "releases/knowledge-clipper-remnote-exporter-v2.1.0-20260830T073620Z/win-x64/release-receipt.json", "sha256": "B290E8FFBA1011130CD740DEB806AC52D76B1179FD0CD51DF9CEA5A89A52A1A2" },
+    "releaseManifest": { "path": "releases/knowledge-clipper-remnote-exporter-v2.1.0-20260830T073620Z/win-x64/release-manifest.json", "sha256": "C4E7236259F9C2E068312A6B709FBA97DBF86194E9541896164480846FB9EB4D" },
+    "offlineReceipt": { "path": "releases/knowledge-clipper-remnote-exporter-v2.1.0-20260830T073620Z/win-x64/evidence/offline-canary-receipt.json", "sha256": "A7DE93A25391D3C238C4A085E57014A9FE9C14E7A348013A972EF027B86F193B" },
+    "workerExe": { "path": "releases/knowledge-clipper-remnote-exporter-v2.1.0-20260830T073620Z/win-x64/KnowledgeClipper.RemNoteExporter.Worker.exe", "sha256": "443835ECA91E5F68C97070777C250FD95E4A2E4873C9EFC7FBF45A528EF2CAD2" },
+    "companionDescriptor": { "path": "releases/knowledge-clipper-remnote-exporter-v2.1.0-20260830T073620Z/win-x64/evidence/settings-companion-descriptor.json", "sha256": "7089829E47C739AADC3BEDC9AFFADD4A275AD2434BF1F548644A977CCB4BDE8C" },
+    "workerDescribe": { "path": "releases/knowledge-clipper-remnote-exporter-v2.1.0-20260830T073620Z/win-x64/evidence/worker-describe.json", "sha256": "ED0DC11DE4F71A2E803113217B8BD63105F25B55C54D29EF6DB39F769342DCCB" },
+    "expected": {
+      "releaseRoot": "releases/knowledge-clipper-remnote-exporter-v2.1.0-20260830T073620Z/win-x64",
+      "workerId": "export.remnote",
+      "workerVersion": "2.1.0",
+      "payloadFiles": 19,
+      "payloadBytes": 169192,
+      "payloadTreeSha256": "A2C5F932B79F2528F2F1B8E30E9B68D3C15AEE07FE7F3AE8E834BF698C675CA8",
+      "schemaFiles": 9,
+      "automaticRetryAllowed": false,
+      "unknownExternalStateRetry": "manual-only",
+      "authorityRegistryAdmission": "pending-core-owned-checkpoint"
+    }
+  },
+  "contentSettings": {
+    "compatibilityReceipt": { "path": "content-worker/receipts/core-v3-desktop-compatibility/20260830T074659078Z/receipt.v1.json", "sha256": "BF933C31A6D0D16C51313CDD6B71D58EB493A11D23F5A01DCFA8A762FCF9513C" },
+    "expected": {
+      "workerVersion": "0.7.0",
+      "contentTests": 74,
+      "schemas": 21,
+      "bindings": 7,
+      "runtimePolicyVersion": "1.1",
+      "desktopPublishedSnapshotSchema": "content-config-snapshot/1.0.0",
+      "scenarioIds": ["ask", "meaning-reading", "writing", "both", "non-language", "target-nonunique", "details-unreliable"],
+      "externalConnections": 0
+    }
+  },
+  "languageCards": {
+    "meaningReading": {
+      "rawText": "The committee reached a tentative conclusion.",
+      "targetTerm": "tentative",
+      "existingCard": { "template": "language_context", "front": "The committee reached a tentative conclusion.", "back": "tentative：/ˈtentətɪv/；暂定的" },
+      "cards": [ { "template": "language_context", "front": "The committee reached a tentative conclusion.", "back": "tentative：/ˈtentətɪv/；暂定的" } ]
+    },
+    "writing": {
+      "rawText": "The committee reached a tentative conclusion.",
+      "targetTerm": "tentative",
+      "pronunciation": "/ˈtentətɪv/",
+      "meaning": "暂定的",
+      "cards": [ { "template": "language_writing", "front": "The committee reached a （/ˈtentətɪv/；暂定的） conclusion.", "back": "tentative" } ]
+    },
+    "both": {
+      "cards": [
+        { "template": "language_context", "front": "The committee reached a tentative conclusion.", "back": "tentative：/ˈtentətɪv/；暂定的" },
+        { "template": "language_writing", "front": "The committee reached a （/ˈtentətɪv/；暂定的） conclusion.", "back": "tentative" }
+      ]
+    },
+    "nonLanguage": { "rawText": "2 + 2 = 4", "status": "not_language", "cards": [] },
+    "ambiguous": { "rawText": "term and term are repeated", "targetTerm": "term", "status": "waiting_input", "resolution": "unresolved", "cards": [] }
+  },
+  "desktopAutomation": {
+    "automationV11": "src/RemNoteQuickClipper.Desktop.Core/AutomationCatalogV11.cs",
+    "automationV12": "src/RemNoteQuickClipper.Desktop.Core/AutomationCatalogV12.cs",
+    "settingsCatalog": "src/RemNoteQuickClipper.Desktop.Core/SettingsAutomationCatalog.cs",
+    "desktopUi": "src/DesktopUi.cs",
+    "contextModeInFloatingWindow": true,
+    "originalModeInFloatingWindow": true,
+    "bottomInlineInputEditable": true,
+    "minimumSettingsAutomationIdCount": 66
+  },
+  "retentionSafety": {
+    "programSource": "src/Program.cs",
+    "legacyJobStoreSource": "src/Core.cs",
+    "isolatedProbeOnly": true,
+    "productionJobsRootUsed": false,
+    "legacyPurgeInvocationsAllowedAtStartup": 0,
+    "oldTaskFixtures": [
+      { "taskId": "old-active", "state": "active", "preserved": true },
+      { "taskId": "old-waiting", "state": "waiting_input", "preserved": true },
+      { "taskId": "old-unknown", "state": "unknown_external_state", "preserved": true },
+      { "taskId": "old-pinned", "state": "completed", "pinned": true, "preserved": true },
+      { "taskId": "old-evidence", "state": "completed", "retentionClass": "evidence", "preserved": true }
+    ]
+  },
+  "legacyCanarySafety": {
+    "buildScript": { "path": "build.ps1", "sha256": "1D66E7C3D7D6D8960BA0FB69E8ADEA9A49E26C5438FA63A1E6963376D56FA83B" },
+    "readme": { "path": "README.md", "sha256": "90F12BF790E6BB569DAB03D5B3D6891151057602B2957DC27E6119E5E45A422B" },
+    "candidateRoot": "releases/kc-i-dpapi-v1211-20260828T183000Z/win-x64",
+    "forbiddenBasenames": ["SmokeTest.exe", "TtsCanary.exe"],
+    "explicitOptInSwitch": "IncludeLegacyExternalCanaries",
+    "defaultBuildIncludesLegacyExternalCanaries": false,
+    "executeLegacyCanaries": false
+  },
+  "ownerEvidence": { "core": "pending", "content": "module-passed-integration-conditional", "image": "module-passed-integration-pending", "desktop": "pending", "speech": "module-passed-integration-pending", "anki": "module-passed-integration-pending", "remnote": "module-passed-authority-pending" },
+  "policy": { "externalCalls": 0, "workerStarts": 0, "pendingIsFailure": false, "candidateBound": false, "bAndCRemainPending": true }
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": "standard-input/1.0.0",
+  "package_id": "clipper-content-offline-general-learning",
+  "task_id": "offline-general-learning-canary",
+  "input_version": "1",
+  "mode": "card",
+  "items": [
+    {
+      "item_id": "item-concept-transfer",
+      "source": {
+        "kind": "text",
+        "material_path": "materials/concept.md"
+      },
+      "hints": {
+        "category_id": "general_learning",
+        "answer_state": "provided",
+        "context_state": "provided",
+        "risk_state": "ordinary",
+        "requested_templates": ["concept_transfer"]
+      }
+    },
+    {
+      "item_id": "item-procedure",
+      "source": {
+        "kind": "text",
+        "material_path": "materials/procedure.md"
+      },
+      "hints": {
+        "category_id": "general_learning",
+        "answer_state": "provided",
+        "context_state": "provided",
+        "risk_state": "ordinary",
+        "requested_templates": ["procedure"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "schemaVersion": "knowledge-clipper-task-settings-override.v2",
+  "content": { "configArtifactRef": "content-config-001", "settingsRevisionId": "revision-001" }
+}

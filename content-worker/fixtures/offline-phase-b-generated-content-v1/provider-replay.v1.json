@@ -1,0 +1,103 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-phase-b-a": {
+      "cleaned_text": "不可变任务包会为每次执行保存独立的请求、结果和哈希，因此重试不会覆盖既有证据。",
+      "removed_fragments": [],
+      "format_anomalies": []
+    },
+    "classification:item-phase-b-a": {
+      "units": [
+        {
+          "unit_id": "unit-phase-b-a",
+          "source_segment_indexes": [0],
+          "category_id": "general_learning",
+          "subtype": "concept",
+          "answer_state": "provided",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "supplied_answer": "不可变任务包会为每次执行保存独立的请求、结果和哈希，因此重试不会覆盖既有证据。",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "card_generation:item-phase-b-a:unit-phase-b-a": {
+      "generated_content": [
+        {
+          "kind": "question_wording",
+          "text": "不可变任务包为什么能保证重试不会覆盖既有证据？"
+        }
+      ],
+      "cards": [
+        {
+          "template": "basic_qa",
+          "front_blocks": [
+            {
+              "type": "text",
+              "text": "不可变任务包为什么能保证重试不会覆盖既有证据？",
+              "provenance": "generated"
+            }
+          ],
+          "back_blocks": [
+            {
+              "type": "text",
+              "text": "不可变任务包会为每次执行保存独立的请求、结果和哈希，因此重试不会覆盖既有证据。",
+              "provenance": "source"
+            }
+          ],
+          "answer_provenance": "source"
+        }
+      ],
+      "unresolved_reasons": []
+    },
+    "cleaning:item-phase-b-d": {
+      "cleaned_text": "可审计的系统让每一次重试都有迹可循。",
+      "removed_fragments": [],
+      "format_anomalies": []
+    },
+    "classification:item-phase-b-d": {
+      "units": [
+        {
+          "unit_id": "unit-phase-b-d",
+          "source_segment_indexes": [0],
+          "category_id": "general_learning",
+          "subtype": "concept",
+          "answer_state": "provided",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "supplied_answer": "可审计的系统让每一次重试都有迹可循。",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "card_generation:item-phase-b-d:unit-phase-b-d": {
+      "generated_content": [
+        {
+          "kind": "question_wording",
+          "text": "可审计的系统有什么作用？"
+        }
+      ],
+      "cards": [
+        {
+          "template": "basic_qa",
+          "front_blocks": [
+            {
+              "type": "text",
+              "text": "可审计的系统有什么作用？",
+              "provenance": "generated"
+            }
+          ],
+          "back_blocks": [
+            {
+              "type": "text",
+              "text": "可审计的系统让每一次重试都有迹可循。",
+              "provenance": "source"
+            }
+          ],
+          "answer_provenance": "source"
+        }
+      ],
+      "unresolved_reasons": []
+    }
+  }
+}

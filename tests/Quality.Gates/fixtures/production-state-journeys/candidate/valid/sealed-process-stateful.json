@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "knowledge-clipper-candidate-stateful-evidence.v1",
+  "fixtureOnly": true,
+  "evidenceLevel": "sealed-candidate-process-stateful",
+  "candidate": { "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "sealedTreeSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
+  "runtime": {
+    "desktopProcess": "KnowledgeClipper.exe",
+    "orchestratorProcess": "authority/win-x64/orchestrator/KnowledgeClipper.Orchestrator.exe",
+    "transport": "NamedPipe",
+    "persistenceStore": "isolated-real",
+    "artifactReader": "production-unified",
+    "injectedHost": false,
+    "sharedTestCoreDll": false,
+    "manualDisplayState": false
+  },
+  "journeys": { "anki": { "status": "passed" }, "remnote": { "status": "passed" }, "question": { "status": "passed" } },
+  "promotion": { "userHandTestEntrypoint": true }
+}

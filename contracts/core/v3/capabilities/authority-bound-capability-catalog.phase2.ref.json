@@ -1,0 +1,10 @@
+{
+  "schema": "kc.capability-binding/1",
+  "catalogPath": "contracts/core/v3/capabilities/capability-catalog.phase2.v1.json",
+  "catalogSha256": "D39994FEEABCAB2875923C80B2AAF6A5A8FCE2F23B7F180BF41999180874ED94",
+  "authorityAnchor": {
+    "authorityVersion": "1.2.41",
+    "checkpointPath": "contracts/core/v2.10/checkpoints/v2.10.6-20260902T041800Z/checkpoint.json",
+    "checkpointSha256": "20AF0975FF176B6D46249B98AC36D72C74C7A494965AF3A69DE4C7FF52235D79"
+  }
+}

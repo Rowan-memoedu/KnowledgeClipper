@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledgeclipper://contracts/remnote-original-media.v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "orderingPolicy", "assets"],
+  "properties": {
+    "schemaVersion": { "const": "remnote-original-media.v2" },
+    "orderingPolicy": { "const": "explicit-role-ordinal" },
+    "assets": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["assetId", "role", "ordinal", "path", "sha256", "bytes", "mediaType"],
+        "properties": {
+          "assetId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+          "role": { "enum": ["question", "answer"] },
+          "ordinal": { "type": "integer", "minimum": 1 },
+          "path": { "type": "string", "minLength": 1, "pattern": "^(?![A-Za-z]:|/|.*(?:^|/)\\.\\.(?:/|$)).+$" },
+          "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+          "bytes": { "type": "integer", "minimum": 1 },
+          "mediaType": { "enum": ["image/png", "image/jpeg", "image/gif", "image/webp"] }
+        }
+      }
+    }
+  },
+  "$comment": "Code validation additionally enforces unique assetId, unique role+ordinal, and question ordinal then answer ordinal input order."
+}

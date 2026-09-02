@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "preseal-chain-run.v1",
+  "runId": "unsafe-run",
+  "createdAt": "2026-08-26T03:00:00Z",
+  "status": "passed",
+  "workerId": "image.ocr.mineru",
+  "mode": "fake",
+  "releaseBinding": {"releaseRoot": "releases/fixture/win-x64", "stateReceiptSha256": "1111111111111111111111111111111111111111111111111111111111111111", "presealTreeSha256": "2222222222222222222222222222222222222222222222222222222222222222"},
+  "entrypoint": {"path": "workers/image-ocr/RemNoteQuickClipper.ImageOcr.Worker.exe", "sha256": "4444444444444444444444444444444444444444444444444444444444444444"},
+  "result": {"path": "canary/fixture/result.json", "sha256": "9999999999999999999999999999999999999999999999999999999999999999", "commonStatus": "completed", "outputs": 4},
+  "checks": {"describePassed": true, "requestSchemaValid": true, "resultSchemaValid": true, "noHiddenWrites": true},
+  "externalProductionApisInvoked": true
+}

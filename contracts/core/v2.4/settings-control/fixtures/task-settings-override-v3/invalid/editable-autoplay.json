@@ -1,0 +1,6 @@
+{
+  "schemaVersion": "knowledge-clipper-task-settings-override.v3",
+  "speech": {
+    "autoPlay": false
+  }
+}

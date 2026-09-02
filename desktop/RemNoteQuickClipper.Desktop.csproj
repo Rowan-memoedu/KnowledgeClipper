@@ -1,0 +1,67 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>KnowledgeClipper</AssemblyName>
+    <RootNamespace>KnowledgeClipper</RootNamespace>
+    <Product>零碎知识剪藏</Product>
+    <AssemblyTitle>零碎知识剪藏</AssemblyTitle>
+    <Description>桌面知识采集、处理与多目标导出工具</Description>
+    <Company>零碎知识剪藏</Company>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishSingleFile>false</PublishSingleFile>
+    <DebugType>embedded</DebugType>
+    <Deterministic>true</Deterministic>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\src\Core.cs" Link="Core.cs" />
+    <Compile Include="..\src\DesktopSettingsDomain.cs" Link="DesktopSettingsDomain.cs" />
+    <Compile Include="..\src\Program.cs" Link="Program.cs" />
+    <Compile Include="..\src\ProjectSettingsForm.cs" Link="ProjectSettingsForm.cs" />
+    <Compile Include="..\src\DesktopCredentialSettings.cs" Link="DesktopCredentialSettings.cs" />
+    <Compile Include="..\src\DesktopSettingsControl.cs" Link="DesktopSettingsControl.cs" />
+    <Compile Include="..\src\DesktopModuleSettings.cs" Link="DesktopModuleSettings.cs" />
+    <Compile Include="..\src\DesktopApplication.cs" Link="DesktopApplication.cs" />
+    <Compile Include="..\src\LegacyDesktopAdapter.cs" Link="LegacyDesktopAdapter.cs" />
+    <Compile Include="..\src\SingleInstanceCoordinator.cs" Link="SingleInstanceCoordinator.cs" />
+    <Compile Include="..\src\CandidateIntegration.cs" Link="CandidateIntegration.cs" />
+    <Compile Include="..\src\LoopbackProviderOverrides.cs" Link="LoopbackProviderOverrides.cs" />
+    <Compile Include="..\src\StartupDiagnostics.cs" Link="StartupDiagnostics.cs" />
+    <Compile Include="..\src\DesktopUi.cs" Link="DesktopUi.cs" />
+    <Compile Include="..\src\WindowsDesktopProviders.cs" Link="WindowsDesktopProviders.cs" />
+    <Compile Include="..\src\KnowledgeClipper.Desktop.Application\*.cs" Link="Desktop.Application\%(Filename)%(Extension)" />
+    <Compile Include="..\src\KnowledgeClipper.Desktop.Adapters\*.cs" Link="Desktop.Adapters\%(Filename)%(Extension)" />
+    <Compile Include="..\src\Compat\JavaScriptSerializer.Net8.cs" Link="Compat\JavaScriptSerializer.Net8.cs" />
+    <Compile Include="..\src\RemNoteQuickClipper.Desktop.Core\*.cs" Exclude="..\src\RemNoteQuickClipper.Desktop.Core\SemanticPortProgram.cs;..\src\RemNoteQuickClipper.Desktop.Core\SemanticPortProgramV11.cs" Link="Desktop.Core\%(Filename)%(Extension)" />
+    <Content Include="..\appsettings.json" Link="appsettings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\contracts\core\v2.4\settings-control\**\*" Link="contracts\core\v2.4\settings-control\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\contracts\core\v2.5\checkpoints\v2.5.1-20260830T075400Z\checkpoint.json" Link="contracts\core\v2.5\checkpoints\v2.5.1-20260830T075400Z\checkpoint.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\contracts\core\v2.1\profile-resolver.v2.1.json" Link="contracts\core\v2.1\profile-resolver.v2.1.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\contracts\desktop-automation\**\*" Link="contracts\desktop-automation\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\contracts\v1\**\*" Link="contracts\v1\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\receipts\contracts-v1-stable-checkpoint-20260825T115938Z.json" Link="receipts\contracts-v1-stable-checkpoint-20260825T115938Z.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\tests\RemNoteQuickClipper.Speech.Tests\bin\out\r103308cb4b\settings-companion\descriptor.json" Link="descriptors\speech-settings-companion.v1.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\content-worker\releases\content.deepseek-0.7.0-win-x64-formal-20260828T103735Z\app\descriptors\content-companion-descriptor.v1.json" Link="descriptors\content-companion-descriptor.v1.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\releases\knowledge-clipper-anki-exporter-v1.2.1-20260828T104000Z\win-x64\workers\anki\contracts\anki-destination-settings-descriptor.v1.json" Link="descriptors\anki-destination-settings-descriptor.v1.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\workers\image-ocr\candidates\1.2.2\image-ocr-capability-config-descriptor.v4.json" Link="descriptors\image-ocr-capability-config-descriptor.v4.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\workers\image-ocr\candidates\1.2.3\image-ocr-capability-config-descriptor.v5.json" Link="descriptors\image-ocr-capability-config-descriptor.v5.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="KnowledgeClipper.Core.V3.Client">
+      <HintPath>..\core-v3\releases\20260902T060054Z-foundation.2\artifacts\net8.0\KnowledgeClipper.Core.V3.Client.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Content Include="..\core-v3\releases\20260902T060054Z-foundation.2\artifacts\net8.0\KnowledgeClipper.Core.V3.Contracts.dll" Link="KnowledgeClipper.Core.V3.Contracts.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

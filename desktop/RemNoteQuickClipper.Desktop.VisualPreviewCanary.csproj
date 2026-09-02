@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <StartupObject>KnowledgeClipper.VisualPreviewCanary</StartupObject>
+    <AssemblyName>KnowledgeClipper.Desktop.VisualPreviewCanary</AssemblyName>
+    <RootNamespace>KnowledgeClipper</RootNamespace>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\src\Core.cs" Link="Core.cs" />
+    <Compile Include="..\src\DesktopSettingsDomain.cs" Link="DesktopSettingsDomain.cs" />
+    <Compile Include="..\src\Program.cs" Link="Program.cs" />
+    <Compile Include="..\src\ProjectSettingsForm.cs" Link="ProjectSettingsForm.cs" />
+    <Compile Include="..\src\DesktopCredentialSettings.cs" Link="DesktopCredentialSettings.cs" />
+    <Compile Include="..\src\DesktopSettingsControl.cs" Link="DesktopSettingsControl.cs" />
+    <Compile Include="..\src\DesktopModuleSettings.cs" Link="DesktopModuleSettings.cs" />
+    <Compile Include="..\src\DesktopApplication.cs" Link="DesktopApplication.cs" />
+    <Compile Include="..\src\SingleInstanceCoordinator.cs" Link="SingleInstanceCoordinator.cs" />
+    <Compile Include="..\src\CandidateIntegration.cs" Link="CandidateIntegration.cs" />
+    <Compile Include="..\src\StartupDiagnostics.cs" Link="StartupDiagnostics.cs" />
+    <Compile Include="..\src\DesktopUi.cs" Link="DesktopUi.cs" />
+    <Compile Include="..\src\WindowsDesktopProviders.cs" Link="WindowsDesktopProviders.cs" />
+    <Compile Include="..\src\VisualPreviewCanary.cs" Link="VisualPreviewCanary.cs" />
+    <Compile Include="..\src\Compat\JavaScriptSerializer.Net8.cs" Link="Compat\JavaScriptSerializer.Net8.cs" />
+    <Compile Include="..\src\RemNoteQuickClipper.Desktop.Core\*.cs" Exclude="..\src\RemNoteQuickClipper.Desktop.Core\SemanticPortProgram.cs;..\src\RemNoteQuickClipper.Desktop.Core\SemanticPortProgramV11.cs" Link="Desktop.Core\%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\tests\RemNoteQuickClipper.Speech.Tests\bin\out\r103308cb4b\settings-companion\descriptor.json" Link="descriptors\speech-settings-companion.v1.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\content-worker\releases\content.deepseek-0.7.0-win-x64-formal-20260828T103735Z\app\descriptors\content-companion-descriptor.v1.json" Link="descriptors\content-companion-descriptor.v1.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\releases\knowledge-clipper-anki-exporter-v1.2.1-20260828T104000Z\win-x64\workers\anki\contracts\anki-destination-settings-descriptor.v1.json" Link="descriptors\anki-destination-settings-descriptor.v1.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\workers\image-ocr\candidates\1.2.2\image-ocr-capability-config-descriptor.v4.json" Link="descriptors\image-ocr-capability-config-descriptor.v4.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\workers\image-ocr\candidates\1.2.3\image-ocr-capability-config-descriptor.v5.json" Link="descriptors\image-ocr-capability-config-descriptor.v5.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

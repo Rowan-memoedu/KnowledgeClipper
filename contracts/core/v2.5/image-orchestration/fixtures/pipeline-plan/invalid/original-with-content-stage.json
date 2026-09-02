@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "2.1.0",
+  "planVersion": "2.1.0",
+  "taskId": "task-invalid-original-media",
+  "maxConcurrency": 2,
+  "stages": [
+    {
+      "stageId": "image-ocr",
+      "workerId": "image.ocr.mineru",
+      "operation": "process-images",
+      "dependsOn": [],
+      "inputRefs": [],
+      "outputKinds": ["image.original"],
+      "timeoutMs": 600000,
+      "retryPolicy": { "maxAttempts": 1, "backoffMs": 1000 },
+      "configSnapshot": {}, "payload": {}, "inputBindings": []
+    },
+    {
+      "stageId": "content",
+      "workerId": "content.deepseek",
+      "operation": "understand-and-card",
+      "dependsOn": ["image-ocr"],
+      "inputRefs": [],
+      "outputKinds": ["card-bundle"],
+      "timeoutMs": 300000,
+      "retryPolicy": { "maxAttempts": 1, "backoffMs": 0 },
+      "configSnapshot": {}, "payload": {}, "inputBindings": []
+    }
+  ],
+  "routing": { "processingProfile": "cards", "destinations": [], "source": "task-manifest.v2" },
+  "terminalBoundary": { "status": "unsupported", "code": "media.downstream_unsupported", "availableOutputKinds": ["image.original"], "unsupportedConsumers": ["content.deepseek"] }
+}

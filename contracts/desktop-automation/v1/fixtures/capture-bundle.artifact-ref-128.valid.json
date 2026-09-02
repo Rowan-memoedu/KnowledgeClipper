@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "capture-bundle.v1",
+  "captureId": "fixture-capture-ref-128",
+  "createdAt": "2026-08-25T12:00:00.0000000Z",
+  "intent": "screenshot",
+  "source": "screenshot",
+  "modeSnapshot": {
+    "workflow": "card",
+    "contextEnabled": false,
+    "contextGranularity": "sentence",
+    "contextApplied": false,
+    "imageHandling": "original"
+  },
+  "artifacts": [
+    {
+      "artifactRef": "capture.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "relativePath": "inputs/images/ref-128.png",
+      "sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+      "bytes": 128,
+      "mediaType": "image/png",
+      "encoding": null
+    }
+  ],
+  "selectedTextArtifactRef": null,
+  "contextSegments": null,
+  "questionImages": ["capture.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"],
+  "answerImages": [],
+  "questionTurns": []
+}

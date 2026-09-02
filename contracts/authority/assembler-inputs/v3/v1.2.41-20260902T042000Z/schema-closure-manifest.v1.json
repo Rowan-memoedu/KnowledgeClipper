@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "knowledge-clipper-core-schema-closure-manifest.v1",
+  "checkpoint": {
+    "path": "contracts/core/v2.10/checkpoints/v2.10.6-20260902T041800Z/checkpoint.json",
+    "sha256": "20AF0975FF176B6D46249B98AC36D72C74C7A494965AF3A69DE4C7FF52235D79"
+  },
+  "dependencies": [
+    {
+      "path": "contracts/core/v2.3/playback-control/schemas/stage-control-request.v1.schema.json",
+      "bytes": 528,
+      "sha256": "B717994985275623719C09C93D04A4F05A5B23BAE6AB240191E00898908182E8",
+      "referencedBy": "contracts/core/v2.10/module-control/schemas/ipc-request.v1.7.schema.json"
+    }
+  ]
+}

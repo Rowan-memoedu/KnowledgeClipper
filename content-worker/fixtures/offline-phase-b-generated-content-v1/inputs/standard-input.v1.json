@@ -1,0 +1,23 @@
+{
+  "schema_version": "standard-input/1.0.0",
+  "package_id": "knowledge-clipper-phase-b-generated-content-regression-v1",
+  "task_id": "phase-b-generated-content-regression-v1",
+  "input_version": "1",
+  "mode": "card",
+  "items": [
+    {
+      "item_id": "item-phase-b-a",
+      "source": {
+        "kind": "text",
+        "material_path": "materials/path-a.md"
+      }
+    },
+    {
+      "item_id": "item-phase-b-d",
+      "source": {
+        "kind": "text",
+        "material_path": "materials/path-d.md"
+      }
+    }
+  ]
+}

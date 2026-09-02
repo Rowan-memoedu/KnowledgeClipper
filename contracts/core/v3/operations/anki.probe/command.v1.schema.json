@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.anki-probe-command/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["configuration"],
+  "properties": {
+    "configuration": {"$ref": "../../artifacts/schemas/artifact-ref.v2.schema.json"},
+    "selectedRoute": {"type": "string", "minLength": 1, "maxLength": 64}
+  }
+}

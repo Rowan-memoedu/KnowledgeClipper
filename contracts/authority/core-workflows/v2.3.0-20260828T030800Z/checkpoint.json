@@ -1,0 +1,153 @@
+{
+  "schemaVersion": "knowledge-clipper-core-workflows-checkpoint.v2",
+  "checkpointId": "core-workflows-v2.3.0-20260828T030800Z",
+  "publishedAt": "2026-08-28T03:08:00Z",
+  "status": "stable",
+  "workspaceRoot": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper",
+  "extends": {
+    "checkpointId": "core-workflows-v2.2.0-20260826T052243Z",
+    "checkpointPath": "contracts/authority/core-workflows/v2.2.0-20260826T052243Z/checkpoint.json",
+    "checkpointSha256": "E4CF8DE7F0AF507E7564F0F8093283C32B77A282B1DFFF6F0E213673CCE5CE09",
+    "receiptPath": "receipts/core-workflows-v2.2.0-checkpoint-20260826T052243Z.json",
+    "receiptSha256": "C3E29A64FE544B72496A02FAA90EED672B9B53C412C0552E230366A9C7812E31"
+  },
+  "scope": {
+    "publicOperation": "playback.stop",
+    "ipcProtocolVersion": "1.1",
+    "messageType": "stage-control",
+    "receiptSchemaVersion": "2.3.0",
+    "request": {
+      "taskId": "caller-selected task identifier",
+      "operation": "speech.playback",
+      "selector": "current-active",
+      "reason": "user_stop"
+    },
+    "externalProductionApisInvoked": false,
+    "physicalSpeakerInvoked": false
+  },
+  "authorityRegistry": {
+    "registryVersion": "1.2.3",
+    "path": "contracts/authority/worker-registry/v1.2.3-20260828T021300Z/worker-registry.v1.json",
+    "sha256": "B695939D797DDF7924D048B3380885ECF06AB926A807E9381D531855363F885B",
+    "authorityReceiptPath": "receipts/knowledge-clipper-authority-1.2.3-20260828T021600Z.json",
+    "authorityReceiptSha256": "3F2E8DED2A59AE7346C03334F3EACA763350F683581F9430DF8D771C6A37BAE3"
+  },
+  "frozenV1": {
+    "checkpointId": "contracts-v1-20260825T115938Z",
+    "receiptPath": "receipts/contracts-v1-stable-checkpoint-20260825T115938Z.json",
+    "receiptSha256": "1CB738FE133F6645B9757E246E2FBC210785086342F70BAD32B5015BD19E1B1E",
+    "filesChecked": 21,
+    "mismatches": 0,
+    "modified": false
+  },
+  "contractTree": {
+    "root": "contracts/core/v2.3/playback-control",
+    "files": 12,
+    "treeHashAlgorithm": "sort Windows relative paths ordinal; for each file emit path<TAB>bytes<TAB>lowercase SHA-256; join with LF; SHA-256 UTF-8",
+    "treeSha256": "1548103766C236B3AFD69A896CFBE2D79A3E9C4F896E4BA0A8E70B34E635A342"
+  },
+  "publicContracts": [
+    {
+      "path": "contracts/core/v2.3/playback-control/orchestrator-ipc.v1.1.json",
+      "version": "1.1.0",
+      "bytes": 1031,
+      "sha256": "849CB3A85DD8CE660B5A6924D804AEB59E254010F616BA54B5E694C263DB98E2"
+    },
+    {
+      "path": "contracts/core/v2.3/playback-control/schemas/ipc-request.v1.1.schema.json",
+      "$id": "./ipc-request.v1.1.schema.json",
+      "bytes": 948,
+      "sha256": "FF71DE29B9E832B302FB5A3CA8F8E16774B1E184868D9A7CAAFCDDDE29AF6731"
+    },
+    {
+      "path": "contracts/core/v2.3/playback-control/schemas/ipc-response.v1.1.schema.json",
+      "$id": "./ipc-response.v1.1.schema.json",
+      "bytes": 1131,
+      "sha256": "F159A30F02EC356E318B9F6305F5F468613C014B6E0ED8CBB38AE57882A1A19F"
+    },
+    {
+      "path": "contracts/core/v2.3/playback-control/schemas/stage-control-request.v1.schema.json",
+      "$id": "./stage-control-request.v1.schema.json",
+      "bytes": 528,
+      "sha256": "B717994985275623719C09C93D04A4F05A5B23BAE6AB240191E00898908182E8"
+    },
+    {
+      "path": "contracts/core/v2.3/playback-control/schemas/stage-control-receipt.v1.schema.json",
+      "$id": "./stage-control-receipt.v1.schema.json",
+      "schemaVersion": "2.3.0",
+      "bytes": 2885,
+      "sha256": "A6B7DAAC447D93EC96BF57220AC7F14A07749B6498963F029EF0BA54BE48BC3F"
+    }
+  ],
+  "runtimeSemantics": {
+    "resolution": "Under a per-task gate, resolve exactly one request.json whose operation is speech.playback and whose result.json and cancel.json are both absent.",
+    "publication": "Atomically create the exact attempt cancelSignal.path using frozen worker-cancel-signal v1, then append stage.control_requested and an immutable receipt with the resolved runId, stageId, attemptId, and operationId.",
+    "recovery": "At startup, a user_stop signal carrying controlId but missing receipt is repaired by idempotently appending any missing event and receipt.",
+    "failClosed": [
+      "request tuple drift",
+      "task missing",
+      "no active playback",
+      "multiple active playback attempts",
+      "playback already has cancel signal",
+      "playback result already terminal",
+      "worker request identity or cancel path mismatch"
+    ],
+    "prohibitedEffects": {
+      "runCancelRequestedWritten": false,
+      "parallelContentCancelled": false,
+      "parallelExportCancelled": false
+    }
+  },
+  "sourceEvidence": [
+    { "path": "orchestrator/Core/StageControl.cs", "bytes": 13098, "sha256": "763D6F41F6632DB37D7CB87366B750B52104FAA0DD8056B291745BF8AABB7ABD" },
+    { "path": "orchestrator/Core/CommandAndIpc.cs", "bytes": 27246, "sha256": "BF7D6169ED7114C1B8DF9CB155E2806200DA23FB99DE0C23EE4BCE9B3E20905C" },
+    { "path": "orchestrator/Core/OrchestratorHost.cs", "bytes": 47414, "sha256": "8B6F2AA7EF4E269E5EDDFAA6DE17B0B6FE07594665E94CB200EC446ED66D98B4" },
+    { "path": "src/RemNoteQuickClipper.Desktop.Core/NamedPipeCommonIpcClient.cs", "bytes": 9090, "sha256": "F731FAC7CC452FCF99009658D409E3FABCD82017A380D8B65B4C2BCD25A90C2B" },
+    { "path": "src/RemNoteQuickClipper.Desktop.Core/DesktopCommonCommandSource.cs", "bytes": 22833, "sha256": "479D4D5251CC8337E2C20FF512FE6253AE6834CD184C932B54002764302108E1" },
+    { "path": "src/RemNoteQuickClipper.Desktop.Core/NamedPipeDesktopOrchestratorPort.cs", "bytes": 7217, "sha256": "13BAB85933E535EB469698A211542C2FB9519CD8A5C52BDA12C0329299B7ADCF" },
+    { "path": "tests/CoreAdapter.IntegrationTests/Program.cs", "bytes": 57286, "sha256": "AC70ED9021E2376F793814356B1E685FEF78C43225745A59209B1F879A242CCF" },
+    { "path": "tools/validate_contracts.py", "bytes": 16257, "sha256": "A5D2B5B8B637BB4BCEC89A8EB74113DB45191E81AAB072CC92BE3C4F2A78632D" }
+  ],
+  "validation": [
+    {
+      "command": "python tools/validate_contracts.py",
+      "exitCode": 0,
+      "result": { "schemasChecked": 48, "validFixturesAccepted": 56, "invalidFixturesRejected": 44 }
+    },
+    {
+      "command": "dotnet build orchestrator/RemNoteQuickClipper.Orchestrator.csproj --configuration Release --no-restore",
+      "exitCode": 0,
+      "result": "0 warnings, 0 errors"
+    },
+    {
+      "command": "tests/RemNoteQuickClipper.Desktop.Tests/build-and-test.ps1",
+      "exitCode": 0,
+      "result": "desktop automation build and tests passed; direct Named Pipe stage-control observed"
+    },
+    {
+      "command": "dotnet tests/CoreAdapter.IntegrationTests/bin/Release/net8.0/CoreAdapter.IntegrationTests.dll <workspaceRoot>",
+      "exitCode": 0,
+      "result": "8 groups passed; real FakeWorker process; one concurrent winner; fail-closed matrix; recovery idempotent",
+      "canaryPath": "canary/core-playback-control/core-playback-control-20260828T031000Z/core-adapter-results.json",
+      "canarySha256": "959D2609B217E37CE1DA27B52A21D468F2B222CCC12BEBE78507F3092F91AD2D"
+    },
+    {
+      "command": "dotnet tests/Orchestrator.ContractTests/bin/Release/net8.0/Orchestrator.ContractTests.dll <workspaceRoot>",
+      "exitCode": 0,
+      "result": "23 groups passed"
+    },
+    {
+      "command": "dotnet build desktop/RemNoteQuickClipper.Desktop.csproj --configuration Release --no-restore",
+      "exitCode": 0,
+      "result": "0 warnings, 0 errors"
+    }
+  ],
+  "releaseBoundary": {
+    "corePublicWiring": "GO",
+    "desktopSourceWiring": "GO",
+    "frozenV1Integrity": "GO",
+    "externalWrites": "NOT_INVOKED",
+    "physicalSpeaker": "NOT_INVOKED",
+    "integratedReleasePackaging": "desktop module/controller owned"
+  }
+}

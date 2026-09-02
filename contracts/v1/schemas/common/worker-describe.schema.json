@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./worker-describe.schema.json",
+  "title": "RemNote Quick Clipper Worker Describe v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "workerId",
+    "workerVersion",
+    "contractVersion",
+    "stages",
+    "inputKinds",
+    "outputKinds",
+    "concurrency",
+    "sideEffectLevel",
+    "idempotencyLevel",
+    "cancellation"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "workerId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "workerVersion": { "$ref": "./artifact.schema.json#/$defs/semanticVersion" },
+    "contractVersion": { "const": "1.0.0" },
+    "stages": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "./artifact.schema.json#/$defs/identifier" }
+    },
+    "inputKinds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "./artifact.schema.json#/$defs/artifactKind" }
+    },
+    "outputKinds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "./artifact.schema.json#/$defs/artifactKind" }
+    },
+    "concurrency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "maxParallelAttempts"],
+      "properties": {
+        "model": { "type": "string", "enum": ["serial", "parallel"] },
+        "maxParallelAttempts": { "type": "integer", "minimum": 1, "maximum": 128 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "model": { "const": "serial" } }, "required": ["model"] },
+          "then": { "properties": { "maxParallelAttempts": { "const": 1 } } }
+        }
+      ]
+    },
+    "sideEffectLevel": { "$ref": "./worker-registry.schema.json#/$defs/sideEffectLevel" },
+    "idempotencyLevel": { "$ref": "./worker-registry.schema.json#/$defs/idempotencyLevel" },
+    "cancellation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol", "supportedReasons"],
+      "properties": {
+        "protocol": { "const": "attempt-signal-file-v1" },
+        "supportedReasons": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": { "$ref": "./worker-cancel-signal.schema.json#/properties/reason" },
+          "allOf": [
+            { "contains": { "const": "user_stop" } },
+            { "contains": { "const": "superseded" } },
+            { "contains": { "const": "task_cancel" } },
+            { "contains": { "const": "timeout" } }
+          ]
+        }
+      }
+    }
+  }
+}

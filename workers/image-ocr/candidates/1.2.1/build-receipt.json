@@ -1,0 +1,98 @@
+{
+  "schemaVersion": "knowledge-clipper-image-ocr-release-root-receipt.v1",
+  "createdAt": "2026-08-30T07:35:58.3809770+00:00",
+  "worker": {
+    "id": "image.ocr.mineru",
+    "version": "1.2.1",
+    "contractVersion": "1.0.0",
+    "executable": "KnowledgeClipper.ImageOcr.Worker.exe"
+  },
+  "companion": {
+    "version": "1.2.0",
+    "executable": "KnowledgeClipper.ImageOcr.Settings.exe",
+    "descriptor": "image-ocr-capability-config-descriptor.v3.json"
+  },
+  "releaseRoot": "workers/image-ocr/candidates/1.2.1",
+  "files": [
+    {
+      "path": "evidence/core-continuation-contract-evidence.v2.json",
+      "bytes": 2570,
+      "sha256": "eb2f4ba30ea7f3147bd66d9d66526667275ca04b2355496e164db58a72e1e314"
+    },
+    {
+      "path": "image-ocr-capability-config-descriptor.v3.json",
+      "bytes": 22100,
+      "sha256": "9c0215aaa21512c0203b45ce8f3cfdd71ac68b402afd124ddeb5c7462306fc05"
+    },
+    {
+      "path": "KnowledgeClipper.ImageOcr.Settings.exe",
+      "bytes": 10277249,
+      "sha256": "0427638afa4ac10526ce176fc928c1cb17012291544ecfdfe189fc7b93d873ed"
+    },
+    {
+      "path": "KnowledgeClipper.ImageOcr.Worker.exe",
+      "bytes": 10312002,
+      "sha256": "c862489e26207cb6fab393536d6b813dbd2c1de03977bf264c0acac787e18b3d"
+    },
+    {
+      "path": "schemas/image-ocr-capability-config-descriptor.v3.schema.json",
+      "bytes": 7557,
+      "sha256": "647d93254f0a0f715d75759f684ac98bd298edd44107b3fadba519afc970e7d0"
+    },
+    {
+      "path": "schemas/image-ocr-capability-status.v2.schema.json",
+      "bytes": 3312,
+      "sha256": "83973c6948c3de94068c6ac38372daea1521ec04ceb7e0803f0d91e764575325"
+    },
+    {
+      "path": "schemas/image-ocr-companion-test-result.v2.schema.json",
+      "bytes": 2118,
+      "sha256": "90a2b1ab68e183e1648bcb1844e309fc944551b45122e9553461bde287883f7e"
+    },
+    {
+      "path": "schemas/image-ocr-companion-validate-result.v1.schema.json",
+      "bytes": 2528,
+      "sha256": "acdb74e6d7c841a7f671e8bd8495225c2d0213cd8b5dd4c321b54a4ae18fee38"
+    },
+    {
+      "path": "schemas/image-ocr-core-continuation-evidence.v2.schema.json",
+      "bytes": 1960,
+      "sha256": "49baa75ccf5fdc04685e4658a7d1b1ffec2f38956491185224d0923d7a22e4ae"
+    },
+    {
+      "path": "schemas/image-ocr-settings-adapter-result.v1.schema.json",
+      "bytes": 2337,
+      "sha256": "ece25cc1f15c8145d120f8fcb1822dcf1a48dac77df76d84a9943d33c51997c8"
+    },
+    {
+      "path": "schemas/image-ocr-settings.v1.schema.json",
+      "bytes": 1390,
+      "sha256": "c7854daf612e1d022b2d67bc5ca1ba7ed98c952cc500f451e3ab92d0371e8d2b"
+    },
+    {
+      "path": "schemas/image-request.v1.schema.json",
+      "bytes": 2199,
+      "sha256": "2b7402f215ae45c327a1c7bebb232e60e219c2f4bf1ce95e477ae4e5d7c97ba4"
+    }
+  ],
+  "fileCount": 12,
+  "totalBytes": null,
+  "treeSha256": "f0c1653d00217d567200c0f13ba90b6b32192cc64991411d008c63de777f8508",
+  "validation": {
+    "workerDescribe": "passed",
+    "companionDescribe": "passed",
+    "validateOnly": "passed",
+    "offlineReadiness": "passed-no-network",
+    "fakeProvider": "passed-exact-settings",
+    "liveConnectivity": "defined-not-run"
+  },
+  "safety": {
+    "externalProductionApisInvoked": 0,
+    "mineruServiceInvocations": 0,
+    "externalUploads": 0,
+    "credentialValuesPersisted": 0
+  },
+  "pyInstallerVersion": "6.22.2",
+  "registryOnboarding": "NO-GO-until-Core-admission-and-new-authority-checkpoint",
+  "replacesPriorCandidate": false
+}

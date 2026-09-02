@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "knowledge-clipper-retention-policy.v1",
+  "policyId": "isolated-canary-policy",
+  "action": "quarantine",
+  "automatic": false,
+  "minimumTerminalAgeHours": 24,
+  "settingsSnapshot": "project-default-retention-v1",
+  "createdAt": "2026-09-01T00:00:00Z"
+}

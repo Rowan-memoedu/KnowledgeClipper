@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "knowledge-clipper-release-dependency-manifest.v1",
+  "releaseId": "knowledge-clipper-authority-v1.2.37-20260901T063000Z",
+  "releaseRoot": "releases/knowledge-clipper-authority-v1.2.37-20260901T063000Z/win-x64",
+  "files": 404,
+  "bytes": 262238747.0,
+  "treeHashAlgorithm": "sort relative paths ordinal; path TAB bytes TAB lowercase SHA-256; LF; SHA-256 UTF-8",
+  "treeSha256": "973E63B7F876A650D6EF4CFAF6D31F6386510BDE81FB2F096F83C403982CECCC",
+  "keyFiles": [
+    {
+      "path": "contracts/core/v2.7/checkpoints/v2.7.16-20260901T023000Z/checkpoint.json",
+      "bytes": 40803,
+      "sha256": "779F9DCD4E3B13644C4C7FC1DA2A2ED8ECDB8B8759DE07AC42CA0EADF23B19D9"
+    },
+    {
+      "path": "contracts\\v1\\schemas\\common\\artifact.schema.json",
+      "bytes": 3174,
+      "sha256": "14AAA3BA918B201280DF462677C39A373ACDF421C8DA06C1D4A7B6D619DA0E91"
+    },
+    {
+      "path": "contracts\\v1\\schemas\\common\\artifact.schema.json",
+      "bytes": 3174,
+      "sha256": "14AAA3BA918B201280DF462677C39A373ACDF421C8DA06C1D4A7B6D619DA0E91"
+    },
+    {
+      "path": "contracts\\v1\\schemas\\common\\artifact.schema.json",
+      "bytes": 3174,
+      "sha256": "14AAA3BA918B201280DF462677C39A373ACDF421C8DA06C1D4A7B6D619DA0E91"
+    }
+  ],
+  "workerOperations": null,
+  "legacyEntrypointsExcluded": true
+}

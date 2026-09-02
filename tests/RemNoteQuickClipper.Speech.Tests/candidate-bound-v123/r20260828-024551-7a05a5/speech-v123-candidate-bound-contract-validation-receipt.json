@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "speech-v123-candidate-bound-contract-validation.v1",
+  "status": "passed",
+  "completedAtUtc": "2026-08-28T02:48:03.176922+00:00",
+  "candidateReceipt": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\tests\\RemNoteQuickClipper.Speech.Tests\\candidate-bound-v123\\r20260828-024551-7a05a5\\speech-v123-candidate-bound-backend-receipt.json",
+  "candidateReceiptSha256": "147FB07FC0A3BE432D3870145897EC83096C5D133BBFA1CBAE0C2E39A67F5BE3",
+  "fiveLanguage": {
+    "requests": 10,
+    "results": 10,
+    "artifacts": 10,
+    "payloads": 10
+  },
+  "backendValidation": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\tests\\RemNoteQuickClipper.Speech.Tests\\bc\\r024551fc2e\\backend-content-speech-canary-validation-receipt.json",
+  "backendValidationSha256": "A4FE1D3B2E51728115F2908EEE1D9BD90AF839939A3E9C8CF7AB2C83F63CF857",
+  "backendRequests": 10,
+  "backendResults": 10,
+  "backendArtifacts": 8,
+  "backendCancelSignals": 4,
+  "totalRequests": 20,
+  "totalResults": 20,
+  "totalArtifacts": 18,
+  "physicalSpeakerPlayback": false,
+  "oldAiTtsRouteCount": 0
+}

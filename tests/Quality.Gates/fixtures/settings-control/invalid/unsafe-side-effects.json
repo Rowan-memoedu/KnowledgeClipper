@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "knowledge-clipper-settings-control-owner-evidence.v1",
+  "evidenceId": "unsafe-side-effects",
+  "modules": {
+    "anki": { "status": "passed", "evidence": [], "probeMode": "read-only", "mutatingActions": 1, "externalCalls": 1 },
+    "imageOcr": { "status": "passed", "evidence": [], "probeMode": "validate-only", "realUploads": 1 },
+    "speech": { "status": "passed", "evidence": [], "probeMode": "validate-only", "physicalSpeakerInvocations": 1 }
+  }
+}

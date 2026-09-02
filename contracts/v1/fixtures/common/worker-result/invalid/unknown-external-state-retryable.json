@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "request-invalid-001",
+  "operationId": "operation-invalid-001",
+  "taskId": "task-invalid",
+  "runId": "run-invalid",
+  "stageId": "export-remnote",
+  "attemptId": "attempt-001",
+  "worker": { "id": "export.remnote", "version": "1.0.0" },
+  "contractVersion": "1.0.0",
+  "idempotencyKey": "8888888888888888888888888888888888888888888888888888888888888888",
+  "status": "unknown_external_state",
+  "outputs": [],
+  "error": { "code": "effect.commit_unknown", "category": "effect", "retryable": true, "detailsRef": "runs/run-invalid/stages/export-remnote/attempts/attempt-001/error.json" },
+  "startedAt": "2026-08-25T10:00:00Z",
+  "finishedAt": "2026-08-25T10:01:00Z",
+  "warnings": []
+}

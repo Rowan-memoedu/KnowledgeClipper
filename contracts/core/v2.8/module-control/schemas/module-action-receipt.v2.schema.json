@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-module-action-receipt.v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "actionId", "operation", "accepted", "status", "inputRef", "inputSha256", "outputRef", "outputSha256", "catalogSnapshotRef", "catalogSnapshotSha256", "externalWriteCount", "physicalAudio", "automaticRetryAllowed", "idempotencyKey", "completedAt", "error"],
+  "properties": {
+    "schemaVersion": {"const": "knowledge-clipper-module-action-receipt.v2"},
+    "actionId": {"type": "string", "minLength": 1},
+    "operation": {"enum": ["speech.voices", "speech.preview", "remnote.probe", "remnote.discover-target"]},
+    "accepted": {"type": "boolean"},
+    "status": {"enum": ["ready", "conditional", "completed", "failed", "unknown_external_state", "blocked", "degraded"]},
+    "inputRef": {"type": "string"}, "inputSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "outputRef": {"type": ["string", "null"]}, "outputSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "catalogSnapshotRef": {"type": ["string", "null"]}, "catalogSnapshotSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "externalWriteCount": {"const": 0}, "physicalAudio": {"type": "boolean"}, "automaticRetryAllowed": {"const": false},
+    "idempotencyKey": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"}, "completedAt": {"type": "string", "format": "date-time"},
+    "error": {"type": ["object", "null"]}
+  },
+  "allOf": [
+    {"if": {"properties": {"accepted": {"const": true}}}, "then": {"properties": {"outputRef": {"type": "string"}, "outputSha256": {"type": "string"}, "error": {"type": "null"}}}},
+    {"if": {"properties": {"operation": {"const": "speech.preview"}}}, "then": {"properties": {"physicalAudio": {"const": true}}}, "else": {"properties": {"physicalAudio": {"const": false}}}},
+    {"if": {"properties": {"operation": {"const": "remnote.discover-target"}}}, "then": {"properties": {"physicalAudio": {"const": false}, "automaticRetryAllowed": {"const": false}, "externalWriteCount": {"const": 0}}}}
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "ocr_proofreading:item-ocr-missing": {
+      "proofread_text": "Question: What process converts light energy into chemical energy?\n\nAnswer: PHOTOSYNTHESIS.\n\nCopyright Example\n",
+      "corrections": [
+        {
+          "segment_index": 1,
+          "operation": "insertion",
+          "start": 15,
+          "end": 15,
+          "before": "",
+          "after": "N",
+          "confidence": 0.98,
+          "evidence_type": "lexical_context",
+          "evidence": "The question asks for the established process converting light to chemical energy; the OCR token is missing one internal letter and has a unique contextual completion."
+        }
+      ],
+      "unresolved": []
+    },
+    "cleaning:item-ocr-missing": {
+      "cleaned_text": "Question: What process converts light energy into chemical energy?\n\nAnswer: PHOTOSYNTHESIS.",
+      "removed_fragments": [
+        {
+          "segment_index": 2,
+          "exact_text": "Copyright Example",
+          "occurrence": 0,
+          "reason": "site_footer",
+          "evidence": "Independent copyright footer"
+        }
+      ],
+      "format_anomalies": []
+    },
+    "classification:item-ocr-missing": {
+      "units": [
+        {
+          "unit_id": "unit-ocr-missing",
+          "source_segment_indexes": [0, 1],
+          "category_id": "question_answer",
+          "subtype": "factual_question",
+          "answer_state": "provided",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "question": "What process converts light energy into chemical energy?",
+          "supplied_answer": "PHOTOSYNTHESIS.",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "card_generation:item-ocr-missing:unit-ocr-missing": {
+      "generated_content": [],
+      "cards": [
+        {
+          "template": "basic_qa",
+          "front_blocks": [{ "type": "text", "text": "What process converts light energy into chemical energy?", "provenance": "source" }],
+          "back_blocks": [{ "type": "text", "text": "PHOTOSYNTHESIS.", "provenance": "source" }],
+          "answer_provenance": "source"
+        }
+      ],
+      "unresolved_reasons": []
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "schemaVersion": "1.0.0",
+  "queryId": "desktop-query-0001",
+  "type": "task.query_recent",
+  "limit": 10
+}

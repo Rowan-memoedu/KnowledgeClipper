@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "knowledge-clipper-question-native-keyboard-journey.v1",
+  "happyPath": {
+    "process": "KnowledgeClipper.exe",
+    "transport": "NamedPipe",
+    "inputMethod": "native-keyboard",
+    "actions": [
+      { "action": "question.submit", "key": "Enter", "taskId": "task-question-001", "queryRecent": false },
+      { "action": "answer.ready", "taskId": "task-question-001", "artifactRef": "question.answer.text.001", "queryRecent": false },
+      { "action": "question.follow-up", "key": "Enter", "taskId": "task-question-001", "queryRecent": false },
+      { "action": "answer.ready", "taskId": "task-question-001", "artifactRef": "question.answer.text.002", "queryRecent": false },
+      { "action": "question.make-cards", "taskId": "task-question-001", "queryRecent": false }
+    ]
+  },
+  "unresolvedPath": {
+    "actions": [
+      { "action": "question.submit", "key": "Enter", "taskId": "task-question-002" },
+      { "action": "answer.ready", "taskId": "task-question-002" },
+      { "action": "question.follow-up", "key": "Enter", "taskId": "task-question-002" }
+    ],
+    "terminal": { "state": "attention_required", "loading": false, "reasonCode": "question.followup.unresolved" }
+  }
+}

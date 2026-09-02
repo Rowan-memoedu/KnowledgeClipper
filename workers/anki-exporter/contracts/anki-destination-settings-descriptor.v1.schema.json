@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./anki-destination-settings-descriptor.v1.schema.json",
+  "title": "KnowledgeClipper Anki destination settings descriptor v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "descriptorVersion", "destinationId", "displayName", "optional", "supportsMultipleInstances", "instanceModel", "enablement", "workerBinding", "configBinding", "fields", "capabilities", "operations", "tests", "statusOutput", "secretRefs"],
+  "properties": {
+    "schemaVersion": {"const": "knowledge-clipper.destination-settings-descriptor.v1"},
+    "descriptorVersion": {"const": "1.1.0"},
+    "destinationId": {"const": "anki"},
+    "displayName": {"const": "Anki"},
+    "optional": {"const": true},
+    "supportsMultipleInstances": {"const": false},
+    "instanceModel": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "fixedInstanceId", "multipleInstancesDeferred"],
+      "properties": {"mode": {"const": "single"}, "fixedInstanceId": {"const": "default"}, "multipleInstancesDeferred": {"const": true}}
+    },
+    "enablement": {
+      "type": "object", "additionalProperties": false,
+      "required": ["userSetting", "activation", "registryEnabledByDefaultMeans", "registryDoesNotEnableDestination"],
+      "properties": {"userSetting": {"const": "enabled"}, "activation": {"const": "next-task"}, "registryEnabledByDefaultMeans": {"const": "worker-available"}, "registryDoesNotEnableDestination": {"const": true}}
+    },
+    "workerBinding": {
+      "type": "object", "additionalProperties": false, "required": ["workerId", "minimumVersion"],
+      "properties": {"workerId": {"const": "export.anki"}, "minimumVersion": {"const": "1.2.1"}}
+    },
+    "configBinding": {
+      "type": "object", "additionalProperties": false, "required": ["artifactKind", "configSchemaVersion", "dataClass", "configSnapshotPolicy"],
+      "properties": {
+        "artifactKind": {"const": "anki-export-config"},
+        "configSchemaVersion": {"const": "anki-export-config.v1"},
+        "dataClass": {"const": "personal"},
+        "configSnapshotPolicy": {"const": "artifact-identity-only"}
+      }
+    },
+    "fields": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/field"}},
+    "capabilities": {"type": "object"},
+    "operations": {
+      "type": "object", "additionalProperties": false,
+      "required": ["validate", "probe", "export", "initializeManaged"],
+      "properties": {
+        "validate": {"$ref": "#/$defs/operation"},
+        "probe": {"$ref": "#/$defs/operation"},
+        "export": {"$ref": "#/$defs/operation"},
+        "initializeManaged": {"$ref": "#/$defs/operation"}
+      }
+    },
+    "tests": {
+      "type": "object", "additionalProperties": false,
+      "required": ["validateConfiguration", "probeConnection"],
+      "properties": {"validateConfiguration": {"$ref": "#/$defs/testAction"}, "probeConnection": {"$ref": "#/$defs/testAction"}}
+    },
+    "statusOutput": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "dataClass", "redaction"],
+      "properties": {"schemaVersion": {"const": "anki-connection-status.v1"}, "dataClass": {"const": "personal"}, "redaction": {"const": "sha256-profile-model-deck-identifiers"}}
+    },
+    "secretRefs": {"const": []}
+  },
+  "$defs": {
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "tier", "authority", "valueType", "required", "default", "secretRefAllowed", "activation", "taskMapping", "restartRequired"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "tier": {"enum": ["common", "advanced", "diagnostic"]},
+        "authority": {"enum": ["user", "deployment", "readonly"]},
+        "valueType": {"type": "string", "minLength": 1},
+        "required": {"type": "boolean"},
+        "default": {},
+        "secretRefAllowed": {"const": false},
+        "activation": {"enum": ["next-task", "immediate-readonly", "migration-required", "explicit-initialization-action"]},
+        "taskMapping": {"type": ["string", "null"]},
+        "restartRequired": {"const": false}
+      }
+    },
+    "operation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["effectClass", "networkScope", "externalMutation", "localArtifactWrite", "mayPromptUser", "allowedActions"],
+      "properties": {
+        "effectClass": {"enum": ["local-read-only", "provider-read-only", "provider-write"]},
+        "networkScope": {"enum": ["none", "loopback-only"]},
+        "externalMutation": {"type": "boolean"},
+        "localArtifactWrite": {"type": "boolean"},
+        "mayPromptUser": {"type": "boolean"},
+        "allowedActions": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "workerOperation": {"type": "boolean"}
+      }
+    },
+    "testAction": {
+      "type": "object", "additionalProperties": false,
+      "required": ["operation", "effectClass", "providerInteraction", "externalMutation", "localArtifactWrite", "mayPromptUser", "executionPolicy"],
+      "properties": {
+        "operation": {"enum": ["validate", "probe"]},
+        "effectClass": {"enum": ["local-read-only", "provider-read-only"]},
+        "providerInteraction": {"enum": ["none", "loopback-read-only"]},
+        "externalMutation": {"const": false}
+        ,"localArtifactWrite": {"const": true}
+        ,"mayPromptUser": {"type": "boolean"}
+        ,"executionPolicy": {"enum": ["automatic-safe", "explicit-user-action"]}
+      }
+    }
+  }
+}

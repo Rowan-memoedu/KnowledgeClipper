@@ -1,0 +1,267 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-checkpoint.v1",
+  "checkpointId": "knowledge-clipper-authority-1.2.24-20260901T011500Z",
+  "generatedAt": "2026-09-01T00:58:55.4920223+00:00",
+  "admissionStatus": "authority-admitted",
+  "frozenV1": {
+    "receipt": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\receipts\\contracts-v1-stable-checkpoint-20260825T115938Z.json",
+    "files": 21,
+    "mismatches": 0,
+    "sha256": "1CB738FE133F6645B9757E246E2FBC210785086342F70BAD32B5015BD19E1B1E"
+  },
+  "registry": {
+    "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.24-20260901T010500Z\\worker-registry.v1.json",
+    "registryVersion": "1.2.24",
+    "workers": 5,
+    "sha256": "CB9F3291625CB6E7309AA3F677CE783FC713A18B54C29F65A553AA590C8187D7"
+  },
+  "release": {
+    "root": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\releases\\knowledge-clipper-authority-v1.2.24-20260901T010500Z\\win-x64",
+    "files": 562,
+    "bytes": 268030359.0,
+    "treeSha256": "F4BDB96A4A327870039E7B48DF7255EBAD1E437D8E37214D001448B67E210541",
+    "dependencyManifest": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.24-20260901T010500Z\\dependency-manifest.v1.json",
+    "dependencyManifestSha256": "E293C91FE4DE80F672B8D947E6BE0DBAC323DF35B17EAFD1491115F2EAB0075C"
+  },
+  "validation": {
+    "command": "KnowledgeClipper.Orchestrator.exe validate-registry",
+    "exitCode": 0,
+    "status": "valid",
+    "workers": 5
+  },
+  "workers": [
+    {
+      "workerId": "image.ocr.mineru",
+      "workerVersion": "1.2.4",
+      "entrypoint": "workers/image-ocr/KnowledgeClipper.ImageOcr.Worker.exe",
+      "bytes": 10321664,
+      "sha256": "2E0C8D2ED9741FDBC9F482330EB4181719A5877F425145FEE8672CD119C86AC4",
+      "stages": [
+        "image-ocr"
+      ],
+      "inputKinds": [
+        "capture-bundle"
+      ],
+      "outputKinds": [
+        "image.original",
+        "image.original.bundle",
+        "image-ocr.markdown",
+        "image-ocr.structured",
+        "image-ocr.image",
+        "image.processing.provenance"
+      ],
+      "operations": "image-ocr",
+      "describeSnapshot": {
+        "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.24-20260901T010500Z\\describe\\image.ocr.mineru.describe.json",
+        "bytes": 555,
+        "sha256": "48DF2EE775F91C309A5466E2AB3846C13BB7AB4F24BCD4D20652DF285D7FF6C7"
+      }
+    },
+    {
+      "workerId": "content.deepseek",
+      "workerVersion": "0.9.1",
+      "entrypoint": "workers/content/KnowledgeClipper.Content.Worker.exe",
+      "bytes": 67490988,
+      "sha256": "F6EC35798F8948727B8664517FDBB096DB8A94C8DD079F612B05BAC4EA72D3B8",
+      "stages": [
+        "content.understand-and-card"
+      ],
+      "inputKinds": [
+        "content-input",
+        "content-config-snapshot"
+      ],
+      "outputKinds": [
+        "ocr-proofread-bundle",
+        "ocr-human-resolution-bundle",
+        "learning-bundle",
+        "card-bundle",
+        "language-practice-decision",
+        "question.answer"
+      ],
+      "operations": [
+        "understand-and-card",
+        "question.answer",
+        "question.make-cards"
+      ],
+      "describeSnapshot": {
+        "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.24-20260901T010500Z\\describe\\content.deepseek.describe.json",
+        "bytes": 592,
+        "sha256": "F9433DD65401A09A82DDB3C4FA5F475C463DF155D6959CF9C57423F5C5D619D2"
+      }
+    },
+    {
+      "workerId": "speech.edge",
+      "workerVersion": "1.2.5",
+      "entrypoint": "workers/speech/KnowledgeClipper.Speech.Worker.exe",
+      "bytes": 138240,
+      "sha256": "B7C28DB9AE2DFF94DB09CD0BBCA5BA95BECFF08C9ABD03B5D906B8834CCAC85C",
+      "stages": [
+        "speech.synthesize",
+        "speech.playback"
+      ],
+      "inputKinds": [
+        "text.spoken",
+        "audio.speech"
+      ],
+      "outputKinds": [
+        "audio.speech"
+      ],
+      "operations": [
+        "speech.synthesize",
+        "speech.playback"
+      ],
+      "describeSnapshot": {
+        "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.24-20260901T010500Z\\describe\\speech.edge.describe.json",
+        "bytes": 463,
+        "sha256": "B15B91F37AF221C804AAE6999F15AD7401C5A5550280A18A9BF56D58CE8C3346"
+      }
+    },
+    {
+      "workerId": "export.remnote",
+      "workerVersion": "2.2.0",
+      "entrypoint": "workers/remnote/KnowledgeClipper.RemNoteExporter.Worker.exe",
+      "bytes": 146432,
+      "sha256": "7BC0931CAD917302CE03426E7B6DA206DA15552A1C3D7CC80679815CBA4FBC63",
+      "stages": [
+        "export-remnote"
+      ],
+      "inputKinds": [
+        "learning.bundle",
+        "card.bundle"
+      ],
+      "outputKinds": [
+        "remnote.write-receipt",
+        "remnote.import-package"
+      ],
+      "operations": "remnote.export",
+      "describeSnapshot": {
+        "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.24-20260901T010500Z\\describe\\export.remnote.describe.json",
+        "bytes": 487,
+        "sha256": "D673CB41B189E1ADCB25B972D50F00C42F06FC1765364424EE46783A09B6A53B"
+      }
+    },
+    {
+      "workerId": "export.anki",
+      "workerVersion": "1.3.2",
+      "entrypoint": "workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe",
+      "bytes": 10222864,
+      "sha256": "473007F52678A5233AE6023D52BC0C6D3F28452C00244DEDAFB88131714346F3",
+      "stages": [
+        "anki-export"
+      ],
+      "inputKinds": [
+        "card-bundle",
+        "learning-bundle",
+        "anki-export-config"
+      ],
+      "outputKinds": [
+        "anki-export-evidence",
+        "anki-connection-status"
+      ],
+      "operations": "export",
+      "describeSnapshot": {
+        "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.24-20260901T010500Z\\describe\\export.anki.describe.json",
+        "bytes": 501,
+        "sha256": "118E6928B4C0AFBFBC9A3657438B3C1466E3413032541470070408EDE158CFF7"
+      }
+    }
+  ],
+  "coreWorkflow": {
+    "checkpointId": "core-workflows-v2.3.0-20260828T030800Z",
+    "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\core-workflows\\v2.3.0-20260828T030800Z\\checkpoint.json",
+    "sha256": "483385EF31F990FD67D6FFFC8A4B7ED9186912C1B417A3F1156D71FABEA4F26A",
+    "ipcProtocolVersion": "1.1",
+    "receiptSchemaVersion": "2.3.0",
+    "publicContracts": 5
+  },
+  "coreSettings": {
+    "schemaVersion": "knowledge-clipper-core-integration-checkpoint.v2",
+    "checkpointVersion": "2.7.10",
+    "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\core\\v2.7\\checkpoints\\v2.7.10-20260901T010000Z\\checkpoint.json",
+    "sha256": "EB46B286C3B569BA40016241BB032D694084D59E0A95AF4959FDC297F68EF052",
+    "coreVersion": "2.7.6",
+    "coreExecutableSha256": "01A42AA7B2D79DF2A5CBBE10C26F4A09900D08EE9122E505C8FFEBF42DD46AAF",
+    "treeFileCount": 114,
+    "treeTotalBytes": 1294247,
+    "treeSha256": "78a79fb47ef7475a4787d56b0959b87298276f7fe762713946ad90a8383cfbf9",
+    "validation": {
+      "contracts": {
+        "schemaVersion": "knowledge-clipper-public-contract-validation-receipt.v1",
+        "status": "passed",
+        "schemasChecked": 73,
+        "validFixturesAccepted": 76,
+        "invalidFixturesRejected": 62,
+        "frozenV1Modified": false,
+        "raw": "{\"schemaVersion\": \"1.0.0\", \"schemasChecked\": 73, \"validFixturesAccepted\": 76, \"invalidFixturesRejected\": 62, \"authoritativeRegistryEntries\": 0, \"workerCliDescriptorChecked\": true, \"speechEdgeRegistryState\": \"authority-pending\", \"imageOcrRegistryState\": \"authority-pending\", \"ipcFramingChecked\": true, \"stageControlIpcVersion\": \"1.1\", \"stageControlReceiptVersion\": \"2.3.0\", \"coreAdapterContractVersion\": \"2.0.0\", \"dynamicPipelineSchemaVersion\": \"2.0.0\", \"productIdentity\": \"knowledge-clipper\", \"destinationNeutral\": true}"
+      },
+      "settings": {
+        "path": "canary/core-v2.7.6-offline/20260901T000500Z/settings-control.receipt.json",
+        "sha256": "577EF6204C17076EFD97D4ED49EAB5B64FD6E7D843E072006D2A3F2B1AB30332",
+        "status": "passed",
+        "externalCalls": 0,
+        "physicalSpeakerInvocations": 0
+      },
+      "coreAdapter": {
+        "path": "canary/core-v2.7.6-offline/20260901T000500Z/core-adapter.receipt.json",
+        "sha256": "5CD756C75DA62DF96BDD76D7AABE0E83DB578E973E260DC0090530BAF7D29414",
+        "status": "passed",
+        "groups": 15,
+        "ocrHumanResolutionDirectMarkdownAncestry": true
+      },
+      "orchestrator": {
+        "path": "canary/core-v2.7.6-offline/20260901T000500Z/orchestrator-contract-tests.receipt.json",
+        "sha256": "EFC8629578DAFFDB4E117650E1351253A9EFB50BC52AB0C224EA82C7D3195735",
+        "status": "passed",
+        "tests": 23
+      },
+      "questionWorkflow": {
+        "path": "canary/core-v2.7.6-offline/20260901T000500Z/question-workflow.receipt.json",
+        "sha256": "E153996383DF4C56499A3D93B8C59B9E1DCA98D6B6607D0BD45E0654B6DAAD86",
+        "status": "passed",
+        "initialWrites": 0,
+        "followUpWrites": 0,
+        "makeCardsWrites": 1,
+        "replayWrites": 0,
+        "missingConfigFailClosed": true,
+        "driftFailClosed": true
+      },
+      "productionRetention": {
+        "status": "disabled-fail-closed",
+        "legacyStartupInvocations": 0,
+        "stateAwareRetentionService": "implemented-offline-explicit-service",
+        "automaticProductionInvocation": "disabled"
+      }
+    },
+    "authorityBoundary": {
+      "currentAuthority": "1.2.23",
+      "intendedAuthority": "1.2.24",
+      "promotion": "pending-append-only-authority-assembly"
+    }
+  },
+  "assemblyPathGate": null,
+  "runtimeGates": {
+    "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\canary\\core-authority-v1.2.24\\20260901T011000Z\\runtime-gates.json",
+    "sha256": "887795A115E9BCCCCFA425ABFC4A808AB96DFEDC157082B67CC8D7A90EDC5F98",
+    "status": "passed",
+    "protocol10": {
+      "taskQuery": "passed",
+      "taskCommand": "passed"
+    },
+    "protocol11": {
+      "stageControl": "passed",
+      "receiptSchemaVersion": "2.3.0"
+    },
+    "dependencyDriftRejected": true,
+    "workerRunInvocations": 0,
+    "physicalSpeakerInvocations": 0,
+    "externalWrites": 0
+  },
+  "supersedes": {
+    "checkpointId": "knowledge-clipper-authority-1.2.23-20260831T113000Z",
+    "registryVersion": "1.2.23",
+    "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.23-20260831T112000Z\\checkpoint.json",
+    "sha256": "F696B3C898FAB11BDEE3D0AFE2A40D417B37CE7BAC280F5BB8E16C9427F588E9",
+    "immutable": true
+  },
+  "caveat": null
+}

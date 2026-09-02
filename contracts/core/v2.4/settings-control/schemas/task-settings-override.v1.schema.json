@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-task-settings-override.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-task-settings-override.v1" },
+    "workflow": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "processingProfile": { "enum": ["learning", "cards"] },
+        "destinations": { "type": "array", "maxItems": 2, "uniqueItems": true, "items": { "enum": ["remnote", "anki"] } }
+      }
+    },
+    "capture": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "contextEnabled": { "type": "boolean" },
+        "contextGranularity": { "enum": ["sentence", "paragraph"] },
+        "imageHandling": { "enum": ["ocr", "original"] }
+      }
+    },
+    "speech": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "voicesByLanguage": { "type": "object", "minProperties": 1, "propertyNames": { "pattern": "^[a-z]{2}-[A-Z]{2}$" }, "additionalProperties": { "type": "string", "minLength": 1 } },
+        "ratePercent": { "type": "integer", "minimum": -100, "maximum": 100 },
+        "volumePercent": { "type": "integer", "minimum": -100, "maximum": 100 },
+        "pitchHz": { "type": "integer", "minimum": -100, "maximum": 100 },
+        "autoPlay": { "type": "boolean" }
+      }
+    },
+    "remnote": { "$ref": "../../../../remnote-destination-settings.v1.schema.json" }
+  }
+}

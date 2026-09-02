@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "quality-v3-private-runner-plan.v1",
+  "runId": "fixture-20260902T050000Z",
+  "runnerSnapshot": {
+    "root": "canary/quality-v3-runner-snapshots/fixture-20260902T050000Z",
+    "treeSha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "manifestSha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "isolation": {
+    "pipeName": "KnowledgeClipper.QualityV3.fixture-20260902T050000Z",
+    "settingsRoot": "canary/runtime/fixture-20260902T050000Z/settings",
+    "jobsRoot": "canary/runtime/fixture-20260902T050000Z/jobs",
+    "tempRoot": "canary/runtime/fixture-20260902T050000Z/temp",
+    "ownedProcessTreeOnly": true,
+    "preexistingProcessesTouched": 0
+  },
+  "commonPreflight": {
+    "failureScope": "global",
+    "checks": ["canonical-manifest", "startup-self-verification", "entrypoints", "isolation"]
+  },
+  "aggregation": { "businessJourneyMode": "independent-collect-all" },
+  "promotionContract": {
+    "emittedEvidenceKeys": ["startup", "namedPipe", "persistence", "artifactParser", "actionLog", "processCleanup", "failFastAssertion"],
+    "acceptedEvidenceKeys": ["startup", "namedPipe", "persistence", "artifactParser", "actionLog", "processCleanup", "failFastAssertion"]
+  },
+  "journeys": [
+    {
+      "id": "anki-probe",
+      "failureScope": "journey-only",
+      "uiContract": { "assertions": ["discoverable", "invoke-pattern", "action-id-correlated"] },
+      "sideEffectPolicies": [
+        { "provider": "anki", "mode": "live-read-only", "auditor": "independent-proxy-call-log" },
+        { "provider": "remnote", "mode": "disabled", "auditor": "independent-proxy-call-log" },
+        { "provider": "deepseek", "mode": "disabled", "auditor": "independent-proxy-call-log" },
+        { "provider": "mineru", "mode": "disabled", "auditor": "independent-proxy-call-log" }
+      ]
+    },
+    {
+      "id": "question-to-anki",
+      "failureScope": "journey-only",
+      "uiContract": { "assertions": ["discoverable", "invoke-pattern", "action-id-correlated"] },
+      "sideEffectPolicies": [
+        { "provider": "anki", "mode": "live-bounded-write", "auditor": "independent-proxy-call-log" },
+        { "provider": "remnote", "mode": "disabled", "auditor": "independent-proxy-call-log" },
+        { "provider": "deepseek", "mode": "live-compute", "auditor": "independent-proxy-call-log" },
+        { "provider": "mineru", "mode": "disabled", "auditor": "independent-proxy-call-log" }
+      ]
+    }
+  ]
+}

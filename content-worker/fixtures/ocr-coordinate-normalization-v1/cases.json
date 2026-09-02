@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "ocr-coordinate-normalization-fixtures/1.0.0",
+  "ordinaryTextDeleteOnly": {
+    "source": "Ordinary prose must stay exact.",
+    "invalidCleanedText": "Ordinary prose should stay exact."
+  },
+  "cases": [
+    {
+      "id": "unique-misaligned",
+      "source": "Status: ALPH.",
+      "response": {
+        "proofread_text": "Status: ALPHA.",
+        "corrections": [{
+          "segment_index": 0,
+          "operation": "substitution",
+          "start": 0,
+          "end": 4,
+          "before": "ALPH",
+          "after": "ALPHA",
+          "confidence": 0.98,
+          "evidence_type": "lexical_context",
+          "evidence": "The surrounding sentence supports one plausible completion."
+        }],
+        "unresolved": []
+      },
+      "expectedLocalization": "unique_relocated",
+      "expectedRanges": [{ "start": 8, "end": 12 }],
+      "expectedUnresolvedCount": 1
+    },
+    {
+      "id": "multiple-matches",
+      "source": "CODE appears twice: CODE.",
+      "response": {
+        "proofread_text": "CODES appears twice: CODE.",
+        "corrections": [{
+          "segment_index": 0,
+          "operation": "substitution",
+          "start": 5,
+          "end": 9,
+          "before": "CODE",
+          "after": "CODES",
+          "confidence": 0.98,
+          "evidence_type": "document_context",
+          "evidence": "One occurrence may need a suffix, but the coordinate does not identify which one."
+        }],
+        "unresolved": []
+      },
+      "expectedLocalization": "multiple_matches",
+      "expectedRanges": [{ "start": 0, "end": 4 }, { "start": 20, "end": 24 }],
+      "expectedUnresolvedCount": 2
+    },
+    {
+      "id": "no-match",
+      "source": "Result token: ZETA.",
+      "response": {
+        "proofread_text": "Result token: ZETA.",
+        "corrections": [{
+          "segment_index": 0,
+          "operation": "substitution",
+          "start": 0,
+          "end": 4,
+          "before": "BETA",
+          "after": "BETAS",
+          "confidence": 0.98,
+          "evidence_type": "lexical_context",
+          "evidence": "The proposed token is absent from the declared segment."
+        }],
+        "unresolved": []
+      },
+      "expectedLocalization": "no_match",
+      "expectedRanges": [{ "start": 0, "end": 19 }],
+      "expectedUnresolvedCount": 1
+    },
+    {
+      "id": "malicious-out-of-bounds",
+      "source": "Header: VECTOR.",
+      "response": {
+        "proofread_text": "Header: VECTORS.",
+        "corrections": [{
+          "segment_index": 0,
+          "operation": "substitution",
+          "start": 999,
+          "end": 1005,
+          "before": "VECTOR",
+          "after": "VECTORS",
+          "confidence": 0.99,
+          "evidence_type": "document_context",
+          "evidence": "The model supplied an impossible range."
+        }],
+        "unresolved": []
+      },
+      "expectedLocalization": "unique_relocated",
+      "expectedRanges": [{ "start": 8, "end": 14 }],
+      "expectedUnresolvedCount": 1
+    }
+  ]
+}

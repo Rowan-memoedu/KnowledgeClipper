@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "RemNoteQuickClipper.Content.Worker/1.0.0": {
+        "runtime": {
+          "RemNoteQuickClipper.Content.Worker.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "RemNoteQuickClipper.Content.Worker/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

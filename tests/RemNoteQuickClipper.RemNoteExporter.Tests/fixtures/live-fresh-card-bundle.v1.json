@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "card-bundle.v1",
+  "bundleId": "cards-remnote-live-fresh-20260826-v1",
+  "cards": [
+    {
+      "cardId": "fresh-canary-card-1",
+      "cardType": "basic",
+      "direction": "forward",
+      "front": "RemNote 隔离写入 Canary：本轮首次写入标识",
+      "back": "fresh-write-20260826-v1"
+    },
+    {
+      "cardId": "fresh-canary-card-2",
+      "cardType": "basic",
+      "direction": "forward",
+      "front": "RemNote 隔离写入 Canary：幂等重放应新增几份？",
+      "back": "0 份；复用同一 document"
+    }
+  ]
+}

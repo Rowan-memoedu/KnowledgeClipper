@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-ocr-capability-config-descriptor.v5.schema.json",
+  "title": "KnowledgeClipper image/OCR capability config descriptor v5",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "moduleId", "companionVersion", "workerBinding", "capabilities", "actions", "readOnlyFacts", "statusSemantics"],
+  "properties": {
+    "schemaVersion": {"const": "image-ocr-capability-config-descriptor.v5"},
+    "moduleId": {"const": "image-ocr"},
+    "companionVersion": {"const": "1.3.0"},
+    "workerBinding": {"$ref": "#/$defs/workerBinding"},
+    "capabilities": {"type": "array", "minItems": 15, "items": {"$ref": "#/$defs/capability"}},
+    "actions": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/$defs/action"}},
+    "readOnlyFacts": {
+      "type": "object",
+      "required": ["provider", "workerId", "workerVersion", "credentialBridge", "provenance", "limits", "retention"]
+    },
+    "statusSemantics": {
+      "type": "object",
+      "required": ["staticDescriptorContainsRuntimeState", "realtimeStatusSchemaVersion", "realtimeCredentialFields", "secretValueProhibited"]
+    }
+  },
+  "$defs": {
+    "workerBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workerId", "workerVersionRange", "contractVersionRange"],
+      "properties": {
+        "workerId": {"const": "image.ocr.mineru"},
+        "workerVersionRange": {"type": "string"},
+        "contractVersionRange": {"type": "string"}
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capabilityId", "moduleId", "workerBinding", "display", "controlKind", "scope", "valueSchema", "sensitivity", "effectiveAt", "snapshotBinding", "availability", "compatibility", "sideEffects", "statusProbe"],
+      "properties": {
+        "capabilityId": {"type": "string", "pattern": "^image\\."},
+        "moduleId": {"const": "image-ocr"},
+        "workerBinding": {"$ref": "#/$defs/workerBinding"},
+        "display": {"type": "object"},
+        "controlKind": {"type": "string"},
+        "scope": {"type": "string"},
+        "valueSchema": {"type": "object"},
+        "defaultValue": {},
+        "sensitivity": {"type": "string"},
+        "effectiveAt": {"type": "string"},
+        "snapshotBinding": {"type": ["object", "null"]},
+        "availability": {"type": "object", "required": ["state"]},
+        "compatibility": {"type": "object"},
+        "sideEffects": {"type": "object", "required": ["externalUpload", "localWrite", "requiresConsent"]},
+        "statusProbe": {"type": ["object", "null"]}
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actionId", "title", "kind", "availability", "invocation", "networkAccess", "executionPolicy", "resultSchemaVersion", "sideEffects", "secretValueProhibited"],
+      "properties": {
+        "actionId": {"enum": ["image.ocr.status.offline-readiness", "image.ocr.test.validate-only", "image.ocr.test.offline-fake-provider", "image.ocr.test.live-connectivity"]},
+        "title": {"type": "string"},
+        "kind": {"type": "string"},
+        "availability": {"type": "object", "required": ["state"]},
+        "invocation": {"type": "object", "required": ["protocol", "executable", "argumentsTemplate"]},
+        "networkAccess": {"enum": ["prohibited", "required"]},
+        "executionPolicy": {"type": "string"},
+        "resultSchemaVersion": {"enum": ["image-ocr-capability-status.v3", "image-ocr-companion-validate-result.v3", "image-ocr-companion-test-result.v3"]},
+        "sideEffects": {"type": "object", "required": ["externalUpload", "localWrite", "requiresConsent"]},
+        "secretValueProhibited": {"const": true}
+      }
+    }
+  }
+}

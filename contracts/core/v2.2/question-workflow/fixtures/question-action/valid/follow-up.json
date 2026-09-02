@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "knowledge-clipper-question-action.v2",
+  "action": "question.follow-up",
+  "targetToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "turnIndex": 1,
+  "questionTurnRef": {
+    "artifactRef": "question.turn.0002",
+    "kind": "question.turn",
+    "contractVersion": "1.0.0",
+    "manifestPath": "commands/command-2/question-turn/artifact.json",
+    "expectedSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  }
+}

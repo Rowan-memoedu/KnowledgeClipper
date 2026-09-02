@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>QualityV3.CorePhase2OutputRoles.ForbiddenConsumer</AssemblyName>
+  </PropertyGroup>
+  <Target Name="RequirePhase2ReleaseRoot" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(Phase2ReleaseRoot)' == ''" Text="Phase2ReleaseRoot must point to an immutable Core v3 Phase 2 release." />
+  </Target>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Reference Include="KnowledgeClipper.Core.V3.Client">
+      <HintPath>$(Phase2ReleaseRoot)\artifacts\net8.0\KnowledgeClipper.Core.V3.Client.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

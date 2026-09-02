@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "knowledgeclipper://contracts/remnote-public-probe-result.v2",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "probeId", "destination", "worker", "state", "admission", "timeoutMs", "externalCall", "externalCallCount", "externalWriteCount", "connection", "targetBinding", "routeCapabilities", "fixedSemantics", "toolChecks", "reasonCodes", "sanitized", "generatedAt"],
+  "properties": {
+    "schemaVersion": { "const": "remnote-public-probe-result.v2" }, "probeId": { "type": "string", "minLength": 1 },
+    "destination": { "const": { "type": "remnote", "optional": true, "peerDestinationTypes": ["anki"] } },
+    "worker": { "type": "object", "additionalProperties": false, "required": ["id", "version", "contractVersion"], "properties": { "id": { "const": "export.remnote" }, "version": { "type": "string" }, "contractVersion": { "const": "1.0.0" } } },
+    "state": { "enum": ["healthy", "degraded", "blocked"] }, "admission": { "enum": ["ready", "blocked"] }, "timeoutMs": { "const": 15000 }, "externalCall": { "const": true }, "externalCallCount": { "type": "integer", "minimum": 1 }, "externalWriteCount": { "const": 0 },
+    "connection": { "type": "object", "additionalProperties": false, "required": ["connected", "acceptWriteOperations", "serverVersion", "pluginVersion", "endpointClass"], "properties": { "connected": { "type": ["boolean", "null"] }, "acceptWriteOperations": { "type": ["boolean", "null"] }, "serverVersion": { "type": ["string", "null"] }, "pluginVersion": { "type": ["string", "null"] }, "endpointClass": { "const": "loopback-local" } } },
+    "targetBinding": { "type": "object", "additionalProperties": false, "required": ["authority", "authorizationScope", "rootRemId", "expectedTitle", "observedTitle", "expectedType", "observedType", "matched", "rootTitleRole", "changeEffectiveAt"], "properties": { "authority": { "const": "rootRemId+exact-readback" }, "authorizationScope": { "enum": ["configured-destination", "isolated-canary"] }, "rootRemId": { "type": "string" }, "expectedTitle": { "type": "string" }, "observedTitle": { "type": ["string", "null"] }, "expectedType": { "const": "document" }, "observedType": { "type": ["string", "null"] }, "matched": { "type": "boolean" }, "rootTitleRole": { "const": "readback-only-not-authority" }, "changeEffectiveAt": { "const": "next-task" } } },
+    "routeCapabilities": {
+      "type": "object", "additionalProperties": false, "required": ["clip", "cards", "originalMedia"],
+      "properties": {
+        "clip": { "type": "object", "additionalProperties": false, "required": ["kind", "supported", "timeZone", "dateFormat", "preflight"], "properties": { "kind": { "const": "clip-daily-route" }, "supported": { "const": true }, "timeZone": { "const": "Asia/Shanghai" }, "dateFormat": { "const": "yyyy-MM-dd" }, "preflight": { "enum": ["ready", "blocked"] } } },
+        "cards": { "type": "object", "additionalProperties": false, "required": ["kind", "supported", "dateRouting"], "properties": { "kind": { "const": "card-export" }, "supported": { "const": true }, "dateRouting": { "const": false } } },
+        "originalMedia": { "type": "object", "additionalProperties": false, "required": ["contractVersion", "readCapability", "writeCapability", "status", "reasonCode"], "properties": { "contractVersion": { "const": "remnote-original-media.v2" }, "readCapability": { "const": "media.images.v1" }, "writeCapability": { "type": "null" }, "status": { "const": "unsupported" }, "reasonCode": { "const": "mcp.media_write_unavailable" } } }
+      }
+    },
+    "fixedSemantics": { "type": "object", "additionalProperties": false, "required": ["readback", "idempotency", "unknownExternalStateRetry", "automaticRetryAllowed"], "properties": { "readback": { "const": "exact" }, "idempotency": { "const": "reconcilable" }, "unknownExternalStateRetry": { "const": "manual-only" }, "automaticRetryAllowed": { "const": false } } },
+    "toolChecks": { "type": "array", "minItems": 4, "items": { "type": "object", "additionalProperties": false, "required": ["operation", "outcome", "durationMs", "reasonCode"], "properties": { "operation": { "enum": ["status", "search", "list", "read"] }, "outcome": { "enum": ["passed", "timeout", "failed", "not_run"] }, "durationMs": { "type": "integer", "minimum": 0 }, "reasonCode": { "type": "string", "minLength": 1 } } } },
+    "reasonCodes": { "type": "array", "items": { "type": "string", "minLength": 1 } }, "sanitized": { "const": true }, "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    { "if": { "properties": { "state": { "const": "healthy" } } }, "then": { "properties": { "admission": { "const": "ready" }, "connection": { "properties": { "connected": { "const": true }, "acceptWriteOperations": { "const": true } } }, "targetBinding": { "properties": { "matched": { "const": true }, "observedType": { "const": "document" } } }, "routeCapabilities": { "properties": { "clip": { "properties": { "preflight": { "const": "ready" } } } } }, "reasonCodes": { "const": [] } } } },
+    { "if": { "properties": { "state": { "enum": ["degraded", "blocked"] } } }, "then": { "properties": { "admission": { "const": "blocked" } } } }
+  ]
+}

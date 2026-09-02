@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "knowledge-clipper-quality-evidence-levels.v1",
+  "levels": [
+    { "id": "unit-contract", "proves": "isolated code and public contract behavior", "mayEnableUserHandTestEntrypoint": false },
+    { "id": "synthetic-component", "proves": "in-process UI or fake-provider component behavior", "mayEnableUserHandTestEntrypoint": false },
+    { "id": "production-shape", "proves": "real production-shaped artifacts and state traces against the gate", "mayEnableUserHandTestEntrypoint": false },
+    { "id": "sealed-candidate-process-stateful", "proves": "the exact sealed Desktop and embedded Orchestrator processes with Named Pipe, real isolated persistence, production artifact parsing and sequential input", "mayEnableUserHandTestEntrypoint": true },
+    { "id": "external-live", "proves": "explicitly authorized provider or destination behavior; does not replace sealed candidate stateful acceptance", "mayEnableUserHandTestEntrypoint": false }
+  ]
+}

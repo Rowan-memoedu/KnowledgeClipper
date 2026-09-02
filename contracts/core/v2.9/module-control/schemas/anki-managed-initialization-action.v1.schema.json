@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "anki-managed-initialization-action.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "workerId", "workerVersion", "packageRootRef", "taskManifestRef", "taskManifestSha256", "requestRef", "requestSha256", "configManifestRef", "configManifestSha256", "configPayloadRef", "configPayloadSha256", "authorization"],
+  "properties": {
+    "schemaVersion": {"const": "anki-managed-initialization-action.v1"},
+    "workerId": {"const": "export.anki"},
+    "workerVersion": {"const": "1.4.0"},
+    "packageRootRef": {"type": "string", "pattern": "^module-actions/[A-Za-z0-9][A-Za-z0-9._-]{0,127}/package$"},
+    "taskManifestRef": {"type": "string", "pattern": "^module-actions/[A-Za-z0-9][A-Za-z0-9._-]{0,127}/package/task\\.manifest\\.v1\\.json$"},
+    "taskManifestSha256": {"$ref": "#/$defs/sha256"},
+    "requestRef": {"type": "string", "pattern": "^module-actions/[A-Za-z0-9][A-Za-z0-9._-]{0,127}/package/runs/[A-Za-z0-9._-]+/stages/anki-export/attempts/[A-Za-z0-9._-]+/request\\.json$"},
+    "requestSha256": {"$ref": "#/$defs/sha256"},
+    "configManifestRef": {"type": "string", "pattern": "^module-actions/[A-Za-z0-9][A-Za-z0-9._-]{0,127}/package/artifacts/[A-Za-z0-9._-]+/artifact\\.json$"},
+    "configManifestSha256": {"$ref": "#/$defs/sha256"},
+    "configPayloadRef": {"type": "string", "pattern": "^module-actions/[A-Za-z0-9][A-Za-z0-9._-]{0,127}/package/artifacts/[A-Za-z0-9._-]+/anki-export\\.v[12]\\.json$"},
+    "configPayloadSha256": {"$ref": "#/$defs/sha256"},
+    "authorization": {"$ref": "#/$defs/authorization"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "authorization": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "authorizationId", "mode", "operation", "scope", "taskId", "configArtifactId", "authorizedAt"],
+      "properties": {
+        "schemaVersion": {"const": "1.0.0"},
+        "authorizationId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+        "mode": {"const": "explicit-user-action"},
+        "operation": {"const": "initialize-managed"},
+        "scope": {"const": "managed-models-and-decks"},
+        "taskId": {"type": "string", "minLength": 1},
+        "configArtifactId": {"type": "string", "minLength": 1},
+        "authorizedAt": {"type": "string", "format": "date-time"}
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+[CmdletBinding()]
+param([Parameter(Mandatory)][string]$EvidenceRoot)
+$ErrorActionPreference='Stop';$utf8=[Text.UTF8Encoding]::new($false)
+function ShaBytes([byte[]]$Bytes){[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($Bytes))}
+function Sha([string]$Path){(Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToUpperInvariant()}
+$root=[IO.Path]::GetFullPath($EvidenceRoot);$replayPath=Join-Path $root 'same-submit-replay-v2/replay-receipt.json';$cardPath=(Get-ChildItem -LiteralPath (Join-Path $root 'jobs') -Recurse -File -Filter card-bundle.schema-v1.json|Select-Object -First 1).FullName
+$out=Join-Path $root 'anki-exact-readback-verification.v1.json';if(Test-Path -LiteralPath $out){throw "Append-only target exists: $out"}
+$r=Get-Content -Raw -LiteralPath $replayPath|ConvertFrom-Json -Depth 100;$bundle=Get-Content -Raw -LiteralPath $cardPath|ConvertFrom-Json -Depth 100;$card=$bundle.cards[0];$note=$r.independentAnkiReadback.notesInfo[0];$ankiCard=$r.independentAnkiReadback.cardsInfo[0]
+$expectedFront=(@($card.front_blocks|ForEach-Object text)-join "`n");$expectedBack=(@($card.back_blocks|ForEach-Object text)-join "`n")
+if($note.fields.Front.value -ne $expectedFront -or $note.fields.Back.value -ne $expectedBack -or $ankiCard.fields.Front.value -ne $expectedFront -or $ankiCard.fields.Back.value -ne $expectedBack -or [string]$note.fields.RQC_ID.value -ne [string]$card.card_id -or [int64]$ankiCard.note -ne [int64]$note.noteId){throw 'Anki exact readback does not equal sealed CardBundle fields.'}
+$normalized=[ordered]@{noteId=[int64]$note.noteId;cardId=[int64]$ankiCard.cardId;deckName=[string]$ankiCard.deckName;modelName=[string]$note.modelName;cardIdValue=[string]$note.fields.RQC_ID.value;front=[string]$note.fields.Front.value;back=[string]$note.fields.Back.value;contentHash=[string]$note.fields.RQC_ContentHash.value;tags=@($note.tags)};$normalizedBytes=$utf8.GetBytes((($normalized|ConvertTo-Json -Compress -Depth 10)+"`n"))
+$value=[ordered]@{schemaVersion='sealed-live-ocr-anki-v1228-exact-readback-verification.v1';status='passed';source=[ordered]@{replayReceiptPath=$replayPath;replayReceiptSha256=Sha $replayPath;cardBundlePath=$cardPath;cardBundleSha256=Sha $cardPath};normalizedReadback=$normalized;normalizedReadbackSha256=ShaBytes $normalizedBytes;comparisons=[ordered]@{noteFrontEqualsCardBundle=$true;noteBackEqualsCardBundle=$true;cardsInfoFrontEqualsCardBundle=$true;cardsInfoBackEqualsCardBundle=$true;noteAndCardOwnershipEquals=$true};redaction=[ordered]@{fixtureIsSynthetic=$true;onlyExpectedDeckAndCardFieldsPersisted=$true;rawCardsInfoOmitted=$true}}
+[IO.File]::WriteAllText($out,(($value|ConvertTo-Json -Depth 100)+"`n"),$utf8);Write-Output $out;Write-Output(Sha $out)

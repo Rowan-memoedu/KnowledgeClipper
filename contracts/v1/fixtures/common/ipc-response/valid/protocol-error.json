@@ -1,0 +1,4 @@
+{
+  "protocolVersion": "1.0", "correlationId": "protocol-generated-001", "messageType": "protocol-error", "ok": false,
+  "payload": null, "error": { "code": "ipc.invalid_json", "category": "protocol", "message": "Request is not valid JSON." }
+}

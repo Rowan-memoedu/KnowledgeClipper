@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "knowledge-clipper-native-ui-scenario.v1",
+  "journey": "question",
+  "windowTimeoutMs": 30000,
+  "steps": [
+    { "id": "initial-text", "operation": "set-value", "automationId": "knowledge-clipper.desktop.question.input", "value": "什么是不可变任务包？" },
+    { "id": "initial-enter", "operation": "send-keys", "automationId": "knowledge-clipper.desktop.question.input", "keys": "{ENTER}", "waitAfterMs": 500 },
+    { "id": "first-answer", "operation": "assert-contains", "automationId": "knowledge-clipper.desktop.question.answer.status", "expected": "已校验", "timeoutMs": 90000 },
+    { "id": "followup-text", "operation": "set-value", "automationId": "knowledge-clipper.desktop.question.input", "value": "重试如何保留它？" },
+    { "id": "followup-enter", "operation": "send-keys", "automationId": "knowledge-clipper.desktop.question.input", "keys": "{ENTER}", "waitAfterMs": 500 },
+    { "id": "second-terminal", "operation": "assert-contains", "automationId": "knowledge-clipper.desktop.question.answer.status", "expected": "已校验", "timeoutMs": 90000 },
+    { "id": "make-cards", "operation": "invoke", "automationId": "knowledge-clipper.desktop.question.make-cards", "waitAfterMs": 500 },
+    { "id": "close", "operation": "close-window" }
+  ]
+}

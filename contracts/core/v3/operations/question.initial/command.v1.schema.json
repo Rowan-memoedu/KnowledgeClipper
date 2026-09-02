@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.question-initial-command/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["question", "context"],
+  "properties": {
+    "question": {"$ref": "../../artifacts/schemas/artifact-ref.v2.schema.json"},
+    "context": {"type": "array", "items": {"$ref": "../../artifacts/schemas/artifact-ref.v2.schema.json"}}
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion":"2.3.0","queryId":"query-ocr-1","type":"task.get","nextCursor":null,
+  "items":[{
+    "taskId":"task-ocr-1","operationId":"operation-ocr-1","intent":"clip.card","status":"succeeded",
+    "createdAt":"2026-08-30T11:00:00Z","updatedAt":"2026-08-30T11:01:00Z","attentionRequired":false,"replayable":true,
+    "summaryCode":"task.succeeded","decisionKind":"ocr-human-resolution","decisionTargetToken":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "answerAvailable":false,"questionTargetToken":null,"questionTurnCount":null,"questionAnswerRef":null,
+    "ocrHumanResolution":{"decisionKind":"ocr-human-resolution","targetToken":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","sourceProofreadRef":{"artifactRef":"p","kind":"ocr-proofread-bundle","contractVersion":"1.0.0","manifestPath":"p/artifact.json","expectedSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},"originalTextRef":{"artifactRef":"o","kind":"ocr.original.text","contractVersion":"1.0.0","manifestPath":"o/artifact.json","expectedSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},"candidateTextRef":{"artifactRef":"c","kind":"ocr.candidate.text","contractVersion":"1.0.0","manifestPath":"c/artifact.json","expectedSha256":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"},"diff":[],"reason":[{}],"allowedActions":["accept_original","submit_correction","cancel"]}
+  }]
+}

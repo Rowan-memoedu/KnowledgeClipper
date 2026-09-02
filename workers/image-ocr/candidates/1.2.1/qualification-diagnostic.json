@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "knowledge-clipper-image-ocr-candidate-qualification-diagnostic.v1",
+  "candidateVersion": "1.2.1",
+  "status": "rejected-before-core-admission",
+  "reason": "build_receipt_totalBytes_null",
+  "runtimeValidation": {
+    "workerDescribe": "passed",
+    "companionDescribe": "passed",
+    "validateOnly": "passed",
+    "offlineReadiness": "passed-no-network",
+    "fakeProvider": "passed-exact-settings",
+    "liveConnectivity": "defined-not-run"
+  },
+  "safety": {
+    "externalProductionApisInvoked": 0,
+    "mineruServiceInvocations": 0,
+    "externalUploads": 0
+  },
+  "supersession": {
+    "nextCandidate": "1.2.2",
+    "oldFilesModified": false,
+    "authorityAdmissionPerformed": false
+  }
+}

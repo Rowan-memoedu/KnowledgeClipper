@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "request-speech-001",
+  "operationId": "operation-speech-001",
+  "taskId": "task-001",
+  "runId": "run-001",
+  "stageId": "speech-synthesize",
+  "attemptId": "attempt-001",
+  "workerId": "speech.edge",
+  "operation": "speech.synthesize",
+  "idempotencyKey": "1111111111111111111111111111111111111111111111111111111111111111",
+  "attemptPath": "runs/run-001/stages/speech-synthesize/attempts/attempt-001",
+  "outputPath": "runs/run-001/stages/speech-synthesize/attempts/attempt-001/outputs",
+  "progressPath": "runs/run-001/stages/speech-synthesize/attempts/attempt-001/progress.ndjson",
+  "resultPath": "runs/run-001/stages/speech-synthesize/attempts/attempt-001/result.json",
+  "cancelSignal": { "schemaVersion": "1.0.0", "path": "runs/run-001/stages/speech-synthesize/attempts/attempt-001/cancel.json", "gracePeriodMs": 2000 },
+  "inputRefs": [{
+    "artifactRef": "spoken-text-001",
+    "kind": "text.spoken",
+    "contractVersion": "1.0.0",
+    "manifestPath": "inputs/spoken-text-001/v0001/artifact.json",
+    "expectedSha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  }],
+  "configSnapshot": {},
+  "payload": {
+    "schemaVersion": "1.0.0",
+    "requestId": "request-speech-001",
+    "operationId": "operation-speech-001",
+    "spokenText": {
+      "artifactRef": "spoken-text-001",
+      "path": "inputs/spoken-text-001/v0001/payload.txt",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "bytes": 21,
+      "encoding": "utf-8",
+      "mediaType": "text/plain"
+    },
+    "contextMode": "selection_only",
+    "language": { "strategy": "auto", "override": null },
+    "voiceSnapshot": {
+      "provider": "edge-tts",
+      "voicesByLanguage": { "zh-CN": "zh-CN-XiaoxiaoNeural", "en-US": "en-US-AvaMultilingualNeural" },
+      "ratePercent": 0,
+      "volumePercent": 0,
+      "pitchHz": 0
+    },
+    "playbackPolicy": {
+      "autoPlay": true,
+      "activePlayback": "supersede",
+      "replay": "from_start",
+      "naturalCompletion": "idle_replayable",
+      "stopTerminal": "stopped"
+    },
+    "cachePolicy": { "scope": "task", "reuseSuccessfulAudio": true, "crossTaskReuse": false }
+  }
+}

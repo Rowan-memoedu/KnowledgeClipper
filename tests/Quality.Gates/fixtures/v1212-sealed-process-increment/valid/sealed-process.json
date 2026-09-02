@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "knowledge-clipper-v1212-sealed-process-increment-fixture.v1",
+  "policy": { "externalRerun": false, "ocrCorrection": "product-gap", "questionWorkflow": "waiting_input" },
+  "evidenceRoot": "canary/sealed-orchestrator-process-v1.2.12/20260830T092622Z",
+  "baseCandidateReceipt": {
+    "path": "canary/v1212-candidate-admission/20260830T083031Z-v183500-final-candidate-bound/quality-candidate-receipt.json",
+    "sha256": "E6313A89DDB3574A173C1139BB889DF1F70B1BF9F1905D159A2EF31ABF793F71"
+  },
+  "candidate": {
+    "candidateId": "kc-integrated-settings-v1212-20260830T183500Z",
+    "manifestSha256": "5D03C90D42FA2A1145FF6DCC4874BD059AC3EE072628F0A8DC81FB23983B4F3C",
+    "sealedTreeSha256": "4F1021038635984154290467011FBB25AB9D88DD7A1A035F059CFF309231416A"
+  },
+  "authority": {
+    "registryVersion": "1.2.12",
+    "registrySha256": "FC105AB65FD80B72779D1601E2C4B6FAA7ECCAF5F5C1BADC774060D8F685495A",
+    "checkpointSha256": "552151B3EDBEED94FD1B4ECC7B49F78CD7503321119235BBF3ECAA2A0EEE8580"
+  },
+  "expectedNotes": { "process-text": 1788081994612, "process-ocr-handoff": 1788082002544 }
+}

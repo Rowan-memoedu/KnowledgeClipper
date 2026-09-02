@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "knowledge-clipper-native-ui-scenario.v1",
+  "journey": "remnote",
+  "windowTimeoutMs": 30000,
+  "steps": [
+    { "id": "open-export", "operation": "select-item", "automationId": "knowledge-clipper.desktop.settings.navigation", "itemName": "导出", "waitAfterMs": 250 },
+    { "id": "wait-title", "operation": "wait", "automationId": "knowledge-clipper.desktop.settings.export.remnote.root-title" },
+    { "id": "set-title", "operation": "set-value", "automationId": "knowledge-clipper.desktop.settings.export.remnote.root-title", "value": "剪藏" },
+    { "id": "discover", "operation": "invoke", "automationId": "knowledge-clipper.desktop.settings.export.remnote.discover-target", "waitAfterMs": 500 },
+    { "id": "verified-pending", "operation": "assert-contains", "automationId": "knowledge-clipper.desktop.settings.export.remnote.bound-target", "expected": "待保存", "timeoutMs": 60000 },
+    { "id": "probe-same-window", "operation": "invoke", "automationId": "knowledge-clipper.desktop.settings.export.remnote.probe-readonly", "waitAfterMs": 500 },
+    { "id": "probe-status", "operation": "assert-contains", "automationId": "knowledge-clipper.desktop.settings.export.remnote.probe-status", "expected": "writes=0", "timeoutMs": 60000 },
+    { "id": "save", "operation": "invoke", "automationId": "knowledge-clipper.desktop.settings.save", "waitAfterMs": 500 },
+    { "id": "close", "operation": "close-window" }
+  ]
+}

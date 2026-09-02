@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "2.0.0",
+  "queryId": "query-follow-up",
+  "type": "task.get",
+  "nextCursor": null,
+  "items": [
+    {
+      "taskId": "task-follow-up-001",
+      "operationId": "operation-follow-up-001",
+      "intent": "clip.card",
+      "status": "waiting_input",
+      "createdAt": "2026-08-26T03:29:00Z",
+      "updatedAt": "2026-08-26T03:30:00Z",
+      "attentionRequired": true,
+      "replayable": false,
+      "summaryCode": "task.waiting_input",
+      "decisionKind": null,
+      "decisionTargetToken": null
+    }
+  ]
+}

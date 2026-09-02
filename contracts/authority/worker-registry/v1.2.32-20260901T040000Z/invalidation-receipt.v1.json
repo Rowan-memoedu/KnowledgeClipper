@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-invalidation-receipt.v1",
+  "status": "invalidated-never-promoted",
+  "authorityBound": false,
+  "reason": "Portable closure and runtime gates passed, but the packed Core settings checkpoint was v2.7.17 while the current append-only Core integration checkpoint is v2.7.19. No authority checkpoint or authority receipt was written.",
+  "supersededBy": "pending-v1.2.33"
+}

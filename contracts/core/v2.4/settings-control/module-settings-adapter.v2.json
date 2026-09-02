@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "knowledge-clipper-module-settings-adapter.v2",
+  "profileSchema": "schemas/workflow-settings.v2.schema.json",
+  "overrideSchema": "schemas/task-settings-override.v2.schema.json",
+  "snapshotSchema": "schemas/task-settings-snapshot.v2.schema.json",
+  "credentialStorageBoundary": {
+    "profileAllowsSecrets": false,
+    "taskSnapshotAllowsSecrets": false,
+    "allowedMechanisms": ["worker-owned-environment", "sha256-bound-task-artifact-reference"]
+  },
+  "modules": [
+    {
+      "moduleId": "image-ocr",
+      "status": "supported",
+      "reason": "Core freezes Image/OCR provider settings and copies them into the image stage configSnapshot and WorkerRequest.",
+      "fields": [
+        { "settingPointer": "/imageOcr/providerSettings", "editable": true, "defaultSource": "moduleDefault", "snapshotPointer": "/modules/imageOcr/providerSettings", "effectTargets": ["image-ocr.configSnapshot.providerSettings", "image-ocr.WorkerRequest.configSnapshot.providerSettings"] },
+        { "settingPointer": "/imageOcr/mineruScriptPath", "editable": true, "defaultSource": "moduleDefault", "snapshotPointer": "/modules/imageOcr/mineruScriptPath", "effectTargets": ["image-ocr.configSnapshot.mineruScriptPath"] }
+      ]
+    },
+    {
+      "moduleId": "content",
+      "status": "supported",
+      "reason": "Core binds one SHA-256 identified content-config-snapshot artifact and revision into the Content request.",
+      "fields": [
+        { "settingPointer": "/content/configArtifactRef", "editable": true, "defaultSource": "taskArtifact", "snapshotPointer": "/modules/content/configArtifactRef", "effectTargets": ["content.inputRefs", "content.payload.contentConfigPath"] },
+        { "settingPointer": "/content/expectedSha256", "editable": false, "defaultSource": "taskArtifact", "snapshotPointer": "/modules/content/expectedSha256", "effectTargets": ["content.WorkerRequest.inputRefs.expectedSha256"] },
+        { "settingPointer": "/content/settingsRevisionId", "editable": false, "defaultSource": "taskArtifact", "snapshotPointer": "/modules/content/settingsRevisionId", "effectTargets": ["content.configSnapshot.contentSettingsRevisionId"] }
+      ]
+    },
+    {
+      "moduleId": "speech",
+      "status": "supported",
+      "reason": "Voice, rate, volume, pitch, and auto-play are frozen per task and copied to speech stages.",
+      "fields": [
+        { "settingPointer": "/speech", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/modules/speech", "effectTargets": ["speech.payload.voiceSnapshot", "speech.payload.playbackPolicy", "speech.WorkerRequest.payload"] }
+      ]
+    },
+    {
+      "moduleId": "export.remnote",
+      "status": "conditional",
+      "reason": "Available only with a selected RemNote destination and exact rootRemId; clip and card routes remain distinct.",
+      "fields": [
+        { "settingPointer": "/remnote", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/modules/remnote", "effectTargets": ["export-remnote.payload.target", "export-remnote.payload.route"] }
+      ]
+    },
+    {
+      "moduleId": "export.anki",
+      "status": "conditional",
+      "reason": "Available for cards only with one SHA-256 identified anki-export-config artifact.",
+      "fields": [
+        { "settingPointer": "/workflow/destinations", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/workflow/destinations", "effectTargets": ["anki-export.stage"] },
+        { "settingPointer": "/anki/configArtifactRef", "editable": false, "defaultSource": "taskArtifact", "snapshotPointer": "/modules/anki/configArtifactRef", "effectTargets": ["anki-export.configSnapshot.ankiConfigArtifactId", "anki-export.inputRefs"] }
+      ]
+    },
+    {
+      "moduleId": "retention-retry-timeout-diagnostics",
+      "status": "unsupported",
+      "reason": "No stable public adapter applies these values.",
+      "fields": []
+    }
+  ]
+}

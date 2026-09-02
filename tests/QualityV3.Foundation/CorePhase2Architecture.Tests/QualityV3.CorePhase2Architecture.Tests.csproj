@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AssemblyName>KnowledgeClipper.Core.V3.Phase2Tests</AssemblyName>
+    <RootNamespace>QualityV3.CorePhase2Architecture.Tests</RootNamespace>
+  </PropertyGroup>
+  <Target Name="RequirePhase2SnapshotRoot" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(Phase2SnapshotRoot)' == ''" Text="Phase2SnapshotRoot must point to an immutable Core v3 release snapshot." />
+  </Target>
+  <ItemGroup>
+    <ProjectReference Include="$(Phase2SnapshotRoot)\core-v3\src\KnowledgeClipper.Core.V3.Contracts\KnowledgeClipper.Core.V3.Contracts.csproj" />
+    <ProjectReference Include="$(Phase2SnapshotRoot)\core-v3\src\KnowledgeClipper.Core.V3.Kernel\KnowledgeClipper.Core.V3.Kernel.csproj" />
+    <ProjectReference Include="$(Phase2SnapshotRoot)\core-v3\src\KnowledgeClipper.Core.V3.Client\KnowledgeClipper.Core.V3.Client.csproj" />
+    <ProjectReference Include="$(Phase2SnapshotRoot)\core-v3\src\KnowledgeClipper.Core.V3.Host\KnowledgeClipper.Core.V3.Host.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+</Project>

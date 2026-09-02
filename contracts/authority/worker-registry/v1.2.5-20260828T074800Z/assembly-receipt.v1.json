@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-assembly-receipt.v1",
+  "status": "candidate-built-offline",
+  "releaseId": "knowledge-clipper-authority-v1.2.5-20260828T074800Z",
+  "registryVersion": "1.2.5",
+  "release": {
+    "files": 186,
+    "bytes": 249571806,
+    "treeSha256": "1DF64264BB69F4039C3B58956AA9612B98E45C2DF38B12D396B4813377E512EE"
+  },
+  "registrySha256": "2BAB4A7985A9C50D30EA6D3E631A6914F7419549C0D94551C04E6870C0D0DD3E",
+  "dependencyManifestSha256": "63C67945523C5B91C4644990217AB9C392EE9854E4C740C6B695536F6C100F87",
+  "core": {
+    "version": "2.4.3",
+    "executableSha256": "EBE9E69A9AB8E93D7E0355B57ACDA45D10189580459FD27195FF9DF9398947CB",
+    "checkpointSha256": "8A9D2765804B7E7ED9A2B2B98C28DB25559C222DFBB757CDFFB6406FBAE61B32"
+  },
+  "workers": {
+    "image.ocr.mineru": {
+      "workerVersion": "1.2.0",
+      "path": "contracts/authority/worker-registry/.v1.2.5-20260828T074800Z.792d40ac7f8d448aacd30e47da46cef1.tmp/describe/image.ocr.mineru.describe.json",
+      "sha256": "3A73FC78A7E9E3A08CA26F78AC8DA5D583AF91C474C5181941920042E6F01600"
+    },
+    "content.deepseek": {
+      "workerVersion": "0.6.0",
+      "path": "contracts/authority/worker-registry/.v1.2.5-20260828T074800Z.792d40ac7f8d448aacd30e47da46cef1.tmp/describe/content.deepseek.describe.json",
+      "sha256": "EB4857BC598EF90C0CA72C8521EEBBB1828A61D9747B802337288C50ECEE6B39"
+    },
+    "speech.edge": {
+      "workerVersion": "1.2.1",
+      "path": "contracts/authority/worker-registry/.v1.2.5-20260828T074800Z.792d40ac7f8d448aacd30e47da46cef1.tmp/describe/speech.edge.describe.json",
+      "sha256": "D29D3700C6391CA12627099B4B54A016B5CE7BFAFDB7673A312CA74574C84C06"
+    },
+    "export.remnote": {
+      "workerVersion": "2.0.0",
+      "path": "contracts/authority/worker-registry/.v1.2.5-20260828T074800Z.792d40ac7f8d448aacd30e47da46cef1.tmp/describe/export.remnote.describe.json",
+      "sha256": "B432F7CEC58F300E054572EE536601ACE40A923650ED34865CF8EE12EA8D49B0"
+    },
+    "export.anki": {
+      "workerVersion": "1.2.0",
+      "path": "contracts/authority/worker-registry/.v1.2.5-20260828T074800Z.792d40ac7f8d448aacd30e47da46cef1.tmp/describe/export.anki.describe.json",
+      "sha256": "DAB97F0460DDD9AA7DC0037CA1AC1449F3DD1C7AA1CCA9E2252399CC1CD6DD28"
+    }
+  },
+  "registryValidation": {
+    "schemaVersion": "1.0.0",
+    "status": "valid",
+    "registryVersion": "1.2.5",
+    "workers": 5
+  },
+  "externalWrites": 0,
+  "physicalSpeakerInvocations": 0
+}

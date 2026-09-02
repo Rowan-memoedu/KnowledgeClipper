@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "ocr-lexical-audit-fixtures/1.0.0",
+  "cases": [
+    {
+      "id": "uppercase-truncation",
+      "source": "Question: Identify the process. Answer: PHOTOSYTHSIS.",
+      "verdicts": { "PHOTOSYTHSIS": "suspicious" },
+      "expectedUnresolved": ["PHOTOSYTHSIS"]
+    },
+    {
+      "id": "mixed-alphanumeric-confusion",
+      "source": "The software versi0n is shown in the panel.",
+      "verdicts": { "versi0n": "suspicious" },
+      "expectedUnresolved": ["versi0n"]
+    },
+    {
+      "id": "contextual-proper-name",
+      "source": "MinerU extracts structured text from documents.",
+      "verdicts": { "MinerU": "contextual_identifier" },
+      "expectedUnresolved": []
+    }
+  ]
+}

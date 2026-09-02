@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "card-bundle.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "bundleId", "cards"],
+  "properties": {
+    "schemaVersion": { "const": "card-bundle.v1" },
+    "bundleId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cardId", "cardType", "direction", "front", "back"],
+        "properties": {
+          "cardId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+          "cardType": { "const": "basic" },
+          "direction": { "enum": ["forward", "reverse", "bidirectional"] },
+          "front": { "type": "string", "minLength": 1, "maxLength": 20000 },
+          "back": { "type": "string", "minLength": 1, "maxLength": 20000 }
+        }
+      }
+    }
+  }
+}

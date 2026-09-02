@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-ocr-human-resolution-command/1.0.0",
+  "title": "Content OCR human-resolution resume command payload",
+  "$comment": "Core owns task.provide_input, waiting_input, targetToken validation and immutable attempt creation. This module-local payload is the opaque decision body consumed by the Core adapter; it is never a WorkerRequest operation.",
+  "type": "object",
+  "required": ["schemaVersion", "decisionKind", "targetToken", "action", "reason"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-ocr-human-resolution-command/1.0.0" },
+    "decisionKind": { "const": "ocr-human-resolution" },
+    "targetToken": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "action": { "enum": ["accept_original", "user_correction"] },
+    "reason": { "type": "string", "minLength": 1 },
+    "correction": {
+      "type": "object",
+      "required": ["correctedText", "correctedTextSha256", "diffs"],
+      "properties": {
+        "correctedText": { "type": "string" },
+        "correctedTextSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "diffs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/diff" }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "action": { "const": "accept_original" } }, "required": ["action"] },
+      "then": { "not": { "required": ["correction"] } },
+      "else": { "required": ["correction"] }
+    }
+  ],
+  "$defs": {
+    "diff": {
+      "type": "object",
+      "required": ["segmentIndex", "operation", "start", "end", "before", "after"],
+      "properties": {
+        "segmentIndex": { "type": "integer", "minimum": 0 },
+        "operation": { "enum": ["substitution", "insertion", "deletion"] },
+        "start": { "type": "integer", "minimum": 0 },
+        "end": { "type": "integer", "minimum": 0 },
+        "before": { "type": "string" },
+        "after": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

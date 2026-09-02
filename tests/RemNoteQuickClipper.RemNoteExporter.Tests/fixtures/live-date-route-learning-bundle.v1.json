@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "learning-bundle.v1",
+  "bundleId": "learning-remnote-date-route-20260826-v1",
+  "entries": [
+    {
+      "itemId": "date-route-clip-20260826-v1",
+      "text": "日期路由 Canary 摘录：按 Asia/Shanghai 的 2026-08-26 写入；同一不可变输入重跑不得重复。"
+    }
+  ]
+}

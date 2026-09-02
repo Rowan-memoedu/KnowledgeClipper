@@ -1,0 +1,20 @@
+{
+  "schema_version": "standard-input/2.0.0",
+  "package_id": "knowledge-clipper-language-meaning-reading-v2",
+  "task_id": "language-meaning-reading-v2",
+  "input_version": "2",
+  "mode": "card",
+  "items": [
+    {
+      "item_id": "item-language-en",
+      "source": { "kind": "text", "material_path": "materials/clip.md" },
+      "hints": {
+        "category_id": "language_en",
+        "answer_state": "not_applicable",
+        "target_term": "tentative",
+        "context_state": "provided",
+        "languagePracticeMode": "meaning-reading"
+      }
+    }
+  ]
+}

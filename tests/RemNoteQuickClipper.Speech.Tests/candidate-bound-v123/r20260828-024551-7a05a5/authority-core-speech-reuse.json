@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "speech-reuse-black-box.v1",
+  "status": "passed",
+  "orchestrator": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\releases\\knowledge-clipper-authority-v1.2.3-20260828T021300Z\\win-x64\\orchestrator\\KnowledgeClipper.Orchestrator.exe",
+  "runs": [
+    {
+      "schemaVersion": "1.0.0",
+      "taskId": "task-speech-reuse",
+      "runId": "run-001",
+      "status": "succeeded"
+    },
+    {
+      "schemaVersion": "1.0.0",
+      "taskId": "task-speech-reuse",
+      "runId": "run-002",
+      "status": "succeeded"
+    }
+  ],
+  "synthesize": {
+    "firstAttemptId": "attempt-20260828024632894-cd09c7866f4f410fb73c8d3d98e66883",
+    "reusedAttemptId": "attempt-20260828024633860-df2acedc2d414917a23d9e7b2137eb40",
+    "operationId": "operation-f291a63860f24d53872dcc3f22fd96bb",
+    "payloadOperationId": "operation-f291a63860f24d53872dcc3f22fd96bb",
+    "cacheHit": true,
+    "reusedFromAttemptId": "attempt-20260828024632894-cd09c7866f4f410fb73c8d3d98e66883",
+    "workerStartedOnReuse": false,
+    "audioOutputs": 1
+  },
+  "playback": {
+    "firstAttemptId": "attempt-20260828024633202-f4763f7031cb44d5a9f808984f37bbcc",
+    "secondAttemptId": "attempt-20260828024633911-45ae781df9474eb3982105bc345ea5cf",
+    "workerStartedOnSecondRun": true,
+    "reused": false
+  },
+  "nonSpeechReuseMetadataPollution": false,
+  "externalProductionApisInvoked": false
+}

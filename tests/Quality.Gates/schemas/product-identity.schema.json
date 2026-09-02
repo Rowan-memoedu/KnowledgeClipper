@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "product-identity.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "displayName", "asciiRoot", "desktopEntrypoint", "primaryProcess", "coreIdentities", "exporters", "legacyCompatibilityAliases"],
+  "properties": {
+    "schemaVersion": {"const": "knowledge-clipper-product-identity.v1"},
+    "displayName": {"const": "零碎知识剪藏"},
+    "asciiRoot": {"const": "KnowledgeClipper"},
+    "desktopEntrypoint": {"const": "desktop/KnowledgeClipper.exe"},
+    "primaryProcess": {"const": "KnowledgeClipper"},
+    "coreIdentities": {
+      "type": "array", "minItems": 5, "maxItems": 5,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["componentId", "assemblyName", "namespaceRoot"],
+        "properties": {
+          "componentId": {"enum": ["desktop", "orchestrator.core", "image.ocr.mineru", "content.deepseek", "speech.edge"]},
+          "assemblyName": {"type": "string", "pattern": "^KnowledgeClipper(?:\\.|$)", "not": {"pattern": "[Rr][Ee][Mm][Nn][Oo][Tt][Ee]"}},
+          "namespaceRoot": {"type": "string", "pattern": "^KnowledgeClipper(?:\\.|$)", "not": {"pattern": "[Rr][Ee][Mm][Nn][Oo][Tt][Ee]"}}
+        }
+      }
+    },
+    "exporters": {
+      "type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true,
+      "items": {"enum": ["export.remnote", "export.anki"]},
+      "allOf": [{"contains": {"const": "export.remnote"}}, {"contains": {"const": "export.anki"}}]
+    },
+    "legacyCompatibilityAliases": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["alias", "target", "authoritative", "scope"],
+        "properties": {
+          "alias": {"type": "string", "minLength": 1},
+          "target": {"type": "string", "minLength": 1},
+          "authoritative": {"const": false},
+          "scope": {"const": "legacy-compatibility-only"}
+        }
+      }
+    }
+  }
+}

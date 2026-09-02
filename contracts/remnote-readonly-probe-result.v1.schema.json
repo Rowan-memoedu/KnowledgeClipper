@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "remnote-readonly-probe-result.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "probeId", "mode", "state", "admission", "timeoutMs", "externalCall", "externalCallCount", "externalWriteCount", "connected", "acceptWriteOperations", "serverVersion", "pluginVersion", "targetBinding", "toolChecks", "reasons", "evidenceChain", "observedRemIds", "generatedAt"],
+  "properties": {
+    "schemaVersion": { "const": "remnote-readonly-probe-result.v1" },
+    "probeId": { "type": "string", "minLength": 1 }, "mode": { "enum": ["health", "reconcile"] },
+    "state": { "enum": ["healthy", "degraded", "blocked"] }, "admission": { "enum": ["ready", "blocked"] },
+    "timeoutMs": { "const": 15000 }, "externalCall": { "const": true }, "externalCallCount": { "type": "integer", "minimum": 0 },
+    "externalWriteCount": { "const": 0 }, "connected": { "type": ["boolean", "null"] },
+    "acceptWriteOperations": { "type": ["boolean", "null"] }, "serverVersion": { "type": ["string", "null"] }, "pluginVersion": { "type": ["string", "null"] },
+    "targetBinding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["authority", "authorizationScope", "rootRemId", "expectedRootTitle", "observedRootTitle", "matched"],
+      "properties": {
+        "authority": { "const": "rootRemId+exact-readback" }, "authorizationScope": { "enum": ["configured-destination", "isolated-canary"] },
+        "rootRemId": { "type": "string" }, "expectedRootTitle": { "type": "string" }, "observedRootTitle": { "type": ["string", "null"] }, "matched": { "type": "boolean" }
+      }
+    },
+    "toolChecks": {
+      "type": "array", "minItems": 4,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["operation", "outcome", "durationMs", "detail"],
+        "properties": { "operation": { "enum": ["status", "search", "list", "read"] }, "outcome": { "enum": ["passed", "timeout", "failed", "not_run"] }, "durationMs": { "type": "integer", "minimum": 0 }, "detail": { "type": "string" } }
+      }
+    },
+    "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "evidenceChain": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "route", "localDate", "documentTitle", "workerStatus", "idempotencyKey", "unknownExternalState", "automaticRetryAllowed", "detail", "hashes"],
+      "properties": {
+        "status": { "enum": ["valid", "invalid"] }, "route": { "type": ["string", "null"] }, "localDate": { "type": ["string", "null"] },
+        "documentTitle": { "type": ["string", "null"] }, "workerStatus": { "type": ["string", "null"] }, "idempotencyKey": { "type": ["string", "null"] },
+        "unknownExternalState": { "type": "boolean" }, "automaticRetryAllowed": { "const": false }, "detail": { "type": ["string", "null"] }, "hashes": { "type": "object" }
+      }
+    },
+    "observedRemIds": { "type": "array", "items": { "type": "string" } },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    { "if": { "properties": { "state": { "const": "healthy" } } }, "then": { "properties": { "admission": { "const": "ready" }, "connected": { "const": true }, "acceptWriteOperations": { "const": true }, "targetBinding": { "properties": { "matched": { "const": true } } }, "toolChecks": { "items": { "properties": { "outcome": { "const": "passed" } } } }, "reasons": { "const": [] } } } },
+    { "if": { "properties": { "state": { "enum": ["degraded", "blocked"] } } }, "then": { "properties": { "admission": { "const": "blocked" } } } }
+  ]
+}

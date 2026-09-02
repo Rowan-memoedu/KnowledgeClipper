@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-ordered-original-images-adapter.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "projection", "sourceMode", "ocrInvoked", "sourceKinds", "ordering", "noteTypeKey", "deckRouteKey", "tags", "unsupportedDestinations"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-ordered-original-images-adapter.v1" },
+    "projection": { "const": "ordered-original-images.v1" },
+    "sourceMode": { "const": "original" },
+    "ocrInvoked": { "const": false },
+    "sourceKinds": {
+      "const": ["capture-bundle", "image.original", "image.original.bundle", "image.processing.provenance", "anki-export-config"]
+    },
+    "ordering": { "const": "questionImages-then-answerImages" },
+    "noteTypeKey": { "const": "original_image_qa" },
+    "deckRouteKey": { "type": "string", "minLength": 1 },
+    "tags": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1, "pattern": "^\\S+$" } },
+    "unsupportedDestinations": {
+      "type": "array", "maxItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["destination", "code", "workerInvocationAllowed"],
+        "properties": {
+          "destination": { "const": "remnote" },
+          "code": { "const": "mcp.media_write_unavailable" },
+          "workerInvocationAllowed": { "const": false }
+        }
+      }
+    }
+  }
+}

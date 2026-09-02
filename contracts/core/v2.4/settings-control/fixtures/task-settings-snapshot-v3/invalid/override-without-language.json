@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "knowledge-clipper-task-settings-snapshot.v3",
+  "taskId": "task-speech-invalid",
+  "frozenAt": "2026-08-28T10:00:00Z",
+  "source": { "activeProfileId": "speech", "settingsSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "precedence": ["taskOverride", "activeProfile", "moduleDefault"] },
+  "workflow": { "processingProfile": "cards", "destinations": [] },
+  "modules": {
+    "capture": { "contextEnabled": false, "contextGranularity": "sentence", "imageHandling": "original" },
+    "content": { "promptSet": "open-md-v2", "categoryRegistry": "category-registry/2.0.0", "providerMode": "live" },
+    "speech": { "languageStrategy": "override", "voicesByLanguage": { "zh-CN": "zh-CN-XiaoxiaoNeural", "en-US": "en-US-AvaMultilingualNeural", "es-ES": "es-ES-XimenaNeural", "ja-JP": "ja-JP-NanamiNeural", "ko-KR": "ko-KR-SunHiNeural" }, "ratePercent": 0, "volumePercent": 0, "pitchHz": 0, "autoPlay": true }
+  },
+  "secretReferences": []
+}

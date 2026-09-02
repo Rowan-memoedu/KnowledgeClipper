@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "content-config-snapshot/1.1.0",
+  "title": "KnowledgeClipper immutable Content resource and runtime policy snapshot",
+  "$comment": "Credentials and UI-only interaction settings are forbidden. The common Artifact and WorkerRequest bind this file and all referenced resources by SHA-256.",
+  "type": "object",
+  "required": ["schemaVersion", "settingsRevisionId", "workerCompatibility", "promptSet", "categoryRegistry", "providerBoundary", "runtimePolicy"],
+  "properties": {
+    "schemaVersion": { "const": "content-config-snapshot/1.1.0" },
+    "settingsRevisionId": { "$ref": "#/$defs/identifier" },
+    "workerCompatibility": {
+      "type": "object",
+      "required": ["workerId", "minimumVersion"],
+      "properties": {
+        "workerId": { "const": "content.deepseek" },
+        "minimumVersion": { "$ref": "#/$defs/version" }
+      },
+      "additionalProperties": false
+    },
+    "promptSet": {
+      "type": "object",
+      "required": ["id", "source", "promptRootPath", "sha256", "files"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "source": { "const": "user-copy" },
+        "promptRootPath": { "$ref": "#/$defs/relativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "files": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/promptFile" } }
+      },
+      "additionalProperties": false
+    },
+    "categoryRegistry": {
+      "type": "object",
+      "required": ["id", "schemaVersion", "packagePath", "sha256", "bytes"],
+      "properties": {
+        "id": { "const": "category-registry/2.0.0" },
+        "schemaVersion": { "const": "category-registry/2.0.0" },
+        "packagePath": { "$ref": "#/$defs/relativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "providerBoundary": {
+      "type": "object",
+      "required": ["provider", "credentials"],
+      "properties": { "provider": { "const": "deepseek" }, "credentials": { "const": "process-injected-only" } },
+      "additionalProperties": false
+    },
+    "runtimePolicy": {
+      "type": "object",
+      "required": ["profileId", "profileVersion", "languagePracticeDefault", "provider"],
+      "properties": {
+        "profileId": { "$ref": "#/$defs/identifier" },
+        "profileVersion": { "$ref": "#/$defs/version" },
+        "languagePracticeDefault": { "enum": ["ask", "meaning-reading", "writing", "both"] },
+        "provider": {
+          "type": "object",
+          "required": ["model", "maxRetries"],
+          "properties": {
+            "model": { "enum": ["deepseek-chat", "deepseek-reasoner"] },
+            "maxRetries": { "type": "integer", "minimum": 1, "maximum": 5 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "relativePath": { "type": "string", "minLength": 1, "not": { "pattern": "^(?:[A-Za-z]:|/|\\\\)|(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)" } },
+    "promptFile": {
+      "type": "object",
+      "required": ["path", "packagePath", "sha256", "bytes"],
+      "properties": {
+        "path": { "$ref": "#/$defs/relativePath" },
+        "packagePath": { "$ref": "#/$defs/relativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0.0",
+  "artifactId": "content-fixture-ocr-ambiguous",
+  "kind": "content-input",
+  "contractVersion": "1.0.0",
+  "mediaType": "application/json",
+  "files": [
+    { "path": "inputs/standard-input.v4.json", "sha256": "c06fb3a938f96e7f1897d0c06e6516b1b9fd0f9d039296982f60584e2a59c0a4", "bytes": 1524, "mediaType": "application/json" },
+    { "path": "upstream/markdown/content.md", "sha256": "9e36ebeeef0747b1aa89297538df39ae361fac3064303e997ba36610511f7228", "bytes": 46, "mediaType": "text/markdown; charset=utf-8" },
+    { "path": "upstream/structured/content.json", "sha256": "c4daeffff7019909aef20243462d888625a9c6fb003017ec8e69adb7e09dc1e3", "bytes": 166, "mediaType": "application/json" },
+    { "path": "provider-replay.v1.json", "sha256": "fb09fbebe197149ec38fb0ac4ee70e4f5a84f95e9cff53f1aafdf6c0ad114f7d", "bytes": 554, "mediaType": "application/json" }
+  ],
+  "createdAt": "2026-08-30T00:00:00.000Z",
+  "producer": { "stageId": "content.fixture", "workerId": "content.fixture", "workerVersion": "1.0.0", "attemptId": "fixture-ocr-ambiguous" },
+  "inputRefs": [
+    { "artifactRef": "fixture.ocr.ambiguous.markdown", "kind": "image-ocr.markdown", "contractVersion": "1.0.0", "manifestPath": "upstream/markdown/artifact.json", "expectedSha256": "0b422a172d07b8cd58b682bee67a891d443fcf3ee4b1ea5a6c14ed3f3a0a68d4" },
+    { "artifactRef": "fixture.ocr.ambiguous.structured", "kind": "image-ocr.structured", "contractVersion": "1.0.0", "manifestPath": "upstream/structured/artifact.json", "expectedSha256": "d8bb6b6963c1cbeab22c132b59c8ca1393781d010860544caa3f3f95c5d08c51" }
+  ],
+  "dataClass": "public",
+  "metadata": { "entrypoint": "inputs/standard-input.v4.json", "fixture": "offline-ocr-ambiguous", "originalOcrImmutable": true }
+}

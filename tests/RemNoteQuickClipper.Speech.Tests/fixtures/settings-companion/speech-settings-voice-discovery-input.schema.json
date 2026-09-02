@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledgeclipper://speech/settings-companion/voice-discovery-input/v1",
+  "title": "Speech voice discovery read-only input v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "mode", "requestedLanguages", "cacheMaxAgeSeconds", "deployment"],
+  "properties": {
+    "schemaVersion": { "const": "speech-settings-voice-discovery-input.v1" },
+    "mode": { "enum": ["discover", "cache_only", "validate_only"] },
+    "requestedLanguages": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$" }
+    },
+    "cacheMaxAgeSeconds": { "type": "integer", "minimum": 60, "maximum": 604800 },
+    "deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "edgeTtsPath": { "type": ["string", "null"] },
+        "ffplayPath": { "type": ["string", "null"] }
+      }
+    },
+    "catalogSnapshot": {
+      "type": ["object", "null"],
+      "properties": {
+        "provider": { "const": "edge-tts" },
+        "catalogVersion": { "type": ["string", "null"] },
+        "updatedAtUtc": { "type": ["string", "null"] },
+        "voices": { "type": "array" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "mode": { "const": "validate_only" } } },
+      "then": { "required": ["catalogSnapshot"] }
+    }
+  ]
+}

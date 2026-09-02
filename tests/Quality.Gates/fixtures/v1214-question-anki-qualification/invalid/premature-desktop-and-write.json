@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "knowledge-clipper-v1214-question-anki-qualification-fixture.v1",
+  "authority": {
+    "version": "1.2.14",
+    "checkpointSha256": "C2DD2E6C2099E9D7A2D4C742A53BEDE28EA229CEF50D849A464F7C20314121D4",
+    "registrySha256": "A1A95EE7FCBBBB3051777088E66389EC2C6578B30AD7562CFB0992DE4729897C",
+    "receiptSha256": "E8D729C8C39EE0BE1CF9C1038F9DAD021668D8720ADDB66DE4EFC0E74225E8D7",
+    "releaseTreeSha256": "30F1A8E65A335811545114474573196B689657DA8BAFB511E7A2F84638DB9D3E"
+  },
+  "core": { "path": "contracts/core/v2.5/checkpoints/v2.5.3-20260830T184500Z/checkpoint.json", "sha256": "16F39BAB63346AADEA83D1C66B1BE2520998BFE1A8341667D121CFCB84838D9A" },
+  "sealed": { "root": "canary/sealed-question-anki-v1.2.14/20260830T105113Z", "receiptSha256": "F23D9D0D4D6A15F62D4696F37E524515D07CBAA0FF89F7FD2395034C9B752466", "readableSha256": "A52D148E6F51E343D4001F6CF94C0C703E4518923A91C7A4440B52AAFA186175" },
+  "content081Rejection": { "path": "content-worker/receipts/content-deepseek-0.8.1-never-promoted-failed-canary-20260830T101000Z.json", "sha256": "D24C8B558BEFD74FF7C9F133975C4F29AE02873B415711BB0C08C6C6F9C8E675" },
+  "supersedes": { "path": "canary/v1213-external-qualification/20260830T102329Z-question-anki-preflight-increment/question-anki-preflight-quality-receipt.json", "sha256": "6E89C3F7927F9FB3479E8475D21E21E81D267EFD039747FD757B94238A51ADEF" },
+  "desktopCandidate": "sealed-and-promoted",
+  "policy": { "externalWriteByQuality": 1, "allowedLiveActions": ["notesInfo", "cardsInfo", "addNote"], "oldAttemptRetry": true, "content081Promotion": true, "desktopCandidateBound": true }
+}

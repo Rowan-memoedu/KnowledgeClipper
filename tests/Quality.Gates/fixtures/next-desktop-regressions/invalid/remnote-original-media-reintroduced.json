@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "knowledge-clipper-next-desktop-regression-gate.v1",
+  "productPolicy": {
+    "originalMode": {
+      "allowedDestinations": ["anki", "remnote"],
+      "remnoteOriginalMedia": {
+        "classification": "OPEN-PRODUCT-GAP",
+        "reasonCode": "mcp.media_write_unavailable",
+        "releaseBlocker": true,
+        "candidateGateRequired": true
+      }
+    },
+    "remnoteTextAndCards": {
+      "exactTitleDiscoveryRequired": true,
+      "readOnlyProbeRequired": true
+    }
+  },
+  "moduleEvidence": {},
+  "nextCandidateEvidence": null,
+  "requiredRegressions": {
+    "ankiReadonlyProbe": "WAITING-NEXT-AUTHORITY-DESKTOP-CANDIDATE",
+    "remnoteExactTitleDiscovery": "WAITING-NEXT-AUTHORITY-DESKTOP-CANDIDATE",
+    "questionFollowUpContinuation": "WAITING-NEXT-AUTHORITY-DESKTOP-CANDIDATE"
+  }
+}

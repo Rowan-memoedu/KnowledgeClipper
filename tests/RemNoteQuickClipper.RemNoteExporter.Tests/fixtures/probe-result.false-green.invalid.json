@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "remnote-readonly-probe-result.v1",
+  "probeId": "false-green",
+  "mode": "health",
+  "state": "healthy",
+  "admission": "ready",
+  "timeoutMs": 15000,
+  "externalCall": true,
+  "externalCallCount": 2,
+  "externalWriteCount": 0,
+  "connected": true,
+  "acceptWriteOperations": true,
+  "serverVersion": "0.17.0",
+  "pluginVersion": "0.17.0",
+  "targetBinding": {
+    "authority": "rootRemId+exact-readback",
+    "authorizationScope": "isolated-canary",
+    "rootRemId": "canary-root-id",
+    "expectedRootTitle": "零碎知识剪藏 Canary",
+    "observedRootTitle": null,
+    "matched": true
+  },
+  "toolChecks": [
+    { "operation": "status", "outcome": "passed", "durationMs": 1, "detail": "connected" },
+    { "operation": "search", "outcome": "timeout", "durationMs": 15000, "detail": "15s tool request timeout" },
+    { "operation": "list", "outcome": "not_run", "durationMs": 0, "detail": "fail-fast" },
+    { "operation": "read", "outcome": "not_run", "durationMs": 0, "detail": "fail-fast" }
+  ],
+  "reasons": [],
+  "evidenceChain": {
+    "status": "valid", "route": null, "localDate": null, "documentTitle": null,
+    "workerStatus": null, "idempotencyKey": null, "unknownExternalState": false,
+    "automaticRetryAllowed": false, "detail": "settings snapshot bound", "hashes": {}
+  },
+  "observedRemIds": [],
+  "generatedAt": "2026-08-28T07:00:00Z"
+}

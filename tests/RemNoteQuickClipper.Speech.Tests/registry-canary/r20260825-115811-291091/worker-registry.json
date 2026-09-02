@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "registryVersion": "1.0.0",
+  "profiles": [
+    "parity-remnote",
+    "cards-remnote",
+    "cards-anki"
+  ],
+  "workers": [
+    {
+      "workerId": "speech.edge",
+      "contractVersionRange": ">=1.0.0 <2.0.0",
+      "entrypoint": {
+        "path": "workers/RemNoteQuickClipper.Speech.Worker.exe",
+        "args": []
+      },
+      "stages": [
+        "speech.synthesize",
+        "speech.playback"
+      ],
+      "inputKinds": [
+        "text.spoken",
+        "audio.speech"
+      ],
+      "outputKinds": [
+        "audio.speech"
+      ],
+      "requiredForProfiles": [
+        "parity-remnote",
+        "cards-remnote",
+        "cards-anki"
+      ],
+      "sideEffectLevel": "local",
+      "idempotencyLevel": "idempotent",
+      "enabledByDefault": true
+    }
+  ]
+}

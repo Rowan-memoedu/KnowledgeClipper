@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "knowledge-clipper-v1212-candidate-admission-fixture.v1",
+  "policy": {
+    "externalCalls": 0,
+    "workerRuns": 0,
+    "candidateHashBeforeDesktop": false,
+    "pendingIsFailure": false
+  },
+  "core": {
+    "path": "contracts/core/v2.5/checkpoints/v2.5.1-20260830T075400Z/checkpoint.json",
+    "sha256": "62996EF471F46470090BE40259BF95ACD84EB7640084A1FCD4EC85E680AEE4F3"
+  },
+  "authority": {
+    "checkpoint": {
+      "path": "contracts/authority/worker-registry/v1.2.12-20260830T075600Z/checkpoint.json",
+      "sha256": "552151B3EDBEED94FD1B4ECC7B49F78CD7503321119235BBF3ECAA2A0EEE8580"
+    },
+    "registry": {
+      "path": "contracts/authority/worker-registry/v1.2.12-20260830T075600Z/worker-registry.v1.json",
+      "sha256": "FC105AB65FD80B72779D1601E2C4B6FAA7ECCAF5F5C1BADC774060D8F685495A"
+    },
+    "qualification": {
+      "path": "receipts/knowledge-clipper-authority-1.2.12-offline-qualification-20260830T080000Z.json",
+      "sha256": "4E46CBE8532F05FBCE1BC0AE222A23390C8C4448720A9A4B53B28D2851F64B9E"
+    },
+    "release": {
+      "root": "releases/knowledge-clipper-authority-v1.2.12-20260830T075600Z/win-x64",
+      "fileCount": 284,
+      "totalBytes": 260374870,
+      "treeSha256": "31CA3150B1A2EF9F97DD67B3B5491E94C49275C23018BC75B8BFECACC504DF13"
+    }
+  },
+  "ankiPostAuthority": {
+    "path": "workers/anki-exporter/canary/shared-consumer-compatibility/20260830T080701Z-fe8c2407/receipt.json",
+    "sha256": "E8335BE40C626A4BECB04ABB76BEC7560A36A5855D053CA6990373984D4019A0"
+  },
+  "desktop": {
+    "requiredRegistryVersion": "1.2.12",
+    "integratedCandidateRoot": null,
+    "manifestSha256": null,
+    "entrypointSha256": null,
+    "applicationDllSha256": null,
+    "sealedFileCount": null,
+    "sealedTotalBytes": null,
+    "sealedTreeSha256": null,
+    "ownerReceipt": null,
+    "settingsUiAutomationLog": null,
+    "uiAutomationLog": null,
+    "physicalCtrlCLog": null
+  }
+}

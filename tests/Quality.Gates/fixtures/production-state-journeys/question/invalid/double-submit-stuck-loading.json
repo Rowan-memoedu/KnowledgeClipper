@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "knowledge-clipper-question-native-keyboard-journey.v1",
+  "happyPath": {
+    "process": "KnowledgeClipper.exe",
+    "transport": "NamedPipe",
+    "inputMethod": "native-keyboard",
+    "actions": [
+      { "action": "question.submit", "key": "Enter", "taskId": "task-question-001", "queryRecent": false },
+      { "action": "answer.ready", "taskId": "task-question-001", "queryRecent": false },
+      { "action": "question.submit", "key": "Enter", "taskId": "task-question-002", "queryRecent": false }
+    ]
+  },
+  "unresolvedPath": {
+    "actions": [
+      { "action": "question.submit", "taskId": "task-question-001" },
+      { "action": "question.submit", "taskId": "task-question-002" }
+    ],
+    "terminal": { "state": "loading", "loading": true, "reasonCode": null }
+  },
+  "sourceEvidence": { "desktopLogSha256": "8B49F5AB5095C40F251AB3FD4F1C7C881319C2CC20C6DBA9A6E9AA0607BA8F26", "window": "2026-09-01T15:31", "submitCount": 2, "followUpCount": 0 }
+}

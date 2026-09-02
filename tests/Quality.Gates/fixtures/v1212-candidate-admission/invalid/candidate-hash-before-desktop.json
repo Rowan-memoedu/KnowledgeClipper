@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "knowledge-clipper-v1212-candidate-admission-fixture.v1",
+  "policy": {
+    "externalCalls": 0,
+    "workerRuns": 0,
+    "candidateHashBeforeDesktop": true,
+    "pendingIsFailure": false
+  },
+  "core": { "path": "x", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "authority": {
+    "checkpoint": { "path": "x", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+    "registry": { "path": "x", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+    "qualification": { "path": "x", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+    "release": { "root": "x", "fileCount": 284, "totalBytes": 260374870, "treeSha256": "0000000000000000000000000000000000000000000000000000000000000000" }
+  },
+  "ankiPostAuthority": { "path": "x", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "desktop": { "requiredRegistryVersion": "1.2.12", "integratedCandidateRoot": null, "manifestSha256": null, "entrypointSha256": null, "applicationDllSha256": null, "sealedFileCount": null, "sealedTotalBytes": null, "sealedTreeSha256": null, "ownerReceipt": null, "settingsUiAutomationLog": null, "uiAutomationLog": null, "physicalCtrlCLog": null }
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./ipc-response.schema.json",
+  "title": "RemNote Quick Clipper IPC Response Envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "correlationId", "messageType", "ok", "payload", "error"],
+  "properties": {
+    "protocolVersion": { "const": "1.0" },
+    "correlationId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "messageType": { "type": "string", "enum": ["task-command-receipt", "task-query-result", "protocol-error"] },
+    "ok": { "type": "boolean" },
+    "payload": { "oneOf": [{ "type": "null" }, { "type": "object" }] },
+    "error": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/protocolError" }] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "messageType": { "const": "task-command-receipt" } }, "required": ["messageType"] },
+      "then": { "properties": { "ok": { "const": true }, "payload": { "$ref": "./task-command-receipt.schema.json" }, "error": { "type": "null" } } }
+    },
+    {
+      "if": { "properties": { "messageType": { "const": "task-query-result" } }, "required": ["messageType"] },
+      "then": { "properties": { "ok": { "const": true }, "payload": { "$ref": "./task-query-result.schema.json" }, "error": { "type": "null" } } }
+    },
+    {
+      "if": { "properties": { "messageType": { "const": "protocol-error" } }, "required": ["messageType"] },
+      "then": { "properties": { "ok": { "const": false }, "payload": { "type": "null" }, "error": { "$ref": "#/$defs/protocolError" } } }
+    }
+  ],
+  "$defs": {
+    "protocolError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "category", "message"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "category": { "const": "protocol" },
+        "message": { "type": "string", "minLength": 1, "maxLength": 1000 }
+      }
+    }
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knowledge-clipper.local/quality/v1212-candidate-admission.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "policy", "core", "authority", "ankiPostAuthority", "desktop"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-v1212-candidate-admission-fixture.v1" },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["externalCalls", "workerRuns", "candidateHashBeforeDesktop", "pendingIsFailure"],
+      "properties": {
+        "externalCalls": { "const": 0 },
+        "workerRuns": { "const": 0 },
+        "candidateHashBeforeDesktop": { "const": false },
+        "pendingIsFailure": { "const": false }
+      }
+    },
+    "core": { "$ref": "#/$defs/fileRef" },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checkpoint", "registry", "qualification", "release"],
+      "properties": {
+        "checkpoint": { "$ref": "#/$defs/fileRef" },
+        "registry": { "$ref": "#/$defs/fileRef" },
+        "qualification": { "$ref": "#/$defs/fileRef" },
+        "release": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["root", "fileCount", "totalBytes", "treeSha256"],
+          "properties": {
+            "root": { "type": "string", "minLength": 1 },
+            "fileCount": { "const": 284 },
+            "totalBytes": { "const": 260374870 },
+            "treeSha256": { "$ref": "#/$defs/sha256" }
+          }
+        }
+      }
+    },
+    "ankiPostAuthority": { "$ref": "#/$defs/fileRef" },
+    "desktop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requiredRegistryVersion", "integratedCandidateRoot", "manifestSha256", "entrypointSha256", "applicationDllSha256", "sealedFileCount", "sealedTotalBytes", "sealedTreeSha256", "ownerReceipt", "settingsUiAutomationLog", "uiAutomationLog", "physicalCtrlCLog"],
+      "properties": {
+        "requiredRegistryVersion": { "const": "1.2.12" },
+        "integratedCandidateRoot": { "type": ["string", "null"] },
+        "manifestSha256": { "type": ["string", "null"], "pattern": "^[A-Fa-f0-9]{64}$" },
+        "entrypointSha256": { "type": ["string", "null"], "pattern": "^[A-Fa-f0-9]{64}$" },
+        "applicationDllSha256": { "type": ["string", "null"], "pattern": "^[A-Fa-f0-9]{64}$" },
+        "sealedFileCount": { "type": ["integer", "null"], "minimum": 1 },
+        "sealedTotalBytes": { "type": ["integer", "null"], "minimum": 1 },
+        "sealedTreeSha256": { "type": ["string", "null"], "pattern": "^[A-Fa-f0-9]{64}$" },
+        "ownerReceipt": { "anyOf": [{ "$ref": "#/$defs/fileRef" }, { "type": "null" }] },
+        "settingsUiAutomationLog": { "anyOf": [{ "$ref": "#/$defs/fileRef" }, { "type": "null" }] },
+        "uiAutomationLog": { "anyOf": [{ "$ref": "#/$defs/fileRef" }, { "type": "null" }] },
+        "physicalCtrlCLog": { "anyOf": [{ "$ref": "#/$defs/fileRef" }, { "type": "null" }] }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+    "fileRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

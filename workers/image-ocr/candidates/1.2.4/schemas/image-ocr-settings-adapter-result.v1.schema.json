@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-ocr-settings-adapter-result.v1.schema.json",
+  "title": "KnowledgeClipper image/OCR settings adapter result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "normalizedSettings",
+    "captureModeSnapshot",
+    "workerRequestProjection",
+    "runtimeSecretBinding",
+    "readOnlyFacts",
+    "status"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "image-ocr-settings-adapter-result.v1"},
+    "normalizedSettings": {"$ref": "image-ocr-settings.v1.schema.json"},
+    "captureModeSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["imageHandling"],
+      "properties": {"imageHandling": {"enum": ["ocr", "original"]}}
+    },
+    "workerRequestProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workerId", "operation", "configSnapshot", "derivedInternalRequest"],
+      "properties": {
+        "workerId": {"const": "image.ocr.mineru"},
+        "operation": {"const": "process-images"},
+        "configSnapshot": {"type": "object"},
+        "derivedInternalRequest": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "cloudUploadAuthorized"],
+          "properties": {
+            "mode": {"enum": ["ocr_mineru", "original_passthrough"]},
+            "cloudUploadAuthorized": {"type": "boolean"}
+          }
+        }
+      }
+    },
+    "runtimeSecretBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["configured", "requiredForSelectedMode", "injectForSelectedMode", "reference", "environmentVariable", "valuePersisted"],
+      "properties": {
+        "configured": {"type": "boolean"},
+        "requiredForSelectedMode": {"type": "boolean"},
+        "injectForSelectedMode": {"type": "boolean"},
+        "reference": {"type": ["string", "null"]},
+        "environmentVariable": {"const": "MINERU_API_TOKEN"},
+        "valuePersisted": {"const": false}
+      }
+    },
+    "readOnlyFacts": {"type": "object"},
+    "status": {
+      "type": "object",
+      "required": ["settingsProjection", "coreSettingsControlPlaneBinding", "originalFullPipeline", "partialFailedOnlyAutomaticContinuation", "retentionExecution"]
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./task-manifest.schema.json",
+  "title": "RemNote Quick Clipper Task Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "taskId",
+    "createdAt",
+    "createdBy",
+    "intent",
+    "executionProfile",
+    "inputRefs",
+    "requestedOutputs",
+    "initialPlanRef",
+    "retentionClass"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "taskId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "createdBy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["application", "version"],
+      "properties": {
+        "application": { "type": "string", "minLength": 1 },
+        "version": { "$ref": "./artifact.schema.json#/$defs/semanticVersion" }
+      }
+    },
+    "intent": {
+      "type": "string",
+      "enum": ["clip.card", "clip.write", "clip.read-aloud", "clip.question"]
+    },
+    "executionProfile": {
+      "type": "string",
+      "enum": ["parity-remnote", "cards-remnote", "cards-anki"]
+    },
+    "inputRefs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/taskInputReference" }
+    },
+    "requestedOutputs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "./artifact.schema.json#/$defs/artifactKind" }
+    },
+    "initialPlanRef": { "$ref": "./artifact.schema.json#/$defs/jobRelativePath" },
+    "retentionClass": {
+      "type": "string",
+      "enum": ["ephemeral", "standard", "evidence", "pinned"]
+    },
+    "metadata": { "type": "object" }
+  },
+  "$defs": {
+    "taskInputReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactRef", "kind", "contractVersion", "expectedSha256"],
+      "properties": {
+        "artifactRef": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+        "kind": { "$ref": "./artifact.schema.json#/$defs/artifactKind" },
+        "contractVersion": { "$ref": "./artifact.schema.json#/$defs/semanticVersion" },
+        "expectedSha256": { "$ref": "./artifact.schema.json#/$defs/sha256" }
+      }
+    }
+  }
+}

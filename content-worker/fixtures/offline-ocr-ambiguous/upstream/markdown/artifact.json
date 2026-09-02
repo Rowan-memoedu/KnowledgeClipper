@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "artifactId": "fixture.ocr.ambiguous.markdown",
+  "kind": "image-ocr.markdown",
+  "contractVersion": "1.0.0",
+  "mediaType": "text/markdown; charset=utf-8",
+  "files": [{ "path": "upstream/markdown/content.md", "sha256": "9e36ebeeef0747b1aa89297538df39ae361fac3064303e997ba36610511f7228", "bytes": 46, "mediaType": "text/markdown; charset=utf-8" }],
+  "createdAt": "2026-08-30T00:00:00.000Z",
+  "producer": { "stageId": "image-ocr", "workerId": "image.ocr.mineru", "workerVersion": "1.2.2", "attemptId": "fixture-ocr-ambiguous" },
+  "inputRefs": [],
+  "dataClass": "public",
+  "metadata": { "entrypoint": "upstream/markdown/content.md", "synthetic": true }
+}

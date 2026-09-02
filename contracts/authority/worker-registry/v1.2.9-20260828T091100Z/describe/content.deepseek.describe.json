@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "workerId": "content.deepseek",
+  "workerVersion": "0.6.1",
+  "contractVersion": "1.0.0",
+  "stages": [
+    "content.understand-and-card"
+  ],
+  "inputKinds": [
+    "content-input",
+    "content-config-snapshot"
+  ],
+  "outputKinds": [
+    "learning-bundle",
+    "card-bundle",
+    "language-practice-decision",
+    "question.answer"
+  ],
+  "concurrency": {
+    "model": "parallel",
+    "maxParallelAttempts": 4
+  },
+  "sideEffectLevel": "local",
+  "idempotencyLevel": "idempotent",
+  "cancellation": {
+    "protocol": "attempt-signal-file-v1",
+    "supportedReasons": [
+      "user_stop",
+      "superseded",
+      "task_cancel",
+      "timeout"
+    ]
+  }
+}

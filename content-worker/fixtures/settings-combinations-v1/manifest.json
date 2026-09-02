@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "content-settings-fixture-matrix/1.0.0",
+  "providerMode": "replay",
+  "credentialsRecorded": false,
+  "resources": {
+    "promptSet": "open-md-v2",
+    "categoryRegistry": "category-registry/2.0.0"
+  },
+  "scenarios": [
+    {
+      "id": "ordinary-structured-cleaning",
+      "fixture": "offline-structured-cleaning",
+      "settings": {
+        "cleaning": "enabled-delete-only",
+        "classification": "automatic",
+        "requestedTemplates": ["procedure"]
+      }
+    },
+    {
+      "id": "language-meaning-reading",
+      "fixture": "offline-language-meaning-reading-v2",
+      "settings": { "languagePracticeMode": "meaning-reading" }
+    },
+    {
+      "id": "language-writing",
+      "fixture": "offline-language-writing-whitespace-v2",
+      "settings": { "languagePracticeMode": "writing" }
+    },
+    {
+      "id": "language-both",
+      "fixture": "offline-language-practice-v2",
+      "settings": { "languagePracticeMode": "both", "cardOrder": ["language_context", "language_writing"] }
+    }
+  ]
+}

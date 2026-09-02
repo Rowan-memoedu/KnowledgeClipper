@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./ipc-request.v1.1.schema.json",
+  "title": "KnowledgeClipper IPC Request Envelope with Stage Control v1.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "correlationId", "messageType", "payload"],
+  "properties": {
+    "protocolVersion": { "enum": ["1.0", "1.1"] },
+    "correlationId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "messageType": { "enum": ["task-command", "task-query", "stage-control"] },
+    "payload": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "messageType": { "const": "stage-control" } }, "required": ["messageType"] },
+      "then": { "properties": { "protocolVersion": { "const": "1.1" }, "payload": { "$ref": "./stage-control-request.v1.schema.json" } } },
+      "else": { "properties": { "protocolVersion": { "const": "1.0" } } }
+    }
+  ]
+}

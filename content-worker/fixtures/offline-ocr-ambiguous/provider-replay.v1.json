@@ -1,0 +1,19 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "ocr_proofreading:item-ocr-ambiguous": {
+      "proofread_text": "Question: Which code is shown?\n\nAnswer: MODL.\n",
+      "corrections": [],
+      "unresolved": [
+        {
+          "segment_index": 1,
+          "start": 8,
+          "end": 12,
+          "exact_text": "MODL",
+          "reason": "insufficient_context",
+          "evidence": "The token may be an identifier or one of several words; the surrounding text provides no unique completion."
+        }
+      ]
+    }
+  }
+}

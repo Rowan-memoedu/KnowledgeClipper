@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-invalidation-receipt.v1",
+  "generatedAt": "2026-08-28T09:20:00.0000000+00:00",
+  "registryVersion": "1.2.9",
+  "releaseId": "knowledge-clipper-authority-v1.2.9-20260828T091100Z",
+  "status": "invalidated-never-promoted",
+  "authorityBound": false,
+  "checkpointCreated": true,
+  "reason": "The authority dependency chain binds Core checkpoint v2.4.6, which was independently found to have tree.totalBytes=0, a stale speech deep-path pending flag, and an updated Core executable under the older 2.4.5 identity. Worker admission remains useful module evidence, but this authority cannot qualify Phase B or an integrated candidate.",
+  "evidence": {
+    "affectedCoreCheckpoint": "contracts/core/v2.4/settings-control/checkpoints/v2.4.6-20260828T091000Z/checkpoint.json",
+    "affectedCoreCheckpointSha256": "C02BC9143A842CFDB1BDE77E62D65F9300D6F168672212045CCF3B537EE342D3",
+    "affectedAuthorityCheckpoint": "contracts/authority/worker-registry/v1.2.9-20260828T091100Z/checkpoint.json",
+    "affectedAuthorityCheckpointSha256": "5C0CCCBA82743048126A4A1D56949661E7DAE402D6DEEF6233E4B9DB9B2512AE"
+  },
+  "immutability": {
+    "v1_2_9ReleaseModified": false,
+    "v1_2_9CheckpointModified": false,
+    "v1_2_8Modified": false,
+    "frozenV1Modified": false
+  },
+  "replacement": {
+    "minimumRegistryVersion": "1.2.10",
+    "rebuildFromOriginalFinalInputs": true
+  }
+}

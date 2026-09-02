@@ -1,0 +1,1 @@
+{"schemaVersion":"speech-settings-voice-discovery-input.v1","mode":"validate_only","requestedLanguages":["zh-CN"],"cacheMaxAgeSeconds":3600,"deployment":{"edgeTtsPath":null,"ffplayPath":null},"catalogSnapshot":{"provider":"edge-tts","catalogVersion":"fake","updatedAtUtc":"2026-09-01T00:00:00Z","voices":[]}}

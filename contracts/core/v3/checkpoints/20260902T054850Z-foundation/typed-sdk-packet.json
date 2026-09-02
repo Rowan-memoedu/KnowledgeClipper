@@ -1,0 +1,61 @@
+{
+  "schema": "kc.core-v3-typed-sdk-packet/1",
+  "createdAt": "2026-09-02T05:49:01.3158506+00:00",
+  "boundary": "foundation-only",
+  "sourceTreeSha256": "B83912EE7DD11781F21A97B99713FB8BE0E708057F736B871F77B284D63754E2",
+  "publicProject": "core-v3/src/KnowledgeClipper.Core.V3.Client/KnowledgeClipper.Core.V3.Client.csproj",
+  "contractProject": "core-v3/src/KnowledgeClipper.Core.V3.Contracts/KnowledgeClipper.Core.V3.Contracts.csproj",
+  "publicAssembly": {
+    "path": "core-v3/src/KnowledgeClipper.Core.V3.Client/bin/Release/net8.0/KnowledgeClipper.Core.V3.Client.dll",
+    "bytes": 71680,
+    "sha256": "7A1D52A5A9AA1B7794611DD197A5478A8F8E9C37ED836ECDE35705C4B12D52C3"
+  },
+  "contractAssembly": {
+    "path": "core-v3/src/KnowledgeClipper.Core.V3.Contracts/bin/Release/net8.0/KnowledgeClipper.Core.V3.Contracts.dll",
+    "bytes": 62976,
+    "sha256": "BF8CB22AFB01F22E22D0C7B8008A1692EFC60B322DBBA37E2F6DD743EACCBAB7"
+  },
+  "publicSources": [
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Client/CoreV3Client.cs",
+      "bytes": 9296,
+      "sha256": "0310B57B48E48A924977F1F29633238FB80340C87D825073B9B4315542B7BA51"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Client/DomainClient.cs",
+      "bytes": 18494,
+      "sha256": "FCBB565AC8DE1C92952327AADD1AA2933E16D5B3F02FECA621620A57906CA491"
+    },
+    {
+      "path": "core-v3/src/KnowledgeClipper.Core.V3.Client/KnowledgeClipper.Core.V3.Client.csproj",
+      "bytes": 656,
+      "sha256": "1BC7F04A05225D3F3659D2FB018AD53BD8CA308C0EA01B885A49F5C79642D466"
+    }
+  ],
+  "capabilityBinding": {
+    "path": "contracts/core/v3/capabilities/authority-bound-capability-catalog.ref.json",
+    "bytes": 459,
+    "sha256": "7F86C8EDA3CF95EBE6F5F312253DF80C2A6F62B093F2F790AFDFF5ED1548DEBD"
+  },
+  "capabilityCatalog": {
+    "path": "contracts/core/v3/capabilities/capability-catalog.v1.json",
+    "bytes": 4708,
+    "sha256": "1B17ECF0784A762192D7F0B59DF4B7CC205707AF7716FBF944D6F5D65BD401D7"
+  },
+  "buildReceipt": {
+    "path": "core-v3/receipts/20260902T054850Z-formal-release-build.receipt.json",
+    "bytes": 1733,
+    "sha256": "237A7B69CC0D5948007601A58A9757D0BB0920B98EF7D80C7371EAD6EC711E98"
+  },
+  "testReceipt": {
+    "path": "core-v3/receipts/20260902T054850Z-formal-foundation-tests.receipt.json",
+    "bytes": 4850,
+    "sha256": "7A450B47833E061D3D6DC6FD86AA4DF82723321610C2CF98E1C7BB91C68D2C0B"
+  },
+  "restrictions": [
+    "Low-level command/query protocol types remain internal to the SDK.",
+    "Artifact references remain opaque to SDK consumers.",
+    "Anki and Question operations are prepared but unavailable in the foundation catalog.",
+    "No Desktop, worker, candidate, or authority migration is included."
+  ]
+}

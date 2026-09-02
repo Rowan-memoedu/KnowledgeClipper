@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "knowledge-clipper-v1212-sealed-process-increment-fixture.v1",
+  "policy": { "externalRerun": false, "ocrCorrection": "pass", "questionWorkflow": "waiting_input" },
+  "evidenceRoot": "x",
+  "baseCandidateReceipt": { "path": "x", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "candidate": { "candidateId": "kc-integrated-settings-v1212-20260830T183500Z", "manifestSha256": "0000000000000000000000000000000000000000000000000000000000000000", "sealedTreeSha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "authority": { "registryVersion": "1.2.12", "registrySha256": "0000000000000000000000000000000000000000000000000000000000000000", "checkpointSha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "expectedNotes": { "process-text": 1788081994612, "process-ocr-handoff": 1788082002544 }
+}

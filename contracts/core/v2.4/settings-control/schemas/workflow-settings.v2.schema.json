@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-workflow-settings.v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "activeProfileId", "profiles"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-workflow-settings.v2" },
+    "activeProfileId": { "$ref": "#/$defs/id" },
+    "profiles": { "type": "object", "minProperties": 1, "propertyNames": { "$ref": "#/$defs/id" }, "additionalProperties": { "$ref": "#/$defs/profile" } }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+    "workflow": { "type": "object", "additionalProperties": false, "properties": { "processingProfile": { "enum": ["learning", "cards"] }, "destinations": { "type": "array", "maxItems": 2, "uniqueItems": true, "items": { "enum": ["remnote", "anki"] } } } },
+    "capture": { "type": "object", "additionalProperties": false, "properties": { "contextEnabled": { "type": "boolean" }, "contextGranularity": { "enum": ["sentence", "paragraph"] }, "imageHandling": { "enum": ["ocr", "original"] } } },
+    "speech": { "type": "object", "additionalProperties": false, "properties": { "voicesByLanguage": { "type": "object", "minProperties": 1, "propertyNames": { "pattern": "^[a-z]{2}-[A-Z]{2}$" }, "additionalProperties": { "type": "string", "minLength": 1 } }, "ratePercent": { "type": "integer", "minimum": -100, "maximum": 100 }, "volumePercent": { "type": "integer", "minimum": -100, "maximum": 100 }, "pitchHz": { "type": "integer", "minimum": -100, "maximum": 100 }, "autoPlay": { "type": "boolean" } } },
+    "imageOcr": {
+      "type": "object", "additionalProperties": false, "required": ["schemaVersion", "providerSettings"],
+      "properties": {
+        "schemaVersion": { "const": "image-ocr-settings.v1" },
+        "providerSettings": {
+          "type": "object", "additionalProperties": false,
+          "required": ["modelVersion", "language", "enableTable", "enableFormula", "timeoutSeconds", "pollIntervalSeconds"],
+          "properties": {
+            "modelVersion": { "enum": ["vlm", "pipeline", "MinerU-HTML"] }, "language": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,31}$" },
+            "enableTable": { "type": "boolean" }, "enableFormula": { "type": "boolean" },
+            "timeoutSeconds": { "type": "integer", "minimum": 30, "maximum": 3600 }, "pollIntervalSeconds": { "type": "integer", "minimum": 1, "maximum": 60 }
+          }
+        },
+        "mineruScriptPath": { "type": "string", "minLength": 3 }
+      }
+    },
+    "content": { "type": "object", "additionalProperties": false, "required": ["configArtifactRef", "expectedSha256", "settingsRevisionId"], "properties": { "configArtifactRef": { "type": "string", "minLength": 1 }, "expectedSha256": { "$ref": "#/$defs/sha256" }, "settingsRevisionId": { "$ref": "#/$defs/id" } } },
+    "profile": {
+      "type": "object", "additionalProperties": false, "required": ["displayName"],
+      "properties": {
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 80 }, "workflow": { "$ref": "#/$defs/workflow" }, "capture": { "$ref": "#/$defs/capture" },
+        "speech": { "$ref": "#/$defs/speech" }, "remnote": { "$ref": "../../../../remnote-destination-settings.v1.schema.json" }, "imageOcr": { "$ref": "#/$defs/imageOcr" }, "content": { "$ref": "#/$defs/content" }
+      }
+    }
+  }
+}

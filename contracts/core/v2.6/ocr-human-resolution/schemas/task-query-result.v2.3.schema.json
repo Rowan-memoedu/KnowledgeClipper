@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-task-query-result.v2.3",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "queryId", "type", "nextCursor", "items"],
+  "properties": {
+    "schemaVersion": { "const": "2.3.0" },
+    "queryId": { "$ref": "./task-query.v2.3.schema.json#/$defs/identifier" },
+    "type": { "enum": ["task.query_recent", "task.get"] },
+    "nextCursor": { "type": ["string", "null"] },
+    "items": { "type": "array", "items": { "$ref": "#/$defs/item" } }
+  },
+  "$defs": {
+    "artifactRef": { "$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/artifactReference" },
+    "item": {
+      "type": "object", "additionalProperties": false,
+      "required": ["taskId", "operationId", "intent", "status", "createdAt", "updatedAt", "attentionRequired", "replayable", "summaryCode", "decisionKind", "decisionTargetToken", "answerAvailable", "questionTargetToken", "questionTurnCount", "questionAnswerRef", "ocrHumanResolution"],
+      "properties": {
+        "taskId": { "$ref": "./task-query.v2.3.schema.json#/$defs/identifier" },
+        "operationId": { "$ref": "./task-query.v2.3.schema.json#/$defs/identifier" },
+        "intent": { "type": "string", "minLength": 1 },
+        "status": { "$ref": "./task-query.v2.3.schema.json#/$defs/status" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "attentionRequired": { "type": "boolean" }, "replayable": { "type": "boolean" },
+        "summaryCode": { "type": "string", "minLength": 1 },
+        "decisionKind": { "type": ["string", "null"] },
+        "decisionTargetToken": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^[a-f0-9]{64}$" }] },
+        "answerAvailable": { "type": "boolean" },
+        "questionTargetToken": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^[a-f0-9]{64}$" }] },
+        "questionTurnCount": { "type": ["integer", "null"], "minimum": 1 },
+        "questionAnswerRef": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/artifactRef" }] },
+        "ocrHumanResolution": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object", "additionalProperties": false,
+              "required": ["decisionKind", "targetToken", "sourceProofreadRef", "sourceImageProvenanceRef", "sourceOriginalImageRef", "originalTextRef", "candidateTextRef", "diff", "reason", "allowedActions"],
+              "properties": {
+                "decisionKind": { "const": "ocr-human-resolution" },
+                "targetToken": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "sourceProofreadRef": { "$ref": "#/$defs/artifactRef" },
+                "sourceImageProvenanceRef": { "$ref": "#/$defs/artifactRef" },
+                "sourceOriginalImageRef": { "$ref": "#/$defs/artifactRef" },
+                "originalTextRef": { "$ref": "#/$defs/artifactRef" },
+                "candidateTextRef": { "$ref": "#/$defs/artifactRef" },
+                "diff": { "type": "array" }, "reason": { "type": "array", "minItems": 1 },
+                "allowedActions": { "const": ["accept_original", "submit_correction", "cancel"] }
+              }
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "ocrHumanResolution": { "type": "object" } }, "required": ["ocrHumanResolution"] },
+          "then": { "properties": { "status": { "const": "waiting_input" }, "attentionRequired": { "const": true }, "decisionKind": { "const": "ocr-human-resolution" }, "decisionTargetToken": { "type": "string" } } }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "2.0.0",
+  "documentTitle": "卡片 · 日期字段泄漏",
+  "sink": "mcp-direct",
+  "target": { "rootRemId": "root-rem-id", "rootTitle": "卡片 Canary" },
+  "route": { "kind": "card-export", "localDate": "2026-08-28" }
+}

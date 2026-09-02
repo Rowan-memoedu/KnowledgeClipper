@@ -1,0 +1,55 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-language-zh": {
+      "cleaned_text": "他阅读完补充材料后，对这个结论仍然心存疑窦。\n",
+      "removed_fragments": [],
+      "format_anomalies": []
+    },
+    "classification:item-language-zh": {
+      "units": [
+        {
+          "unit_id": "unit-doubt",
+          "source_segment_indexes": [0],
+          "category_id": "language_zh",
+          "subtype": "contextual_vocabulary",
+          "answer_state": "not_applicable",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "target_term": "疑窦",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "language_writing:item-language-zh:unit-doubt": {
+      "pronunciation": { "value": "yí dòu", "reliability": "reliable", "evidence": "当前词语规范读音" },
+      "meaning": { "value": "疑问或疑惑", "reliability": "reliable", "evidence": "与当前语境一致" },
+      "unresolved_reasons": []
+    },
+    "cleaning:item-language-en": {
+      "cleaned_text": "Please review the draft before Friday.\n",
+      "removed_fragments": [],
+      "format_anomalies": []
+    },
+    "classification:item-language-en": {
+      "units": [
+        {
+          "unit_id": "unit-draft",
+          "source_segment_indexes": [0],
+          "category_id": "language_en",
+          "subtype": "contextual_vocabulary",
+          "answer_state": "not_applicable",
+          "context_state": "ambiguous",
+          "risk_state": "ordinary",
+          "target_term": "draft",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "language_writing:item-language-en:unit-draft": {
+      "pronunciation": { "value": "/drɑːft/", "reliability": "reliable", "evidence": "标准读音" },
+      "meaning": { "reliability": "unreliable", "evidence": "上下文不足以可靠锁定语境义" },
+      "unresolved_reasons": ["meaning_requires_human"]
+    }
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-task-settings-snapshot.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "taskId", "frozenAt", "source", "workflow", "modules", "secretReferences"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-task-settings-snapshot.v1" },
+    "taskId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "frozenAt": { "type": "string", "format": "date-time" },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["activeProfileId", "settingsSha256", "precedence"],
+      "properties": {
+        "activeProfileId": { "type": "string", "minLength": 1 },
+        "settingsSha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+        "precedence": { "const": ["taskOverride", "activeProfile", "moduleDefault"] }
+      }
+    },
+    "workflow": {
+      "type": "object", "additionalProperties": false,
+      "required": ["processingProfile", "destinations"],
+      "properties": {
+        "processingProfile": { "enum": ["learning", "cards"] },
+        "destinations": { "type": "array", "maxItems": 2, "uniqueItems": true, "items": { "enum": ["remnote", "anki"] } }
+      }
+    },
+    "modules": {
+      "type": "object", "additionalProperties": false,
+      "required": ["capture", "content"],
+      "properties": {
+        "capture": {
+          "type": "object", "additionalProperties": false,
+          "required": ["contextEnabled", "contextGranularity", "imageHandling"],
+          "properties": {
+            "contextEnabled": { "type": "boolean" },
+            "contextGranularity": { "enum": ["sentence", "paragraph"] },
+            "imageHandling": { "enum": ["ocr", "original"] }
+          }
+        },
+        "content": {
+          "type": "object", "additionalProperties": false,
+          "required": ["promptSet", "categoryRegistry", "providerMode"],
+          "properties": {
+            "promptSet": { "const": "open-md-v2" },
+            "categoryRegistry": { "const": "category-registry/2.0.0" },
+            "providerMode": { "const": "live" }
+          }
+        },
+        "speech": {
+          "type": "object", "additionalProperties": false,
+          "required": ["voicesByLanguage", "ratePercent", "volumePercent", "pitchHz", "autoPlay"],
+          "properties": {
+            "voicesByLanguage": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "string", "minLength": 1 } },
+            "ratePercent": { "type": "integer", "minimum": -100, "maximum": 100 },
+            "volumePercent": { "type": "integer", "minimum": -100, "maximum": 100 },
+            "pitchHz": { "type": "integer", "minimum": -100, "maximum": 100 },
+            "autoPlay": { "type": "boolean" }
+          }
+        },
+        "remnote": {
+          "type": "object", "additionalProperties": false,
+          "required": ["settings", "route"],
+          "properties": {
+            "settings": { "$ref": "../../../../remnote-destination-settings-snapshot.v1.schema.json" },
+            "route": { "$ref": "../../../../remnote-export-payload.v2.schema.json#/properties/route" }
+          }
+        },
+        "anki": {
+          "type": "object", "additionalProperties": false,
+          "required": ["configArtifactRef", "expectedSha256", "secretReferences"],
+          "properties": {
+            "configArtifactRef": { "type": "string", "minLength": 1 },
+            "expectedSha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+            "secretReferences": { "const": [] }
+          }
+        }
+      }
+    },
+    "secretReferences": { "const": [] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "workflow": { "properties": { "destinations": { "contains": { "const": "remnote" } } } } } },
+      "then": { "properties": { "modules": { "required": ["remnote"] } } },
+      "else": { "properties": { "modules": { "not": { "required": ["remnote"] } } } }
+    },
+    {
+      "if": { "properties": { "workflow": { "properties": { "destinations": { "contains": { "const": "anki" } } } } } },
+      "then": {
+        "properties": {
+          "workflow": { "properties": { "processingProfile": { "const": "cards" } } },
+          "modules": { "required": ["anki"] }
+        }
+      },
+      "else": { "properties": { "modules": { "not": { "required": ["anki"] } } } }
+    },
+    {
+      "if": {
+        "properties": {
+          "workflow": {
+            "properties": {
+              "processingProfile": { "const": "learning" },
+              "destinations": { "contains": { "const": "remnote" } }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "modules": {
+            "properties": {
+              "remnote": { "properties": { "route": { "properties": { "kind": { "const": "clip-daily-route" } }, "required": ["kind"] } } }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "workflow": {
+            "properties": {
+              "processingProfile": { "const": "cards" },
+              "destinations": { "contains": { "const": "remnote" } }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "modules": {
+            "properties": {
+              "remnote": { "properties": { "route": { "const": { "kind": "card-export" } } } }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

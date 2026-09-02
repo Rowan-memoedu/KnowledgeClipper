@@ -1,0 +1,6 @@
+{
+  "schemaVersion": "1.0.0",
+  "registryVersion": "1.0.0",
+  "profiles": ["parity-remnote", "cards-remnote", "cards-anki"],
+  "workers": []
+}

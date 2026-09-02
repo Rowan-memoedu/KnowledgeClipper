@@ -1,0 +1,18 @@
+{
+  "schemaVersion":"2.3.0","queryId":"query-ocr-1","type":"task.get","nextCursor":null,
+  "items":[{
+    "taskId":"task-ocr-1","operationId":"operation-ocr-1","intent":"clip.card","status":"waiting_input",
+    "createdAt":"2026-08-30T11:00:00Z","updatedAt":"2026-08-30T11:01:00Z","attentionRequired":true,"replayable":false,
+    "summaryCode":"task.waiting_input","decisionKind":"ocr-human-resolution","decisionTargetToken":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "answerAvailable":false,"questionTargetToken":null,"questionTurnCount":null,"questionAnswerRef":null,
+    "ocrHumanResolution":{
+      "decisionKind":"ocr-human-resolution","targetToken":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceProofreadRef":{"artifactRef":"proof-1","kind":"ocr-proofread-bundle","contractVersion":"1.0.0","manifestPath":"runs/run-1/stages/content/attempts/attempt-1/outputs/proof-1/artifact.json","expectedSha256":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+      "sourceImageProvenanceRef":{"artifactRef":"image-provenance-1","kind":"image.processing.provenance","contractVersion":"1.0.0","manifestPath":"runs/run-1/stages/image-ocr/attempts/attempt-image/outputs/image-provenance-1/artifact.json","expectedSha256":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},
+      "sourceOriginalImageRef":{"artifactRef":"image-original-1","kind":"image.original","contractVersion":"1.0.0","manifestPath":"runs/run-1/stages/image-ocr/attempts/attempt-image/outputs/image-original-1/artifact.json","expectedSha256":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
+      "originalTextRef":{"artifactRef":"original-1","kind":"ocr.original.text","contractVersion":"1.0.0","manifestPath":"runs/run-1/adapters/content/original-1/v0001/artifact.json","expectedSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
+      "candidateTextRef":{"artifactRef":"candidate-1","kind":"ocr.candidate.text","contractVersion":"1.0.0","manifestPath":"runs/run-1/adapters/content/candidate-1/v0001/artifact.json","expectedSha256":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"},
+      "diff":[],"reason":[{"reason":"insufficient_context","exact_text":"CANAR"}],"allowedActions":["accept_original","submit_correction","cancel"]
+    }
+  }]
+}

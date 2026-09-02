@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./task-query-result.v2.2.schema.json",
+  "title": "KnowledgeClipper task query result v2.2 with question answer projection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "queryId", "type", "nextCursor", "items"],
+  "properties": {
+    "schemaVersion": { "const": "2.2.0" },
+    "queryId": { "$ref": "./task-query.v2.2.schema.json#/$defs/identifier" },
+    "type": { "enum": ["task.query_recent", "task.get"] },
+    "nextCursor": { "type": ["string", "null"], "maxLength": 512 },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["taskId", "operationId", "intent", "status", "createdAt", "updatedAt", "attentionRequired", "replayable", "summaryCode", "decisionKind", "decisionTargetToken", "answerAvailable", "questionTargetToken", "questionTurnCount", "questionAnswerRef"],
+        "properties": {
+          "taskId": { "$ref": "./task-query.v2.2.schema.json#/$defs/identifier" },
+          "operationId": { "$ref": "./task-query.v2.2.schema.json#/$defs/identifier" },
+          "intent": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "status": { "$ref": "./task-query.v2.2.schema.json#/$defs/status" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "attentionRequired": { "type": "boolean" },
+          "replayable": { "type": "boolean" },
+          "summaryCode": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "decisionKind": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 },
+          "decisionTargetToken": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^[a-f0-9]{64}$" }] },
+          "answerAvailable": { "type": "boolean" },
+          "questionTargetToken": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^[a-f0-9]{64}$" }] },
+          "questionTurnCount": { "type": ["integer", "null"], "minimum": 1 },
+          "questionAnswerRef": {
+            "oneOf": [
+              { "type": "null" },
+              {
+                "allOf": [
+                  { "$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/artifactReference" },
+                  { "properties": { "kind": { "const": "question.answer.text" } } }
+                ]
+              }
+            ]
+          }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "answerAvailable": { "const": true } }, "required": ["answerAvailable"] },
+            "then": { "properties": { "status": { "const": "waiting_input" }, "questionTargetToken": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "questionTurnCount": { "type": "integer", "minimum": 1 }, "questionAnswerRef": { "type": "object" } } },
+            "else": { "properties": { "questionTargetToken": { "type": "null" }, "questionTurnCount": { "type": "null" }, "questionAnswerRef": { "type": "null" } } }
+          },
+          {
+            "if": { "properties": { "decisionKind": { "const": "language-practice" } }, "required": ["decisionKind"] },
+            "then": { "properties": { "status": { "const": "waiting_input" }, "decisionTargetToken": { "type": "string", "pattern": "^[a-f0-9]{64}$" } } }
+          },
+          {
+            "if": { "properties": { "decisionKind": { "type": "null" } }, "required": ["decisionKind"] },
+            "then": { "properties": { "decisionTargetToken": { "type": "null" } } }
+          }
+        ]
+      }
+    }
+  }
+}

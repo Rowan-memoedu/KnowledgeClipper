@@ -1,0 +1,17 @@
+{
+  "schema_version": "standard-input/3.0.0",
+  "package_id": "knowledge-clipper-question-ancestry-missing-v3",
+  "task_id": "question-ancestry-missing-v3",
+  "input_version": "2",
+  "mode": "question",
+  "questionWorkflow": {
+    "schemaVersion": "question-workflow-input/1.0.0",
+    "phase": "answer",
+    "questionTurns": [
+      { "turnId": "question-1", "turnIndex": 0, "question": "为什么 TCP 建立连接需要三次握手？" },
+      { "turnId": "question-2", "turnIndex": 1, "question": "如果只有两次握手，会留下什么风险？", "parentAnswerId": "answer-tcp-1" }
+    ],
+    "answerAncestry": []
+  },
+  "items": [{ "item_id": "item-question", "source": { "kind": "question_workflow" } }]
+}

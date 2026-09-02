@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Version>3.0.0-foundation.2</Version>
+    <AssemblyName>KnowledgeClipper.Core.V3.Client</AssemblyName>
+    <RootNamespace>KnowledgeClipper.Core.V3.Client</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\KnowledgeClipper.Core.V3.Contracts\KnowledgeClipper.Core.V3.Contracts.csproj" PrivateAssets="all" />
+    <InternalsVisibleTo Include="KnowledgeClipper.Core.V3.FoundationTests" />
+    <InternalsVisibleTo Include="KnowledgeClipper.Core.V3.Phase2Tests" />
+  </ItemGroup>
+</Project>

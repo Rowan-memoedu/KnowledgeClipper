@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./worker-request.schema.json",
+  "title": "RemNote Quick Clipper Worker Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "operationId",
+    "taskId",
+    "runId",
+    "stageId",
+    "attemptId",
+    "workerId",
+    "operation",
+    "idempotencyKey",
+    "attemptPath",
+    "outputPath",
+    "progressPath",
+    "resultPath",
+    "cancelSignal",
+    "inputRefs",
+    "configSnapshot",
+    "payload"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "requestId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "operationId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "taskId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "runId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "stageId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "attemptId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "workerId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "operation": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+    "idempotencyKey": { "$ref": "./artifact.schema.json#/$defs/sha256" },
+    "attemptPath": { "$ref": "./artifact.schema.json#/$defs/jobRelativePath" },
+    "outputPath": { "$ref": "./artifact.schema.json#/$defs/jobRelativePath" },
+    "progressPath": { "$ref": "./artifact.schema.json#/$defs/jobRelativePath" },
+    "resultPath": { "$ref": "./artifact.schema.json#/$defs/jobRelativePath" },
+    "cancelSignal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "path", "gracePeriodMs"],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "path": { "$ref": "./artifact.schema.json#/$defs/jobRelativePath" },
+        "gracePeriodMs": { "const": 2000 }
+      }
+    },
+    "inputRefs": {
+      "type": "array",
+      "items": { "$ref": "./artifact.schema.json#/$defs/artifactReference" }
+    },
+    "configSnapshot": { "type": "object" },
+    "payload": { "type": "object" }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-v3-input-generation-receipt.v1",
+  "status": "generated",
+  "generatedAt": "2026-09-01T13:06:37.8183704Z",
+  "checkpoint": {
+    "path": "contracts/core/v2.10/checkpoints/v2.10.2-20260901T100127Z/checkpoint.json",
+    "sha256": "954F1D28DA9F64E15099FD55527FC158A0C3E5E34668A3F2385A09A8266F1039",
+    "boundFiles": 11
+  },
+  "schemaClosure": {
+    "file": "schema-closure-manifest.v1.json",
+    "sha256": "97DE7EE56D28354C4683DA72C9816035B99D5F42FDB56A36337D59EF905BAB3E",
+    "dependencies": 4
+  },
+  "runtime": {
+    "file": "orchestrator-runtime-manifest.v1.json",
+    "sha256": "46EA7A794C161104D16D19F9AECBCDD9405E7C921DE756762D55C73B4AFE807F",
+    "files": 187,
+    "totalBytes": 75005615,
+    "treeSha256": "897089A13C1F29728E677413276F5E1EB4BD9137DFF8B2C7F9E0FC3DD3E54346"
+  },
+  "externalWrites": 0
+}

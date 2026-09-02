@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "knowledge-clipper.destination-settings-descriptor.v1",
+  "descriptorVersion": "1.3.0",
+  "destinationId": "anki",
+  "displayName": "Anki",
+  "optional": true,
+  "supportsMultipleInstances": false,
+  "instanceModel": {"mode": "single", "fixedInstanceId": "default", "multipleInstancesDeferred": true},
+  "enablement": {"userSetting": "enabled", "activation": "next-task", "registryEnabledByDefaultMeans": "worker-available", "registryDoesNotEnableDestination": true},
+  "workerBinding": {"workerId": "export.anki", "minimumVersion": "1.4.0"},
+  "configBinding": {"artifactKind": "anki-export-config", "configSchemaVersions": ["anki-export-config.v1", "anki-export-config.v2"], "preferredConfigSchemaVersion": "anki-export-config.v2", "dataClass": "personal", "configSnapshotPolicy": "artifact-identity-only"},
+  "fields": [
+    {"path": "enabled", "tier": "common", "authority": "user", "valueType": "boolean", "required": true, "default": false, "secretRefAllowed": false, "activation": "next-task", "taskMapping": "task.manifest.v2.destinations", "restartRequired": false},
+    {"path": "instanceId", "tier": "common", "authority": "readonly", "valueType": "fixed-default-instance", "required": false, "default": "default", "secretRefAllowed": false, "activation": "next-task", "taskMapping": "destinationInstances.anki.instanceId", "restartRequired": false},
+    {"path": "expectedProfile", "tier": "common", "authority": "user", "valueType": "string", "required": true, "default": null, "secretRefAllowed": false, "activation": "next-task", "taskMapping": "anki-export-config.expected_profile", "restartRequired": false},
+    {"path": "deckPreset", "tier": "common", "authority": "user", "valueType": "enum", "required": true, "default": "knowledge-clipper-default", "secretRefAllowed": false, "activation": "next-task", "taskMapping": "anki-export-config.deck_routes", "restartRequired": false},
+    {"path": "projectTags", "tier": "common", "authority": "user", "valueType": "tag-array", "required": true, "default": [], "secretRefAllowed": false, "activation": "next-task", "taskMapping": "core.ankiProjection.tags", "restartRequired": false},
+    {"path": "connectionStatus", "tier": "common", "authority": "readonly", "valueType": "status", "required": false, "default": null, "secretRefAllowed": false, "activation": "immediate-readonly", "taskMapping": null, "restartRequired": false},
+    {"path": "endpoint", "tier": "advanced", "authority": "deployment", "valueType": "loopback-endpoint", "required": false, "default": "http://127.0.0.1:8765", "secretRefAllowed": false, "activation": "next-task", "taskMapping": "anki-export-config.endpoint", "restartRequired": false},
+    {"path": "deckRoutes", "tier": "advanced", "authority": "deployment", "valueType": "map", "required": false, "default": null, "secretRefAllowed": false, "activation": "next-task", "taskMapping": "anki-export-config.deck_routes", "restartRequired": false},
+    {"path": "provisionManaged", "tier": "advanced", "authority": "deployment", "valueType": "boolean", "required": false, "default": false, "secretRefAllowed": false, "activation": "explicit-initialization-action", "taskMapping": "anki-export-config.provision_managed", "restartRequired": false},
+    {"path": "noteTypes", "tier": "advanced", "authority": "deployment", "valueType": "map", "required": false, "default": "managed-defaults", "secretRefAllowed": false, "activation": "migration-required", "taskMapping": "anki-export-config.note_types", "restartRequired": false},
+    {"path": "maxMediaBytes", "tier": "advanced", "authority": "deployment", "valueType": "integer", "required": false, "default": 26214400, "secretRefAllowed": false, "activation": "next-task", "taskMapping": "anki-export-config.max_media_bytes", "restartRequired": false},
+    {"path": "timeoutSeconds", "tier": "diagnostic", "authority": "deployment", "valueType": "number", "required": false, "default": 15, "secretRefAllowed": false, "activation": "next-task", "taskMapping": "anki-export-config.timeout_seconds", "restartRequired": false},
+    {"path": "permission", "tier": "diagnostic", "authority": "readonly", "valueType": "status", "required": false, "default": null, "secretRefAllowed": false, "activation": "immediate-readonly", "taskMapping": null, "restartRequired": false},
+    {"path": "apiVersion", "tier": "diagnostic", "authority": "readonly", "valueType": "integer", "required": false, "default": null, "secretRefAllowed": false, "activation": "immediate-readonly", "taskMapping": null, "restartRequired": false},
+    {"path": "apiActions", "tier": "diagnostic", "authority": "readonly", "valueType": "string-array", "required": false, "default": [], "secretRefAllowed": false, "activation": "immediate-readonly", "taskMapping": null, "restartRequired": false},
+    {"path": "lastReceipt", "tier": "diagnostic", "authority": "readonly", "valueType": "reference", "required": false, "default": null, "secretRefAllowed": false, "activation": "immediate-readonly", "taskMapping": null, "restartRequired": false},
+    {"path": "unknownExternalState", "tier": "diagnostic", "authority": "readonly", "valueType": "status", "required": false, "default": null, "secretRefAllowed": false, "activation": "immediate-readonly", "taskMapping": null, "restartRequired": false}
+  ],
+  "capabilities": {
+    "destinationPeer": true,
+    "media": {"status": "ready", "activePolicy": "ordered-original-images.v1", "destinationPolicy": "anki-only", "requiresCoreInputContract": true, "realCanaryStatus": "worker-fake-readback-pass-core-admission-pending"},
+    "provisioning": {"default": false, "operation": "initialize-managed", "requiresExplicitExternalWriteAction": true, "createsOnlyMissingManagedModelsAndDecks": true, "modifiesExistingResources": false, "automaticRetryAfterUnknownState": false},
+    "fixedSemantics": ["rqc-id-global-identity", "revision-conflict-fail-closed", "user-notes-preserved", "tags-additive", "media-content-addressed", "media-readback-required", "no-delete", "explicit-reconcile-only"]
+  },
+  "operations": {
+    "validate": {"operation": "validate", "effectClass": "local-read-only", "networkScope": "none", "externalMutation": false, "localArtifactWrite": true, "mayPromptUser": false, "allowedActions": [], "workerOperation": true},
+    "probe": {"operation": "probe", "effectClass": "provider-read-only", "networkScope": "loopback-only", "externalMutation": false, "localArtifactWrite": true, "mayPromptUser": true, "allowedActions": ["requestPermission", "version", "getActiveProfile", "apiReflect", "modelNames", "modelFieldNames", "modelTemplates", "modelStyling", "deckNames"], "workerOperation": true},
+    "export": {"operation": "export", "effectClass": "provider-write", "networkScope": "loopback-only", "externalMutation": true, "localArtifactWrite": true, "mayPromptUser": true, "allowedActions": [], "workerOperation": true},
+    "initializeManaged": {"operation": "initialize-managed", "effectClass": "provider-write", "networkScope": "loopback-only", "externalMutation": true, "localArtifactWrite": true, "mayPromptUser": true, "allowedActions": ["requestPermission", "version", "getActiveProfile", "apiReflect", "modelNames", "modelFieldNames", "modelTemplates", "modelStyling", "deckNames", "createModel", "createDeck"], "workerOperation": true}
+  },
+  "tests": {
+    "validateConfiguration": {"operation": "validate", "effectClass": "local-read-only", "providerInteraction": "none", "externalMutation": false, "localArtifactWrite": true, "mayPromptUser": false, "executionPolicy": "automatic-safe"},
+    "probeConnection": {"operation": "probe", "effectClass": "provider-read-only", "providerInteraction": "loopback-read-only", "externalMutation": false, "localArtifactWrite": true, "mayPromptUser": true, "executionPolicy": "explicit-user-action"},
+    "initializeManaged": {"operation": "initialize-managed", "effectClass": "provider-write", "providerInteraction": "loopback-write", "externalMutation": true, "localArtifactWrite": true, "mayPromptUser": true, "executionPolicy": "explicit-user-action"}
+  },
+  "statusOutputs": [
+    {"kind": "anki-connection-status", "schemaVersion": "anki-connection-status.v1", "dataClass": "personal", "redaction": "sha256-profile-model-deck-identifiers"},
+    {"kind": "anki-managed-initialization-status", "schemaVersion": "anki-managed-initialization-status.v1", "dataClass": "personal", "redaction": "sha256-profile-model-deck-identifiers"}
+  ],
+  "secretRefs": []
+}

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "request-002",
+  "operationId": "operation-002",
+  "taskId": "task-002",
+  "runId": "run-002",
+  "stageId": "image-ocr",
+  "attemptId": "attempt-001",
+  "worker": { "id": "image.ocr.mineru", "version": "1.0.0" },
+  "contractVersion": "1.0.0",
+  "idempotencyKey": "3333333333333333333333333333333333333333333333333333333333333333",
+  "status": "partial",
+  "outputs": [{
+    "artifactRef": "ocr-item-question-1",
+    "kind": "text.ocr",
+    "contractVersion": "1.0.0",
+    "manifestPath": "runs/run-002/stages/image-ocr/attempts/attempt-001/outputs/ocr-item-question-1/v0001/artifact.json",
+    "expectedSha256": "4444444444444444444444444444444444444444444444444444444444444444"
+  }],
+  "itemDiagnostics": [
+    {
+      "itemId": "question-1",
+      "status": "completed",
+      "outputs": [{
+        "artifactRef": "ocr-item-question-1",
+        "kind": "text.ocr",
+        "contractVersion": "1.0.0",
+        "manifestPath": "runs/run-002/stages/image-ocr/attempts/attempt-001/outputs/ocr-item-question-1/v0001/artifact.json",
+        "expectedSha256": "4444444444444444444444444444444444444444444444444444444444444444"
+      }],
+      "error": null
+    },
+    {
+      "itemId": "answer-1",
+      "status": "failed",
+      "outputs": [],
+      "error": {
+        "code": "dependency.ocr_timeout",
+        "category": "transient",
+        "retryable": true,
+        "detailsRef": "runs/run-002/stages/image-ocr/attempts/attempt-001/error-answer-1.json"
+      }
+    }
+  ],
+  "error": null,
+  "startedAt": "2026-08-25T10:00:00Z",
+  "finishedAt": "2026-08-25T10:00:05Z",
+  "warnings": ["one item failed"],
+  "sideEffects": [],
+  "metrics": { "completedItems": 1, "failedItems": 1 },
+  "payload": {}
+}

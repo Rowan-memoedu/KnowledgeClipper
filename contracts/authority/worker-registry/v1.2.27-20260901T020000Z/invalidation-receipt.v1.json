@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-invalidation-receipt.v1",
+  "generatedAt": "2026-09-01T01:51:08.6055871+00:00",
+  "status": "invalidated-never-promoted",
+  "authority": {
+    "registryVersion": "1.2.27",
+    "checkpoint": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.27-20260901T020000Z\\checkpoint.json",
+    "checkpointSha256": "88B96D2316C438DED62D1D7ED4A589379DB23C1B20362EB7F93F7D67F4836E61"
+  },
+  "reason": "Bound Core v2.7.14 metadata had stale Content 0.9.2 pair-integrity wording and Anki 1.3.1 metadata; no task was dispatched.",
+  "externalWorkerRuns": 0,
+  "externalWrites": 0,
+  "frozenV1Modified": false
+}

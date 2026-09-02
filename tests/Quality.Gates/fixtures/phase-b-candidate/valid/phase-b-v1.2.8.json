@@ -1,0 +1,117 @@
+{
+  "schemaVersion": "knowledge-clipper-phase-b-candidate-gate-fixture.v1",
+  "authority": {
+    "checkpoint": { "path": "contracts/authority/worker-registry/v1.2.8-20260828T090000Z/checkpoint.json", "sha256": "4D2997B2ABEE89E41DC3F77815AE43122079E2DAFEA7C773A22FCB29C5BBAE11" },
+    "receipt": { "path": "receipts/knowledge-clipper-authority-1.2.8-20260828T090200Z.json", "sha256": "EFA64E5F020FC9157483814192D77728D5C485F1B04D6B0DDA3D05AF15265720" },
+    "dependencyManifest": { "path": "contracts/authority/worker-registry/v1.2.8-20260828T090000Z/dependency-manifest.v1.json", "sha256": "6B250A54F4634A4EDBC3646FD3592F8289C1C536FBA7B533C714D5F20D8F9B6D" },
+    "runtimeGate": { "path": "canary/core-authority-v1.2.8/core-authority-v1.2.8-20260828T090100Z/runtime-gates.json", "sha256": "211893E7FB0148B8201B0D9C94EB116BEC67EA93FDAA4A81D6AA48555203CCDD" },
+    "registryVersion": "1.2.8",
+    "registrySha256": "CAC29BBBBC614E4DC2B60A781CC0239D422775B212A9C2AF2201E3EC3B95D7AC",
+    "releaseTreeSha256": "0C89556014F69E775D1E9F9F9EF14D5EA20F57E2359E193DAC91720820A38121",
+    "releaseFiles": 192,
+    "releaseBytes": 249613600
+  },
+  "invalidatedAuthority127": {
+    "invalidationReceipt": { "path": "contracts/authority/worker-registry/v1.2.7-20260828T085600Z/invalidation-receipt.v1.json", "sha256": "4381DE79A1E94A9D92869B8886028E5F73AD8FC398F0209889492D869DD5C69E" },
+    "registryVersion": "1.2.7",
+    "replacementMinimum": "1.2.8"
+  },
+  "desktop": {
+    "checkpoint": { "path": "receipts/desktop-integrated-settings-v1.2.6-20260828T083800Z-module-checkpoint.json", "sha256": "3B824A0A02C78E6B3C6A16413FC9643016690385BA95DD121DF1F3E89D16584F" },
+    "baseReceipt": { "path": "receipts/desktop-integrated-settings-v1.2.6-20260828T083800Z.json", "sha256": "6EFE4C5C6A9BAC69C7CA493C3353C6778F1CE7012E3AB1AA38C2D002BBAAE6DA" },
+    "candidateTreeSha256": "6EA6BE0F7192AB9719D57F5554A98C6E1246CF6BE891D2134CBC53216DEAF973",
+    "candidateFiles": 444,
+    "candidateBytes": 402010459,
+    "userHandTestEntrypoint": false,
+    "embeddedAuthorityVersion": "1.2.6",
+    "targetAuthorityVersion": "1.2.8",
+    "integratedReady": false
+  },
+  "content061": {
+    "manifest": { "path": "content-worker/releases/content.deepseek-0.6.1-win-x64-formal-20260828T082100Z/release-manifest.v1.json", "sha256": "B716E6476D34D325322F6C8930819AAEDD33E06FAFBE50F883E22ACDA10D39E9" },
+    "offlineReceipt": { "path": "content-worker/canary/formal-release/content.deepseek-0.6.1-win-x64-formal-20260828T082100Z/20260828T082055252Z-settings-snapshot-replay/formal-release-offline-receipt.v1.json", "sha256": "06683DB2F6902F2075B756A4C24E570C85DD7CE89D3B29E067582A974CEB6A03" },
+    "liveReceipt": { "path": "content-worker/canary/jobs/20260828T081953675Z-offline-phase-b-generated-content-v1-live-3bd60c10/canary-receipt.json", "sha256": "CAA4F4DA84DDF1D1871998EFCEF38D6668E0AA2A928CEF4D3C11FD30F25B71F7" },
+    "workerVersion": "0.6.1",
+    "payloadTreeSha256": "DD5EF58D6390DD02E8BED77D3ADAC24D83855DD0D9BC3214BE938164D7F63F9B",
+    "payloadFiles": 68
+  },
+  "speech122": {
+    "formalRoot": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260828T084915Z-c5fecde0/win-x64",
+    "formalReceipt": { "path": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260828T084915Z-c5fecde0/speech-formal-win-x64-release-receipt.json", "sha256": "A4C3AD17A3AB5837CE1294CD0ADA4E85C7C7F341F32BCB636C1E810A43B028BF" },
+    "independentValidation": { "path": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260828T084915Z-c5fecde0/speech-formal-win-x64-independent-validation-receipt.json", "sha256": "FC9B72672673909EC6F3F8CCBED8C9BDEC21205B5584096F2A366FA5208C5099" },
+    "unitReceipt": { "path": "tests/RemNoteQuickClipper.Speech.Tests/bin/out/r08470758ca/unit-test-receipt.json", "sha256": "B726CB37E4F0AA5A4376C8C76563BEFBA15C2E7B2603DA65CD71A6C180031E32" },
+    "publicReceipt": { "path": "tests/RemNoteQuickClipper.Speech.Tests/bin/out/r08470758ca/public-contract-validation-receipt.json", "sha256": "A94D0708506620F711FA709E2C64EED55DBCB78E2A5978BB1E8E3501DC7C7A48" },
+    "deepCanary": { "path": "tests/RemNoteQuickClipper.Speech.Tests/canary/r20260828-084827-a-a5181b/deep-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/canary-receipt.json", "sha256": "226BB8DF9A32F1BB72C7ADBCE35987F3CF033A2F83523E33D0FFD2DBE2E02AC1" },
+    "deepPublicReceipt": { "path": "tests/RemNoteQuickClipper.Speech.Tests/canary/r20260828-084827-a-a5181b/deep-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/public-contract-validation-receipt.json", "sha256": "F6C7FC24952B36B7BAAF880D8E583DD271AE9A486E3ADA7F2CCAE5AC51DEE9C9" },
+    "canonicalReceipt": { "path": "tests/RemNoteQuickClipper.Speech.Tests/publish/speech.edge/v1.2.2/candidate-c5fecde05fe949c0991c493be60a3d858d13893e0492f46f04761a50f5dd12b7/speech-canonical-release-receipt.json", "sha256": "3CE2EF5975F9F12FAD82A42D6D226CC1AF45EC68FF59C308E442A2C62B6FB2EB" },
+    "canonicalValidation": { "path": "tests/RemNoteQuickClipper.Speech.Tests/publish/speech.edge/v1.2.2/candidate-c5fecde05fe949c0991c493be60a3d858d13893e0492f46f04761a50f5dd12b7/speech-canonical-release-validation-receipt.json", "sha256": "C5DA5A84D0912C359747D8A60BD6EF255847AE13EC36D896E0FD8ABA2E2B0031" },
+    "workerVersion": "1.2.2",
+    "exeSha256": "C5FECDE05FE949C0991C493BE60A3D858D13893E0492F46F04761A50F5DD12B7",
+    "formalTreeSha256": "77EB10D84E6B25292FE119D625C06A984BA4952A42981BD0B8CE00CA90CF98E8",
+    "deepLanguageCount": 5,
+    "deepPayloadPathLength": 268
+  },
+  "speech123": {
+    "formalRoot": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260828T090958Z-88d3f9d3/win-x64",
+    "formalReceipt": { "path": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260828T090958Z-88d3f9d3/speech-formal-win-x64-release-receipt.json", "sha256": "51A1A659EB919529616B77A36C42B617E4A78CD835F5F166F2BE26259DC193E0" },
+    "independentValidation": { "path": "tests/RemNoteQuickClipper.Speech.Tests/formal/r20260828T090958Z-88d3f9d3/speech-formal-win-x64-independent-validation-receipt.json", "sha256": "12E568473EC60DE7A9450BBB9CE184B70CDDA36D379FC7DE0EEAA0BA55E28F4F" },
+    "unitReceipt": { "path": "tests/RemNoteQuickClipper.Speech.Tests/bin/out/r090922851b/unit-test-receipt.json", "sha256": "B4D9F116F17F94AFBF016B9F7229348F2816D3CC3D18444A477D90028F893F61" },
+    "publicReceipt": { "path": "tests/RemNoteQuickClipper.Speech.Tests/bin/out/r090922851b/public-contract-validation-receipt.json", "sha256": "95E85C643BAC20F6820C85CFD201D1DF8201143C181C53696E0FAD17738929AE" },
+    "playbackCanary": { "path": "tests/RemNoteQuickClipper.Speech.Tests/pc/r090937d6c/deep-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/playback-canary-receipt.json", "sha256": "2A7112AD331CD0D8134DBD75E41E6E5C61B146647899B9B251CB7F30ED75FB1F" },
+    "playbackContractValidation": { "path": "tests/RemNoteQuickClipper.Speech.Tests/pc/r090937d6c/deep-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/playback-contract-validation-receipt.json", "sha256": "346260E56F0B7263A770917822C4AE98EE84C2FE89B777437E3CC5B7CA499C97" },
+    "workerVersion": "1.2.3",
+    "exeSha256": "88D3F9D3BD6BFDC9893098903E65ED7AEB2977FF95CA57C421CC2A443B5D8C1A",
+    "formalTreeSha256": "B19889BB6D16ED5234CDA742835250E4F2BB1DB2E385E9F30DAB3B77BD13C91C",
+    "unitTests": 44,
+    "playbackCases": 5,
+    "audioFullPathLength": 261
+  },
+  "coreResolver": {
+    "checkpoint": { "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.5-20260828T085200Z/checkpoint.json", "sha256": "55778934CD4A4323704DC028FA1E6E1880C2FA3E7A0178F4B1BA5032FC89B764" },
+    "supersededCheckpoint": { "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.4-20260828T082300Z/checkpoint.json", "sha256": "DBC212DD2700C47126A2185BDFABFAF678CB93DD42B4F4A1EA59E53AA0AFDF55" },
+    "regressionReceipt": { "path": "contracts/core/v2.4/settings-control/checkpoints/v2.4.4-20260828T082300Z/orchestrator-regression.receipt.json", "sha256": "3B5C49D5C1E851C5D567E901F8F2BCC556852AF37B8A649661C1A474B6D6DC64" },
+    "checkpointVersion": "2.4.5",
+    "expectedTests": 23
+  },
+  "historicalFailure": {
+    "root": "canary/phase-b-v1.2.6/20260828T083300Z",
+    "executionReceipt": { "path": "canary/phase-b-v1.2.6/20260828T083300Z/execution-receipt.json", "sha256": "A0E0BEC29BEADE663DC7B11F3A317DFDBC4EADF49F43362DDB7979C245BBED58" },
+    "pathAReceipt": { "path": "canary/phase-b-v1.2.6/20260828T083300Z/path-a/path-receipt.json", "sha256": "B44E084EBA845709D3207426B78E79F60D89A5A1808B2507FAD7A11528F3133F" },
+    "pathCReceipt": { "path": "canary/phase-b-v1.2.6/20260828T083300Z/path-c/path-receipt.json", "sha256": "25400C6BF6F3A0F210A743F794B6B01525762D4A1AD6C5FCFF1478EEC0C2CB20" },
+    "pathDReceipt": { "path": "canary/phase-b-v1.2.6/20260828T083300Z/path-d/path-receipt.json", "sha256": "43A4C1F062D6C70506D23FC624415E6D26DF07BB09E3354331AC6DB69A619783" },
+    "authorityRegistrySha256": "0FD2AAB69E4B850D6D6747C0261FCA5448397C19BA8E88D8ADB1BA3E80348665",
+    "authorityVersion": "1.2.6",
+    "contentWorkerVersion": "0.6.0"
+  },
+  "currentPaths": {
+    "C": {
+      "receipt": { "path": "canary/p/0822/c/path-receipt.json", "sha256": "0C476B04712AC4B52433F71E41611C2A25584E70F109BB813DD25538179FBC99" },
+      "readable": { "path": "canary/p/0822/c/readable-output.md", "sha256": "87428788154FD17FB13AA5DA98121A18E6D49D416334051F29F4212876491AB9" },
+      "qualification": "provider-chain-no-destination"
+    },
+    "D": {
+      "receipt": { "path": "C:/RQC/PB/0824/d/path-receipt.json", "sha256": "23E5CE6CDBD2610EE837B789B8D745D32FC208606DD15B1AAD93C7710801ECDB" },
+      "readable": { "path": "C:/RQC/PB/0824/d/readable-output.md", "sha256": "97FF36A66A932EBEEB572364FB46B24E42364B79931D920A3473858BFC9EB189" },
+      "qualification": "short-root-only"
+    }
+  },
+  "phaseB128": {
+    "root": "canary/phase-b-v1.2.8/20260828T090400Z",
+    "executionReceipt": { "path": "canary/phase-b-v1.2.8/20260828T090400Z/execution-receipt.json", "sha256": "66F71D43A59AEED8F594AF773CBF6AF10B9F805FF0D939C78E43DD7C3CE5794C" },
+    "pathAReceipt": { "path": "canary/phase-b-v1.2.8/20260828T090400Z/a/path-receipt.json", "sha256": "EC0057DA4CE84225CFB67732450CA305157675BC9B1DC6FCFAA458BDFE6FBC19" },
+    "pathAReadable": { "path": "canary/phase-b-v1.2.8/20260828T090400Z/a/readable-output.md", "sha256": "AD433624029EA14A03E7425D67AFF40726A3273B3602307DB4932C29068F42CA" },
+    "pathBReceipt": { "path": "canary/phase-b-v1.2.8/20260828T090400Z/b/path-receipt.json", "sha256": "E645AC2EE179CB1DC3E27E74B2775AC01BFBD85D94A57EF5095B6F3BE4F56B32" },
+    "pathBReadable": { "path": "canary/phase-b-v1.2.8/20260828T090400Z/b/readable-output.md", "sha256": "9887CFACB7F00B761302F15F7966F1524AE88BEBC2C66F1B55A707F6F874CDFF" },
+    "pathCReceipt": { "path": "canary/phase-b-v1.2.8/20260828T090400Z/c/path-receipt.json", "sha256": "4FCFD8D22768D7D9F207237BFDF7AF45E05255F85DF8228228937026DAF5E02D" },
+    "pathCReadable": { "path": "canary/phase-b-v1.2.8/20260828T090400Z/c/readable-output.md", "sha256": "0D5E9144B61CB1E8A8B2DE049C79D3F85B213A6B30F22D4A0697B8580C015AA6" },
+    "pathDReceipt": { "path": "canary/phase-b-v1.2.8/20260828T090400Z/d/path-receipt.json", "sha256": "64DCD16A7E77346B289439D288831CA9BB2967F956FA40D7B71BF8BBD85D1CDC" },
+    "pathDReadable": { "path": "canary/phase-b-v1.2.8/20260828T090400Z/d/readable-output.md", "sha256": "A8235440A842EB6A12C63F8358DA6676363D3CB2843687229A8B217B4AA3D329" },
+    "expectedStatus": "partial"
+  },
+  "qualificationPolicy": {
+    "standardLongRootRequired": true,
+    "shortRootMayQualify": false,
+    "contentFormalReleaseMayCloseHistoricalFailure": false,
+    "desktopModuleCheckpointMayBeUserEntrypoint": false
+  }
+}

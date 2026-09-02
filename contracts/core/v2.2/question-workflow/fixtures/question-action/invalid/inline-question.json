@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "knowledge-clipper-question-action.v2",
+  "action": "question.follow-up",
+  "targetToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "turnIndex": 1,
+  "question": "must not travel inline"
+}

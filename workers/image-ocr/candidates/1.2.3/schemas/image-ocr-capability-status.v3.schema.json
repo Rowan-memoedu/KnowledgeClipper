@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-ocr-capability-status.v3.schema.json",
+  "title": "KnowledgeClipper image/OCR capability status v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "moduleId", "companionVersion", "workerBinding", "observedAt", "selectedMode", "effectiveProviderSettings", "checks", "safety"],
+  "properties": {
+    "schemaVersion": {"const": "image-ocr-capability-status.v3"},
+    "moduleId": {"const": "image-ocr"},
+    "companionVersion": {"const": "1.3.0"},
+    "workerBinding": {
+      "type": "object",
+      "required": ["workerId", "workerVersionRange", "contractVersionRange"]
+    },
+    "observedAt": {"type": "string", "format": "date-time"},
+    "selectedMode": {"enum": ["ocr", "original"]},
+    "effectiveProviderSettings": {"$ref": "image-request.v1.schema.json#/properties/providerSettings"},
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["settings", "providerScript", "credential", "offlineReadiness", "liveConnectivity", "retentionExecution", "coreIntegration"],
+      "properties": {
+        "settings": {"type": "object", "required": ["state"]},
+        "providerScript": {"type": "object", "required": ["state", "configured", "path", "exists"]},
+        "credential": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["configured", "verified", "sourceType"],
+          "properties": {
+            "configured": {"type": "boolean"},
+            "verified": {"type": "boolean"},
+            "sourceType": {"type": "string"}
+          }
+        },
+        "offlineReadiness": {"type": "object", "required": ["state", "reasons", "actionId", "networkAccessPerformed"]},
+        "liveConnectivity": {"type": "object", "required": ["state", "actionId", "externalUpload", "requiresConsent"]},
+        "retentionExecution": {"type": "object", "required": ["state", "requestMetadataDays", "automaticDeletionClaim"]},
+        "coreIntegration": {"type": "object", "required": ["originalFullPipeline", "partialFailedOnlyAutomaticContinuation"]}
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["networkAccessPerformed", "externalUploadPerformed", "credentialResolved", "credentialValueObserved", "secretValueProhibited"],
+      "properties": {
+        "networkAccessPerformed": {"const": false},
+        "externalUploadPerformed": {"const": false},
+        "credentialResolved": {"const": false},
+        "credentialValueObserved": {"const": false},
+        "secretValueProhibited": {"const": true}
+      }
+    }
+  }
+}

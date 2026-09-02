@@ -1,0 +1,167 @@
+{
+  "schemaVersion": "authority-worker-registry-checkpoint.v1",
+  "checkpointId": "worker-registry-v1.1.0-20260826T023054Z",
+  "publishedAt": "2026-08-26T02:42:18.279Z",
+  "status": "published",
+  "authorityRegistry": {
+    "path": "contracts/authority/worker-registry/v1.1.0-20260826T023054Z/worker-registry.v1.json",
+    "schemaVersion": "1.0.0",
+    "registryVersion": "1.1.0",
+    "bytes": 2962,
+    "sha256": "975B14F43D947C038E6B22F1DD3F43649E4C05D00FD22AB8042AD9F8D0D2EF7C",
+    "workers": 5
+  },
+  "sourceCandidate": {
+    "path": "releases/1.0.0-rc.1-preseal.10/win-x64/registry-candidate/v1/worker-registry.v1.json",
+    "bytes": 2962,
+    "sha256": "975B14F43D947C038E6B22F1DD3F43649E4C05D00FD22AB8042AD9F8D0D2EF7C",
+    "byteIdentical": true
+  },
+  "releaseBinding": {
+    "root": "releases/1.0.0-rc.1-preseal.10/win-x64",
+    "files": 4994,
+    "bytes": 791324353,
+    "treeSha256": "D0CE5FB36765A45D49BE5C83F6E4223C102C9EB13D37EDE079AEDCB97D00A6BC",
+    "state": "unsealed-no-go"
+  },
+  "workers": [
+    {
+      "workerId": "image.ocr.mineru",
+      "workerVersion": "1.0.0",
+      "entrypoint": "workers/image-ocr/RemNoteQuickClipper.ImageOcr.Worker.exe",
+      "entrypointBytes": 10235806,
+      "entrypointSha256": "12798E6898817F05B87369583A9894239FD1446D482E099980131BDD2F7DB0A0",
+      "operations": ["image-ocr"],
+      "inputKinds": ["capture-bundle"],
+      "outputKinds": ["image.original", "image-ocr.markdown", "image-ocr.structured", "image-ocr.image"]
+    },
+    {
+      "workerId": "content.deepseek",
+      "workerVersion": "0.2.0",
+      "entrypoint": "workers/content/RemNoteQuickClipper.Content.Worker.exe",
+      "entrypointBytes": 67486910,
+      "entrypointSha256": "2B37B9CAE324CA2B8B94003136B3275B0B87D9DE090B16C44AC214193D609B37",
+      "operations": ["content.understand-and-card"],
+      "inputKinds": ["content-input"],
+      "outputKinds": ["learning-bundle", "card-bundle"]
+    },
+    {
+      "workerId": "speech.edge",
+      "workerVersion": "1.1.0",
+      "entrypoint": "workers/speech/RemNoteQuickClipper.Speech.Worker.exe",
+      "entrypointBytes": 71680,
+      "entrypointSha256": "32E65EDF5D23F87A60E5826278DE06F3B5EC8066006D243ECD58D3FD3A272470",
+      "operations": ["speech.synthesize", "speech.playback"],
+      "inputKinds": ["text.spoken", "audio.speech"],
+      "outputKinds": ["audio.speech"]
+    },
+    {
+      "workerId": "export.remnote",
+      "workerVersion": "1.0.0",
+      "entrypoint": "workers/remnote/RemNoteQuickClipper.RemNoteExporter.Worker.exe",
+      "entrypointBytes": 72704,
+      "entrypointSha256": "45DE3A87501236ECAA0CFA13FC02A8F6B0C56A79996F1F37613610819F2708FF",
+      "operations": ["export-remnote"],
+      "inputKinds": ["learning.bundle", "card.bundle"],
+      "outputKinds": ["remnote.write-receipt", "remnote.import-package"]
+    },
+    {
+      "workerId": "export.anki",
+      "workerVersion": "1.1.2",
+      "entrypoint": "workers/anki/RemNoteQuickClipper.AnkiExporter.Worker.exe",
+      "entrypointBytes": 10207461,
+      "entrypointSha256": "AC1F37AB4486B59BEF50A40214BA8D7C7D3B01BC569461C8539D926308E9BB96",
+      "operations": ["anki-export"],
+      "inputKinds": ["card-bundle", "learning-bundle", "anki-export-config"],
+      "outputKinds": ["anki-export-evidence"]
+    }
+  ],
+  "checkpointFiles": [
+    {
+      "path": "worker-registry.v1.json",
+      "bytes": 2962,
+      "sha256": "975B14F43D947C038E6B22F1DD3F43649E4C05D00FD22AB8042AD9F8D0D2EF7C"
+    },
+    {
+      "path": "dependency-manifest.v1.json",
+      "bytes": 6247,
+      "sha256": "8B57B806A2D6CD8076BAACFBEDED19CC70463005F79F024DE8F57951DD64F24F"
+    },
+    {
+      "path": "describe/image.ocr.mineru.json",
+      "bytes": 501,
+      "sha256": "234CEEF79F5E7E8ED3C251779F5C4440D0DDE0F9239A65F6C61D3A82FB13001B"
+    },
+    {
+      "path": "describe/content.deepseek.json",
+      "bytes": 466,
+      "sha256": "AD0F27AFE5C78E4CCB0A2105A5A5A0FFF75E51092AD6BD0D39B020EF953491D3"
+    },
+    {
+      "path": "describe/speech.edge.json",
+      "bytes": 463,
+      "sha256": "093377DC08067F775E5CC1BC289153DCF6F8AEA33255002B0B46C83006666C83"
+    },
+    {
+      "path": "describe/export.remnote.json",
+      "bytes": 487,
+      "sha256": "D7852D865955AFD04F7135A6EB892D737E4E7169CDE73F4CEA82B543703E403E"
+    },
+    {
+      "path": "describe/export.anki.json",
+      "bytes": 476,
+      "sha256": "4EDF2F18FF824EF32E77A273DCBE95BDA12F308180FA7B108B8D098FA6B9EAF6"
+    }
+  ],
+  "validation": {
+    "productionRegistryLoader": {
+      "status": "valid",
+      "registryVersion": "1.1.0",
+      "workers": 5
+    },
+    "liveDescribe": {
+      "status": "passed",
+      "workers": 5
+    },
+    "dependencies": {
+      "status": "passed",
+      "localFiles": 7,
+      "trees": 1
+    },
+    "contracts": {
+      "schemasChecked": 25,
+      "validFixturesAccepted": 37,
+      "invalidFixturesRejected": 26,
+      "status": "passed"
+    },
+    "dispatcherCanary": {
+      "receiptPath": "canary/authority-registry/authority-registry-20260826T023501Z/receipt.json",
+      "receiptBytes": 4128,
+      "receiptSha256": "9BA986056D87D1013D9FA67F43ECCAE403394D944203FD847406608072C97B8F",
+      "status": "passed",
+      "externalProductionApisInvoked": false
+    },
+    "verifier": {
+      "path": "tools/verify_authority_registry_checkpoint.py",
+      "bytes": 8124,
+      "sha256": "4550C8D6D474B74FA4C5FC6B26DB21B464E4B44C33BD7700441FADFB2B3E0070",
+      "status": "passed"
+    }
+  },
+  "immutableBoundaries": {
+    "frozenCheckpoint": "receipts/contracts-v1-stable-checkpoint-20260825T115938Z.json",
+    "frozenFilesChecked": 21,
+    "frozenMismatches": 0,
+    "oldEmptyRegistry": {
+      "path": "contracts/v1/registry/worker-registry.v1.json",
+      "sha256": "ACB4BA01ADBC0A410AAE7050FEC04F527C47EE6D0A98F30B73E7AC2B0E35F6E1",
+      "modified": false
+    }
+  },
+  "externalProductionApisInvoked": false,
+  "readiness": {
+    "authorityRegistry": "GO",
+    "releaseCandidate": "NO-GO",
+    "reason": "release remains unsealed and this checkpoint does not claim real external E2E or production writes"
+  }
+}

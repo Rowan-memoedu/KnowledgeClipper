@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "desktop-intent.v1",
+  "taskId": "task-bad-001",
+  "intent": "clip.magic",
+  "inputArtifactRef": "capture.bundle-001",
+  "requestedOutputs": ["card-bundle"]
+}

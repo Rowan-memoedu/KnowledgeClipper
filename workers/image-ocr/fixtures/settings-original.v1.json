@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "image-ocr-settings.v1",
+  "mode": "original",
+  "providerSettings": {
+    "modelVersion": "vlm",
+    "language": "ch",
+    "enableTable": true,
+    "enableFormula": true,
+    "timeoutSeconds": 900,
+    "pollIntervalSeconds": 5
+  },
+  "deployment": {
+    "mineruScriptPath": "C:\\KnowledgeClipper\\providers\\mineru_ocr.py"
+  },
+  "credential": {
+    "mineruTokenRef": "local-credential://image-ocr/mineru-api-token"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./question-action.v2.schema.json",
+  "title": "KnowledgeClipper destination-neutral question action v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "action", "targetToken"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-question-action.v2" },
+    "action": { "enum": ["question.follow-up", "question.make-cards"] },
+    "targetToken": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "turnIndex": { "type": "integer", "minimum": 1 },
+    "questionTurnRef": { "$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/artifactReference" },
+    "cardStructureRef": { "$ref": "../../../../v1/schemas/common/artifact.schema.json#/$defs/artifactReference" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "action": { "const": "question.follow-up" } }, "required": ["action"] },
+      "then": {
+        "required": ["turnIndex", "questionTurnRef"],
+        "properties": {
+          "questionTurnRef": { "properties": { "kind": { "const": "question.turn" }, "contractVersion": { "const": "1.0.0" } } }
+        }
+      },
+      "else": {
+        "properties": {
+          "cardStructureRef": { "properties": { "kind": { "const": "question.card-structure" }, "contractVersion": { "const": "1.0.0" } } }
+        }
+      }
+    }
+  ]
+}

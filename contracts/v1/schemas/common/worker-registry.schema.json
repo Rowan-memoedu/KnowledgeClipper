@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./worker-registry.schema.json",
+  "title": "RemNote Quick Clipper Worker Registry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "registryVersion", "profiles", "workers"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "registryVersion": { "$ref": "./artifact.schema.json#/$defs/semanticVersion" },
+    "profiles": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": { "type": "string", "enum": ["parity-remnote", "cards-remnote", "cards-anki"] }
+    },
+    "workers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/workerEntry" }
+    }
+  },
+  "$defs": {
+    "workerEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workerId", "contractVersionRange", "entrypoint", "stages", "inputKinds", "outputKinds", "requiredForProfiles", "sideEffectLevel", "idempotencyLevel", "enabledByDefault"],
+      "properties": {
+        "workerId": { "$ref": "./artifact.schema.json#/$defs/identifier" },
+        "contractVersionRange": { "type": "string", "pattern": "^>=1\\.0\\.0 <2\\.0\\.0$" },
+        "entrypoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "args"],
+          "properties": {
+            "path": { "$ref": "./artifact.schema.json#/$defs/jobRelativePath" },
+            "args": { "type": "array", "items": { "type": "string", "maxLength": 512 } }
+          }
+        },
+        "stages": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "./artifact.schema.json#/$defs/identifier" } },
+        "inputKinds": { "type": "array", "uniqueItems": true, "items": { "$ref": "./artifact.schema.json#/$defs/artifactKind" } },
+        "outputKinds": { "type": "array", "uniqueItems": true, "items": { "$ref": "./artifact.schema.json#/$defs/artifactKind" } },
+        "requiredForProfiles": { "type": "array", "uniqueItems": true, "items": { "type": "string", "enum": ["parity-remnote", "cards-remnote", "cards-anki"] } },
+        "sideEffectLevel": { "$ref": "#/$defs/sideEffectLevel" },
+        "idempotencyLevel": { "$ref": "#/$defs/idempotencyLevel" },
+        "enabledByDefault": { "type": "boolean" }
+      }
+    },
+    "sideEffectLevel": { "type": "string", "enum": ["none", "local", "external"] },
+    "idempotencyLevel": { "type": "string", "enum": ["pure", "idempotent", "reconcilable", "non_idempotent"] }
+  }
+}

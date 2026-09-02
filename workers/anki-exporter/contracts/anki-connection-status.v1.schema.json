@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./anki-connection-status.v1.schema.json",
+  "title": "KnowledgeClipper Anki read-only connection status v1",
+  "description": "Module-local probe output. The common worker-result and artifact schemas remain authoritative.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "checkedAt", "operation", "effectClass", "networkScope", "externalMutation", "localArtifactWrite", "mayPromptUser", "permission", "apiVersion", "activeProfileSha256", "actionsVerified", "actionsObserved", "models", "decks", "initializationWouldWrite", "migrationRequired", "mutatingActionsObserved"],
+  "properties": {
+    "schemaVersion": {"const": "anki-connection-status.v1"},
+    "status": {"enum": ["ready", "needs_initialization", "migration_required"]},
+    "checkedAt": {"type": "string", "format": "date-time"},
+    "operation": {"const": "probe"},
+    "effectClass": {"const": "provider-read-only"},
+    "networkScope": {"const": "loopback-only"},
+    "externalMutation": {"const": false},
+    "localArtifactWrite": {"const": true},
+    "mayPromptUser": {"const": true},
+    "permission": {"const": "granted"},
+    "apiVersion": {"type": "integer", "minimum": 6},
+    "activeProfileSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "actionsVerified": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "actionsObserved": {"type": "array", "minItems": 6, "items": {"type": "string", "minLength": 1}},
+    "models": {"type": "array", "items": {"$ref": "#/$defs/modelCheck"}},
+    "decks": {"type": "array", "items": {"$ref": "#/$defs/deckCheck"}},
+    "initializationWouldWrite": {"type": "boolean"},
+    "migrationRequired": {"type": "boolean"},
+    "mutatingActionsObserved": {"const": []}
+  },
+  "$defs": {
+    "modelCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["noteTypeKey", "modelNameSha256", "status"],
+      "properties": {
+        "noteTypeKey": {"type": "string", "minLength": 1},
+        "modelNameSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "status": {"enum": ["ready", "missing", "migration_required"]},
+        "fieldMatch": {"type": "boolean"},
+        "templateMatch": {"type": "boolean"},
+        "cssMatch": {"type": "boolean"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"enum": ["ready", "migration_required"]}}, "required": ["status"]},
+          "then": {"required": ["fieldMatch", "templateMatch", "cssMatch"]}
+        }
+      ]
+    },
+    "deckCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["routeKey", "deckNameSha256", "status"],
+      "properties": {
+        "routeKey": {"type": "string", "minLength": 1},
+        "deckNameSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "status": {"enum": ["ready", "missing"]}
+      }
+    }
+  }
+}

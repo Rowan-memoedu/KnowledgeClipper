@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-workflow-settings.v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "activeProfileId", "profiles"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-workflow-settings.v3" },
+    "activeProfileId": { "$ref": "workflow-settings.v2.schema.json#/$defs/id" },
+    "profiles": { "type": "object", "minProperties": 1, "propertyNames": { "$ref": "workflow-settings.v2.schema.json#/$defs/id" }, "additionalProperties": { "$ref": "#/$defs/profile" } }
+  },
+  "$defs": {
+    "speech": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "languageStrategy": { "enum": ["auto", "override"] },
+        "languageOverride": { "type": ["string", "null"], "pattern": "^[a-z]{2}-[A-Z]{2}$" },
+        "voicesByLanguage": { "type": "object", "minProperties": 1, "propertyNames": { "pattern": "^[a-z]{2}-[A-Z]{2}$" }, "additionalProperties": { "type": "string", "minLength": 1 }, "required": ["zh-CN", "en-US", "es-ES", "ja-JP", "ko-KR"] },
+        "ratePercent": { "type": "integer", "minimum": -100, "maximum": 100 },
+        "volumePercent": { "type": "integer", "minimum": -100, "maximum": 100 },
+        "pitchHz": { "type": "integer", "minimum": -100, "maximum": 100 },
+        "deployment": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "edgeTtsPath": { "type": ["string", "null"], "pattern": "^[A-Za-z]:\\\\" },
+            "ffplayPath": { "type": ["string", "null"], "pattern": "^[A-Za-z]:\\\\" }
+          }
+        }
+      },
+      "allOf": [
+        { "if": { "properties": { "languageStrategy": { "const": "override" } }, "required": ["languageStrategy"] }, "then": { "required": ["languageOverride", "voicesByLanguage"] } },
+        { "if": { "properties": { "languageStrategy": { "const": "auto" } }, "required": ["languageStrategy"] }, "then": { "properties": { "languageOverride": { "type": "null" } } } }
+      ]
+    },
+    "profile": {
+      "type": "object", "additionalProperties": false, "required": ["displayName"],
+      "properties": {
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "workflow": { "$ref": "workflow-settings.v2.schema.json#/$defs/workflow" },
+        "capture": { "$ref": "workflow-settings.v2.schema.json#/$defs/capture" },
+        "speech": { "$ref": "#/$defs/speech" },
+        "remnote": { "$ref": "../../../../remnote-destination-settings.v1.schema.json" },
+        "imageOcr": { "$ref": "workflow-settings.v2.schema.json#/$defs/imageOcr" },
+        "content": { "$ref": "workflow-settings.v2.schema.json#/$defs/content" }
+      }
+    }
+  }
+}

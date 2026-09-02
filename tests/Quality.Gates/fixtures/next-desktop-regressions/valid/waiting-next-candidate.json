@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "knowledge-clipper-next-desktop-regression-gate.v1",
+  "productPolicy": {
+    "originalMode": {
+      "allowedDestinations": ["anki"],
+      "remnoteOriginalMedia": {
+        "classification": "BY-DESIGN-UNSUPPORTED-NOT-A-GAP",
+        "reasonCode": "mcp.media_write_unavailable",
+        "releaseBlocker": false,
+        "candidateGateRequired": false
+      }
+    },
+    "remnoteTextAndCards": {
+      "exactTitleDiscoveryRequired": true,
+      "readOnlyProbeRequired": true
+    }
+  },
+  "moduleEvidence": {
+    "desktopProducerQuality": {
+      "path": "canary/quality-desktop-producer-fixes/20260901T050000Z-independent-r14-final/quality-receipt.json",
+      "sha256": "88AF0CEDFDA80A5843D6DF4DB32F3D09FF2F3AEB9794720E5B9296C0064B2C4F"
+    },
+    "productPolicyDelta": {
+      "path": "canary/product-gap-audit/20260901T042200Z-remnote-original-by-design/product-gap-delta.json",
+      "sha256": "C52709ADDDD1425EC015BE9674B7E04E0607FD74FE57423014744E720EA3BEDE"
+    }
+  },
+  "nextCandidateEvidence": null,
+  "requiredRegressions": {
+    "ankiReadonlyProbe": "WAITING-NEXT-AUTHORITY-DESKTOP-CANDIDATE",
+    "remnoteExactTitleDiscovery": "WAITING-NEXT-AUTHORITY-DESKTOP-CANDIDATE",
+    "questionFollowUpContinuation": "WAITING-NEXT-AUTHORITY-DESKTOP-CANDIDATE"
+  }
+}

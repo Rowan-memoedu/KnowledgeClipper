@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "knowledge-clipper-module-settings-adapter.v3",
+  "profileSchema": "schemas/workflow-settings.v3.schema.json",
+  "overrideSchema": "schemas/task-settings-override.v3.schema.json",
+  "snapshotSchema": "schemas/task-settings-snapshot.v3.schema.json",
+  "credentialStorageBoundary": { "profileAllowsSecrets": false, "taskSnapshotAllowsSecrets": false, "allowedMechanisms": ["worker-owned-environment", "sha256-bound-task-artifact-reference"] },
+  "modules": [
+    {
+      "moduleId": "capture", "status": "conditional", "reason": "Text/OCR routes are supported; original media is preserved without OCR and ends partial at an explicit media downstream boundary.",
+      "fields": [
+        { "settingPointer": "/capture/contextEnabled", "editable": true, "defaultSource": "moduleDefault", "snapshotPointer": "/modules/capture/contextEnabled", "effectTargets": ["capture-bundle.modeSnapshot.contextEnabled"] },
+        { "settingPointer": "/capture/contextGranularity", "editable": true, "defaultSource": "moduleDefault", "snapshotPointer": "/modules/capture/contextGranularity", "effectTargets": ["content-input.payload.contextMode"] },
+        { "settingPointer": "/capture/imageHandling", "editable": true, "defaultSource": "moduleDefault", "snapshotPointer": "/modules/capture/imageHandling", "effectTargets": ["pipeline.image-ocr.outputKinds", "pipeline.terminalBoundary"] }
+      ]
+    },
+    {
+      "moduleId": "image-ocr", "status": "supported", "reason": "OCR provider settings bind only in OCR mode; partial continuation is a fixed failed-items-only Core policy, not an editable retry setting.",
+      "fields": [
+        { "settingPointer": "/imageOcr/providerSettings", "editable": true, "defaultSource": "moduleDefault", "snapshotPointer": "/modules/imageOcr/providerSettings", "effectTargets": ["image-ocr.configSnapshot.providerSettings", "image-ocr.WorkerRequest.configSnapshot.providerSettings"] },
+        { "settingPointer": "/imageOcr/mineruScriptPath", "editable": true, "defaultSource": "moduleDefault", "snapshotPointer": "/modules/imageOcr/mineruScriptPath", "effectTargets": ["image-ocr.configSnapshot.mineruScriptPath"] }
+      ]
+    },
+    {
+      "moduleId": "content", "status": "supported", "reason": "One SHA-bound content config snapshot 1.0/1.1 and revision are consumed; 1.1 freezes language-practice default and provider runtime policy while prompt-after-recognition remains a Core-owned runtime decision.",
+      "fields": [
+        { "settingPointer": "/content/configArtifactRef", "editable": true, "defaultSource": "taskArtifact", "snapshotPointer": "/modules/content/configArtifactRef", "effectTargets": ["content.inputRefs", "content.payload.contentConfigPath"] },
+        { "settingPointer": "/content/expectedSha256", "editable": false, "defaultSource": "taskArtifact", "snapshotPointer": "/modules/content/expectedSha256", "effectTargets": ["content.WorkerRequest.inputRefs.expectedSha256"] },
+        { "settingPointer": "/content/settingsRevisionId", "editable": false, "defaultSource": "taskArtifact", "snapshotPointer": "/modules/content/settingsRevisionId", "effectTargets": ["content.configSnapshot.contentSettingsRevisionId"] },
+        { "settingPointer": "/content/runtimePolicy/languagePracticeDefault", "editable": true, "defaultSource": "taskArtifact", "snapshotPointer": "/modules/content/runtimePolicy/languagePracticeDefault", "effectTargets": ["content-config-snapshot.runtimePolicy.languagePracticeDefault", "content.WorkerRequest.inputRefs"] },
+        { "settingPointer": "/content/runtimePolicy/providerModel", "editable": true, "defaultSource": "taskArtifact", "snapshotPointer": "/modules/content/runtimePolicy/providerModel", "effectTargets": ["content-config-snapshot.runtimePolicy.provider.model", "content.WorkerRequest.inputRefs"] },
+        { "settingPointer": "/content/runtimePolicy/providerMaxRetries", "editable": true, "defaultSource": "taskArtifact", "snapshotPointer": "/modules/content/runtimePolicy/providerMaxRetries", "effectTargets": ["content-config-snapshot.runtimePolicy.provider.maxRetries", "content.WorkerRequest.inputRefs"] },
+        { "settingPointer": "/content/promptProfile", "editable": false, "defaultSource": "taskArtifact", "snapshotPointer": "/modules/content/promptSet", "effectTargets": ["content-config-snapshot.promptSet", "content.WorkerRequest.inputRefs"] }
+      ]
+    },
+    {
+      "moduleId": "speech", "status": "supported", "reason": "Project settings are frozen for the next task; provider discovery and speaker preview remain conditional actions outside this adapter.",
+      "fields": [
+        { "settingPointer": "/speech/languageStrategy", "editable": true, "defaultSource": "moduleDefault", "snapshotPointer": "/modules/speech/languageStrategy", "effectTargets": ["speech-synthesize.payload.language.strategy", "speech-synthesize.WorkerRequest.payload.language.strategy"] },
+        { "settingPointer": "/speech/languageOverride", "editable": true, "defaultSource": "moduleDefault", "snapshotPointer": "/modules/speech/languageOverride", "effectTargets": ["speech-synthesize.payload.language.override", "speech-synthesize.WorkerRequest.payload.language.override"] },
+        { "settingPointer": "/speech/voicesByLanguage", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/modules/speech/voicesByLanguage", "effectTargets": ["speech-synthesize.payload.voiceSnapshot.voicesByLanguage"] },
+        { "settingPointer": "/speech/ratePercent", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/modules/speech/ratePercent", "effectTargets": ["speech-synthesize.payload.voiceSnapshot.ratePercent"] },
+        { "settingPointer": "/speech/volumePercent", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/modules/speech/volumePercent", "effectTargets": ["speech-synthesize.payload.voiceSnapshot.volumePercent"] },
+        { "settingPointer": "/speech/pitchHz", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/modules/speech/pitchHz", "effectTargets": ["speech-synthesize.payload.voiceSnapshot.pitchHz"] },
+        { "settingPointer": "/speech/deployment/edgeTtsPath", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/modules/speech/deployment/edgeTtsPath", "effectTargets": ["speech-synthesize.WorkerRequest.configSnapshot.edgeTtsPath"] },
+        { "settingPointer": "/speech/deployment/ffplayPath", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/modules/speech/deployment/ffplayPath", "effectTargets": ["speech-playback.WorkerRequest.configSnapshot.ffplayPath"] },
+        { "settingPointer": "/speech/autoPlay", "editable": false, "defaultSource": "fixedContract", "snapshotPointer": "/modules/speech/autoPlay", "effectTargets": ["speech.pipeline.speech-playback.selection"] }
+      ]
+    },
+    { "moduleId": "export.remnote", "status": "conditional", "reason": "Requires a selected RemNote destination and exact rootRemId; media export remains unsupported.", "fields": [{ "settingPointer": "/remnote", "editable": true, "defaultSource": "resolverDefault", "snapshotPointer": "/modules/remnote", "effectTargets": ["export-remnote.payload.target", "export-remnote.payload.route"] }] },
+    { "moduleId": "export.anki", "status": "conditional", "reason": "Enabled maps only to new-task destinations and export requires cards plus one SHA-bound anki-export-config; explicit read-only probe is separately admitted; media export remains unsupported.", "fields": [{ "settingPointer": "/anki/enabled", "editable": true, "defaultSource": "moduleDefault", "snapshotPointer": "/workflow/destinations", "effectTargets": ["task.manifest.v2.destinations"] }, { "settingPointer": "/anki/configArtifactRef", "editable": false, "defaultSource": "taskArtifact", "snapshotPointer": "/modules/anki/configArtifactRef", "effectTargets": ["anki-export.configSnapshot.ankiConfigArtifactId", "anki-export.inputRefs"] }] },
+    { "moduleId": "retention-retry-timeout-diagnostics", "status": "conditional", "reason": "Production startup disables the unsafe legacy time-based deleter; no editable state-aware retention service exists. Failed-items-only is fixed and unknown_external_state never auto-retries.", "fields": [] }
+  ],
+  "actions": [
+    { "actionId": "export.anki.probe", "moduleId": "export.anki", "status": "supported", "invocation": "explicit_only", "operation": "probe", "effectClass": "provider-read-only", "externalMutation": false, "outputKinds": ["anki-connection-status"], "requiredArtifactKind": "anki-export-config" },
+    { "actionId": "export.remnote.probe", "moduleId": "export.remnote", "status": "conditional", "invocation": "explicit_only", "operation": "probe", "effectClass": "provider-read-only", "externalMutation": false, "outputKinds": ["remnote-readonly-probe-result"], "requiredArtifactKind": null },
+    { "actionId": "speech.preview", "moduleId": "speech", "status": "conditional", "invocation": "explicit_only", "operation": "speaker.preview", "effectClass": "physical-audio", "externalMutation": false, "outputKinds": ["speech-preview-status"], "requiredArtifactKind": null }
+  ]
+}

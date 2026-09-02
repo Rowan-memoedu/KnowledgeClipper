@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "knowledge-clipper-task-settings-snapshot.v3",
+  "taskId": "task-speech-en",
+  "frozenAt": "2026-08-28T10:00:00Z",
+  "source": { "activeProfileId": "speech-en", "settingsSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "precedence": ["taskOverride", "activeProfile", "moduleDefault"] },
+  "workflow": { "processingProfile": "cards", "destinations": [] },
+  "modules": {
+    "capture": { "contextEnabled": false, "contextGranularity": "sentence", "imageHandling": "original" },
+    "content": { "promptSet": "open-md-v2", "categoryRegistry": "category-registry/2.0.0", "providerMode": "live" },
+    "speech": {
+      "languageStrategy": "override", "languageOverride": "en-US",
+      "voicesByLanguage": { "zh-CN": "zh-CN-XiaoxiaoNeural", "en-US": "en-US-AvaMultilingualNeural", "es-ES": "es-ES-XimenaNeural", "ja-JP": "ja-JP-NanamiNeural", "ko-KR": "ko-KR-SunHiNeural" },
+      "ratePercent": 17, "volumePercent": -8, "pitchHz": 23, "autoPlay": true,
+      "deployment": { "edgeTtsPath": "D:\\Runtime\\edge-tts.exe", "ffplayPath": "D:\\Runtime\\ffplay.exe" }
+    }
+  },
+  "secretReferences": []
+}

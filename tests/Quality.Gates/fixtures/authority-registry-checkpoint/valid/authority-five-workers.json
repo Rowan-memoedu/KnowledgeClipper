@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "authority-registry-checkpoint.v1",
+  "checkpointId": "authority-registry-20260826T030000Z",
+  "createdAt": "2026-08-26T03:00:00Z",
+  "status": "passed-authority",
+  "releaseRoot": "releases/fixture/win-x64",
+  "releaseBinding": {
+    "stateReceiptPath": "receipts/fixture-state.json",
+    "stateReceiptSha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "presealTreeSha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "registry": {
+    "sourcePath": "authority-checkpoints/fixture/worker-registry.v1.json",
+    "releasePath": "registry-authority/v1/worker-registry.v1.json",
+    "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+    "registryVersion": "1.1.0",
+    "workerCount": 5,
+    "authority": true
+  },
+  "workers": [
+    {"workerId": "image.ocr.mineru", "workerVersion": "1.0.0", "entrypoint": "workers/image-ocr/RemNoteQuickClipper.ImageOcr.Worker.exe", "bytes": 1, "sha256": "4444444444444444444444444444444444444444444444444444444444444444", "describeSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "describeExitCode": 0},
+    {"workerId": "content.deepseek", "workerVersion": "0.2.0", "entrypoint": "workers/content/RemNoteQuickClipper.Content.Worker.exe", "bytes": 1, "sha256": "5555555555555555555555555555555555555555555555555555555555555555", "describeSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "describeExitCode": 0},
+    {"workerId": "speech.edge", "workerVersion": "1.1.0", "entrypoint": "workers/speech/RemNoteQuickClipper.Speech.Worker.exe", "bytes": 1, "sha256": "6666666666666666666666666666666666666666666666666666666666666666", "describeSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "describeExitCode": 0},
+    {"workerId": "export.remnote", "workerVersion": "1.0.0", "entrypoint": "workers/remnote/RemNoteQuickClipper.RemNoteExporter.Worker.exe", "bytes": 1, "sha256": "7777777777777777777777777777777777777777777777777777777777777777", "describeSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "describeExitCode": 0},
+    {"workerId": "export.anki", "workerVersion": "1.1.2", "entrypoint": "workers/anki/RemNoteQuickClipper.AnkiExporter.Worker.exe", "bytes": 1, "sha256": "8888888888888888888888888888888888888888888888888888888888888888", "describeSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "describeExitCode": 0}
+  ],
+  "stableContracts": {
+    "checkpointId": "contracts-v1-20260825T115938Z",
+    "receiptPath": "receipts/contracts-v1-stable-checkpoint-20260825T115938Z.json",
+    "receiptSha256": "1CB738FE133F6645B9757E246E2FBC210785086342F70BAD32B5015BD19E1B1E",
+    "filesChecked": 21,
+    "mismatches": 0,
+    "modified": false
+  },
+  "frozenAuthorityRegistry": {
+    "path": "contracts/v1/registry/worker-registry.v1.json",
+    "sha256": "ACB4BA01ADBC0A410AAE7050FEC04F527C47EE6D0A98F30B73E7AC2B0E35F6E1",
+    "workerCount": 0,
+    "modified": false
+  },
+  "externalProductionApisInvoked": false
+}

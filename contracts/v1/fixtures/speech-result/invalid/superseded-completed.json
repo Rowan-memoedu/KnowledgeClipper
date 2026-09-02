@@ -1,0 +1,6 @@
+{
+  "schemaVersion": "1.0.0", "requestId": "request-speech-result-invalid", "operationId": "operation-speech-result-invalid", "taskId": "task-invalid", "runId": "run-invalid", "stageId": "speech-playback", "attemptId": "attempt-invalid",
+  "worker": { "id": "speech.edge", "version": "1.2.3" }, "contractVersion": "1.0.0", "idempotencyKey": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+  "status": "completed", "outputs": [], "error": null, "startedAt": "2026-08-25T11:00:00Z", "finishedAt": "2026-08-25T11:00:01Z", "warnings": [],
+  "payload": { "operationId": "operation-speech-result-invalid", "languageTag": "zh-CN", "voiceId": "zh-CN-XiaoxiaoNeural", "cacheHit": true, "playbackState": "superseded" }
+}

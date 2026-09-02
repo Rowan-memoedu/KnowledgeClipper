@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "2.0.0",
+  "taskId": "task-v2-content-only",
+  "createdAt": "2026-08-26T03:00:00Z",
+  "createdBy": { "application": "KnowledgeClipper", "version": "2.0.0" },
+  "intent": "clip.card",
+  "executionProfile": "cards",
+  "destinations": [],
+  "inputRefs": [
+    {
+      "artifactRef": "capture-v2-content",
+      "kind": "capture-bundle",
+      "contractVersion": "1.0.0",
+      "expectedSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "requestedOutputs": ["card-bundle"],
+  "initialPlanRef": "plans/clip-intent.v2.json",
+  "retentionClass": "ephemeral"
+}

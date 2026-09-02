@@ -1,0 +1,14 @@
+{
+  "bundle_kind": "CardBundle",
+  "schema_version": "1.0",
+  "bundle_id": "all-registry-enums",
+  "cards": [
+    { "card_id": "basic", "revision": 1, "content_hash": "1111111111111111111111111111111111111111111111111111111111111111", "status": "ready", "deck_route_key": "question", "note_type_key": "basic_qa", "fields": { "question": "Q", "answer": "A" }, "tags": ["rqc"], "media_refs": [] },
+    { "card_id": "media", "revision": 1, "content_hash": "2222222222222222222222222222222222222222222222222222222222222222", "status": "ready", "deck_route_key": "question", "note_type_key": "image_qa", "fields": { "question": "Q", "answer": "A" }, "tags": ["rqc"], "media_refs": [] },
+    { "card_id": "language-zh", "revision": 1, "content_hash": "3333333333333333333333333333333333333333333333333333333333333333", "status": "ready", "deck_route_key": "language.zh", "note_type_key": "language_item", "fields": { "context_sentence": "句子", "reading_and_meaning": "释义" }, "tags": ["rqc"], "media_refs": [] },
+    { "card_id": "language-en", "revision": 1, "content_hash": "4444444444444444444444444444444444444444444444444444444444444444", "status": "ready", "deck_route_key": "language.en", "note_type_key": "language_item", "fields": { "context_sentence": "Sentence", "reading_and_meaning": "Meaning" }, "tags": ["rqc"], "media_refs": [] },
+    { "card_id": "concept", "revision": 1, "content_hash": "5555555555555555555555555555555555555555555555555555555555555555", "status": "ready", "deck_route_key": "other", "note_type_key": "basic_qa", "fields": { "question": "Concept", "answer": "Transfer" }, "tags": ["rqc"], "media_refs": [] },
+    { "card_id": "procedure", "revision": 1, "content_hash": "6666666666666666666666666666666666666666666666666666666666666666", "status": "ready", "deck_route_key": "other", "note_type_key": "basic_qa", "fields": { "question": "Step", "answer": "Procedure" }, "tags": ["rqc"], "media_refs": [] }
+  ],
+  "media": []
+}

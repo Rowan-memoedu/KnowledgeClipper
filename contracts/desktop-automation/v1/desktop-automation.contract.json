@@ -1,0 +1,80 @@
+{
+  "contractId": "rqc.desktop-automation",
+  "contractVersion": "1.0.0",
+  "schemaVersion": "desktop-automation.v1",
+  "authorityPath": "contracts/desktop-automation/v1/",
+  "commonContractPolicy": "reference-only",
+  "commonCheckpoint": {
+    "checkpointId": "contracts-v1-20260825T115938Z",
+    "receipt": "../../../receipts/contracts-v1-stable-checkpoint-20260825T115938Z.json",
+    "receiptSha256": "1cb738fe133f6645b9757e246e2fbc210785086342f70bad32b5015bd19e1b1e"
+  },
+  "automationIds": [
+    { "automationId": "rqc.desktop.clip", "semanticAction": "clip.capture" },
+    { "automationId": "rqc.desktop.read", "semanticAction": "read.capture" },
+    { "automationId": "rqc.desktop.screenshot", "semanticAction": "screenshot.session.start" },
+    { "automationId": "rqc.desktop.screenshot.continue", "semanticAction": "screenshot.session.continue" },
+    { "automationId": "rqc.desktop.screenshot.finish", "semanticAction": "screenshot.session.finish" },
+    { "automationId": "rqc.desktop.screenshot.cancel", "semanticAction": "screenshot.session.cancel" },
+    { "automationId": "rqc.desktop.screenshot.undo-last", "semanticAction": "screenshot.session.undo-last" },
+    { "automationId": "rqc.desktop.screenshot.group.question", "semanticAction": "screenshot.group.set-question" },
+    { "automationId": "rqc.desktop.screenshot.group.answer", "semanticAction": "screenshot.group.set-answer" },
+    { "automationId": "rqc.desktop.mode.context", "semanticAction": "mode.context.set" },
+    { "automationId": "rqc.desktop.mode.original-image", "semanticAction": "mode.original-image.set" },
+    { "automationId": "rqc.desktop.context.continue-without", "semanticAction": "capture.context.continue-without" },
+    { "automationId": "rqc.desktop.question.open", "semanticAction": "question.open" },
+    { "automationId": "rqc.desktop.question.input", "semanticAction": null },
+    { "automationId": "rqc.desktop.question.submit", "semanticAction": "question.submit" },
+    { "automationId": "rqc.desktop.question.follow-up.input", "semanticAction": null },
+    { "automationId": "rqc.desktop.question.follow-up.submit", "semanticAction": "question.follow-up" },
+    { "automationId": "rqc.desktop.question.make-cards", "semanticAction": "question.make-cards" },
+    { "automationId": "rqc.desktop.playback.replay", "semanticAction": "playback.replay" },
+    { "automationId": "rqc.desktop.playback.stop", "semanticAction": "playback.stop" },
+    { "automationId": "rqc.desktop.task.status.recent", "semanticAction": "task.status.query-recent" },
+    { "automationId": "rqc.desktop.status", "semanticAction": null }
+  ],
+  "semanticActions": [
+    "clip.capture",
+    "read.capture",
+    "screenshot.session.start",
+    "screenshot.session.continue",
+    "screenshot.session.finish",
+    "screenshot.session.cancel",
+    "screenshot.session.undo-last",
+    "screenshot.group.set-question",
+    "screenshot.group.set-answer",
+    "mode.context.set",
+    "mode.original-image.set",
+    "capture.context.continue-without",
+    "question.open",
+    "question.submit",
+    "question.follow-up",
+    "question.make-cards",
+    "playback.replay",
+    "playback.stop",
+    "task.status.query-recent"
+  ],
+  "schemas": {
+    "semanticAction": "semantic-action.schema.json",
+    "semanticState": "semantic-state.schema.json",
+    "captureBundle": "capture-bundle.v1.schema.json"
+  },
+  "commonContractReferences": {
+    "taskCommand": "../../v1/schemas/common/task-command.schema.json",
+    "taskCommandReceipt": "../../v1/schemas/common/task-command-receipt.schema.json",
+    "taskStatus": "../../v1/schemas/common/task-status.schema.json",
+    "taskQuery": "../../v1/schemas/common/task-query.schema.json",
+    "taskQueryResult": "../../v1/schemas/common/task-query-result.schema.json",
+    "ipcRequest": "../../v1/schemas/common/ipc-request.schema.json",
+    "ipcResponse": "../../v1/schemas/common/ipc-response.schema.json",
+    "taskCancelPayload": "../../v1/schemas/common/task-cancel-payload.schema.json",
+    "orchestratorIpc": "../../v1/ipc/orchestrator-ipc.v1.json"
+  },
+  "productionIpcOwnership": {
+    "server": "orchestrator",
+    "desktopRole": "client",
+    "persistentStateOwner": "orchestrator",
+    "eventFactSource": "task-event-files",
+    "wireContract": "external-common-contract-reference"
+  }
+}

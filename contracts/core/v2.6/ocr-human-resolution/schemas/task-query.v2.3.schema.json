@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-task-query.v2.3",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "queryId", "type"],
+  "properties": {
+    "schemaVersion": { "const": "2.3.0" },
+    "queryId": { "$ref": "#/$defs/identifier" },
+    "type": { "enum": ["task.query_recent", "task.get"] },
+    "taskId": { "$ref": "#/$defs/identifier" },
+    "statusFilter": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/status" } },
+    "limit": { "type": "integer", "minimum": 1, "maximum": 200 },
+    "cursor": { "type": "string", "maxLength": 512 }
+  },
+  "allOf": [
+    { "if": { "properties": { "type": { "const": "task.get" } }, "required": ["type"] }, "then": { "required": ["taskId"] } },
+    { "if": { "properties": { "type": { "const": "task.query_recent" } }, "required": ["type"] }, "then": { "required": ["statusFilter", "limit"] } }
+  ],
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "status": { "enum": ["created", "validating", "queued", "running", "waiting_input", "retry_wait", "cancelling", "succeeded", "partial", "failed", "cancelled"] }
+  }
+}

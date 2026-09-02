@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-ipc-request.v1.7",
+  "type": "object", "additionalProperties": false,
+  "required": ["protocolVersion", "correlationId", "messageType", "payload"],
+  "properties": {
+    "protocolVersion": {"enum": ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7"]},
+    "correlationId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "messageType": {"enum": ["task-command", "task-query", "stage-control", "module-action"]},
+    "payload": {"type": "object"}
+  },
+  "allOf": [
+    {"if": {"properties": {"messageType": {"const": "module-action"}}, "required": ["messageType"]}, "then": {"properties": {"protocolVersion": {"const": "1.7"}, "payload": {"$ref": "./module-action-request.v6.schema.json"}}}},
+    {"if": {"properties": {"messageType": {"const": "stage-control"}}, "required": ["messageType"]}, "then": {"properties": {"protocolVersion": {"const": "1.1"}, "payload": {"$ref": "../../../v2.3/playback-control/schemas/stage-control-request.v1.schema.json"}}}}
+  ]
+}

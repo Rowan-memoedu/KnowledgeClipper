@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "2.0.0",
+  "planVersion": "2.0.0",
+  "taskId": "task-v2-invalid",
+  "maxConcurrency": 1,
+  "stages": [
+    {
+      "stageId": "content-understand",
+      "workerId": "content.deepseek",
+      "operation": "understand-and-card",
+      "dependsOn": [],
+      "inputRefs": [],
+      "outputKinds": ["card-bundle"],
+      "timeoutMs": 300000,
+      "retryPolicy": { "maxAttempts": 1, "backoffMs": 0 },
+      "configSnapshot": {},
+      "payload": {},
+      "inputBindings": []
+    }
+  ],
+  "routing": { "processingProfile": "cards", "destinations": ["notion"], "source": "task-manifest.v2" }
+}

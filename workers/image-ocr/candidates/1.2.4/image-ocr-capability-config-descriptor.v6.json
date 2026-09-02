@@ -1,0 +1,832 @@
+{
+  "actions": [
+    {
+      "actionId": "image.ocr.status.offline-readiness",
+      "availability": {
+        "state": "available"
+      },
+      "executionPolicy": "safe-read-only",
+      "invocation": {
+        "argumentsTemplate": [
+          "status",
+          "--settings",
+          "{absoluteSettingsPath}",
+          "--credential-metadata",
+          "{absoluteCredentialMetadataPath}",
+          "--json"
+        ],
+        "executable": "KnowledgeClipper.ImageOcr.Settings.exe",
+        "protocol": "command-json-v1"
+      },
+      "kind": "status-probe",
+      "networkAccess": "prohibited",
+      "resultSchemaVersion": "image-ocr-capability-status.v4",
+      "secretValueProhibited": true,
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "title": "离线就绪状态"
+    },
+    {
+      "actionId": "image.ocr.test.validate-only",
+      "availability": {
+        "state": "available"
+      },
+      "executionPolicy": "safe-read-only",
+      "invocation": {
+        "argumentsTemplate": [
+          "validate",
+          "--settings",
+          "{absoluteSettingsPath}",
+          "--json"
+        ],
+        "executable": "KnowledgeClipper.ImageOcr.Settings.exe",
+        "protocol": "command-json-v1"
+      },
+      "kind": "diagnostic-test",
+      "networkAccess": "prohibited",
+      "resultSchemaVersion": "image-ocr-companion-validate-result.v4",
+      "secretValueProhibited": true,
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "title": "设置与快照 Validate-only"
+    },
+    {
+      "actionId": "image.ocr.test.offline-fake-provider",
+      "availability": {
+        "requiresMode": "ocr",
+        "state": "available"
+      },
+      "executionPolicy": "explicit-safe-action",
+      "invocation": {
+        "argumentsTemplate": [
+          "test",
+          "--settings",
+          "{absoluteSettingsPath}",
+          "--credential-metadata",
+          "{absoluteCredentialMetadataPath}",
+          "--action",
+          "image.ocr.test.offline-fake-provider",
+          "--json"
+        ],
+        "executable": "KnowledgeClipper.ImageOcr.Settings.exe",
+        "protocol": "command-json-v1"
+      },
+      "kind": "diagnostic-test",
+      "networkAccess": "prohibited",
+      "resultSchemaVersion": "image-ocr-companion-test-result.v4",
+      "secretValueProhibited": true,
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "title": "Fake Provider 离线测试"
+    },
+    {
+      "actionId": "image.ocr.test.live-connectivity",
+      "availability": {
+        "reason": "external_upload_action_requires_explicit_launcher_and_user_consent",
+        "state": "conditional"
+      },
+      "executionPolicy": "explicit-user-action-only",
+      "invocation": {
+        "argumentsTemplate": [],
+        "executable": null,
+        "protocol": "delegated-external-upload-v1"
+      },
+      "kind": "live-connectivity-test",
+      "networkAccess": "required",
+      "resultSchemaVersion": "image-ocr-companion-test-result.v4",
+      "secretValueProhibited": true,
+      "sideEffects": {
+        "externalUpload": true,
+        "localWrite": true,
+        "requiresConsent": true
+      },
+      "title": "MinerU 实时连接测试"
+    }
+  ],
+  "capabilities": [
+    {
+      "availability": {
+        "state": "available"
+      },
+      "capabilityId": "image.processing.mode",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "selectable",
+      "defaultValue": "ocr",
+      "display": {
+        "tier": "common",
+        "title": "图片处理模式"
+      },
+      "effectiveAt": "next-capture-session",
+      "moduleId": "image-ocr",
+      "scope": "project",
+      "sensitivity": "public-config",
+      "sideEffects": {
+        "externalUpload": true,
+        "localWrite": true,
+        "requiresConsent": true
+      },
+      "snapshotBinding": {
+        "excludedFromSnapshot": false,
+        "jsonPointer": "/modeSnapshot/imageHandling",
+        "target": "capture-bundle"
+      },
+      "statusProbe": {
+        "actionId": "image.ocr.status.offline-readiness",
+        "resultJsonPointer": "",
+        "trigger": "on-open-or-manual"
+      },
+      "valueSchema": {
+        "enum": [
+          "ocr",
+          "original"
+        ],
+        "type": "string"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    },
+    {
+      "availability": {
+        "state": "available"
+      },
+      "capabilityId": "image.ocr.model-version",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "selectable",
+      "defaultValue": "vlm",
+      "display": {
+        "tier": "advanced",
+        "title": "OCR 模型"
+      },
+      "effectiveAt": "next-task",
+      "moduleId": "image-ocr",
+      "scope": "project",
+      "sensitivity": "public-config",
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "snapshotBinding": {
+        "excludedFromSnapshot": false,
+        "jsonPointer": "/configSnapshot/providerSettings/modelVersion",
+        "target": "worker-request"
+      },
+      "statusProbe": {
+        "actionId": "image.ocr.status.offline-readiness",
+        "resultJsonPointer": "",
+        "trigger": "on-open-or-manual"
+      },
+      "valueSchema": {
+        "enum": [
+          "vlm",
+          "pipeline",
+          "MinerU-HTML"
+        ],
+        "type": "string"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    },
+    {
+      "availability": {
+        "state": "available"
+      },
+      "capabilityId": "image.ocr.language",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "selectable",
+      "defaultValue": "ch",
+      "display": {
+        "tier": "advanced",
+        "title": "OCR 语言"
+      },
+      "effectiveAt": "next-task",
+      "moduleId": "image-ocr",
+      "scope": "project",
+      "sensitivity": "public-config",
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "snapshotBinding": {
+        "excludedFromSnapshot": false,
+        "jsonPointer": "/configSnapshot/providerSettings/language",
+        "target": "worker-request"
+      },
+      "statusProbe": {
+        "actionId": "image.ocr.status.offline-readiness",
+        "resultJsonPointer": "",
+        "trigger": "on-open-or-manual"
+      },
+      "valueSchema": {
+        "maxLength": 32,
+        "minLength": 1,
+        "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,31}$",
+        "type": "string"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    },
+    {
+      "availability": {
+        "state": "available"
+      },
+      "capabilityId": "image.ocr.table-recognition",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "selectable",
+      "defaultValue": true,
+      "display": {
+        "tier": "advanced",
+        "title": "表格识别"
+      },
+      "effectiveAt": "next-task",
+      "moduleId": "image-ocr",
+      "scope": "project",
+      "sensitivity": "public-config",
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "snapshotBinding": {
+        "excludedFromSnapshot": false,
+        "jsonPointer": "/configSnapshot/providerSettings/enableTable",
+        "target": "worker-request"
+      },
+      "statusProbe": {
+        "actionId": "image.ocr.status.offline-readiness",
+        "resultJsonPointer": "",
+        "trigger": "on-open-or-manual"
+      },
+      "valueSchema": {
+        "type": "boolean"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    },
+    {
+      "availability": {
+        "state": "available"
+      },
+      "capabilityId": "image.ocr.formula-recognition",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "selectable",
+      "defaultValue": true,
+      "display": {
+        "tier": "advanced",
+        "title": "公式识别"
+      },
+      "effectiveAt": "next-task",
+      "moduleId": "image-ocr",
+      "scope": "project",
+      "sensitivity": "public-config",
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "snapshotBinding": {
+        "excludedFromSnapshot": false,
+        "jsonPointer": "/configSnapshot/providerSettings/enableFormula",
+        "target": "worker-request"
+      },
+      "statusProbe": {
+        "actionId": "image.ocr.status.offline-readiness",
+        "resultJsonPointer": "",
+        "trigger": "on-open-or-manual"
+      },
+      "valueSchema": {
+        "type": "boolean"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    },
+    {
+      "availability": {
+        "state": "available"
+      },
+      "capabilityId": "image.ocr.provider-timeout-seconds",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "selectable",
+      "defaultValue": 900,
+      "display": {
+        "tier": "advanced",
+        "title": "Provider 超时"
+      },
+      "effectiveAt": "next-attempt",
+      "moduleId": "image-ocr",
+      "scope": "project",
+      "sensitivity": "public-config",
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "snapshotBinding": {
+        "excludedFromSnapshot": false,
+        "jsonPointer": "/configSnapshot/providerSettings/timeoutSeconds",
+        "target": "worker-request"
+      },
+      "statusProbe": {
+        "actionId": "image.ocr.status.offline-readiness",
+        "resultJsonPointer": "",
+        "trigger": "on-open-or-manual"
+      },
+      "valueSchema": {
+        "maximum": 3600,
+        "minimum": 30,
+        "type": "integer"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    },
+    {
+      "availability": {
+        "state": "available"
+      },
+      "capabilityId": "image.ocr.poll-interval-seconds",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "selectable",
+      "defaultValue": 5,
+      "display": {
+        "tier": "advanced",
+        "title": "轮询间隔"
+      },
+      "effectiveAt": "next-attempt",
+      "moduleId": "image-ocr",
+      "scope": "project",
+      "sensitivity": "public-config",
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "snapshotBinding": {
+        "excludedFromSnapshot": false,
+        "jsonPointer": "/configSnapshot/providerSettings/pollIntervalSeconds",
+        "target": "worker-request"
+      },
+      "statusProbe": {
+        "actionId": "image.ocr.status.offline-readiness",
+        "resultJsonPointer": "",
+        "trigger": "on-open-or-manual"
+      },
+      "valueSchema": {
+        "maximum": 60,
+        "minimum": 1,
+        "type": "integer"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    },
+    {
+      "availability": {
+        "state": "available"
+      },
+      "capabilityId": "image.ocr.mineru-script-path",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "deployment-path",
+      "display": {
+        "tier": "developer-diagnostics",
+        "title": "MinerU 脚本路径"
+      },
+      "effectiveAt": "next-attempt",
+      "moduleId": "image-ocr",
+      "scope": "deployment",
+      "sensitivity": "local-path",
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "snapshotBinding": {
+        "excludedFromSnapshot": false,
+        "jsonPointer": "/configSnapshot/mineruScriptPath",
+        "target": "worker-request"
+      },
+      "statusProbe": {
+        "actionId": "image.ocr.status.offline-readiness",
+        "resultJsonPointer": "",
+        "trigger": "on-open-or-manual"
+      },
+      "valueSchema": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    },
+    {
+      "availability": {
+        "state": "available"
+      },
+      "capabilityId": "image.ocr.api-token-reference",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "secret-reference",
+      "display": {
+        "tier": "developer-diagnostics",
+        "title": "MinerU 本地凭据引用"
+      },
+      "effectiveAt": "process-start",
+      "moduleId": "image-ocr",
+      "scope": "device",
+      "sensitivity": "secret-value-prohibited",
+      "sideEffects": {
+        "externalUpload": true,
+        "localWrite": false,
+        "requiresConsent": true
+      },
+      "snapshotBinding": {
+        "excludedFromSnapshot": true,
+        "jsonPointer": "/MINERU_API_TOKEN",
+        "target": "worker-process-environment"
+      },
+      "statusProbe": {
+        "actionId": "image.ocr.status.offline-readiness",
+        "resultJsonPointer": "",
+        "trigger": "on-open-or-manual"
+      },
+      "valueSchema": {
+        "const": "local-credential://image-ocr/mineru-api-token",
+        "type": "string"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    },
+    {
+      "availability": {
+        "state": "available"
+      },
+      "capabilityId": "image.ocr.credential-status",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "read-only-status",
+      "display": {
+        "tier": "developer-diagnostics",
+        "title": "MinerU 凭据状态"
+      },
+      "effectiveAt": "immediate",
+      "moduleId": "image-ocr",
+      "scope": "device",
+      "sensitivity": "secret-value-prohibited",
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "snapshotBinding": null,
+      "statusProbe": {
+        "actionId": "image.ocr.status.offline-readiness",
+        "resultJsonPointer": "",
+        "trigger": "on-open-or-manual"
+      },
+      "valueSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "configured": {
+            "type": "boolean"
+          },
+          "sourceType": {
+            "enum": [
+              "desktop-dpapi-current-user",
+              "desktop-dpapi-current-user-backup",
+              "desktop-dpapi-current-user-migrated",
+              "not-probed",
+              "not-configured"
+            ],
+            "type": "string"
+          },
+          "verified": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "configured",
+          "verified",
+          "sourceType"
+        ],
+        "type": "object"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    },
+    {
+      "availability": {
+        "state": "available"
+      },
+      "capabilityId": "image.ocr.offline-readiness",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "read-only-status",
+      "display": {
+        "tier": "developer-diagnostics",
+        "title": "Image/OCR 离线就绪"
+      },
+      "effectiveAt": "immediate",
+      "moduleId": "image-ocr",
+      "scope": "device",
+      "sensitivity": "public-config",
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "snapshotBinding": null,
+      "statusProbe": {
+        "actionId": "image.ocr.status.offline-readiness",
+        "resultJsonPointer": "",
+        "trigger": "on-open-or-manual"
+      },
+      "valueSchema": {
+        "enum": [
+          "ready",
+          "conditional",
+          "not-ready"
+        ],
+        "type": "string"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    },
+    {
+      "availability": {
+        "state": "available"
+      },
+      "capabilityId": "image.ocr.validate-only",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "diagnostic-action",
+      "display": {
+        "tier": "developer-diagnostics",
+        "title": "设置与快照 Validate-only"
+      },
+      "effectiveAt": "immediate",
+      "moduleId": "image-ocr",
+      "scope": "device",
+      "sensitivity": "public-config",
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "snapshotBinding": null,
+      "statusProbe": {
+        "actionId": "image.ocr.test.validate-only",
+        "resultJsonPointer": "",
+        "trigger": "manual"
+      },
+      "valueSchema": {
+        "enum": [
+          "image.ocr.test.validate-only"
+        ],
+        "type": "string"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    },
+    {
+      "availability": {
+        "state": "available"
+      },
+      "capabilityId": "image.ocr.offline-fake-provider-test",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "diagnostic-action",
+      "display": {
+        "tier": "developer-diagnostics",
+        "title": "Fake Provider 离线测试"
+      },
+      "effectiveAt": "immediate",
+      "moduleId": "image-ocr",
+      "scope": "device",
+      "sensitivity": "public-config",
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "snapshotBinding": null,
+      "statusProbe": {
+        "actionId": "image.ocr.test.offline-fake-provider",
+        "resultJsonPointer": "",
+        "trigger": "manual"
+      },
+      "valueSchema": {
+        "enum": [
+          "image.ocr.test.offline-fake-provider"
+        ],
+        "type": "string"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    },
+    {
+      "availability": {
+        "reason": "explicit_external_upload_action_only",
+        "state": "conditional"
+      },
+      "capabilityId": "image.ocr.live-connectivity-test",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "diagnostic-action",
+      "display": {
+        "tier": "developer-diagnostics",
+        "title": "MinerU 实时连接测试"
+      },
+      "effectiveAt": "immediate",
+      "moduleId": "image-ocr",
+      "scope": "device",
+      "sensitivity": "public-config",
+      "sideEffects": {
+        "externalUpload": true,
+        "localWrite": true,
+        "requiresConsent": true
+      },
+      "snapshotBinding": null,
+      "statusProbe": {
+        "actionId": "image.ocr.test.live-connectivity",
+        "resultJsonPointer": "",
+        "trigger": "manual"
+      },
+      "valueSchema": {
+        "enum": [
+          "image.ocr.test.live-connectivity"
+        ],
+        "type": "string"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    },
+    {
+      "availability": {
+        "reason": "lifecycle_executor_not_connected",
+        "state": "unsupported"
+      },
+      "capabilityId": "image.ocr.retention-execution",
+      "compatibility": {
+        "legacyAliases": []
+      },
+      "controlKind": "read-only-status",
+      "display": {
+        "tier": "developer-diagnostics",
+        "title": "本地保留期执行状态"
+      },
+      "effectiveAt": "release-bind",
+      "moduleId": "image-ocr",
+      "scope": "device",
+      "sensitivity": "public-config",
+      "sideEffects": {
+        "externalUpload": false,
+        "localWrite": false,
+        "requiresConsent": false
+      },
+      "snapshotBinding": null,
+      "statusProbe": {
+        "actionId": "image.ocr.status.offline-readiness",
+        "resultJsonPointer": "",
+        "trigger": "on-open-or-manual"
+      },
+      "valueSchema": {
+        "enum": [
+          "unsupported"
+        ],
+        "type": "string"
+      },
+      "workerBinding": {
+        "contractVersionRange": ">=1.0.0 <2.0.0",
+        "workerId": "image.ocr.mineru",
+        "workerVersionRange": ">=1.2.4 <2.0.0"
+      }
+    }
+  ],
+  "companionVersion": "1.3.1",
+  "moduleId": "image-ocr",
+  "readOnlyFacts": {
+    "credentialBridge": {
+      "credentialId": "local-credential://image-ocr/mineru-api-token",
+      "legacyKnowledgeBaseBootstrapAuthoritative": false,
+      "source": "desktop-dpapi-current-user",
+      "taskSnapshotContainsValue": false,
+      "workerInjection": "process-environment-inherited",
+      "workerRequestContainsReference": false
+    },
+    "limits": {
+      "maxImagesPerOcrRequest": 50,
+      "maxZipFiles": 20000,
+      "maxZipUncompressedBytes": 536870912
+    },
+    "provenance": {
+      "defaultOcrRerunAfterHumanDecision": false,
+      "mediaBundleKind": "image.original.bundle",
+      "ocrSameRunOriginalHashBound": true,
+      "ocrSameRunOriginalKind": "image.original",
+      "processingProvenanceKind": "image.processing.provenance"
+    },
+    "provider": "mineru",
+    "retention": {
+      "automaticDeletionClaim": false,
+      "executorState": "unsupported",
+      "requestMetadataDays": 30
+    },
+    "workerId": "image.ocr.mineru",
+    "workerVersion": "1.2.4"
+  },
+  "schemaVersion": "image-ocr-capability-config-descriptor.v6",
+  "statusSemantics": {
+    "coreOriginalFullPipeline": "unsupported",
+    "corePartialFailedOnlyAutomaticContinuation": "available",
+    "liveConnectivityDefaultState": "not-run",
+    "offlineReadinessStates": [
+      "ready",
+      "conditional",
+      "not-ready"
+    ],
+    "realtimeCredentialFields": [
+      "configured",
+      "verified",
+      "sourceType"
+    ],
+    "realtimeStatusSchemaVersion": "image-ocr-capability-status.v4",
+    "secretValueProhibited": true,
+    "staticDescriptorContainsRuntimeState": false
+  },
+  "workerBinding": {
+    "contractVersionRange": ">=1.0.0 <2.0.0",
+    "workerId": "image.ocr.mineru",
+    "workerVersionRange": ">=1.2.4 <2.0.0"
+  }
+}

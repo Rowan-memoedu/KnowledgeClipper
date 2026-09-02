@@ -1,0 +1,232 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "passed",
+  "tests": [
+    {
+      "name": "primitives-and-event-store",
+      "status": "passed",
+      "traversalRejected": true,
+      "createOnceEnforced": true,
+      "concurrentEvents": 20
+    },
+    {
+      "name": "registry-describe-gate",
+      "status": "passed",
+      "exactSetsAccepted": true,
+      "driftRejected": true,
+      "unknownDescribePropertyRejected": true,
+      "concurrencyOver128Rejected": true,
+      "duplicateDescribeStageRejected": true,
+      "invalidDescribeJsonRejected": true,
+      "nonzeroDescribeRejected": true,
+      "missingEntrypointRejected": true,
+      "cancelledDescribeProcessTerminated": true,
+      "registryExtraPropertyRejected": true,
+      "registryTraversalRejected": true,
+      "registryDuplicateProfileRejected": true
+    },
+    {
+      "name": "standalone-run-registry-preflight",
+      "status": "passed",
+      "describeDriftRejected": true,
+      "workerAttemptCreated": false,
+      "executable": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\orchestrator\\bin\\Release\\net8.0\\KnowledgeClipper.Orchestrator.dll",
+      "exitCode": 1
+    },
+    {
+      "name": "dag-and-cross-run-reuse",
+      "status": "passed",
+      "stages": 2,
+      "firstRun": "succeeded",
+      "secondRun": "succeeded",
+      "reusedStages": 2
+    },
+    {
+      "name": "speech-synthesize-reuse-and-playback-no-reuse",
+      "status": "passed",
+      "synthesize": {
+        "firstAttemptId": "attempt-20260828082554253-454572aab83d4a18b85b3d956b157a21",
+        "reusedAttemptId": "attempt-20260828082554794-1004d93e02554612ac773f13646b98d7",
+        "operationId": "operation-1f6a4d7ed97b482aab77ede4f521ae4e",
+        "payloadOperationId": "operation-1f6a4d7ed97b482aab77ede4f521ae4e",
+        "cacheHit": true,
+        "reusedFromAttemptId": "attempt-20260828082554253-454572aab83d4a18b85b3d956b157a21",
+        "workerStartedOnReuse": false,
+        "audioOutputs": 1
+      },
+      "playback": {
+        "firstAttemptId": "attempt-20260828082554531-cc655e1cef434cf685bbc797bbef1032",
+        "secondAttemptId": "attempt-20260828082554820-de8ed75cc4a74515bca9be3c6b5fc8ff",
+        "workerStartedOnSecondRun": true,
+        "reused": false
+      },
+      "nonSpeechReuseMetadataPollution": false
+    },
+    {
+      "name": "speech-synthesis-reuse-and-playback-effect",
+      "status": "passed",
+      "synthesis": {
+        "firstAttemptId": "attempt-20260828082555080-dfb5d544364f4a2ebd8da7cb042e3b93",
+        "reusedAttemptId": "attempt-20260828082555363-7e6a21ac37b24dc480cb1c31e1c015f2",
+        "reusedFromAttemptId": "attempt-20260828082555080-dfb5d544364f4a2ebd8da7cb042e3b93",
+        "envelopeOperationId": "operation-42859b7a3c43403d8ae4d9abbdfee32d",
+        "payloadOperationId": "operation-42859b7a3c43403d8ae4d9abbdfee32d",
+        "cacheHit": true,
+        "workerStarts": 1,
+        "artifactRef": "audio-speech",
+        "artifactSha256": "1139f14d805b7edfc6f9c3790d6b1e9d96b8fbc7ecee698be98eb31693543f25"
+      },
+      "playback": {
+        "firstAttemptId": "attempt-20260828082555404-749216820ec64d309c9b6c7e18fbc0cb",
+        "secondAttemptId": "attempt-20260828082555660-3f4eed2e23b44bfdb8b5032fca986daf",
+        "workerStarts": 2,
+        "fromStart": true,
+        "resultReuse": false
+      },
+      "nonSpeechPayloadUntouched": true
+    },
+    {
+      "name": "reuse-candidate-corruption-isolation",
+      "status": "passed",
+      "corruptedArtifactCandidateReused": false,
+      "freshWorkerStarted": true,
+      "malformedResultSkipped": true,
+      "forgedIdentitySkipped": true,
+      "fallbackAttemptId": "attempt-20260828082556218-a13cf587110640fa8f9f68cdfa2bc1b3",
+      "reusedAttemptId": "attempt-20260828082556509-9a8865da71c94d8880a895078cd62c0c",
+      "workerStartedOnFallbackReuse": false
+    },
+    {
+      "name": "abandoned-attempt-recovery",
+      "status": "passed",
+      "recovered": 6,
+      "externalStatus": "unknown_external_state",
+      "externalAutomaticRetry": false,
+      "safeStatus": "failed",
+      "safeRetryable": true,
+      "removedWorkerStatus": "unknown_external_state",
+      "removedWorkerErrorCode": "effect.worker_registry_missing",
+      "removedWorkerAutomaticRetry": false,
+      "invalidTerminalResultsPreserved": 2,
+      "invalidTerminalEvents": 2,
+      "invalidRequestPreserved": true,
+      "invalidRequestEvents": 1,
+      "repeatedRecovery": 0,
+      "duplicateDiagnostics": false
+    },
+    {
+      "name": "hosted-invalid-terminal-recovery",
+      "status": "passed",
+      "finalStatus": "failed",
+      "invalidTerminalPreserved": 2,
+      "invalidRequestPreserved": true,
+      "forgedCompletedCountedAsSuccess": false,
+      "recoveryEventsAppended": 3,
+      "hostRemainedAvailable": true
+    },
+    {
+      "name": "hosted-ipc-submit-to-worker",
+      "status": "passed",
+      "receiptAccepted": true,
+      "finalStatus": "succeeded",
+      "commonOptionalNullsOmitted": true,
+      "requiredErrorNullRetained": true,
+      "durableEvents": 11
+    },
+    {
+      "name": "production-orchestrator-process-ipc",
+      "status": "passed",
+      "independentProcess": true,
+      "selfContained": true,
+      "executablePath": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\dist\\orchestrator\\win-x64\\v2.0.0\\KnowledgeClipper.Orchestrator.exe",
+      "executableBytes": 67904672,
+      "executableSha256": "E5F047843E1C000FD3A737CDA1A039B231BF9FDFDE7DE0C49657A6912E6D400A",
+      "finalStatus": "succeeded",
+      "processId": 36684
+    },
+    {
+      "name": "durable-command-replay",
+      "status": "passed",
+      "finalStatus": "succeeded",
+      "replayed": true
+    },
+    {
+      "name": "cancel-user_stop",
+      "status": "passed",
+      "publicStatus": "cancelled",
+      "gracePeriodMs": 2000,
+      "workerPublishedWithinGrace": true
+    },
+    {
+      "name": "cancel-superseded",
+      "status": "passed",
+      "publicStatus": "cancelled",
+      "gracePeriodMs": 2000,
+      "workerPublishedWithinGrace": true
+    },
+    {
+      "name": "cancel-task_cancel",
+      "status": "passed",
+      "publicStatus": "cancelled",
+      "gracePeriodMs": 2000,
+      "workerPublishedWithinGrace": true
+    },
+    {
+      "name": "cancel-timeout",
+      "status": "passed",
+      "publicStatus": "failed",
+      "gracePeriodMs": 2000,
+      "workerPublishedWithinGrace": true
+    },
+    {
+      "name": "task-cancel-payload-propagation",
+      "status": "passed",
+      "reasons": [
+        "user_stop",
+        "superseded",
+        "task_cancel",
+        "timeout"
+      ]
+    },
+    {
+      "name": "ipc-json-lines-unary",
+      "status": "passed",
+      "validRoundTrip": true,
+      "invalidJsonErrorEnvelope": true,
+      "exactOneMiBCrLfAccepted": true,
+      "oneMiBPlusOneRejected": true,
+      "framingDriftRejected": true,
+      "maxMessageBytes": 1048576
+    },
+    {
+      "name": "fault-nonzero-exit",
+      "status": "passed",
+      "expectedStatus": "failed",
+      "expectedCode": "worker.crashed",
+      "expectedExitCode": 17
+    },
+    {
+      "name": "fault-external-crash",
+      "status": "passed",
+      "expectedStatus": "unknown_external_state",
+      "expectedCode": "effect.worker_exit_unknown",
+      "expectedExitCode": 23
+    },
+    {
+      "name": "fault-invalid-json-result",
+      "status": "passed",
+      "malformedTerminalRejected": true
+    },
+    {
+      "name": "fault-partial-write-crash",
+      "status": "passed",
+      "malformedTerminalRejected": true
+    },
+    {
+      "name": "fault-hang-timeout",
+      "status": "passed",
+      "gracePeriodMs": 2000,
+      "killedAfterGrace": true
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-checkpoint.v1",
+  "checkpointId": "knowledge-clipper-authority-1.2.2-20260828T012800Z",
+  "generatedAt": "2026-08-28T01:25:54.3668321+00:00",
+  "admissionStatus": "authority-admitted",
+  "frozenV1": {
+    "receipt": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\receipts\\contracts-v1-stable-checkpoint-20260825T115938Z.json",
+    "files": 21,
+    "mismatches": 0,
+    "sha256": "1CB738FE133F6645B9757E246E2FBC210785086342F70BAD32B5015BD19E1B1E"
+  },
+  "registry": {
+    "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.2-20260828T012500Z\\worker-registry.v1.json",
+    "registryVersion": "1.2.2",
+    "workers": 5,
+    "sha256": "6E0486D733103F7EF9581743C139D65E65F9C4F56397F571402590C982F6A8F6"
+  },
+  "release": {
+    "root": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\releases\\knowledge-clipper-authority-v1.2.2-20260828T012500Z\\win-x64",
+    "files": 79,
+    "bytes": 248977927.0,
+    "treeSha256": "F15F21E5489B4002086B0664144606A7E2EF5BD40E1AA02AB90F34EC277C2503",
+    "dependencyManifest": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.2-20260828T012500Z\\dependency-manifest.v1.json",
+    "dependencyManifestSha256": "414B9B9A0AC18EB48E8412B1EF4AC11D435FBE8D750C2944DB03347ABC91C842"
+  },
+  "validation": {
+    "command": "KnowledgeClipper.Orchestrator.exe validate-registry",
+    "exitCode": 0,
+    "status": "valid",
+    "workers": 5
+  },
+  "workers": [
+    {
+      "workerId": "image.ocr.mineru",
+      "workerVersion": "1.1.0",
+      "entrypoint": "workers/image-ocr/KnowledgeClipper.ImageOcr.Worker.exe",
+      "bytes": 10235516,
+      "sha256": "3487C4D0FF8E5C5CA81ED2D2F85D957720DCAFE93F848337EE53EAAD4EC01BAD",
+      "stages": [
+        "image-ocr"
+      ],
+      "inputKinds": [
+        "capture-bundle"
+      ],
+      "outputKinds": [
+        "image.original",
+        "image-ocr.markdown",
+        "image-ocr.structured",
+        "image-ocr.image"
+      ],
+      "operations": "image-ocr",
+      "describeSnapshot": {
+        "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.2-20260828T012500Z\\describe\\image.ocr.mineru.describe.json",
+        "bytes": 501,
+        "sha256": "3650AC40FB94FC305BB5B46ACF8ADAA96E56EB0D4BC3D1EB39B0FF2C23428744"
+      }
+    },
+    {
+      "workerId": "content.deepseek",
+      "workerVersion": "0.5.2",
+      "entrypoint": "workers/content/KnowledgeClipper.Content.Worker.exe",
+      "bytes": 67490988,
+      "sha256": "F6EC35798F8948727B8664517FDBB096DB8A94C8DD079F612B05BAC4EA72D3B8",
+      "stages": [
+        "content.understand-and-card"
+      ],
+      "inputKinds": [
+        "content-input"
+      ],
+      "outputKinds": [
+        "learning-bundle",
+        "card-bundle",
+        "language-practice-decision",
+        "question.answer"
+      ],
+      "operations": [
+        "understand-and-card",
+        "question.answer",
+        "question.make-cards"
+      ],
+      "describeSnapshot": {
+        "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.2-20260828T012500Z\\describe\\content.deepseek.describe.json",
+        "bytes": 513,
+        "sha256": "A84C90D0946B9C482C8361859AE12C77738D92677BB253D6D35E6486E6E04A0A"
+      }
+    },
+    {
+      "workerId": "speech.edge",
+      "workerVersion": "1.2.0",
+      "entrypoint": "workers/speech/KnowledgeClipper.Speech.Worker.exe",
+      "bytes": 74240,
+      "sha256": "51FF5937C297DAD562AB781D6114374649E1A965EDBB43D575264BEED3DFB19C",
+      "stages": [
+        "speech.synthesize",
+        "speech.playback"
+      ],
+      "inputKinds": [
+        "text.spoken",
+        "audio.speech"
+      ],
+      "outputKinds": [
+        "audio.speech"
+      ],
+      "operations": [
+        "speech.synthesize",
+        "speech.playback"
+      ],
+      "describeSnapshot": {
+        "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.2-20260828T012500Z\\describe\\speech.edge.describe.json",
+        "bytes": 463,
+        "sha256": "2A3ECF211297DFF7324C858460361B33F676B3C9267F22BB072DD0C263C15EE8"
+      }
+    },
+    {
+      "workerId": "export.remnote",
+      "workerVersion": "1.0.1",
+      "entrypoint": "workers/remnote/KnowledgeClipper.RemNoteExporter.Worker.exe",
+      "bytes": 74752,
+      "sha256": "0B01297E4345EFD07E50DDD90E23CD94F2A4AFA6DF731CF4252760BD05496B42",
+      "stages": [
+        "export-remnote"
+      ],
+      "inputKinds": [
+        "learning.bundle",
+        "card.bundle"
+      ],
+      "outputKinds": [
+        "remnote.write-receipt",
+        "remnote.import-package"
+      ],
+      "operations": "remnote.export",
+      "describeSnapshot": {
+        "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.2-20260828T012500Z\\describe\\export.remnote.describe.json",
+        "bytes": 487,
+        "sha256": "8E1DC2AA595C7699623E8D873EB0E982CA5B563BFE01C0A23413B9969C0C0F99"
+      }
+    },
+    {
+      "workerId": "export.anki",
+      "workerVersion": "1.1.4",
+      "entrypoint": "workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe",
+      "bytes": 10209227,
+      "sha256": "850BACAB0F3C86D84AE3B3A415AE780C079C5F98475E76D9C9F3E2D25DDBA0DB",
+      "stages": [
+        "anki-export"
+      ],
+      "inputKinds": [
+        "card-bundle",
+        "learning-bundle",
+        "anki-export-config"
+      ],
+      "outputKinds": [
+        "anki-export-evidence"
+      ],
+      "operations": "export",
+      "describeSnapshot": {
+        "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\authority\\worker-registry\\v1.2.2-20260828T012500Z\\describe\\export.anki.describe.json",
+        "bytes": 476,
+        "sha256": "2E1B61B1A96FFB012D5520D6B62FEF42CEA68D44B471077D3BA03719A4192D56"
+      }
+    }
+  ],
+  "caveat": null
+}

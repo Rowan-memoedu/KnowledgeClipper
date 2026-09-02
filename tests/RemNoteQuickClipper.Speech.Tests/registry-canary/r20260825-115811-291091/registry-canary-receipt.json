@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "canary": "speech-worker-authoritative-registry-onboarding",
+  "completedAtUtc": "2026-08-25T11:58:11.9767278Z",
+  "status": "passed",
+  "orchestratorResponse": {
+    "schemaVersion": "1.0.0",
+    "status": "valid",
+    "registryVersion": "1.0.0",
+    "workers": 1
+  },
+  "workerExeSha256": "32e65edf5d23f87a60e5826278de06f3b5ec8066006d243ecd58d3fd3a272470",
+  "describe": {
+    "schemaVersion": "1.0.0",
+    "workerId": "speech.edge",
+    "workerVersion": "1.1.0",
+    "contractVersion": "1.0.0",
+    "stages": [
+      "speech.synthesize",
+      "speech.playback"
+    ],
+    "inputKinds": [
+      "text.spoken",
+      "audio.speech"
+    ],
+    "outputKinds": [
+      "audio.speech"
+    ],
+    "concurrency": {
+      "model": "serial",
+      "maxParallelAttempts": 1
+    },
+    "sideEffectLevel": "local",
+    "idempotencyLevel": "idempotent",
+    "cancellation": {
+      "protocol": "attempt-signal-file-v1",
+      "supportedReasons": [
+        "user_stop",
+        "superseded",
+        "task_cancel",
+        "timeout"
+      ]
+    }
+  }
+}

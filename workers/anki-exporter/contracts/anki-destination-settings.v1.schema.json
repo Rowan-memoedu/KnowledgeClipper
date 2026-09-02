@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./anki-destination-settings.v1.schema.json",
+  "title": "KnowledgeClipper Anki destination settings v1",
+  "description": "Module-local project settings input. It does not replace any common task, artifact, request, result, or worker descriptor contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "enabled", "expectedProfile", "deckPreset", "projectTags"],
+  "properties": {
+    "schemaVersion": {"const": "knowledge-clipper.anki-destination-settings.v1"},
+    "enabled": {"type": "boolean"},
+    "instanceId": {"const": "default", "default": "default"},
+    "expectedProfile": {"type": "string", "minLength": 1},
+    "deckPreset": {"enum": ["knowledge-clipper-default", "custom"]},
+    "projectTags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1, "pattern": "^\\S+$"}},
+    "endpoint": {"type": "string", "pattern": "^http://127\\.0\\.0\\.1:[0-9]{1,5}$"},
+    "deckRoutes": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "minLength": 1}},
+    "provisionManaged": {"type": "boolean", "default": false},
+    "noteTypes": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/noteType"}
+    },
+    "maxMediaBytes": {"type": "integer", "minimum": 1, "default": 26214400},
+    "timeoutSeconds": {"type": "number", "exclusiveMinimum": 0, "default": 15}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"deckPreset": {"const": "custom"}}, "required": ["deckPreset"]},
+      "then": {"required": ["deckRoutes"]}
+    }
+  ],
+  "$defs": {
+    "noteType": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modelName", "fieldMap", "requiredFields"],
+      "properties": {
+        "modelName": {"type": "string", "minLength": 1},
+        "fieldMap": {"type": "object", "minProperties": 1, "additionalProperties": {"enum": ["Front", "Back", "Context", "Extra", "Source"]}},
+        "requiredFields": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "css": {"type": "string"},
+        "frontTemplate": {"type": "string"},
+        "backTemplate": {"type": "string"}
+      }
+    }
+  }
+}

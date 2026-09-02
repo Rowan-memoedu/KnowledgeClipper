@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.1.0",
+  "planVersion": "1.1.0",
+  "taskId": "task-pipeline-001",
+  "maxConcurrency": 4,
+  "stages": [
+    {
+      "stageId": "content.understand-and-card",
+      "workerId": "content.deepseek",
+      "operation": "understand-and-card",
+      "dependsOn": [],
+      "inputRefs": [],
+      "outputKinds": ["card-bundle"],
+      "timeoutMs": 300000,
+      "retryPolicy": { "maxAttempts": 3, "backoffMs": 1000 },
+      "configSnapshot": {},
+      "payload": {},
+      "inputAdapter": null
+    }
+  ]
+}

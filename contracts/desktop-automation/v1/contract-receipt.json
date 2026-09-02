@@ -1,0 +1,65 @@
+{
+  "contractId": "rqc.desktop-automation",
+  "contractVersion": "1.0.0",
+  "verifiedAt": "2026-08-25T14:03:46.181906Z",
+  "treeHashAlgorithm": "sha256(utf8(relativePath UTF-8 ordinal ascending|fileSha256 + LF))",
+  "treeSha256": "d4d0cca8d1210a90f484a6d31643a8312f67ab6f1e53fc2367308af009194a6e",
+  "receiptExcludedFromTreeHash": true,
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "1a6fe2a9bad52894f59c1c6c978e568db2418661ac419ecb529ff3b2c05f2d38",
+      "bytes": 1885
+    },
+    {
+      "path": "capture-bundle.v1.schema.json",
+      "sha256": "0971421423d0cb03b45b8a2f07c7461d1dc741ef19b58e7cd4a59b9827c3f979",
+      "bytes": 4576
+    },
+    {
+      "path": "desktop-automation.contract.json",
+      "sha256": "789135bdd009bc12f6960bd62b4b58e5077463a11581ec94ff100e3ddebde8fe",
+      "bytes": 4313
+    },
+    {
+      "path": "fixtures/capture-bundle.answer-only.invalid.json",
+      "sha256": "7ea64ae12bcfe983badfbf7ec2faad069d6161aefe4a10fd48f7cd97048e71cd",
+      "bytes": 529
+    },
+    {
+      "path": "fixtures/capture-bundle.artifact-ref-128.valid.json",
+      "sha256": "47f405515b38020c78912c3fd5b8aa594a27a101d6dfe67fc1b1dfcb011b4972",
+      "bytes": 1019
+    },
+    {
+      "path": "fixtures/capture-bundle.artifact-ref-129.invalid.json",
+      "sha256": "4a39f2f2953e863dbbf248ca70e718fce76659af51a3592f2d83ee888e10b41f",
+      "bytes": 1021
+    },
+    {
+      "path": "fixtures/capture-bundle.multi-image.valid.json",
+      "sha256": "1f2853ba02638feb31b88827cf45de385b8da53267e6280d390705e78eeb7349",
+      "bytes": 1316
+    },
+    {
+      "path": "fixtures/fake-scenario.v1.json",
+      "sha256": "05faf6bf4302637c23a1ad95c70039dd280b14894cc072f62c897ff26d86453d",
+      "bytes": 1732
+    },
+    {
+      "path": "fixtures/semantic-actions.valid.ndjson",
+      "sha256": "6fad656032b0ed046298f9ee20354d94442e67898bb6eda8ae4274f92b39d4a7",
+      "bytes": 1826
+    },
+    {
+      "path": "semantic-action.schema.json",
+      "sha256": "06e2319a822f149ffdf08b66aa0dd0ae6b7c80613de366f9afed4724140fe468",
+      "bytes": 2431
+    },
+    {
+      "path": "semantic-state.schema.json",
+      "sha256": "b2125f0d21846d7bc76661a081c2b2e632561751d7cb88641ae270d7c90f5c60",
+      "bytes": 2652
+    }
+  ]
+}

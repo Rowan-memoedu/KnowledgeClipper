@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "knowledge-clipper-checkpoint-invalidation.v1",
+  "checkpoint": "contracts/core/v2.4/settings-control/checkpoints/v2.4.6-20260828T091000Z/checkpoint.json",
+  "checkpointSha256": "c02bc9143a842cfdb1bde77e62d65f9300d6f168672212045ccf3b537ee342d3",
+  "status": "invalidated-never-authority-bound",
+  "reason": "The generated tree.totalBytes field is zero despite 18 non-empty tree files, the authority boundary still records speech playback deep-path release as pending after speech.edge 1.2.3 was formally delivered, and updated Core sources were packaged under the older 2.4.5 runtime identity.",
+  "authorityBound": false,
+  "supersededBy": "pending-v2.4.7",
+  "externalCalls": 0,
+  "physicalSpeakerInvocations": 0,
+  "immutability": {
+    "checkpointModified": false,
+    "runtimeV245Modified": false,
+    "frozenV1Modified": false
+  }
+}

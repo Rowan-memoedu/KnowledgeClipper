@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "knowledge-clipper-core-checkpoint.v1",
+  "checkpointVersion": "2.10.0",
+  "createdAt": "2026-09-01T09:12:43Z",
+  "status": "passed",
+  "scope": "Core Phase 1 public process boundary for task-scoped truth and Anki read-only probe",
+  "repositoryHeadAtCheckpoint": "6fc44e18637e00d394227ec4b15ad4c06054102a",
+  "authority": {
+    "ipc": {
+      "schemaVersion": "1.5.0",
+      "protocolVersion": "1.5",
+      "configuration": "contracts/core/v2.10/module-control/orchestrator-ipc.v1.5.json",
+      "serverOwnership": "orchestrator-exclusive",
+      "transport": "windows-named-pipe",
+      "newOperation": "anki.probe"
+    },
+    "moduleAction": {
+      "request": "knowledge-clipper-module-action.v4",
+      "input": "anki-readonly-probe-action.v1",
+      "receipt": "knowledge-clipper-module-action-receipt.v4",
+      "requestFields": ["schemaVersion", "actionId", "operation", "payloadRef", "idempotencyKey"],
+      "inputFields": ["schemaVersion", "taskId", "packageRootRef", "configRef", "effectClass", "externalMutation"],
+      "receiptFacts": ["accepted", "executionStatus", "status", "taskId", "runId", "outputRef", "outputSha256", "artifactRootRef", "outputRefs", "externalWriteCount", "error"],
+      "executionAndBusinessStateSeparated": true,
+      "typedOutputKind": "anki-connection-status",
+      "providerEffect": "provider-read-only",
+      "externalMutation": false,
+      "automaticRetryAllowed": false
+    },
+    "taskTruth": {
+      "request": "knowledge-clipper-task-query.v2.4",
+      "result": "knowledge-clipper-task-query-result.v2.4",
+      "currentTaskQuery": "task.get",
+      "activeSessionUsesRecentQuery": false,
+      "baseFacts": ["taskId", "operationId", "intent", "status", "createdAt", "updatedAt", "attentionRequired", "replayable", "summaryCode"],
+      "activeQuestionSessionFacts": ["targetToken", "binding.taskId", "binding.runId", "binding.stageId", "binding.attemptId", "binding.operationId", "sessionRef", "sourceAnswerRef", "displayAnswerRef", "answeredTurnCount"]
+    },
+    "compatibility": {
+      "frozenContractsV1Modified": false,
+      "existingIpcProtocolsPreserved": ["1.0", "1.1", "1.2", "1.3", "1.4"],
+      "existingTaskQuerySchemasPreserved": ["1.0.0", "2.0.0", "2.2.0", "2.3.0"],
+      "appendOnlyTaskEventSessionStoragePreserved": true,
+      "targetTokenAndTurnIndexSemanticsPreserved": true,
+      "nextTaskSettingsSemanticsModified": false
+    }
+  },
+  "verification": {
+    "formalProcessNamedPipe": {
+      "status": "passed",
+      "receipt": "receipts/core-phase1/20260901T091243Z/core-process-named-pipe.receipt.json",
+      "receiptSha256": "2b47f4e339c7e252e37ae229b25241f4ec7988a0bdd8ac575671ff6d321081fe",
+      "process": "KnowledgeClipper.Orchestrator.dll serve",
+      "fakeWorkerRole": "worker-only-real-artifact-producer",
+      "fakeReturnedDisplayResult": false,
+      "persistentArtifactEvidence": "receipts/core-phase1/20260901T091243Z/evidence/jobs/module-actions/anki-probe-process-canary",
+      "moduleActionReceiptSha256": "859d418643ab6579f64fa5a7ea9a7ad12c047d9625f0bbc2ffdb0156faf4e2e7",
+      "taskGetResultSha256": "0e831c0cafc8051488097ae2dd7a970aff4a87a9ba059e869255c17f851bb5aa"
+    },
+    "schemaValidation": {
+      "status": "passed",
+      "validated": [
+        "module-action-request.v4 valid fixture",
+        "anki-readonly-probe-action.v1 valid fixture",
+        "task-query.v2.4 task.get fixture",
+        "runtime module-action-receipt.v4",
+        "runtime task-query-result.v2.4"
+      ]
+    },
+    "legacyRegression": {
+      "status": "passed",
+      "suite": "tests/CoreAdapter.IntegrationTests",
+      "coverage": ["IPC 1.2 module actions", "IPC 1.3 RemNote discovery", "IPC 1.4 Anki managed initialization", "task pipeline matrix"]
+    },
+    "questionWorkflowStandalone": {
+      "status": "not_run_to_completion",
+      "classification": "pre-existing-fixture-drift",
+      "failure": "QuestionWorkflow.ContractTests registry outputKinds omits the already-present FakeWorker anki-managed-initialization-status output kind",
+      "coreRuntimeReached": false
+    },
+    "commands": [
+      "D:\\Applications\\RemNoteQuickClipperRuntime\\dotnet-sdk-8.0.424\\dotnet.exe build tests\\CoreProcessNamedPipe.IntegrationTests\\CoreProcessNamedPipe.IntegrationTests.csproj -c Release --nologo",
+      "D:\\Applications\\RemNoteQuickClipperRuntime\\dotnet-sdk-8.0.424\\dotnet.exe tests\\CoreProcessNamedPipe.IntegrationTests\\bin\\Release\\net8.0\\CoreProcessNamedPipe.IntegrationTests.dll . D:\\Applications\\RemNoteQuickClipperRuntime\\dotnet-sdk-8.0.424\\dotnet.exe",
+      "D:\\Applications\\RemNoteQuickClipperRuntime\\dotnet-sdk-8.0.424\\dotnet.exe tests\\CoreAdapter.IntegrationTests\\bin\\Release\\net8.0\\CoreAdapter.IntegrationTests.dll ."
+    ]
+  },
+  "desktopInterfacesRemaining": [
+    "Load contracts/core/v2.10/module-control/orchestrator-ipc.v1.5.json and send anki.probe as knowledge-clipper-module-action.v4.",
+    "Publish the existing SHA-bound anki-export-config and task.manifest.v1.json under module-actions/{actionId}/package, then publish the six-field anki-readonly-probe-action.v1 input.json.",
+    "Consume receipt.executionStatus separately from receipt.status; resolve receipt.outputRef/outputSha256 for raw WorkerResult and receipt.outputRefs relative to receipt.artifactRootRef for typed artifacts.",
+    "Project anki-connection-status into Desktop display state inside Desktop; Core returns no DisplayResult schema.",
+    "For a retained question taskId, send task.get with schemaVersion 2.4.0 and consume activeQuestionSession; do not call task.query_recent.",
+    "After the Named Pipe client migration is wired, remove Desktop ProjectReference/direct RegistryLoader/OrchestratorEngine use without changing Core contracts."
+  ],
+  "fileBindings": [
+    {"path": "orchestrator/Core/CommandAndIpc.cs", "sha256": "8a6b9affcf70ef77ac19cc4db4e66470ac79e91d12021c7bd47918b544d7c8c7"},
+    {"path": "orchestrator/Core/ModuleActionControl.cs", "sha256": "aaa53f06743f738877de6e1ca9c8e39aa31e600a722f2c41d238f521478aa818"},
+    {"path": "tests/CoreProcessNamedPipe.IntegrationTests/Program.cs", "sha256": "71daa52981c7e14da0c2d8e289f3a9b8bfd1b86d2d14567a9115e69253292d93"},
+    {"path": "contracts/core/v2.10/module-control/orchestrator-ipc.v1.5.json", "sha256": "9ab5bc5aa7eb443553f5b094d5e6522a260b9dc320ff86dd56b4becb60daa9a0"},
+    {"path": "contracts/core/v2.10/module-control/schemas/module-action-request.v4.schema.json", "sha256": "8037f8190c1be98144ec974b8c36c1138d8825ae97973b52f06ea4932cb30198"},
+    {"path": "contracts/core/v2.10/module-control/schemas/module-action-receipt.v4.schema.json", "sha256": "ea41a434a1cc40475f0e6efac2ace691073ac44f50e7edb8d3e29cdc56a1023b"},
+    {"path": "contracts/core/v2.10/task-truth/schemas/task-query.v2.4.schema.json", "sha256": "5c53127ea281779b862ba9bc117526c9cc2b0394d6f778b04c6a0933bb361c4a"},
+    {"path": "contracts/core/v2.10/task-truth/schemas/task-query-result.v2.4.schema.json", "sha256": "18af382ff1b238309c6f0c297680a65b91e1fe83ed270d8c216879fe5a650313"}
+  ]
+}

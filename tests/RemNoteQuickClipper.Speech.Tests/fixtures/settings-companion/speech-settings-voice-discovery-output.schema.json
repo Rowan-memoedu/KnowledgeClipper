@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledgeclipper://speech/settings-companion/voice-discovery-output/v1",
+  "title": "Speech voice discovery read-only output v1",
+  "type": "object",
+  "required": ["schemaVersion", "companionVersion", "workerId", "workerVersion", "status", "mode", "source", "provider", "catalogRevision", "catalogSha256", "updatedAtUtc", "routes", "voices", "cache", "deployment", "settingsMutationCount", "taskCreation", "physicalSpeakerPlayback", "readOperationsPerformed", "sideEffectsPerformed"],
+  "properties": {
+    "schemaVersion": { "const": "speech-settings-voice-discovery-output.v1" },
+    "companionVersion": { "const": "1.1.0" },
+    "workerId": { "const": "speech.edge" },
+    "workerVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "status": { "enum": ["ready", "conditional"] },
+    "mode": { "enum": ["discover", "cache_only", "validate_only"] },
+    "source": { "enum": ["live", "cache", "supplied_snapshot", "stale_cache_fallback", "none"] },
+    "provider": { "const": "edge-tts" },
+    "catalogRevision": { "type": "string", "minLength": 20 },
+    "catalogSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "updatedAtUtc": { "type": ["string", "null"] },
+    "routes": { "type": "array", "minItems": 1 },
+    "voices": { "type": "array" },
+    "cache": { "type": "object" },
+    "deployment": { "type": "object" },
+    "settingsMutationCount": { "const": 0 },
+    "taskCreation": { "type": "object" },
+    "physicalSpeakerPlayback": { "const": false },
+    "readOperationsPerformed": { "type": "array" },
+    "sideEffectsPerformed": { "type": "array", "maxItems": 0 }
+  }
+}

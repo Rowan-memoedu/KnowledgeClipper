@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "protocol": "worker-cli-v1",
+  "describe": {
+    "arguments": ["describe", "--json"],
+    "stdout": "one worker-describe.schema.json document",
+    "stderr": "diagnostics only",
+    "successExitCode": 0
+  },
+  "run": {
+    "arguments": ["run", "--request", "<absolute-request.json>"],
+    "requestPathRequirement": "absolute-existing-file",
+    "stdout": "progress NDJSON only",
+    "stderr": "diagnostics only",
+    "terminalPublication": "result.json atomically created once",
+    "successExitCode": 0
+  },
+  "cancellation": {
+    "protocol": "attempt-signal-file-v1",
+    "pathSource": "worker-request.cancelSignal.path",
+    "publication": "same-directory temporary file followed by atomic create-once rename",
+    "gracePeriodMs": 2000,
+    "graceDeadlineSource": "worker-cancel-signal.graceDeadline",
+    "reasons": ["user_stop", "superseded", "task_cancel", "timeout"],
+    "publicStatusMapping": {
+      "user_stop": "cancelled",
+      "superseded": "cancelled",
+      "task_cancel": "cancelled",
+      "timeout": "failed"
+    },
+    "moduleTerminalDetail": "worker-result.payload"
+  }
+}

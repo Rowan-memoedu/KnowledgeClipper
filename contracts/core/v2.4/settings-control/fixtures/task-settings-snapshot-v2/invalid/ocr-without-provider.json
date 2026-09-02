@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "knowledge-clipper-task-settings-snapshot.v2",
+  "taskId": "task-invalid",
+  "frozenAt": "2026-08-28T07:00:00Z",
+  "source": { "activeProfileId": "study", "settingsSha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "precedence": ["taskOverride", "activeProfile", "moduleDefault"] },
+  "workflow": { "processingProfile": "cards", "destinations": [] },
+  "modules": {
+    "capture": { "contextEnabled": false, "contextGranularity": "sentence", "imageHandling": "ocr" },
+    "content": { "promptSet": "open-md-v2", "categoryRegistry": "category-registry/2.0.0", "providerMode": "live" }
+  },
+  "secretReferences": []
+}

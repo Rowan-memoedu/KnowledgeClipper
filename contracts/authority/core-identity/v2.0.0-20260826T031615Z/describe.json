@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "identityVersion": "2.0.0",
+  "productId": "knowledge-clipper",
+  "productName": "零碎知识剪藏",
+  "componentId": "knowledge-clipper.orchestrator",
+  "architecture": "destination-neutral",
+  "destinations": ["remnote", "anki"],
+  "legacyCompatibilityAliases": ["orchestrator.core", "RemNoteQuickClipper.Orchestrator"],
+  "version": "2.0.0.0",
+  "runtime": ".NET 8",
+  "commands": ["validate-registry", "run", "recover", "cancel", "status", "serve"]
+}

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "2.0.0",
+  "sink": "mcp-direct",
+  "route": "card-export",
+  "outcome": "already_applied",
+  "documentRemId": "card-document-rem-id",
+  "documentTitle": "卡片 · fixture-v2",
+  "rootRemId": "root-rem-id",
+  "idempotencyKey": "fixture-v2-card-idempotency",
+  "contentSha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+  "readbackVerified": true,
+  "duplicateCount": 0,
+  "dateRouting": false,
+  "imagesHandled": false
+}

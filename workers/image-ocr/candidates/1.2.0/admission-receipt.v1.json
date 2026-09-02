@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "knowledge-clipper-image-ocr-candidate-admission-receipt.v1",
+  "receiptId": "image-ocr-1.2.0-offline-admission-20260828T071534Z",
+  "createdAt": "2026-08-28T07:15:34.6762657Z",
+  "candidate": {
+    "root": "workers/image-ocr/candidates/1.2.0",
+    "workerId": "image.ocr.mineru",
+    "workerVersion": "1.2.0",
+    "contractVersion": "1.0.0",
+    "executable": {
+      "path": "KnowledgeClipper.ImageOcr.Worker.exe",
+      "bytes": 10250526,
+      "sha256": "80FE1D2D7D371D135658B36AC22735490DADD5239D263C2E1B3025D5FC7221B3"
+    },
+    "buildReceipt": {
+      "path": "build-receipt.json",
+      "bytes": 594,
+      "sha256": "6F0ED9859869966F69F04BBF09743FB54EF96C18D6A7F73A237F24E4BBE7EDC5"
+    }
+  },
+  "releaseRootAssessment": {
+    "status": "passed",
+    "independentlyCopyable": true,
+    "runtimeFiles": [
+      "KnowledgeClipper.ImageOcr.Worker.exe",
+      "build-receipt.json"
+    ],
+    "copiedRootDescribe": {
+      "exitCode": 0,
+      "workerId": "image.ocr.mineru",
+      "workerVersion": "1.2.0",
+      "contractVersion": "1.0.0"
+    }
+  },
+  "describe": {
+    "workingDirectory": "workers/image-ocr/candidates/1.2.0",
+    "command": "KnowledgeClipper.ImageOcr.Worker.exe describe --json",
+    "exitCode": 0,
+    "singleJsonDocument": true,
+    "workerId": "image.ocr.mineru",
+    "workerVersion": "1.2.0",
+    "contractVersion": "1.0.0",
+    "stage": "image-ocr"
+  },
+  "offlineAdmission": {
+    "status": "candidate-admitted-offline",
+    "workingDirectory": "workers/image-ocr/candidates/1.2.0",
+    "commandShape": "KnowledgeClipper.ImageOcr.Worker.exe run --request <absolute-existing-request.json>",
+    "workerRequestContract": "contracts/v1/schemas/common/worker-request.schema.json",
+    "workerRequestAccepted": true,
+    "requestProviderSettings": {
+      "modelVersion": "pipeline",
+      "language": "en",
+      "enableTable": false,
+      "enableFormula": true,
+      "timeoutSeconds": 120,
+      "pollIntervalSeconds": 3
+    },
+    "fakeProviderObservedSettings": {
+      "modelVersion": "pipeline",
+      "language": "en",
+      "enableTable": false,
+      "enableFormula": true,
+      "timeoutSeconds": 120,
+      "pollIntervalSeconds": 3
+    },
+    "providerSettingsExactMatch": true,
+    "terminalResult": {
+      "status": "completed",
+      "workerId": "image.ocr.mineru",
+      "workerVersion": "1.2.0"
+    },
+    "test": {
+      "name": "test_settings_candidate_describe_and_non_default_settings_reach_fake_provider",
+      "result": "passed",
+      "testsRun": 1,
+      "durationSeconds": 5.365
+    }
+  },
+  "externalDependencyBoundary": {
+    "provider": "local-fake-provider",
+    "mineruExternalServiceCalled": false,
+    "externalProductionApisInvoked": false,
+    "credentialSource": "process-environment-fake-placeholder",
+    "credentialValuePersisted": false,
+    "credentialValueIncludedInReceipt": false
+  },
+  "authorityBoundary": {
+    "oldAuthorityModified": false,
+    "candidateRuntimeFilesModified": false,
+    "authorityPromotionPerformed": false,
+    "note": "This append-only receipt proves offline candidate admission; Phase A authority assembly remains owned by the authority release process."
+  }
+}

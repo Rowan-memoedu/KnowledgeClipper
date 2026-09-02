@@ -1,0 +1,1 @@
+{"schemaVersion":"remnote-target-discovery-request.v1","discoveryId":"discover-001","authorizationScope":"configured-destination","timeoutMs":15000,"operations":["status","search","list","read"],"selector":{"rootTitle":"剪藏","expectedType":"document","match":"exact","uniqueness":"required"}}

@@ -1,0 +1,18 @@
+{
+  "contractId": "knowledge-clipper.desktop-automation",
+  "contractVersion": "1.3.0",
+  "verifiedAt": "2026-08-30T11:48:08.4941171Z",
+  "treeHashAlgorithm": "sha256(utf8(relativePath UTF-8 ordinal ascending|fileSha256 + LF))",
+  "treeSha256": "866e70dd7af5980012b817f22950dc2132914abcf39e63091ff2aac6181cd83a",
+  "receiptExcludedFromTreeHash": true,
+  "files": [
+    { "path": "desktop-automation.contract.json", "sha256": "d4adb5e4a2521263e9bfbdd5c9ac71533151ab3e51877e387b3906704e775897", "bytes": 3374 },
+    { "path": "fixtures/semantic-actions/invalid/cancel-with-text.json", "sha256": "53b51927f9ac743b8c168175e50f5fd539e323e432233e55608f78aac3c745c7", "bytes": 143 },
+    { "path": "fixtures/semantic-actions/invalid/correction-missing-candidate.json", "sha256": "2b0f50b59f71e2113deea74f571294fcb848bfe50b8a0bf901ab214783f0b53c", "bytes": 157 },
+    { "path": "fixtures/semantic-actions/invalid/legacy-action-under-v13.json", "sha256": "749ac01df3aa0f0c1f972cd0e285587c3eace486dd4df72ef251990d0f619faf", "bytes": 104 },
+    { "path": "fixtures/semantic-actions/valid/accept-original.json", "sha256": "3101d5a52f97e479f163a606be4aa421741e21988c24051e446372837d1d07d2", "bytes": 119 },
+    { "path": "fixtures/semantic-actions/valid/cancel.json", "sha256": "4f7017655e058e9cae310e97e2a7cec086983d5f21f3d0c432f3ea09848d472e", "bytes": 110 },
+    { "path": "fixtures/semantic-actions/valid/submit-correction.json", "sha256": "dd93d756e9489984028a15fb4f8fbbb011bbeb2ca9024a2171d62703a64b4941", "bytes": 189 },
+    { "path": "semantic-action.schema.json", "sha256": "ddefb15b576e694b16e86832ee2959db3a94eede96525170162721645770c6bc", "bytes": 1201 }
+  ]
+}

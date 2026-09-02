@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.question-make-cards-command/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sessionId", "answer", "configuration"],
+  "properties": {
+    "sessionId": {"type": "string", "minLength": 1},
+    "answer": {"$ref": "../../artifacts/schemas/artifact-ref.v2.schema.json"},
+    "configuration": {"$ref": "../../artifacts/schemas/artifact-ref.v2.schema.json"}
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledgeclipper://speech/settings-companion/speaker-preview-input/v1",
+  "title": "Speech explicit speaker preview input v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "scope", "effectiveAt", "action", "explicitSideEffectAuthorization", "previewLanguage", "adapterInput"],
+  "properties": {
+    "schemaVersion": { "const": "speech-settings-speaker-preview-input.v1" },
+    "scope": { "const": "project" },
+    "effectiveAt": { "const": "preview_only" },
+    "action": { "const": "speaker.preview" },
+    "explicitSideEffectAuthorization": { "const": true },
+    "previewLanguage": { "type": "string", "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$" },
+    "adapterInput": { "type": "object" }
+  }
+}

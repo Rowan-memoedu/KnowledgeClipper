@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "receiptId": "receipt-worker-speech-edge",
+  "verificationKind": "worker-canary",
+  "status": "passed",
+  "profile": "parity-remnote",
+  "candidate": {
+    "manifestPath": "releases/1.0.0/win-x64/release-manifest.v1.json",
+    "candidateHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  },
+  "contractCheckpoint": {
+    "checkpointId": "contracts-v1-20260825T115938Z",
+    "receiptPath": "receipts/contracts-v1-stable-checkpoint-20260825T115938Z.json",
+    "receiptSha256": "1CB738FE133F6645B9757E246E2FBC210785086342F70BAD32B5015BD19E1B1E"
+  },
+  "subject": {
+    "componentId": "speech.edge",
+    "componentVersion": "1.1.0",
+    "componentSha256": "32E65EDF5D23F87A60E5826278DE06F3B5EC8066006D243ECD58D3FD3A272470"
+  },
+  "startedAt": "2026-08-25T12:00:00Z",
+  "finishedAt": "2026-08-25T12:00:01Z",
+  "checks": [
+    { "checkId": "describe-contract", "status": "passed" },
+    { "checkId": "run-request-contract", "status": "passed" }
+  ],
+  "evidence": [
+    {
+      "path": "receipts/speech-edge-canary.json",
+      "sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "bytes": 128,
+      "mediaType": "application/json"
+    }
+  ],
+  "privacy": {
+    "syntheticDataOnly": true,
+    "productionContentObserved": false,
+    "secretsRedacted": true
+  }
+}

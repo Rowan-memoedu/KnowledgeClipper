@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "knowledge-clipper-profile-resolver.v2.1",
+  "defaultProcessingProfile": "cards",
+  "processingProfiles": ["learning", "cards"],
+  "defaultDestinations": [],
+  "destinations": ["remnote", "anki"],
+  "legacyProfileAliases": {},
+  "destinationConfigurations": {},
+  "speech": {}
+}

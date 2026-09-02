@@ -1,0 +1,84 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-structured-cleaning": {
+      "cleaned_text": "# 一元一次方程示例\n\n求解原则：等式两边同作相同变换。\n\n1. 去括号\n2. 移项并合并同类项\n3. 把未知数的系数化为 1\n\n```text\nx + 2 = 5\nx = 3\n```\n\n公式核验：$$x + 2 = 5$$\n",
+      "removed_fragments": [
+        {
+          "segment_index": 5,
+          "exact_text": "复制\n分享\n",
+          "occurrence": 0,
+          "reason": "sharing_prompt",
+          "evidence": "正文末尾的复制与分享控件文字"
+        },
+        {
+          "segment_index": 5,
+          "exact_text": "Copyright Example 2026\n",
+          "occurrence": 0,
+          "reason": "site_footer",
+          "evidence": "正文末尾的统一版权尾注"
+        }
+      ],
+      "format_anomalies": []
+    },
+    "classification:item-structured-cleaning": {
+      "units": [
+        {
+          "unit_id": "unit-equation-procedure",
+          "source_segment_indexes": [0, 1, 2, 3, 4],
+          "category_id": "general_learning",
+          "subtype": "worked_procedure",
+          "answer_state": "provided",
+          "context_state": "provided",
+          "risk_state": "ordinary",
+          "supplied_answer": "1. 去括号\n2. 移项并合并同类项\n3. 把未知数的系数化为 1",
+          "unresolved_reasons": []
+        }
+      ]
+    },
+    "card_generation:item-structured-cleaning:unit-equation-procedure": {
+      "generated_content": [
+        {
+          "kind": "question_wording",
+          "text": "解一元一次方程时，应遵守什么原则并按哪些步骤操作？"
+        }
+      ],
+      "cards": [
+        {
+          "template": "procedure",
+          "front_blocks": [
+            {
+              "type": "text",
+              "text": "解一元一次方程时，应遵守什么原则并按哪些步骤操作？",
+              "provenance": "generated"
+            }
+          ],
+          "back_blocks": [
+            {
+              "type": "text",
+              "text": "求解原则：等式两边同作相同变换。",
+              "provenance": "source"
+            },
+            {
+              "type": "markdown",
+              "text": "1. 去括号\n2. 移项并合并同类项\n3. 把未知数的系数化为 1",
+              "provenance": "source"
+            },
+            {
+              "type": "markdown",
+              "text": "```text\nx + 2 = 5\nx = 3\n```",
+              "provenance": "source"
+            },
+            {
+              "type": "markdown",
+              "text": "公式核验：$$x + 2 = 5$$",
+              "provenance": "source"
+            }
+          ],
+          "answer_provenance": "source"
+        }
+      ],
+      "unresolved_reasons": []
+    }
+  }
+}

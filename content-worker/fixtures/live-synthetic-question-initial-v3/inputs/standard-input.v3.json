@@ -1,0 +1,26 @@
+{
+  "schema_version": "standard-input/3.0.0",
+  "package_id": "knowledge-clipper-live-synthetic-question",
+  "task_id": "live-synthetic-question-workflow",
+  "input_version": "1",
+  "mode": "question",
+  "questionWorkflow": {
+    "schemaVersion": "question-workflow-input/1.0.0",
+    "phase": "answer",
+    "questionTurns": [
+      {
+        "turnId": "turn-regression-0",
+        "turnIndex": 0,
+        "question": "为什么软件发布前需要进行回归测试？"
+      }
+    ],
+    "answerAncestry": []
+  },
+  "items": [
+    {
+      "item_id": "item-regression-question",
+      "source": { "kind": "question_workflow" },
+      "hints": { "requested_templates": ["basic_qa"] }
+    }
+  ]
+}

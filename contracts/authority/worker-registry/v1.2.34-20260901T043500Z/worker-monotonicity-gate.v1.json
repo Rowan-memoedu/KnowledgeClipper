@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "knowledge-clipper-authority-worker-monotonicity-gate.v1",
+  "status": "passed",
+  "baseRegistryVersion": "1.2.33",
+  "registryVersion": "1.2.34",
+  "workers": [
+    {
+      "workerId": "image.ocr.mineru",
+      "previousVersion": "1.2.4",
+      "previousSha256": "2E0C8D2ED9741FDBC9F482330EB4181719A5877F425145FEE8672CD119C86AC4",
+      "currentVersion": "1.2.4",
+      "currentSha256": "2E0C8D2ED9741FDBC9F482330EB4181719A5877F425145FEE8672CD119C86AC4",
+      "status": "passed"
+    },
+    {
+      "workerId": "content.deepseek",
+      "previousVersion": "0.9.5",
+      "previousSha256": "F6EC35798F8948727B8664517FDBB096DB8A94C8DD079F612B05BAC4EA72D3B8",
+      "currentVersion": "0.9.5",
+      "currentSha256": "F6EC35798F8948727B8664517FDBB096DB8A94C8DD079F612B05BAC4EA72D3B8",
+      "status": "passed"
+    },
+    {
+      "workerId": "speech.edge",
+      "previousVersion": "1.2.5",
+      "previousSha256": "B7C28DB9AE2DFF94DB09CD0BBCA5BA95BECFF08C9ABD03B5D906B8834CCAC85C",
+      "currentVersion": "1.2.5",
+      "currentSha256": "B7C28DB9AE2DFF94DB09CD0BBCA5BA95BECFF08C9ABD03B5D906B8834CCAC85C",
+      "status": "passed"
+    },
+    {
+      "workerId": "export.remnote",
+      "previousVersion": "2.2.0",
+      "previousSha256": "7BC0931CAD917302CE03426E7B6DA206DA15552A1C3D7CC80679815CBA4FBC63",
+      "currentVersion": "2.2.0",
+      "currentSha256": "7BC0931CAD917302CE03426E7B6DA206DA15552A1C3D7CC80679815CBA4FBC63",
+      "status": "passed"
+    },
+    {
+      "workerId": "export.anki",
+      "previousVersion": "1.3.2",
+      "previousSha256": "473007F52678A5233AE6023D52BC0C6D3F28452C00244DEDAFB88131714346F3",
+      "currentVersion": "1.3.2",
+      "currentSha256": "473007F52678A5233AE6023D52BC0C6D3F28452C00244DEDAFB88131714346F3",
+      "status": "passed"
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "image-ocr-offline-fixture.v1.schema.json",
+  "title": "Image OCR Offline Fixture v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "fixtureId",
+    "dataClass",
+    "images",
+    "artifactsArrayOrder",
+    "questionImages",
+    "answerImages",
+    "scenarios"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "image-ocr-offline-fixture.v1"},
+    "fixtureId": {"type": "string", "minLength": 1, "maxLength": 128},
+    "dataClass": {"const": "synthetic-non-sensitive"},
+    "images": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["artifactRef", "role", "fileName", "mediaType", "contentBase64", "bytes", "sha256"],
+        "properties": {
+          "artifactRef": {"type": "string", "minLength": 1, "maxLength": 128},
+          "role": {"enum": ["question", "answer"]},
+          "fileName": {"type": "string", "pattern": "^[A-Za-z0-9._-]+$"},
+          "mediaType": {"enum": ["image/png", "image/jpeg", "image/webp"]},
+          "contentBase64": {"type": "string", "minLength": 4},
+          "bytes": {"type": "integer", "minimum": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "artifactsArrayOrder": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1, "maxLength": 128}
+    },
+    "questionImages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1, "maxLength": 128}
+    },
+    "answerImages": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1, "maxLength": 128}
+    },
+    "scenarios": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["success", "partial-retry", "resume", "original", "provider-failed", "tampered-input", "unknown-external-state"],
+      "properties": {
+        "success": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["firstAttemptFailureRefs"],
+          "properties": {
+            "firstAttemptFailureRefs": {"const": []}
+          }
+        },
+        "partial-retry": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["firstAttemptFailureRefs", "expectedRetryRefs"],
+          "properties": {
+            "firstAttemptFailureRefs": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"type": "string", "minLength": 1, "maxLength": 128}
+            },
+            "expectedRetryRefs": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"type": "string", "minLength": 1, "maxLength": 128}
+            }
+          }
+        },
+        "resume": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["expectedResumeRefs"],
+          "properties": {
+            "expectedResumeRefs": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"type": "string", "minLength": 1, "maxLength": 128}
+            }
+          }
+        },
+        "original": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["expectedOutputKind", "providerMustNotRun"],
+          "properties": {
+            "expectedOutputKind": {"const": "image.original"},
+            "providerMustNotRun": {"const": true}
+          }
+        },
+        "provider-failed": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["failureRefs", "expectedTopErrorCode"],
+          "properties": {
+            "failureRefs": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"type": "string", "minLength": 1, "maxLength": 128}
+            },
+            "expectedTopErrorCode": {"const": "all_items_failed"}
+          }
+        },
+        "tampered-input": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tamperArtifactRef", "expectedErrorCode", "providerMustNotRun"],
+          "properties": {
+            "tamperArtifactRef": {"type": "string", "minLength": 1, "maxLength": 128},
+            "expectedErrorCode": {"const": "integrity_mismatch"},
+            "providerMustNotRun": {"const": true}
+          }
+        },
+        "unknown-external-state": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["expectedStatus", "expectedErrorCode", "expectedRetryable", "expectedCommonOutputs"],
+          "properties": {
+            "expectedStatus": {"const": "unknown_external_state"},
+            "expectedErrorCode": {"const": "provider_submission_unknown"},
+            "expectedRetryable": {"const": false},
+            "expectedCommonOutputs": {"const": 0}
+          }
+        }
+      }
+    }
+  }
+}

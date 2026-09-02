@@ -1,0 +1,23 @@
+{
+  "schema_version": "standard-input/1.0.0",
+  "package_id": "clipper-content-offline-needs-research",
+  "task_id": "offline-needs-research-canary",
+  "input_version": "1",
+  "mode": "card",
+  "items": [
+    {
+      "item_id": "item-needs-research",
+      "source": {
+        "kind": "text",
+        "material_path": "materials/clip.md"
+      },
+      "hints": {
+        "category_id": "question_answer",
+        "answer_state": "missing",
+        "context_state": "missing",
+        "risk_state": "high_stakes",
+        "requested_templates": ["basic_qa"]
+      }
+    }
+  ]
+}

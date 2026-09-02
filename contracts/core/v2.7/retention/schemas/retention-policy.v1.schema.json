@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-clipper-retention-policy.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "policyId", "action", "automatic", "minimumTerminalAgeHours", "settingsSnapshot", "createdAt"],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-clipper-retention-policy.v1" },
+    "policyId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "action": { "const": "quarantine" },
+    "automatic": { "const": false },
+    "minimumTerminalAgeHours": { "type": "integer", "minimum": 0, "maximum": 8760 },
+    "settingsSnapshot": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

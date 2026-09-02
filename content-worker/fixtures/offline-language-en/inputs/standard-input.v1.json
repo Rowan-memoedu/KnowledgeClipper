@@ -1,0 +1,23 @@
+{
+  "schema_version": "standard-input/1.0.0",
+  "package_id": "clipper-content-offline-language-en",
+  "task_id": "offline-language-en-canary",
+  "input_version": "1",
+  "mode": "card",
+  "items": [
+    {
+      "item_id": "item-language-en",
+      "source": {
+        "kind": "text",
+        "material_path": "materials/clip.md"
+      },
+      "hints": {
+        "category_id": "language_en",
+        "answer_state": "not_applicable",
+        "target_term": "tentative",
+        "context_state": "provided",
+        "requested_templates": ["language_context"]
+      }
+    }
+  ]
+}

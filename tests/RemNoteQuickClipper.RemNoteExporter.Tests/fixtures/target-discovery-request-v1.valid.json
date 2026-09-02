@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "remnote-target-discovery-request.v1",
+  "discoveryId": "offline-discovery-fixture",
+  "authorizationScope": "configured-destination",
+  "timeoutMs": 15000,
+  "operations": ["status", "search", "list", "read"],
+  "selector": { "rootTitle": "零碎知识剪藏 Canary", "expectedType": "document", "match": "exact", "uniqueness": "required" }
+}

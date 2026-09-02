@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0.0",
+  "commandId": "desktop-command-0001",
+  "operationId": "desktop-operation-0001",
+  "taskId": null,
+  "type": "task.submit",
+  "issuedAt": "2026-08-25T12:00:00.0000000Z",
+  "idempotencyKey": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "payloadRef": "commands/desktop-command-0001/payload.json"
+}

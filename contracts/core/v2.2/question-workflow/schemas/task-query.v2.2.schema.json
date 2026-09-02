@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./task-query.v2.2.schema.json",
+  "title": "KnowledgeClipper task query v2.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "queryId", "type"],
+  "properties": {
+    "schemaVersion": { "const": "2.2.0" },
+    "queryId": { "$ref": "#/$defs/identifier" },
+    "type": { "enum": ["task.query_recent", "task.get"] },
+    "taskId": { "$ref": "#/$defs/identifier" },
+    "limit": { "type": "integer", "minimum": 1, "maximum": 200 },
+    "cursor": { "type": ["string", "null"], "maxLength": 512 },
+    "statusFilter": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/status" } }
+  },
+  "allOf": [
+    { "if": { "properties": { "type": { "const": "task.query_recent" } }, "required": ["type"] }, "then": { "required": ["limit"] }, "else": { "required": ["taskId"] } }
+  ],
+  "$defs": {
+    "identifier": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+    "status": { "enum": ["created", "validating", "queued", "running", "waiting_input", "retry_wait", "cancelling", "succeeded", "partial", "failed", "cancelled"] }
+  }
+}

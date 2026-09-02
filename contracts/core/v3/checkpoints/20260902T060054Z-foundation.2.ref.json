@@ -1,0 +1,15 @@
+{
+  "schema": "kc.core-v3-foundation-checkpoint-ref/1",
+  "releaseId": "20260902T060054Z-foundation.2",
+  "status": "PASS-not-promoted",
+  "releaseRoot": "core-v3/releases/20260902T060054Z-foundation.2",
+  "checkpoint": "checkpoint.json",
+  "checkpointBytes": 1418,
+  "checkpointSha256": "D789C855FE1F3264939E82A5661172523FFAD479218F927A8C2B44F7AD872F7A",
+  "rejectedPredecessor": {
+    "checkpoint": "contracts/core/v3/checkpoints/20260902T054850Z-foundation/checkpoint.json",
+    "checkpointSha256": "CE82E060BB422E8457D70B8E5750666DE200343351C315A9F11CD2AB42EDEEA2",
+    "status": "rejected-never-promoted",
+    "reason": "Public protocol compile surface and mutable release paths invalidated the packet boundary claim."
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/knowledge-clipper/desktop-automation/v1.1/semantic-state.schema.json",
+  "title": "KnowledgeClipper desktop semantic state v1.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "revision", "foregroundState", "contextMode", "originalImageMode", "screenshotSession", "questionSession", "playback", "recentTask", "lastAction", "noticeCode"],
+  "properties": {
+    "schemaVersion": { "const": "desktop-state.v1.1" },
+    "revision": { "type": "integer", "minimum": 0 },
+    "foregroundState": { "enum": ["idle", "capture-pending", "context-required", "screenshot-awaiting-frame", "screenshot-review", "question-composing", "question-awaiting-answer", "question-answer-ready", "error"] },
+    "contextMode": { "type": "object", "additionalProperties": false, "required": ["enabled", "granularity"], "properties": { "enabled": { "type": "boolean" }, "granularity": { "enum": ["sentence", "paragraph"] } } },
+    "originalImageMode": { "type": "boolean" },
+    "screenshotSession": {
+      "type": "object", "additionalProperties": false,
+      "required": ["active", "activeGroup", "questionImageCount", "answerImageCount", "canContinue", "canFinish", "canCancel", "canUndo"],
+      "properties": {
+        "active": { "type": "boolean" }, "activeGroup": { "enum": ["question", "answer"] },
+        "questionImageCount": { "type": "integer", "minimum": 0 }, "answerImageCount": { "type": "integer", "minimum": 0 },
+        "canContinue": { "type": "boolean" }, "canFinish": { "type": "boolean" }, "canCancel": { "type": "boolean" }, "canUndo": { "type": "boolean" }
+      }
+    },
+    "questionSession": { "type": "object", "additionalProperties": false, "required": ["open", "turnCount", "answerAvailable"], "properties": { "open": { "type": "boolean" }, "turnCount": { "type": "integer", "minimum": 0 }, "answerAvailable": { "type": "boolean" } } },
+    "playback": { "enum": ["stopped", "playing", "replay-available"] },
+    "recentTask": {
+      "type": "object", "additionalProperties": false,
+      "required": ["available", "taskId", "displayState", "decisionKind", "decisionTargetToken"],
+      "properties": {
+        "available": { "type": "boolean" },
+        "taskId": { "type": ["string", "null"] },
+        "displayState": { "enum": ["not-queried", "none", "queued", "running", "awaiting-user", "succeeded", "partial", "failed", "cancelled", "unknown"] },
+        "decisionKind": { "type": ["string", "null"], "enum": ["language-practice", null] },
+        "decisionTargetToken": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^[a-f0-9]{64}$" }] }
+      },
+      "allOf": [
+        { "if": { "properties": { "decisionKind": { "const": "language-practice" } }, "required": ["decisionKind"] }, "then": { "properties": { "decisionTargetToken": { "type": "string", "pattern": "^[a-f0-9]{64}$" } } }, "else": { "properties": { "decisionTargetToken": { "type": "null" } } } }
+      ]
+    },
+    "lastAction": { "type": ["string", "null"] },
+    "noticeCode": { "type": ["string", "null"] }
+  }
+}

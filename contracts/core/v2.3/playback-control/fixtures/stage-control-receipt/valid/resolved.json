@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "2.3.0",
+  "controlId": "control-playback-001",
+  "accepted": true,
+  "taskId": "task-playback-001",
+  "operation": "speech.playback",
+  "selector": "current-active",
+  "reason": "user_stop",
+  "status": "requested",
+  "resolved": {
+    "runId": "run-001",
+    "stageId": "speech-playback",
+    "attemptId": "attempt-001",
+    "operationId": "operation-001",
+    "cancelSignalRef": "runs/run-001/stages/speech-playback/attempts/attempt-001/cancel.json"
+  },
+  "timestamp": "2026-08-28T03:00:00Z",
+  "durableEventRef": "runs/run-001/events/000010-stage-control-requested.json",
+  "receiptRef": "runs/run-001/controls/control-playback-001/receipt.json",
+  "error": null
+}

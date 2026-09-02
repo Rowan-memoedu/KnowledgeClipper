@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "markdownArtifactRef": "fixture.ocr.missing.markdown",
+  "sourceImageRef": "fixture.image.missing",
+  "blocks": [
+    {
+      "blockId": "fixture.block.missing.0001",
+      "markdownArtifactRef": "fixture.ocr.missing.markdown",
+      "sourceImageRef": "fixture.image.missing",
+      "order": 0,
+      "type": "document"
+    }
+  ],
+  "imageRefs": []
+}

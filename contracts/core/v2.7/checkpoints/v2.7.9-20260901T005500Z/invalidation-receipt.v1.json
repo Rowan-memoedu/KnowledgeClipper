@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "knowledge-clipper-core-checkpoint-invalidation.v1",
+  "status": "invalidated-never-authority-bound",
+  "checkpointVersion": "2.7.9",
+  "checkpointPath": "contracts/core/v2.7/checkpoints/v2.7.9-20260901T005500Z/checkpoint.json",
+  "checkpointSha256": "D8FAA2865B1AF618C2FD7302BB6D8D4171E1117AE4902906E0F0BB2469C46C8B",
+  "reasonCode": "checkpoint.total_bytes_zero",
+  "reason": "The generator used Measure-Object against ordered dictionaries, producing totalBytes=0 despite 114 non-empty immutable file entries.",
+  "authorityBound": false,
+  "releaseCandidateUsed": false,
+  "externalCalls": 0,
+  "externalWrites": 0
+}
