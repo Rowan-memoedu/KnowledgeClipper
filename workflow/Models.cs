@@ -104,16 +104,21 @@ public sealed class ClipDraft
     public string? ImportError { get; set; }
     public ConcurrentDictionary<string, DateTimeOffset> Times { get; set; } = new();
     [JsonIgnore] public SemaphoreSlim ImportGate { get; } = new(1, 1);
+    [JsonIgnore] public DateTimeOffset? LastSpeechAt => Times.TryGetValue("speechRequested", out var requested) ? requested :
+        Times.TryGetValue("speechStarted", out var started) ? started : AudioPath != null ? Original.CapturedAt : null;
 }
 
 public sealed class DraftStore(string root)
 {
     public void Save(ClipDraft draft) => WorkflowJson.Save(Path.Combine(root, "language-drafts", draft.Id + ".json"), draft);
-    public IEnumerable<ClipDraft> Recent()
+    public IEnumerable<ClipDraft> Recent() => ReadDrafts().Take(20);
+    public IEnumerable<ClipDraft> RecentSpeech() => ReadDrafts().Where(d => d.LastSpeechAt != null)
+        .OrderByDescending(d => d.LastSpeechAt).Take(20);
+    private IEnumerable<ClipDraft> ReadDrafts()
     {
         var path = Path.Combine(root, "language-drafts");
         if (!Directory.Exists(path)) yield break;
-        foreach (var file in new DirectoryInfo(path).EnumerateFiles("*.json").OrderByDescending(f => f.LastWriteTimeUtc).Take(20))
+        foreach (var file in new DirectoryInfo(path).EnumerateFiles("*.json").OrderByDescending(f => f.LastWriteTimeUtc))
         {
             ClipDraft? draft = null;
             try { draft = WorkflowJson.Read<ClipDraft>(file.FullName); } catch (JsonException) { } catch (IOException) { }

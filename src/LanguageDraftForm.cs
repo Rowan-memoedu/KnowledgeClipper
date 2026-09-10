@@ -31,9 +31,14 @@ internal sealed class LanguageDraftForm : Form
         Name = AccessibleName = "knowledge-clipper.language.preview";
         Font = new Font("微软雅黑", 10); AutoScaleMode = AutoScaleMode.Dpi;
         Width = 840; Height = 740; MinimumSize = new Size(620, 520); StartPosition = FormStartPosition.CenterScreen;
-        var scroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
-        var layout = new TableLayoutPanel { Dock = DockStyle.Top, Height = 680, Padding = new Padding(16), ColumnCount = 1, RowCount = 8 };
-        for (var i = 0; i < 8; i++) layout.RowStyles.Add(new RowStyle(i == 5 ? SizeType.Percent : SizeType.AutoSize, i == 5 ? 100 : 0));
+        var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty };
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        var scroll = new Panel { Name = "knowledge-clipper.language.content-scroll", Dock = DockStyle.Fill, AutoScroll = true, Margin = Padding.Empty };
+        var layout = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            MinimumSize = new Size(0, 680), Padding = new Padding(16), ColumnCount = 1, RowCount = 7 };
+        for (var i = 0; i < 7; i++) layout.RowStyles.Add(new RowStyle(i == 5 ? SizeType.Percent : SizeType.AutoSize, i == 5 ? 100 : 0));
         status = new Label { AutoSize = true, MaximumSize = new Size(760, 0), Text = "正在处理内容…", Name = "knowledge-clipper.language.status", AccessibleName = "knowledge-clipper.language.status" };
         source = new Label { AutoSize = true, MaximumSize = new Size(760, 0), ForeColor = Color.DimGray,
             Text = "目标：" + draft.Material.SelectedText.TakeText(120) + "\n来源：" + draft.Material.SourceTitle.TakeText(80) + "\n导入：" + draft.Settings.AnkiDeck + " · " + draft.Settings.AnkiModel };
@@ -51,23 +56,31 @@ internal sealed class LanguageDraftForm : Form
         practice = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 240, Name = "knowledge-clipper.language.practice", AccessibleName = "knowledge-clipper.language.practice" };
         practice.Items.AddRange(new object[] { "两者：理解与朗读 + 书写", "理解与朗读", "书写练习" }); practice.SelectedIndex = (int)draft.Practice;
         layout.Controls.Add(practice, 0, 4);
-        var tabs = new TabControl { Dock = DockStyle.Fill, MinimumSize = new Size(100, 130) };
+        var tabs = new TabControl { Name = "knowledge-clipper.language.faces", Dock = DockStyle.Fill, MinimumSize = new Size(100, 130) };
         reading = Editor("knowledge-clipper.language.reading-preview", 150); reading.Dock = DockStyle.Fill; reading.ReadOnly = true;
         writing = Editor("knowledge-clipper.language.writing-preview", 150); writing.Dock = DockStyle.Fill; writing.ReadOnly = true;
         var readTab = new TabPage("理解与朗读 · 正反面"); readTab.Controls.Add(reading); tabs.TabPages.Add(readTab);
         var writeTab = new TabPage("书写练习 · 正反面"); writeTab.Controls.Add(writing); tabs.TabPages.Add(writeTab); layout.Controls.Add(tabs, 0, 5);
-        var controls = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, WrapContents = true };
-        confirm = Button("确认并导入 Anki", "knowledge-clipper.language.confirm"); confirm.Enabled = false;
+        var actions = new TableLayoutPanel { Name = "knowledge-clipper.language.actions", Dock = DockStyle.Fill, AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty, Padding = new Padding(12, 6, 12, 6), BackColor = Color.WhiteSmoke };
+        actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        actions.RowStyles.Add(new RowStyle(SizeType.AutoSize)); actions.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        confirm = Button("确认制卡并导入 Anki", "knowledge-clipper.language.confirm"); confirm.Enabled = false;
+        confirm.Dock = DockStyle.Fill; confirm.BackColor = Color.FromArgb(38, 90, 150); confirm.ForeColor = Color.White;
+        confirm.FlatStyle = FlatStyle.Flat; confirm.FlatAppearance.BorderSize = 0; confirm.Padding = new Padding(8, 4, 8, 4);
         confirm.Click += async (_, _) => await ConfirmAsync();
+        var controls = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, WrapContents = true, Margin = Padding.Empty };
         retry = Button("重试内容", "knowledge-clipper.language.retry-content"); retry.Click += (_, _) => RetryContent?.Invoke();
         var replayButton = Button("重播 / 重新朗读", "knowledge-clipper.language.replay"); replayButton.Click += async (_, _) => await this.replay();
         var stopButton = Button("停止朗读", "knowledge-clipper.language.stop"); stopButton.Click += (_, _) => stop();
-        controls.Controls.AddRange(new Control[] { confirm, retry, replayButton, stopButton }); layout.Controls.Add(controls, 0, 6);
-        layout.Controls.Add(new Label { Text = "关闭窗口会保留草稿，可从悬浮窗的“最近草稿”继续。", AutoSize = true, ForeColor = Color.DimGray }, 0, 7);
-        scroll.Controls.Add(layout); Controls.Add(scroll);
+        controls.Controls.AddRange(new Control[] { retry, replayButton, stopButton });
+        actions.Controls.Add(confirm, 0, 0); actions.Controls.Add(controls, 0, 1);
+        var note = new Label { Name = "knowledge-clipper.language.preview-note", Text = "关闭窗口会保留草稿，可从悬浮窗的“最近草稿”继续。", AutoSize = true, ForeColor = Color.DimGray };
+        layout.Controls.Add(note, 0, 6);
+        scroll.Controls.Add(layout); root.Controls.Add(scroll, 0, 0); root.Controls.Add(actions, 0, 1); Controls.Add(root);
         void Fit() {
-            source.MaximumSize = status.MaximumSize = new Size(Math.Max(250, scroll.ClientSize.Width - 55), 0);
-            layout.Height = Math.Max(scroll.ClientSize.Height, 680);
+            note.MaximumSize = source.MaximumSize = status.MaximumSize = new Size(Math.Max(250, scroll.ClientSize.Width - 55), 0);
+            layout.MinimumSize = new Size(0, Math.Max(scroll.ClientSize.Height, 680));
         }
         scroll.SizeChanged += (_, _) => Fit(); Fit();
         pronunciation.TextChanged += (_, _) => SaveEdits(); meaning.TextChanged += (_, _) => SaveEdits(); example.TextChanged += (_, _) => SaveEdits(); practice.SelectedIndexChanged += (_, _) => SaveEdits();
@@ -136,8 +149,9 @@ internal sealed class LanguageDraftForm : Form
     {
         if (IsDisposed) return;
         status.Text = (committing ? "正在核对 Anki 写入结果…" : Draft.ImportState == ImportState.Verified ? "已核对 Anki：" + Draft.CardIds.Length + " 张可复习卡片" : Draft.ImportError ?? Draft.ContentError ?? (Draft.Content == null ? "正在准备内容…" : "内容已就绪，请核对后确认")) + "\n" + Draft.SpeechStatus + (Draft.SpeechError == null ? "" : " · " + Draft.SpeechError);
-        confirm.Enabled = Draft.Content != null && !committing && Draft.ImportState != ImportState.Verified;
-        confirm.Text = Draft.ImportState == ImportState.Unknown ? "核对写入结果" : Draft.ConfirmedNote == null ? "确认并导入 Anki" : Draft.ImportState == ImportState.Verified ? "已导入" : "重试导入";
+        confirm.Enabled = Draft.Content != null && !ContentRunning && !committing && Draft.ImportState != ImportState.Verified;
+        confirm.Text = committing ? "正在处理 Anki…" : ContentRunning || Draft.Content == null ? "等待内容准备完成…" :
+            Draft.ImportState == ImportState.Unknown ? "核对写入结果" : Draft.ConfirmedNote == null ? "确认制卡并导入 Anki" : Draft.ImportState == ImportState.Verified ? "已导入" : "重试导入";
         retry.Enabled = !ContentRunning && Draft.Content == null;
         pronunciation.ReadOnly = meaning.ReadOnly = Draft.ConfirmedNote != null;
         example.ReadOnly = Draft.ConfirmedNote != null || Draft.Material.ContextText != null;
@@ -146,7 +160,7 @@ internal sealed class LanguageDraftForm : Form
 
     private async Task ConfirmAsync()
     {
-        if (committing || Draft.ImportState == ImportState.Verified) return;
+        if (committing || ContentRunning || Draft.Content == null || Draft.ImportState == ImportState.Verified) return;
         committing = true;
         try
         {

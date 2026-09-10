@@ -90,6 +90,14 @@ freshBackend.Buried = false;
 freshBackend.WrongCardId = true;
 await MustFail(() => freshAnki.ImportAsync(buried, store), "card readback must match the note card identities");
 Check(freshBackend.Adds == 2, "card-state and identity failures do not re-add an existing note");
+var historyStore = new DraftStore(@"D:\Caches\KnowledgeClipper\history-tests\" + Guid.NewGuid().ToString("N"));
+var earlierSpeech = Draft(); earlierSpeech.Times["speechStarted"] = DateTimeOffset.UtcNow.AddHours(-2); historyStore.Save(earlierSpeech);
+var laterSpeech = Draft(); laterSpeech.Times["speechRequested"] = DateTimeOffset.UtcNow.AddHours(-1); historyStore.Save(laterSpeech);
+for (var i = 0; i < 23; i++) historyStore.Save(Draft());
+Check(historyStore.RecentSpeech().Select(d => d.Id).SequenceEqual(new[] { laterSpeech.Id, earlierSpeech.Id }), "reading history ignores newer text-only drafts and retains older readings");
+earlierSpeech.Times["speechRequested"] = DateTimeOffset.UtcNow; historyStore.Save(earlierSpeech);
+Check(historyStore.RecentSpeech().First().Id == earlierSpeech.Id, "last played record survives a fresh history load");
+Check(historyStore.Recent().Count() == 20, "general draft list remains bounded");
 Console.WriteLine($"{checks} checks passed; no external calls");
 
 sealed class ContentHandler : HttpMessageHandler

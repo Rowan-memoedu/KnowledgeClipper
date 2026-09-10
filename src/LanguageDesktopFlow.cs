@@ -21,7 +21,8 @@ internal sealed class LanguageDesktopFlow : IDisposable
     private readonly StreamingSpeech speech;
     private readonly LanguageDesktopCapture capture;
     private readonly List<LanguageDraftForm> forms = new();
-    private ClipDraft latest;
+    private ClipDraft latest, lastSpeech;
+    private LanguageReadingHistoryForm history;
     private bool capturing;
     internal bool IsPlaying => speech.IsPlaying;
     internal LanguageSettings Settings { get; private set; }
@@ -46,6 +47,7 @@ internal sealed class LanguageDesktopFlow : IDisposable
         speech = new StreamingSpeech(Path.Combine(baseRoot, "helpers", "stream_speech.py"), @"D:\Caches\KnowledgeClipper\audio");
         speech.Prepare(Settings);
         capture = new LanguageDesktopCapture(Path.Combine(baseRoot, "helpers", "selection.cjs"));
+        lastSpeech = store.RecentSpeech().FirstOrDefault();
     }
 
     internal void SaveSettings(LanguageSettings value)
@@ -73,7 +75,7 @@ internal sealed class LanguageDesktopFlow : IDisposable
             draft.Times["captured"] = DateTimeOffset.UtcNow;
             latest = draft;
             // Start the audio connection before constructing/showing the preview on the UI thread.
-            if (read) _ = speech.SpeakAsync(draft, false, () => Changed(draft, null));
+            if (read) _ = PlayAsync(draft, false);
             var form = OpenDraft(draft);
             draft.Times["previewOpened"] = DateTimeOffset.UtcNow;
             store.Save(draft);
@@ -89,7 +91,7 @@ internal sealed class LanguageDesktopFlow : IDisposable
         if (existing != null) { existing.Show(); existing.Activate(); return existing; }
         var form = new LanguageDraftForm(draft, store,
             async () => { try { using var request = new HttpClient(); await new AnkiConnection(request, draft.Settings.AnkiEndpoint).ImportAsync(draft, store); } finally { Changed(draft, null); } },
-            () => speech.SpeakAsync(draft, true, () => Changed(draft, null)), () => speech.Stop());
+            () => PlayAsync(draft, true), () => speech.Stop());
         forms.Add(form);
         form.RetryContent += () => _ = ProcessAsync(draft, form);
         form.FormClosed += (_, _) => { forms.Remove(form); store.Save(draft); };
@@ -132,6 +134,7 @@ internal sealed class LanguageDesktopFlow : IDisposable
         if (owner.IsDisposed) return;
         if (owner.InvokeRequired) { owner.BeginInvoke((Action)(() => Changed(draft, form))); return; }
         store.Save(draft);
+        if (history != null && !history.IsDisposed) history.RefreshDraft(draft);
         foreach (var view in forms.Where(f => f.Draft.Id == draft.Id).ToArray()) if (!view.IsDisposed) view.RefreshStatus();
         if (ReferenceEquals(latest, draft))
             status(draft.ImportState == ImportState.Verified ? "已写入 Anki · " + draft.CardIds.Length + " 张卡" :
@@ -139,16 +142,41 @@ internal sealed class LanguageDesktopFlow : IDisposable
     }
 
     internal void Stop() => speech.Stop();
-    internal void Replay() { var target = latest; if (target != null) _ = speech.SpeakAsync(target, true, () => Changed(target, null)); }
-    internal void ShowRecent()
+    private ClipDraft LiveDraft(ClipDraft draft) => forms.FirstOrDefault(f => !f.IsDisposed && f.Draft.Id == draft.Id)?.Draft
+        ?? (latest?.Id == draft.Id ? latest : lastSpeech?.Id == draft.Id ? lastSpeech : draft);
+
+    private Task PlayAsync(ClipDraft draft, bool replay)
     {
-        var recent = store.Recent().ToArray();
-        using var dialog = new Form { Text = "最近的语言草稿", Width = 680, Height = 420, StartPosition = FormStartPosition.CenterParent, Font = new Font("微软雅黑", 10) };
-        var list = new ListBox { Dock = DockStyle.Fill };
-        foreach (var draft in recent) list.Items.Add(draft.Original.CapturedAt.ToLocalTime().ToString("MM-dd HH:mm") + "  " + draft.Original.SelectedText.Replace("\r", " ").Replace("\n", " ").TakeText(45) + "  · " + (draft.ImportState == ImportState.Verified ? "已导入" : "草稿"));
-        list.DoubleClick += (_, _) => { if (list.SelectedIndex >= 0) { var f = OpenDraft(recent[list.SelectedIndex]); latest = f.Draft; if (f.Draft.Content != null) f.ContentReady(); dialog.Close(); } };
-        dialog.Controls.Add(list); dialog.ShowDialog(owner);
+        draft = LiveDraft(draft);
+        latest = lastSpeech = draft;
+        draft.Times["speechRequested"] = DateTimeOffset.UtcNow;
+        store.Save(draft);
+        return speech.SpeakAsync(draft, replay, () => Changed(draft, null));
     }
 
-    public void Dispose() { foreach (var f in forms.ToArray()) f.Close(); speech.Dispose(); http.Dispose(); }
+    internal void ReplayAndShowRecent()
+    {
+        var target = lastSpeech ?? store.RecentSpeech().FirstOrDefault();
+        if (target != null) _ = PlayAsync(target, true);
+        ShowRecent(true);
+    }
+
+    internal void ShowRecent(bool speechOnly = false)
+    {
+        var recent = (speechOnly ? store.RecentSpeech() : store.Recent()).Select(LiveDraft).ToArray();
+        if (history == null || history.IsDisposed)
+        {
+            history = new LanguageReadingHistoryForm(draft => _ = PlayAsync(draft, true), draft => {
+                var form = OpenDraft(LiveDraft(draft)); latest = form.Draft;
+                if (form.Draft.Content != null) form.ContentReady();
+                else _ = ProcessAsync(form.Draft, form);
+            }, () => speech.Stop());
+            history.FormClosed += (_, _) => history = null;
+        }
+        history.SetDrafts(recent, speechOnly);
+        if (!history.Visible) history.Show(owner);
+        history.Activate();
+    }
+
+    public void Dispose() { history?.Close(); foreach (var f in forms.ToArray()) f.Close(); speech.Dispose(); http.Dispose(); }
 }

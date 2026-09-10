@@ -4,7 +4,7 @@ Windows 悬浮式知识采集工具。活动源码位于 `D:\Projects\RemNote Qu
 
 ## 当前状态（2026-09-10）
 
-**M1 主流程已接通，首声与窗口修复已通过用户复测；内容质量仍待最后回归，M2 尚未开始。**
+**M1 主流程已接通；首声、窗口、重播记录与继续制卡均已通过用户复测，实际卡片已回读。内容质量仍待最后回归，M2 尚未开始。**
 
 现有朗读/摘录入口已直接连接 .NET 语言流程：取得一次材料，独立启动 TTS 和内容处理，显示可编辑预览，一次确认后通过 AnkiConnect 写入并核对实际卡片。新路径不启动旧 Core / Host / Worker 调度。
 
@@ -25,8 +25,9 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 1. 在普通应用选中文字，点击悬浮窗“朗读”或“摘录”。
 2. 上下文开启时使用可靠的来源原文；提取失败时选择允许生成、补充原文或取消。补充上下文不会自动重播。
 3. 在预览核对读音、语境义、句子及练习类型。可选理解与朗读、书写或两者；关闭窗口保留草稿和未确认的编辑。
-4. 确认一次，等待 Anki 实际回读。Anki 不可用时草稿保留；不确定的写入先查询，不盲目再添加。
-5. 右键“设置…”调整语音、内容 API、Anki 目标和已有提示词；“最近草稿 / 任务”可恢复本次材料。停止朗读不取消制卡，完整音频可直接重播。
+4. 点击固定在预览底部的“确认制卡并导入 Anki”，等待 Anki 实际回读。Anki 不可用时草稿保留；不确定的写入先查询，不盲目再添加。
+5. 点击悬浮窗“重播”，或右键“重播上一条 / 最近朗读”，立即播放上一条并打开最近 20 条朗读记录。每条可点击文字或“播放”重听，点击“继续制卡”打开该条预览。完整音频直接复用；关闭记录面板不停止播放。
+6. 右键“设置…”调整语音、内容 API、Anki 目标和已有提示词；“最近草稿 / 朗读”也包含仅摘录的草稿。停止朗读不取消制卡。
 
 当前本机配置仍指向隔离牌组 `KnowledgeClipper Canary::Architecture 20260910`，用于完成 M1 验收。专用笔记类型是一份共享字段配两个原生模板；已有用户模板不会被覆盖。
 
@@ -50,7 +51,8 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 | 语音 | 最新预热后的首次调用至实际输出约 3.94 秒，首块约 2.80 秒；同轮后续播放约 2.48 秒，重播约 0.33 秒。首次首块后的约 1.14 秒等待仍是体验限制 |
 | 语音设置与状态 | 速度、音量、音色实际生效；新预热实现的停止约 78 毫秒，停止和退出能回收本次播放器与空助手 |
 | Anki | 隔离牌组真实双卡与单卡；字段、卡面、模板、来源及非暂停/非埋藏状态回读；真实写后丢响应查询恢复且未再次添加 |
-| 预览与确认 | 长内容、最小窗口下确认可达、编辑持久化、冻结确认；原失败草稿正常重试后产生 2 张实际卡片，重复确认不再调用导入器 |
+| 预览与确认 | 确认按钮固定在底部，长内容与最小窗口均无需滚动寻找；编辑持久化、冻结确认；原失败草稿正常重试后产生 2 张实际卡片，重复确认不再调用导入器 |
+| 重播与记录 | 生产界面检查验证立即重播、逐条实际播放已存音频、继续同一草稿、关闭面板不停播、最近播放记录重启后保留；用户复测全部正常 |
 | 捕获局部 | 多格式剪贴板保护、并发复制、辅助进程故障、超过 200k 字符后的真实 UIA 邻接范围 |
 | 真实朗读入口 | 修复后用户复测通过；点击至实际输出 3.00 秒、预览 3.54 秒，预览早于播放结束；真实来源材料和两条分支均保留在本次草稿中 |
 | 浮窗与 DPI | 当前实际 192 DPI 下首次 UIA、状态、预览开关尺寸稳定；手动缩放、逻辑尺寸保存恢复、启动后完全可见均已检查 |
@@ -58,9 +60,9 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 
 证据集中在 [validation](D:/Artifacts/KnowledgeClipper/validation)：[语音](D:/Artifacts/KnowledgeClipper/validation/speech.json)、[最终播放状态](D:/Artifacts/KnowledgeClipper/validation/speech-state.json)、[Anki 真实丢响应恢复](D:/Artifacts/KnowledgeClipper/validation/anki-mixed-writing-lost-response.json)、[预览确认](D:/Artifacts/KnowledgeClipper/validation/m1-preview-confirmation.json)、[窗口缩小复现](D:/Artifacts/KnowledgeClipper/validation/window-size-before.json)。首次取词自动检查未取得前台、静音、Anki 模板大小写及 HTTP chunked 兼容失败均保留；它们不覆盖后续真实结果。
 
-本次修复的相关结果：[首次语音](D:/Artifacts/KnowledgeClipper/validation/speech-prepared-first.json)、[预热与生命周期](D:/Artifacts/KnowledgeClipper/validation/speech-latency.json)、[窗口尺寸及可见范围](D:/Artifacts/KnowledgeClipper/validation/window-size-visible-check.txt)、[预览 DPI](D:/Artifacts/KnowledgeClipper/validation/preview-dpi-check.txt)。普通接口回归 34 项通过，预览局部 6 项通过；固定响应检查仅证明结构与状态。
+本次修复的相关结果：[首次语音](D:/Artifacts/KnowledgeClipper/validation/speech-prepared-first.json)、[预热与生命周期](D:/Artifacts/KnowledgeClipper/validation/speech-latency.json)、[窗口尺寸及可见范围](D:/Artifacts/KnowledgeClipper/validation/window-size-visible-check.txt)、[预览固定按钮](D:/Artifacts/KnowledgeClipper/validation/preview-fixed-footer.txt)、[重播记录](D:/Artifacts/KnowledgeClipper/validation/history-ui-check.json)。普通接口回归 37 项、预览局部 20 项、重播界面 9 项通过；固定响应检查仅证明结构与状态。
 
-用户复测对应草稿为 `b0ccda88c648434b921be4632bd80796`，运行数据留在本机应用目录。人工验证由工程先准备测试条件并确认悬浮窗可见，再通过默认提问框通知和收集结果，不额外询问是否准备好。独立内容线程目前停在原生消息工具的批准项，最后语义回归尚未完成；不能据此宣布 M1 全部通过。
+用户复测对应草稿为 `b0ccda88c648434b921be4632bd80796`，运行数据留在本机应用目录。重播与继续制卡复测后，笔记 `1789018923487` 的 2 张实际卡片已只读回查：确认字段一致、卡面有内容、未暂停或埋藏，见[用户重播与制卡复测](D:/Artifacts/KnowledgeClipper/validation/history-user-retest.json)。人工验证由工程先准备测试条件并确认悬浮窗可见，再通过默认提问框通知和收集结果，不额外询问是否准备好。独立内容线程目前停在原生消息工具的批准项，最后语义回归尚未完成；不能据此宣布 M1 全部通过。
 
 常规接口检查使用 [Workflow.Tests](tests/KnowledgeClipper.Workflow.Tests/KnowledgeClipper.Workflow.Tests.csproj)；内容、语音、Anki 和捕获各有薄 CLI，均调用生产实现。真实写入和播放检查只针对明确的隔离输入与目标，不作为每次构建的自动步骤。没有新变化或未解决问题时，不重跑整批外部检查。
 

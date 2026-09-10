@@ -216,7 +216,7 @@ namespace KnowledgeClipper
             originalButton.Click += async delegate { await SetOriginalImageModeAsync(!settings.OriginalImageMode); };
             statusButton.Click += async delegate
             {
-                if (languageFlow != null) languageFlow.ShowRecent();
+                if (languageFlow != null) languageFlow.ReplayAndShowRecent();
                 else if (statusButton.Text == "查看答案") await OpenQuestionAsync();
                 else if (applicationBinding != null && readToAnkiView != null && readToAnkiView.CanReplay && statusButton.Text.Contains("重播")) await ExecuteReadToAnkiAsync(ApplicationCommandKind.ReadToAnkiReplay);
                 else if (statusButton.Text == "▶ 重播") await ExecuteAsync(AutomationCatalog.PlaybackReplay, null);
@@ -271,6 +271,7 @@ namespace KnowledgeClipper
             contextItem.Click += async delegate { await SetContextModeAsync(contextItem.Checked); };
             originalItem.Click += async delegate { await SetOriginalImageModeAsync(originalItem.Checked); };
             menu.Items.Add(contextItem); menu.Items.Add(originalItem); menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add("重播上一条 / 最近朗读", null, delegate { languageFlow?.ReplayAndShowRecent(); });
             var stopRead = menu.Items.Add("停止朗读", null, async delegate
             {
                 if (languageFlow != null) { languageFlow.Stop(); return; }
@@ -290,7 +291,7 @@ namespace KnowledgeClipper
                 await dependencies.Application.ReadToAnkiUseCases.RefreshPlaybackControlAsync(CancellationToken.None);
                 if (!IsDisposed) stopRead.Enabled = readToAnkiView?.CanStop == true;
             };
-            menu.Items.Add("最近草稿 / 任务", null, async delegate { if (languageFlow != null) languageFlow.ShowRecent(); else await ExecuteAsync(AutomationCatalog.TaskStatusQueryRecent, null); }).Name = AutomationCatalogV11.AutomationIds[AutomationCatalog.TaskStatusQueryRecent];
+            menu.Items.Add("最近草稿 / 朗读", null, async delegate { if (languageFlow != null) languageFlow.ShowRecent(); else await ExecuteAsync(AutomationCatalog.TaskStatusQueryRecent, null); }).Name = AutomationCatalogV11.AutomationIds[AutomationCatalog.TaskStatusQueryRecent];
             menu.Items.Add("设置…", null, delegate { OpenSettings(); }).Name = "knowledge-clipper.desktop.menu.settings";
             menu.Items.Add("其他功能设置…", null, delegate { OpenSettings(true); });
             menu.Items.Add("恢复默认大小", null, delegate { RestoreDefaultSize(); }).Name = "knowledge-clipper.desktop.menu.window.restore-size";

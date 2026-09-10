@@ -48,17 +48,70 @@ internal static class Program
                 Find<TextBox>(preview, "meaning").Text = longMeaning;
                 Find<ComboBox>(preview, "practice").SelectedIndex = 2;
                 preview.Size = preview.MinimumSize; await Task.Delay(100);
-                var host = preview.Controls.OfType<Panel>().Single();
+                var host = Find<Panel>(preview, "content-scroll");
+                var actions = Find<TableLayoutPanel>(preview, "actions");
                 var confirm = Find<Button>(preview, "confirm");
-                host.ScrollControlIntoView(confirm); await Task.Delay(100);
-                var confirmBounds = host.RectangleToClient(confirm.RectangleToScreen(confirm.ClientRectangle));
-                Check(host.ClientRectangle.Contains(confirmBounds), "confirmation reachable at minimum size: " + confirmBounds + " / " + host.ClientRectangle);
+                var confirmBounds = preview.RectangleToClient(confirm.RectangleToScreen(confirm.ClientRectangle));
+                var actionBounds = preview.RectangleToClient(actions.RectangleToScreen(actions.ClientRectangle));
+                Check(preview.DeviceDpi == 192, "current PerMonitorV2 display is 192 DPI");
+                Check(preview.ClientRectangle.Contains(confirmBounds) && actionBounds.Contains(confirmBounds) && !host.Contains(confirm),
+                    "confirmation is visible in fixed footer without scrolling: " + confirmBounds + " / " + preview.ClientRectangle);
+                Check(host.VerticalScroll.Visible && host.DisplayRectangle.Height > host.ClientSize.Height, "long content has an independent scroll area");
+                Check(Find<TabControl>(preview, "faces").Bottom <= Find<Label>(preview, "preview-note").Top,
+                    "card faces and closing note do not overlap at minimum size");
+                host.AutoScrollPosition = new Point(0, host.DisplayRectangle.Height); await Task.Delay(100);
+                Check(preview.RectangleToClient(confirm.RectangleToScreen(confirm.ClientRectangle)) == confirmBounds,
+                    "content scrolling does not move the confirmation button");
+                foreach (var suffix in new[] { "retry-content", "replay", "stop" })
+                {
+                    var control = Find<Button>(preview, suffix);
+                    Check(preview.ClientRectangle.Contains(preview.RectangleToClient(control.RectangleToScreen(control.ClientRectangle))), "secondary action stays visible: " + suffix);
+                }
                 using (var bitmap = new Bitmap(preview.Width, preview.Height)) { preview.DrawToBitmap(bitmap, new Rectangle(Point.Empty, preview.Size)); bitmap.Save(Path.Combine(artifacts, "m1-preview-minimum.png")); }
                 preview.Close();
                 var saved = store.Recent().Single(d => d.Id == draft.Id);
                 Check(saved.EditedFields.Meaning == longMeaning && saved.Practice == PracticeChoice.Writing, "unconfirmed edits persist");
                 using var reopened = new LanguageDraftForm(saved, store, () => Task.CompletedTask, () => Task.CompletedTask, () => { });
                 Check(Find<TextBox>(reopened, "meaning").Text == longMeaning && Find<ComboBox>(reopened, "practice").SelectedIndex == 2, "reopened preview retains edits");
+            }
+
+            // UI confirmation state uses a controlled importer, with no Anki calls.
+            var confirmed = Create();
+            var imports = 0;
+            var releaseImport = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (var preview = new LanguageDraftForm(confirmed, store, async () => {
+                imports++;
+                await releaseImport.Task;
+                confirmed.ImportState = ImportState.Verified;
+                confirmed.CardIds = new long[] { 1, 2 };
+            }, () => Task.CompletedTask, () => { }))
+            {
+                preview.Show(); await Task.Delay(100);
+                var button = Find<Button>(preview, "confirm");
+                Check(button.Enabled && button.Text == "确认制卡并导入 Anki", "ready draft exposes the direct card confirmation action");
+                preview.ContentRunning = true; preview.RefreshStatus();
+                Check(!button.Enabled && button.Text.Contains("等待内容"), "processing keeps the visible confirmation disabled");
+                preview.ContentRunning = false; preview.RefreshStatus();
+                button.PerformClick(); button.PerformClick();
+                Check(imports == 1 && confirmed.ConfirmedNote != null && !button.Enabled, "one confirmation starts exactly one importer while pending");
+                Check(Find<TextBox>(preview, "meaning").ReadOnly && !Find<ComboBox>(preview, "practice").Enabled, "pending confirmed fields remain frozen");
+                releaseImport.SetResult(true); await Task.Delay(100);
+                button.PerformClick(); await Task.Delay(50);
+                Check(imports == 1 && confirmed.ImportState == ImportState.Verified && !button.Enabled, "repeated completed confirmation does not invoke importer again");
+                preview.Close();
+            }
+
+            var unknown = Create(); unknown.ConfirmedNote = AnkiNoteDraft.From(unknown); unknown.ImportState = ImportState.Unknown;
+            var originalNote = unknown.ConfirmedNote; var queries = 0;
+            using (var preview = new LanguageDraftForm(unknown, store, () => { queries++; return Task.CompletedTask; }, () => Task.CompletedTask, () => { }))
+            {
+                preview.Show(); await Task.Delay(100);
+                var button = Find<Button>(preview, "confirm");
+                Check(button.Text == "核对写入结果" && Find<TextBox>(preview, "meaning").ReadOnly, "unknown result exposes reconciliation and preserves frozen content");
+                button.PerformClick(); await Task.Delay(50);
+                Check(queries == 1 && ReferenceEquals(unknown.ConfirmedNote, originalNote) && unknown.ImportState == ImportState.Unknown,
+                    "unknown action retains the same confirmed note for the importer to reconcile");
+                preview.Close();
             }
 
             var missingContext = new CaptureMaterial("aa", null, "unavailable", null, "overlapping context fixture", 0, DateTimeOffset.UtcNow);
