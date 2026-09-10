@@ -14,5 +14,6 @@ $env:NUGET_PACKAGES = 'D:\Caches\NuGet\packages'
 & $DotnetPath build (Join-Path $projectRoot 'desktop\RemNoteQuickClipper.Desktop.csproj') -c Release --nologo
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 $clipperExecutable = 'D:\Artifacts\KnowledgeClipper\build\RemNoteQuickClipper.Desktop\Release\net8.0-windows\win-x64\KnowledgeClipper.exe'
+& (Join-Path $projectRoot 'tools\Install-DesktopShortcut.ps1') -ExecutablePath $clipperExecutable
 Write-Output $clipperExecutable
 if ($Start) { Start-Process -FilePath $clipperExecutable -WindowStyle Normal }

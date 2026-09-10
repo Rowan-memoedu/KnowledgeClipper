@@ -35,6 +35,8 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 
 当前可执行入口：[KnowledgeClipper.exe](D:/Artifacts/KnowledgeClipper/build/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)。保留整个输出目录；重新构建前退出正在使用该输出目录的进程。
 
+日常使用桌面的 `KnowledgeClipper` 快捷方式。每次 `build.ps1` 构建成功后会自动创建或修正它，始终指向上述固定正式输出路径，不指向历史构建目录。只需修复快捷方式时，可单独运行 `tools/Install-DesktopShortcut.ps1`，无需重新构建。
+
 1. 在普通应用选中文字，点击悬浮窗“朗读”或“摘录”。
 2. 上下文开启时使用可靠的来源原文；提取失败时选择允许生成、补充原文或取消。补充上下文不会自动重播。
 3. 在预览核对读音、语境义、句子及练习类型。可选理解与朗读、书写或两者；关闭窗口保留草稿和未确认的编辑。
