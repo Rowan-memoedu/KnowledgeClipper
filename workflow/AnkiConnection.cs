@@ -9,7 +9,9 @@ namespace KnowledgeClipper.Workflow;
 public sealed record AnkiNoteDraft(string Deck, string Model, Dictionary<string, string> Fields, string[] Tags, int[] Ordinals)
 {
     public const string BasicModelName = "零碎知识剪藏 · 问答与翻译";
+    public const string QuestionModelName = "零碎知识剪藏 · 多轮问答";
     [JsonIgnore] public bool IsBasic => Fields.ContainsKey("Front") && Fields.ContainsKey("Back");
+    [JsonIgnore] public bool HasQuestionContext => IsBasic && Fields.ContainsKey("Context");
     public static string Html(string value) => WebUtility.HtmlEncode(value).Replace("\r\n", "\n").Replace("\n", "<br>");
     public static AnkiNoteDraft From(ClipDraft draft)
     {
@@ -20,13 +22,16 @@ public sealed record AnkiNoteDraft(string Deck, string Model, Dictionary<string,
             if (!string.Equals(basic.Front, draft.Original.SelectedText, StringComparison.Ordinal))
                 throw new InvalidDataException("卡片正面必须保留本次原始输入。");
             if (string.IsNullOrWhiteSpace(basic.Back)) throw new InvalidDataException("译文或答案尚未完成。");
-            return new(draft.Settings.AnkiDeck, BasicModelName, new()
+            var basicFields = new Dictionary<string, string>
             {
                 ["ClipId"] = draft.Id,
                 ["Front"] = Html(draft.Original.SelectedText),
                 ["Back"] = Html(basic.Back),
                 ["Source"] = Html(material.SourceTitle)
-            }, ["KnowledgeClipper", "kc_" + draft.Id], [0]);
+            };
+            if (basic.Context != null) basicFields["Context"] = Html(basic.Context);
+            return new(draft.Settings.AnkiDeck, basic.Context != null ? QuestionModelName : BasicModelName,
+                basicFields, ["KnowledgeClipper", "kc_" + draft.Id], [0]);
         }
         var fields = draft.Content?.Fields ?? throw new InvalidOperationException("内容尚未完成。");
         ContentModule.ValidateFields(material, fields);
@@ -56,6 +61,7 @@ public sealed class AnkiConnection(HttpClient http, string endpoint)
     private static readonly JsonSerializerOptions ApiJson = new();
     private static readonly string[] FieldNames = ["ClipId", "Target", "SentenceBefore", "SentenceAfter", "Pronunciation", "Meaning", "Source", "Origin", "ReadingEnabled", "WritingEnabled"];
     private static readonly string[] BasicFieldNames = ["ClipId", "Front", "Back", "Source"];
+    private static readonly string[] QuestionFieldNames = ["ClipId", "Front", "Back", "Context", "Source"];
     public async Task<JsonElement> CallAsync(string action, object? parameters = null, CancellationToken ct = default)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -82,9 +88,11 @@ public sealed class AnkiConnection(HttpClient http, string endpoint)
 
     private async Task PrepareAsync(AnkiNoteDraft note, CancellationToken ct)
     {
-        var fieldNames = note.IsBasic ? BasicFieldNames : FieldNames;
+        var fieldNames = note.HasQuestionContext ? QuestionFieldNames : note.IsBasic ? BasicFieldNames : FieldNames;
         var templateNames = note.IsBasic ? new[] { "正反面" } : new[] { "理解与朗读", "书写练习" };
-        var cardTemplates = note.IsBasic
+        var cardTemplates = note.HasQuestionContext
+            ? new[] { new { Name = "正反面", Front = "{{#Front}}{{#Context}}<div class='context'>{{Context}}</div>{{/Context}}<div>{{Front}}</div>{{/Front}}", Back = "<div>{{Back}}</div>" } }
+            : note.IsBasic
             ? new[] { new { Name = "正反面", Front = "{{#Front}}<div>{{Front}}</div>{{/Front}}", Back = "<div>{{Back}}</div>" } }
             : new[]
             {
@@ -96,7 +104,7 @@ public sealed class AnkiConnection(HttpClient http, string endpoint)
             await CallAsync("createModel", new
             {
                 modelName = note.Model, inOrderFields = fieldNames, isCloze = false,
-                css = ".card{font-family:'Microsoft YaHei',sans-serif;font-size:24px;text-align:left;line-height:1.8;padding:20px;color:#253449;background:#fafbfc}.target{color:#235ba5;font-weight:bold}.hint{color:#8b5516}.origin{font-size:14px;color:#718096;margin-top:20px}",
+                css = ".card{font-family:'Microsoft YaHei',sans-serif;font-size:24px;text-align:left;line-height:1.8;padding:20px;color:#253449;background:#fafbfc}.target{color:#235ba5;font-weight:bold}.hint{color:#8b5516}.origin{font-size:14px;color:#718096;margin-top:20px}.context{font-size:14px;color:#718096;margin-bottom:20px;border-bottom:1px solid #d9dfe7;padding-bottom:12px}",
                 cardTemplates
             }, ct);
         }
@@ -182,7 +190,7 @@ public sealed class AnkiConnection(HttpClient http, string endpoint)
                 throw new InvalidDataException("实际卡片已暂停或暂时埋藏，当前不可复习。");
             var question = card.GetProperty("question").GetString() ?? "";
             var answer = card.GetProperty("answer").GetString() ?? "";
-            var neededQuestion = expected.IsBasic ? new[] { "Front" } : ordinal == 0 ? new[] { "Target" } : new[] { "Pronunciation", "Meaning" };
+            var neededQuestion = expected.HasQuestionContext ? new[] { "Front", "Context" } : expected.IsBasic ? new[] { "Front" } : ordinal == 0 ? new[] { "Target" } : new[] { "Pronunciation", "Meaning" };
             var neededAnswer = expected.IsBasic ? new[] { "Back" } : ordinal == 0 ? new[] { "Target", "Pronunciation", "Meaning" } : new[] { "Target" };
             if (!neededQuestion.All(f => Plain(question).Contains(Plain(expected.Fields[f]), StringComparison.Ordinal)) ||
                 !neededAnswer.All(f => Plain(answer).Contains(Plain(expected.Fields[f]), StringComparison.Ordinal)))

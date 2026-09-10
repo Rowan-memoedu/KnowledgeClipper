@@ -12,11 +12,12 @@ using KnowledgeClipper.Workflow;
 internal static class Program
 {
     private const BindingFlags Instance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-    private const string DataRoot = @"D:\AppData\KnowledgeClipper\canary\input-ui";
+    private const string DataRoot = @"D:\AppData\KnowledgeClipper\canary\question-batch";
     private const string Deck = "KnowledgeClipper Canary::Architecture 20260910";
-    private const string Translation = "循序渐进";
     private const string Question = "为什么正方形的对角线长度相等？";
     private const string FollowUp = "用更简单的话解释";
+    private const string ThirdTurn = "换一个角度说明这个结论";
+    private const string WithoutContextQuestion = "三角形内角和为什么是180度？";
     private static readonly DraftStore Store = new(DataRoot);
     private static readonly List<string> Checks = [];
     private static readonly Dictionary<string, object> Readbacks = [];
@@ -84,7 +85,7 @@ internal static class Program
             outcome, stage, error, started, updated = DateTimeOffset.UtcNow, desktopSha256, dpi,
             mainBefore, mainAfter, checks = Checks, drafts, readbacks = Readbacks,
             openTestForms = Application.OpenForms.Count,
-            scope = "Actual Desktop UI semantic controls and production Flow/API/Anki; no simulated input, TTS playback or global selection. At most one translation and one follow-up card."
+            scope = "Actual Desktop semantic controls and production conversation batching/Anki. Three ordered cards with context and one selected card without context; no simulated input, TTS or global selection."
         });
     }
 
@@ -123,24 +124,16 @@ internal static class Program
             Check(!(bool)Property(monitor, "IsRunning")! && Get(monitor, "input") == null, "global input stays uninstalled " + when);
         }
 
-        Stage("settings and modes");
-        foreach (var enabled in new[] { true, false }) {
+        Stage("question context setting");
+        async Task SetContext(bool enabled) {
             var dialog = (Form)assembly.GetType("KnowledgeClipper.LanguageSettingsForm", true)!.GetConstructors(Instance).Single().Invoke([flow, DataRoot]);
             Owned.Add(dialog); dialog.Show(main);
-            Control<CheckBox>(dialog, "typed-auto-read").Checked = enabled;
-            var mode = Control<ComboBox>(dialog, "mode");
-            var page = mode.Parent; while (page is not TabPage) page = page!.Parent;
-            ((TabControl)page.Parent!).SelectedTab = (TabPage)page;
-            for (var index = 0; index < mode.Items.Count; index++) {
-                mode.SelectedIndex = index;
-                var definition = (ModeDefinition)mode.SelectedItem!;
-                Check(Control<CheckBox>(dialog, "follow-up-default").Checked == (definition.OutputKind == "question"), "settings follow-up default for " + definition.Id + " during typed toggle " + enabled);
-            }
+            Control<CheckBox>(dialog, "question-card-context").Checked = enabled;
             Control<Button>(dialog, "save-settings").PerformClick(); await Task.Delay(50);
-            Check(dialog.IsDisposed && WorkflowJson.Read<LanguageSettings>(settingsPath).TypedInputAutoRead == enabled &&
-                ((LanguageSettings)Property(flow, "Settings")!).TypedInputAutoRead == enabled, "typed auto-read saves and applies " + enabled);
+            Check(dialog.IsDisposed && WorkflowJson.Read<LanguageSettings>(settingsPath).QuestionCardIncludeContext == enabled &&
+                ((LanguageSettings)Property(flow, "Settings")!).QuestionCardIncludeContext == enabled, "question context setting saves and applies " + enabled);
         }
-        Check(!Directory.EnumerateFiles(Path.Combine(DataRoot, "modes"), "*", SearchOption.AllDirectories).Any(), "switching modes leaves prompts and definitions unchanged");
+        await SetContext(true);
         Unchanged("after settings");
 
         async Task<Form> Submit(string text)
@@ -170,79 +163,105 @@ internal static class Program
             Unchanged("after input " + text); return preview;
         }
 
-        Stage("translation input");
-        var translation = await Submit(Translation); var translationDraft = Draft(translation);
-        Check(translationDraft.Route is { OutputKind: "translation", RequiresContext: false, FollowUpDefault: false } &&
-            translationDraft.Content is { Fields: null, Basic: not null, Answer: null }, "Chinese lookup creates a single Basic translation preview");
-        Check(Control<TextBox>(translation, "basic-front").Text == Translation && Control<TextBox>(translation, "basic-front").ReadOnly &&
-            !Control<ComboBox>(translation, "practice").Visible && !Control<Control>(translation, "follow-up").Visible, "translation preserves original front and omits practice and default follow-up");
-        await ConfirmAndReadAsync(translation, anki, "translation"); Unchanged("after translation import");
-
-        Stage("question and follow-up");
-        var question = await Submit(Question); var questionDraft = Draft(question);
-        Check(questionDraft.Route is { OutputKind: "question", RequiresContext: false, FollowUpDefault: true } &&
-            questionDraft.Content?.Answer?.Answered == true && questionDraft.Content.Basic != null, "question route has a real answered Basic preview");
-        Check(Control<Control>(question, "follow-up").Visible && Control<Button>(question, "follow-up-toggle").Text == "收起追问", "question follow-up is expanded by default");
-        var first = questionDraft.Conversation.FirstOrDefault() ?? throw new InvalidOperationException("Initial question/answer missing.");
-        Check(first.Question == Question && first.Answer == questionDraft.Content!.Answer, "initial question and answer begin the conversation");
-        var original = questionDraft.Original; var material = questionDraft.Material; var captured = questionDraft.Times["captured"];
-        var followInput = Control<TextBox>(question, "follow-up-input"); var send = Control<Button>(question, "follow-up-send");
-        if (questionDraft.Conversation.Count == 1) {
-            followInput.Text = FollowUp; Check(send.Enabled, "non-question-mark follow-up can be sent");
+        async Task Follow(Form preview, string text)
+        {
+            var draft = Draft(preview);
+            if (draft.Conversation.Any(t => t.Question == text)) return;
+            var previous = draft.Conversation.ToArray();
+            var original = draft.Original; var captured = draft.Times["captured"];
+            var input = Control<TextBox>(preview, "follow-up-input");
+            var send = Control<Button>(preview, "follow-up-send");
+            input.Text = text; Check(send.Enabled, "unpunctuated follow-up is available");
             send.PerformClick();
-            Check(!send.Enabled && !Control<Button>(question, "confirm").Enabled, "follow-up blocks repeated send and import while pending");
-            await UntilAsync(() => !(bool)Property(Control<Control>(question, "follow-up"), "Sending")!, "follow-up reply");
+            Check(!send.Enabled && !Control<Button>(preview, "confirm").Enabled, "pending follow-up blocks repeat submission and import");
+            await UntilAsync(() => !(bool)Property(Control<Control>(preview, "follow-up"), "Sending")!, "follow-up reply");
+            if (draft.ConversationError != null) throw new InvalidOperationException(draft.ConversationError);
+            Check(draft.Conversation.Count == previous.Length + 1 && draft.Conversation.Take(previous.Length).SequenceEqual(previous) &&
+                draft.Conversation.Last().Answer.Answered && input.Text.Length == 0, "new answer appends once and preserves preceding turns");
+            Check(draft.Original == original && draft.Times["captured"] == captured && !draft.Times.ContainsKey("captureStarted"), "follow-up does not recapture");
         }
-        if (questionDraft.ConversationError != null) throw new InvalidOperationException(questionDraft.ConversationError);
-        Check(questionDraft.Conversation.Count == 2 && questionDraft.Conversation[0] == first && questionDraft.Conversation[1].Question == FollowUp &&
-            questionDraft.Conversation[1].Answer.Answered, "follow-up retains first turn and answers unpunctuated input in the same conversation");
-        Check(questionDraft.Original == original && questionDraft.Material == material && questionDraft.Times["captured"] == captured &&
-            !questionDraft.Times.ContainsKey("captureStarted"), "follow-up uses saved material without recapture");
-        Check(followInput.Text.Length == 0 && questionDraft.PendingFollowUp == null, "successful follow-up clears the pending input");
-        var transcript = Control<TextBox>(question, "conversation").Text;
-        Check(transcript.Contains(Question) && transcript.Contains(first.Answer.AnswerText!) && transcript.IndexOf(Question, StringComparison.Ordinal) < transcript.IndexOf(FollowUp, StringComparison.Ordinal), "preview shows the original question and answer before follow-up");
-
-        Stage("follow-up child card");
-        var makeCard = Control<Button>(question, "follow-up-card"); Check(makeCard.Visible && makeCard.Enabled, "answered last turn offers its card preview");
-        makeCard.PerformClick();
-        var child = ((System.Collections.IEnumerable)Get(flow, "forms")!).Cast<Form>().Single(f => Draft(f).ParentDraftId == questionDraft.Id);
-        Owned.Add(child); var childDraft = Draft(child);
-        Check(childDraft.Original.SelectedText == FollowUp && childDraft.Content?.Basic?.Front == FollowUp && childDraft.ParentDraftId == questionDraft.Id &&
-            childDraft.ConversationMaterial?.SelectedText == Question && childDraft.Conversation.First().Question == Question, "child card preserves this turn plus parent identity and original question context");
-        Check(questionDraft.ConfirmedNote == null && questionDraft.NoteId == null && questionDraft.ImportState == ImportState.Unconfirmed &&
-            questionDraft.FollowUpCards.GetValueOrDefault(1) == childDraft.Id, "child preview leaves original question unconfirmed and saves its link");
-        await ConfirmAndReadAsync(child, anki, "follow-up"); Unchanged("after follow-up import");
-
-        Stage("closed draft persistence");
-        foreach (var form in new[] { translation, question, child }) form.Close();
-        foreach (var draft in new[] { translationDraft, questionDraft, childDraft }) {
-            var loaded = Store.Find(draft.Id) ?? throw new InvalidOperationException("Saved draft missing.");
-            Check(loaded.Input == draft.Input && loaded.Route == draft.Route && loaded.ParentDraftId == draft.ParentDraftId &&
-                JsonSerializer.Serialize(loaded.Conversation, WorkflowJson.Options) == JsonSerializer.Serialize(draft.Conversation, WorkflowJson.Options) &&
-                loaded.ImportState == draft.ImportState && loaded.CardIds.SequenceEqual(draft.CardIds), "closed draft reload preserves metadata, conversation and import for " + draft.Id);
+        async Task Import(Form preview, int? only = null)
+        {
+            var draft = Draft(preview);
+            var indexes = only is int index ? new[] { index } : QuestionCards.Preview(draft, Store)
+                .Where(c => c.State != ImportState.Verified && draft.Conversation[c.Index].Answer.Answered).Select(c => c.Index).ToArray();
+            if (indexes.All(i => QuestionCards.Preview(draft, Store)[i].State == ImportState.Verified)) return;
+            var button = Control<Button>(preview, only is int selected ? "question-card-" + selected + ".import" : "confirm");
+            Check(button.Visible && button.Enabled, only == null ? "footer offers the selected batch" : "individual round has an import action");
+            button.PerformClick();
+            await UntilAsync(() => !(bool)Property(preview, "QuestionImportRunning")!, "question card import", 120);
+            if (draft.ConversationImportError != null) throw new InvalidOperationException(draft.ConversationImportError);
+            foreach (var i in indexes) await ReadQuestionAsync(draft, i, anki);
         }
-        Check(Store.Recent().Count() == 3 && Store.Recent().Sum(d => d.CardIds.Length) == 2 && Store.Recent().All(d => !d.Times.ContainsKey("speechRequested")), "run retains exactly three drafts and two single cards without speech");
+
+        Stage("three-turn question session");
+        var question = await Submit(Question); var questionDraft = Draft(question);
+        Check(questionDraft.Route?.OutputKind == "question" && !Control<Control>(question, "basic-fields").Visible,
+            "question uses the conversation list without a duplicate Basic preview");
+        await Follow(question, FollowUp); await Follow(question, ThirdTurn);
+        Check(QuestionCards.Preview(questionDraft, Store).Count == 3, "all three ordered questions have one preview row each");
+        var secondBefore = QuestionCards.Preview(questionDraft, Store)[1];
+        Check(secondBefore.Context.Contains(Question) && secondBefore.Context.Contains(questionDraft.Conversation[0].Answer.AnswerText!),
+            "second card previews the preceding question and answer as separate context");
+        await Import(question, 1);
+        if (!resume) Check(QuestionCards.Preview(questionDraft, Store).Count(p => p.State == ImportState.Verified) == 1,
+            "individual import writes only the chosen second round");
+        await Import(question);
+        var firstCards = questionDraft.FollowUpCards.Values.Distinct().Select(id => Store.Find(id)!).ToArray();
+        Check(firstCards.Length == 3 && firstCards.All(d => d.ImportState == ImportState.Verified && d.CardIds.Length == 1),
+            "single then batch import produces exactly three actual cards");
+        foreach (var i in Enumerable.Range(0, 3)) await ReadQuestionAsync(questionDraft, i, anki);
+        Check(!Control<Button>(question, "confirm").Enabled, "completed batch disables repeat confirmation");
+        var beforeIds = firstCards.Select(d => d.NoteId).ToArray();
+        Control<Button>(question, "confirm").PerformClick();
+        Check(questionDraft.FollowUpCards.Values.Distinct().Select(id => Store.Find(id)!.NoteId).SequenceEqual(beforeIds),
+            "repeat confirmation keeps the same note identities");
+        Unchanged("after batch import");
+
+        Stage("context disabled for next session");
+        await SetContext(false);
+        var without = await Submit(WithoutContextQuestion); var withoutDraft = Draft(without);
+        await Follow(without, FollowUp);
+        Check(!withoutDraft.Settings.QuestionCardIncludeContext && QuestionCards.Preview(withoutDraft, Store)[1].Context == "",
+            "new session obeys disabled preceding context setting");
+        await Import(without, 1);
+        var noContextCard = Store.Find(withoutDraft.FollowUpCards[1])!;
+        Check(noContextCard.ConfirmedNote!.Fields["Context"] == "" && !withoutDraft.FollowUpCards.ContainsKey(0),
+            "only selected second card is imported with an empty auxiliary context field");
+        await ReadQuestionAsync(withoutDraft, 1, anki);
+        Check(questionDraft.Settings.QuestionCardIncludeContext && QuestionCards.Preview(questionDraft, Store)[1].Context.Length > 0,
+            "changing settings does not mutate already confirmed earlier card context");
+
+        Stage("history and persistence");
+        Call(flow, "ShowRecent", false);
+        var history = (Form)Get(flow, "history")!; Owned.Add(history);
+        Check(!history.Controls.Find("knowledge-clipper.language.history.play." + questionDraft.Id, true).Single().Visible &&
+            !history.Controls.Find("knowledge-clipper.language.history.play." + withoutDraft.Id, true).Single().Visible,
+            "non-language sessions have no visible playback buttons");
+        var rowPanel = (FlowLayoutPanel)Get(history, "rows")!;
+        Check(rowPanel.Controls.Count == 2 && Store.RecentSessions().Count() == 2, "history contains one entry per session and no internal card duplicates");
+        Check(Store.RecentSpeech().Count() == 0 && Store.Recent().All(d => !d.Times.ContainsKey("speechRequested")),
+            "question sessions cannot enter reading history or request playback");
+        foreach (var form in new[] { history, question, without }) form.Close();
+        foreach (var draft in new[] { questionDraft, withoutDraft }) {
+            var loaded = Store.Find(draft.Id)!;
+            Check(JsonSerializer.Serialize(loaded.Conversation, WorkflowJson.Options) == JsonSerializer.Serialize(draft.Conversation, WorkflowJson.Options) &&
+                loaded.FollowUpCards.Count == draft.FollowUpCards.Count, "closed session preserves conversation and per-round import identities");
+        }
+        Check(Store.Recent().Sum(d => d.CardIds.Length) == 4, "actual run created exactly four reviewable question cards");
         Unchanged("after closing drafts"); main.Close();
         Check(main.IsDisposed && !(bool)Property(monitor, "IsRunning")!, "closing the test app releases UI and watcher");
         Stage("complete");
     }
 
-    private static async Task ConfirmAndReadAsync(Form preview, AnkiConnection anki, string kind)
+    private static async Task ReadQuestionAsync(ClipDraft parent, int index, AnkiConnection anki)
     {
-        Stage(kind + " Anki confirmation"); var draft = Draft(preview); var button = Control<Button>(preview, "confirm");
-        if (draft.ImportState != ImportState.Verified) {
-            if (draft.ImportState is ImportState.Writing or ImportState.Unknown || draft.NoteId != null)
-                throw new InvalidOperationException("Anki result needs explicit reconciliation; this canary will not add another note.");
-            Check(draft.ConfirmedNote == null && button.Visible && button.Enabled, kind + " has one available preview confirmation");
-            var before = await anki.CallAsync("findNotes", new { query = "tag:kc_" + draft.Id });
-            Check(before.GetArrayLength() == 0, kind + " identity has no existing Anki result before confirmation");
-            button.PerformClick();
-            await UntilAsync(() => !(bool)Get(preview, "committing")!, kind + " Anki import", 90);
-            if (draft.ImportState != ImportState.Verified) throw new InvalidOperationException(draft.ImportError ?? "Anki import not verified.");
-        }
-        var frozen = draft.ConfirmedNote!;
-        Check(frozen.IsBasic && frozen.Ordinals.SequenceEqual(new[] { 0 }) && draft.CardIds.Length == 1 && !button.Enabled,
-            kind + " confirmation freezes one Basic card and disables a repeat");
+        var kind = parent.Original.SelectedText + " 第 " + (index + 1) + " 轮";
+        Check(parent.FollowUpCards.TryGetValue(index, out var childId), kind + " retains its per-round identity");
+        var draft = Store.Find(childId!) ?? throw new InvalidOperationException("Missing confirmed question draft.");
+        var frozen = draft.ConfirmedNote ?? throw new InvalidOperationException("Missing confirmed question card.");
+        Check(draft.ImportState == ImportState.Verified && frozen.HasQuestionContext && frozen.Ordinals.SequenceEqual(new[] { 0 }) && draft.CardIds.Length == 1,
+            kind + " freezes exactly one verified question card");
         var notes = await anki.CallAsync("notesInfo", new { notes = new[] { draft.NoteId!.Value } });
         var cards = await anki.CallAsync("cardsInfo", new { cards = draft.CardIds });
         var matches = await anki.CallAsync("findNotes", new { query = "tag:kc_" + draft.Id });
@@ -250,15 +269,24 @@ internal static class Program
         Check(matches.GetArrayLength() == 1 && matches[0].GetInt64() == draft.NoteId && notes.GetArrayLength() == 1 && cards.GetArrayLength() == 1,
             kind + " actual Anki readback finds one note and one card");
         var note = notes[0]; var card = cards[0];
-        Check(note.GetProperty("modelName").GetString() == AnkiNoteDraft.BasicModelName && frozen.Fields.All(f =>
+        Check(note.GetProperty("modelName").GetString() == AnkiNoteDraft.QuestionModelName && frozen.Fields.All(f =>
             note.GetProperty("fields").GetProperty(f.Key).GetProperty("value").GetString() == f.Value), kind + " actual fields match the frozen preview");
+        var view = QuestionCards.Preview(parent, Store)[index];
+        Check(frozen.Fields["Front"] == AnkiNoteDraft.Html(parent.Conversation[index].Question) &&
+            frozen.Fields["Back"] == AnkiNoteDraft.Html(view.Answer) && frozen.Fields["Context"] == AnkiNoteDraft.Html(view.Context),
+            kind + " current question and prior context remain in separate fields");
         string Plain(string html) => WebUtility.HtmlDecode(Regex.Replace(html, "<[^>]*>", ""));
+        var front = card.GetProperty("question").GetString()!; var back = card.GetProperty("answer").GetString()!;
         Check(card.GetProperty("note").GetInt64() == draft.NoteId && card.GetProperty("deckName").GetString() == Deck && card.GetProperty("ord").GetInt32() == 0 &&
             card.GetProperty("queue").GetInt32() >= 0 && suspended.GetArrayLength() == 1 && suspended[0].ValueKind == JsonValueKind.False &&
-            Plain(card.GetProperty("question").GetString()!).Contains(Plain(frozen.Fields["Front"]), StringComparison.Ordinal) &&
-            Plain(card.GetProperty("answer").GetString()!).Contains(Plain(frozen.Fields["Back"]), StringComparison.Ordinal), kind + " actual card has front/back in Canary deck and is available for review");
-        Readbacks[kind] = new { draft.Id, draft.NoteId, draft.CardIds, deck = Deck, model = frozen.Model,
-            front = frozen.Fields["Front"], back = frozen.Fields["Back"], queue = card.GetProperty("queue").GetInt32(), suspended = false };
+            Plain(front).Contains(Plain(frozen.Fields["Front"]), StringComparison.Ordinal) &&
+            Plain(back).Contains(Plain(frozen.Fields["Back"]), StringComparison.Ordinal), kind + " actual card has front/back in Canary deck and is available for review");
+        Check(view.Context.Length == 0 ? !front.Contains("class='context'", StringComparison.Ordinal) :
+            front.Contains("class='context'", StringComparison.Ordinal) && Plain(front).Contains(Plain(frozen.Fields["Context"]), StringComparison.Ordinal),
+            kind + " preceding context is rendered only in the auxiliary front area when enabled");
+        Readbacks[parent.Id + "-" + index] = new { draft.Id, draft.NoteId, draft.CardIds, deck = Deck, model = frozen.Model,
+            front = frozen.Fields["Front"], back = frozen.Fields["Back"], context = frozen.Fields["Context"],
+            queue = card.GetProperty("queue").GetInt32(), suspended = false };
         SaveEvidence();
     }
 }

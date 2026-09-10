@@ -128,7 +128,7 @@ internal sealed class LanguageDesktopFlow : IDisposable
         forms.Add(form);
         form.RetryContent += () => _ = ProcessAsync(draft, form);
         form.SubmitFollowUp += text => FollowUpAsync(draft, form, text);
-        form.PreviewFollowUpCard += turn => OpenFollowUpCard(draft, turn);
+        form.ImportQuestionCards += indexes => ImportQuestionCardsAsync(draft, form, indexes);
         form.FormClosed += (_, _) => { forms.Remove(form); store.Save(draft); };
         form.Show(owner);
         return form;
@@ -174,8 +174,9 @@ internal sealed class LanguageDesktopFlow : IDisposable
         try
         {
             var content = new ContentModule(http, () => ContentCredentials.Resolve(DesktopCredentialSettings.Load(dataRoot).DeepSeekApiKey));
-            var answer = await content.AnswerAsync(draft.ConversationMaterial ?? draft.Material, draft.ConversationContent ?? draft.PreviewContent, draft.Conversation.ToArray(), text,
-                draft.Configuration, draft.Settings, form.Lifetime, currentPreview: new(draft.Original.SelectedText, draft.PreviewContent));
+            var conversation = QuestionCards.EffectiveConversation(draft, store);
+            var answer = await content.AnswerAsync(draft.ConversationMaterial ?? draft.Material, draft.ConversationContent ?? draft.PreviewContent, conversation, text,
+                draft.Configuration, draft.Settings, form.Lifetime, currentPreview: new(draft.Original.SelectedText, draft.SupportsSpeech ? draft.PreviewContent : null, conversation));
             draft.Conversation.Add(new ConversationTurn(text, answer));
             draft.PendingFollowUp = null;
             draft.Times["followUpAnswered"] = DateTimeOffset.UtcNow;
@@ -185,48 +186,78 @@ internal sealed class LanguageDesktopFlow : IDisposable
         finally { store.Save(draft); if (!form.IsDisposed) form.RefreshConversation(); }
     }
 
-    private void OpenFollowUpCard(ClipDraft parent, ConversationTurn turn)
+    private async Task ImportQuestionCardsAsync(ClipDraft draft, LanguageDraftForm form, int[] indexes)
     {
-        if (!turn.Answer.Answered) return;
-        var index = parent.Conversation.IndexOf(turn);
-        if (index < 0) return;
-        if (turn.Question == parent.Original.SelectedText && turn.Answer.AnswerText == parent.Content?.Answer?.AnswerText)
-        { OpenDraft(parent); return; }
-        if (parent.FollowUpCards.TryGetValue(index, out var previous) && store.Find(previous) is { } existing)
-        { OpenDraft(LiveDraft(existing)); return; }
-        var mode = parent.Configuration.Modes.Single(m => m.Definition.OutputKind == "question");
-        var material = new CaptureMaterial(turn.Question, null, "generated_allowed", null, parent.Original.SourceTitle, 0, DateTimeOffset.UtcNow);
-        var draft = new ClipDraft { Original = material, Material = material, Input = parent.Input with { Intent = "question", ReadRequested = false },
-            Settings = parent.Settings, Configuration = parent.Configuration, ParentDraftId = parent.Id,
-            ConversationMaterial = parent.ConversationMaterial ?? parent.Material, ConversationContent = parent.ConversationContent ?? parent.PreviewContent,
-            ModeId = mode.Definition.Id, Route = ModeConfigurationLoader.Route(parent.Configuration, mode.Definition.Id),
-            Content = new ContentResult(mode.Definition.Id, Basic: new(turn.Question, turn.Answer.AnswerText!), Answer: turn.Answer),
-            Conversation = parent.Conversation.Take(index + 1).ToList() };
-        draft.Times["previewReady"] = DateTimeOffset.UtcNow;
-        latest = draft; store.Save(draft);
-        parent.FollowUpCards[index] = draft.Id; store.Save(parent);
-        OpenDraft(draft);
+        if (form.QuestionImportRunning) return;
+        form.QuestionImportRunning = true;
+        try
+        {
+            using var request = new HttpClient();
+            await QuestionCards.ImportAsync(draft, indexes, store, new AnkiConnection(request, draft.Settings.AnkiEndpoint), () => {
+                if (!form.IsDisposed) form.RefreshConversation();
+                Changed(draft, form);
+            });
+        }
+        catch (Exception ex) { draft.ConversationImportError ??= ex.Message; }
+        finally { form.QuestionImportRunning = false; Changed(draft, form); }
     }
 
     private void Changed(ClipDraft draft, LanguageDraftForm form)
     {
         if (owner.IsDisposed) return;
         if (owner.InvokeRequired) { owner.BeginInvoke((Action)(() => Changed(draft, form))); return; }
+        RefreshCardLinks(draft);
         store.Save(draft);
         if (history != null && !history.IsDisposed) history.RefreshDraft(draft);
-        foreach (var view in forms.Where(f => f.Draft.Id == draft.Id).ToArray()) if (!view.IsDisposed) view.RefreshStatus();
-        if (ReferenceEquals(latest, draft))
-            status(draft.ImportState == ImportState.Verified ? "已写入 Anki · " + draft.CardIds.Length + " 张卡" :
-                draft.Content != null ? "预览已就绪 · " + draft.SpeechStatus : draft.ContentError != null ? "内容待重试 · " + draft.SpeechStatus : "内容处理中 · " + draft.SpeechStatus);
+        foreach (var view in forms.ToArray())
+            if (!view.IsDisposed)
+            {
+                RefreshCardLinks(view.Draft); view.RefreshStatus();
+                if (history != null && !history.IsDisposed) history.RefreshDraft(view.Draft);
+            }
+        if (latest != null) RefreshCardLinks(latest);
+        if (lastSpeech != null) RefreshCardLinks(lastSpeech);
+        if (ReferenceEquals(latest, draft)) status(DescribeStatus(draft));
+    }
+
+    private string DescribeStatus(ClipDraft draft)
+    {
+        if (draft.Content == null) return draft.ContentError != null ? "内容待重试" : "内容处理中";
+        var state = draft.ImportState == ImportState.Verified ? "已导入 " + draft.CardIds.Length + " 张原卡" : "预览已就绪";
+        if (draft.Conversation.Count > 0)
+        {
+            var verified = QuestionCards.Preview(draft, store).Count(card => card.State == ImportState.Verified);
+            var questions = "问答 " + draft.Conversation.Count + " 轮 · 已导入 " + verified + " 张";
+            state = draft.SupportsSpeech ? state + " · " + questions : questions;
+        }
+        if (draft.ConversationImportError != null || draft.ImportError != null) state += " · 导入待核对";
+        return draft.SupportsSpeech ? state + " · " + draft.SpeechStatus : state;
     }
 
     internal void Stop() => speech.Stop();
-    private ClipDraft LiveDraft(ClipDraft draft) => forms.FirstOrDefault(f => !f.IsDisposed && f.Draft.Id == draft.Id)?.Draft
-        ?? (latest?.Id == draft.Id ? latest : lastSpeech?.Id == draft.Id ? lastSpeech : draft);
+    private void RefreshCardLinks(ClipDraft draft)
+    {
+        var saved = store.Find(draft.Id);
+        if (saved == null) return;
+        foreach (var link in saved.FollowUpCards) draft.FollowUpCards.TryAdd(link.Key, link.Value);
+        if (saved.ConfirmedNote != null)
+        {
+            draft.ConfirmedNote = saved.ConfirmedNote; draft.ImportState = saved.ImportState;
+            draft.NoteId = saved.NoteId; draft.CardIds = saved.CardIds; draft.ImportError = saved.ImportError;
+        }
+    }
+    private ClipDraft LiveDraft(ClipDraft draft)
+    {
+        var live = forms.FirstOrDefault(f => !f.IsDisposed && f.Draft.Id == draft.Id)?.Draft
+            ?? (latest?.Id == draft.Id ? latest : lastSpeech?.Id == draft.Id ? lastSpeech : draft);
+        RefreshCardLinks(live);
+        return live;
+    }
 
     private Task PlayAsync(ClipDraft draft, bool replay)
     {
         draft = LiveDraft(draft);
+        if (!draft.SupportsSpeech) return Task.CompletedTask;
         latest = lastSpeech = draft;
         draft.Times["speechRequested"] = DateTimeOffset.UtcNow;
         store.Save(draft);
@@ -242,14 +273,14 @@ internal sealed class LanguageDesktopFlow : IDisposable
 
     internal void ShowRecent(bool speechOnly = false)
     {
-        var recent = (speechOnly ? store.RecentSpeech() : store.Recent()).Select(LiveDraft).ToArray();
+        var recent = (speechOnly ? store.RecentSpeech() : store.RecentSessions()).Select(LiveDraft).ToArray();
         if (history == null || history.IsDisposed)
         {
             history = new LanguageReadingHistoryForm(draft => _ = PlayAsync(draft, true), draft => {
                 var form = OpenDraft(LiveDraft(draft)); latest = form.Draft;
                 if (form.Draft.Content != null) form.ContentReady();
                 else _ = ProcessAsync(form.Draft, form);
-            }, () => speech.Stop());
+            }, () => speech.Stop(), DescribeStatus);
             history.FormClosed += (_, _) => history = null;
         }
         history.SetDrafts(recent, speechOnly);

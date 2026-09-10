@@ -81,6 +81,19 @@ Check(store.Find(restored.Id)?.FollowUpCards[0] == restored.FollowUpCards[0] && 
     "follow-up card links survive restart and draft lookup accepts only actual draft IDs");
 Check(restored.PreviewContent?.Basic?.Back == "An edited translation." && restored.Content?.Basic?.Back != "An edited translation.",
     "current preview overlays edits without mutating original generated content");
+var questionMaterial = Material(turns[0].Question);
+var child = new ClipDraft { Id = restored.FollowUpCards[0], ParentDraftId = restored.Id, Original = questionMaterial, Material = questionMaterial,
+    Settings = new(), Configuration = config, ModeId = "question", Route = ModeConfigurationLoader.Route(config, "question"), Conversation = turns.ToList() };
+store.Save(child);
+Check(store.RecentSessions().Select(d => d.Id).SequenceEqual(new[] { restored.Id }), "history folds a child already fully represented in its parent session");
+child.Conversation.Add(new("An independent follow-up", new("answered", "An independent answer", []))); store.Save(child);
+Check(store.RecentSessions().Any(d => d.Id == child.Id), "history preserves an older child with its own additional conversation branch");
+child.Conversation = turns.ToList(); child.PendingFollowUp = "unsent child input"; store.Save(child);
+Check(store.RecentSessions().Any(d => d.Id == child.Id), "history keeps an older child with unsent follow-up input accessible");
+restored.FollowUpCards.Clear(); child.PendingFollowUp = null; store.Save(restored); store.Save(child);
+Check(store.RecentSessions().Any(d => d.Id == child.Id), "an unlinked old child remains accessible without mutating legacy data");
+Check(!child.SupportsSpeech && restored.SupportsSpeech && new LanguageSettings().QuestionCardIncludeContext,
+    "question drafts hide playback while translation stays readable and preceding context defaults on");
 Console.WriteLine($"TOTAL {checks} PASS");
 
 sealed class ContentWire : HttpMessageHandler

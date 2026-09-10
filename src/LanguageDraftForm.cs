@@ -11,9 +11,10 @@ namespace KnowledgeClipper;
 internal sealed class LanguageDraftForm : Form
 {
     internal ClipDraft Draft { get; }
-    private bool contentRunning, followUpRunning;
+    private bool contentRunning, followUpRunning, questionImportRunning;
     internal bool ContentRunning { get => contentRunning; set { contentRunning = value; if (followUp != null) RefreshStatus(); } }
     internal bool FollowUpRunning { get => followUpRunning; set { followUpRunning = value; if (followUp != null) RefreshStatus(); } }
+    internal bool QuestionImportRunning { get => questionImportRunning; set { questionImportRunning = value; if (followUp != null) RefreshStatus(); } }
     private readonly DraftStore store;
     private readonly Func<Task> import, replay;
     private readonly Label status, source;
@@ -22,14 +23,14 @@ internal sealed class LanguageDraftForm : Form
     private readonly TableLayoutPanel languageFields, basicFields;
     private readonly TabControl tabs;
     private readonly LanguageFollowUpPanel followUp;
-    private readonly Button confirm, retry;
+    private readonly Button confirm, retry, replayButton, stopButton;
     private readonly ComboBox practice;
     private readonly Panel decision;
     private readonly CancellationTokenSource lifetime = new();
-    private bool committing, loadingFields;
+    private bool committing, questionCommitting, loadingFields;
     internal event Action RetryContent;
     internal event Func<string, Task> SubmitFollowUp;
-    internal event Action<ConversationTurn> PreviewFollowUpCard;
+    internal event Func<int[], Task> ImportQuestionCards;
     internal CancellationToken Lifetime => lifetime.Token;
 
     internal LanguageDraftForm(ClipDraft draft, DraftStore store, Func<Task> import, Func<Task> replay, Action stop)
@@ -88,18 +89,15 @@ internal sealed class LanguageDraftForm : Form
         confirm.Click += async (_, _) => await ConfirmAsync();
         var controls = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, WrapContents = true, Margin = Padding.Empty };
         retry = Button("重试内容", "knowledge-clipper.language.retry-content"); retry.Click += (_, _) => RetryContent?.Invoke();
-        var replayButton = Button("重播 / 重新朗读", "knowledge-clipper.language.replay"); replayButton.Click += async (_, _) => await this.replay();
-        var stopButton = Button("停止朗读", "knowledge-clipper.language.stop"); stopButton.Click += (_, _) => stop();
+        replayButton = Button("重播 / 重新朗读", "knowledge-clipper.language.replay"); replayButton.Click += async (_, _) => await this.replay();
+        stopButton = Button("停止朗读", "knowledge-clipper.language.stop"); stopButton.Click += (_, _) => stop();
         followUp = new LanguageFollowUpPanel(draft, store, async question => {
-            if (ContentRunning || FollowUpRunning || committing) throw new InvalidOperationException("请等待当前处理完成后追问。");
+            if (ContentRunning || FollowUpRunning || committing || QuestionBusy) throw new InvalidOperationException("请等待当前处理完成后追问。");
             var handler = SubmitFollowUp ?? throw new InvalidOperationException("追问功能尚未连接。");
             await handler(question);
-        }, turn => {
-            var handler = PreviewFollowUpCard ?? throw new InvalidOperationException("问答制卡预览尚未连接。");
-            handler(turn);
-        });
+        }, ImportQuestionsAsync);
         followUp.StateChanged += RefreshStatus;
-        followUp.Toggle.Click += (_, _) => { if (followUp.Visible) scroll.ScrollControlIntoView(followUp); };
+        followUp.Toggle.Click += (_, _) => { scroll.AutoScrollPosition = Point.Empty; };
         layout.Controls.Add(followUp, 0, 6);
         controls.Controls.AddRange(new Control[] { retry, replayButton, stopButton, followUp.Toggle });
         actions.Controls.Add(confirm, 0, 0); actions.Controls.Add(controls, 0, 1);
@@ -153,19 +151,24 @@ internal sealed class LanguageDraftForm : Form
         Draft.Content?.Basic != null || Draft.Content?.Answer != null;
     private bool UnresolvedAnswer => Draft.Content?.Answer is { Answered: false };
     private bool FollowUpBusy => FollowUpRunning || followUp?.Sending == true;
+    private bool QuestionBusy => QuestionImportRunning || questionCommitting;
+    private bool QuestionView => followUp?.ShowingQuestions == true;
+    private bool Busy => ContentRunning || FollowUpBusy || committing || QuestionBusy;
     private void UpdateContentKind()
     {
         var basic = IsBasic;
-        languageFields.Visible = practice.Visible = tabs.Visible = !basic;
-        basicFields.Visible = basic && !UnresolvedAnswer;
-        Text = (basic ? "卡片预览 · " : "语言卡片预览 · ") + Draft.Original.SelectedText.TakeText(24);
+        languageFields.Visible = practice.Visible = tabs.Visible = !basic && !QuestionView;
+        basicFields.Visible = basic && !UnresolvedAnswer && !QuestionView;
+        source.Text = QuestionView ? "来源：" + Draft.Material.SourceTitle.TakeText(80) + "\n导入：" + Draft.Settings.AnkiDeck + " · 每轮一张问答卡" :
+            basic ? "来源：" + Draft.Material.SourceTitle.TakeText(80) + "\n导入：" + Draft.Settings.AnkiDeck + " · 单张卡片" :
+            "目标：" + Draft.Material.SelectedText.TakeText(120) + "\n来源：" + Draft.Material.SourceTitle.TakeText(80) + " · " +
+            (Draft.Material.ContextText == null ? "AI 生成例句" : Draft.Material.ContextOrigin == "user" ? "用户提供原文" : "来源原文") + "\n导入：" + Draft.Settings.AnkiDeck + " · " + Draft.Settings.AnkiModel;
+        Text = (QuestionView ? "问答卡片 · " : basic ? "卡片预览 · " : "语言卡片预览 · ") + Draft.Original.SelectedText.TakeText(24);
     }
 
     internal void RefreshConversation()
     {
         if (IsDisposed) return;
-        UpdateContentKind();
-        followUp.RefreshView(ContentRunning || FollowUpRunning || committing);
         RefreshStatus();
     }
 
@@ -214,25 +217,54 @@ internal sealed class LanguageDraftForm : Form
     internal void RefreshStatus()
     {
         if (IsDisposed) return;
+        followUp.RefreshView(Busy);
         UpdateContentKind();
-        status.Text = (committing ? "正在核对 Anki 写入结果…" : Draft.ImportState == ImportState.Verified ? "已核对 Anki：" + Draft.CardIds.Length + " 张可复习卡片" : Draft.ImportError ?? Draft.ContentError ?? (Draft.Content == null ? "正在准备内容…" : UnresolvedAnswer ? "暂未解答，可继续追问或补充条件。" : "内容已就绪，请核对后确认")) + "\n" + Draft.SpeechStatus + (Draft.SpeechError == null ? "" : " · " + Draft.SpeechError);
-        confirm.Visible = !UnresolvedAnswer || Draft.ConfirmedNote != null;
-        confirm.Enabled = Draft.Content != null && !ContentRunning && !FollowUpBusy && !committing && !UnresolvedAnswer &&
-            (!IsBasic || !string.IsNullOrWhiteSpace(basicBack.Text)) && Draft.ImportState != ImportState.Verified;
-        confirm.Text = committing ? "正在处理 Anki…" : ContentRunning || Draft.Content == null ? "等待内容准备完成…" :
-            Draft.ImportState == ImportState.Unknown ? "核对写入结果" : Draft.ConfirmedNote == null ? "确认制卡并导入 Anki" : Draft.ImportState == ImportState.Verified ? "已导入" : "重试导入";
-        retry.Enabled = !ContentRunning && !FollowUpBusy && Draft.Content == null;
+        if (QuestionView)
+        {
+            var count = followUp.SelectedIndexes.Length;
+            status.Text = ContentRunning ? "正在准备回答…" : FollowUpBusy ? "正在回复追问…" : QuestionBusy ? "正在核对问答卡片写入结果…" :
+                Draft.ConversationImportError ?? Draft.ConversationError ?? Draft.ContentError ?? "每轮一张卡片，可编辑回答、勾选导入，或单独导入本张。";
+            confirm.Visible = true;
+            confirm.Enabled = !Busy && count > 0;
+            confirm.Text = QuestionBusy ? "正在处理 Anki…" : ContentRunning ? "等待内容准备完成…" : FollowUpBusy ? "等待追问回复…" :
+                count > 0 ? (followUp.SelectedNeedsReconciliation ? "核对并导入所选 " : "确认导入所选 ") + count + " 张问答卡" :
+                followUp.AvailableCount > 0 ? "请勾选要导入的问答卡" : "暂无待导入问答卡";
+        }
+        else
+        {
+            status.Text = (committing ? "正在核对 Anki 写入结果…" : Draft.ImportState == ImportState.Verified ? "已核对 Anki：" + Draft.CardIds.Length + " 张可复习卡片" : Draft.ImportError ?? Draft.ContentError ?? (Draft.Content == null ? "正在准备内容…" : UnresolvedAnswer ? "暂未解答，可继续追问或补充条件。" : "内容已就绪，请核对后确认")) + "\n" + Draft.SpeechStatus + (Draft.SpeechError == null ? "" : " · " + Draft.SpeechError);
+            confirm.Visible = !UnresolvedAnswer || Draft.ConfirmedNote != null;
+            confirm.Enabled = Draft.Content != null && !Busy && !UnresolvedAnswer &&
+                (!IsBasic || !string.IsNullOrWhiteSpace(basicBack.Text)) && Draft.ImportState != ImportState.Verified;
+            confirm.Text = committing ? "正在处理 Anki…" : ContentRunning || Draft.Content == null ? "等待内容准备完成…" :
+                Draft.ImportState == ImportState.Unknown ? "核对写入结果" : Draft.ConfirmedNote == null ? "确认制卡并导入 Anki" : Draft.ImportState == ImportState.Verified ? "已导入" : "重试导入";
+        }
+        retry.Enabled = !Busy && Draft.Content == null;
+        replayButton.Visible = stopButton.Visible = Draft.SupportsSpeech;
         pronunciation.ReadOnly = meaning.ReadOnly = Draft.ConfirmedNote != null;
         example.ReadOnly = Draft.ConfirmedNote != null || Draft.Material.ContextText != null;
         practice.Enabled = Draft.ConfirmedNote == null;
         basicFront.ReadOnly = true;
         basicBack.ReadOnly = Draft.ConfirmedNote != null || UnresolvedAnswer;
-        followUp.RefreshView(ContentRunning || FollowUpRunning || committing);
+    }
+
+    private async Task ImportQuestionsAsync(int[] indexes)
+    {
+        if (!QuestionView || Busy || indexes.Length == 0) return;
+        var available = QuestionCards.Preview(Draft, store).Where(preview => preview.State != ImportState.Verified &&
+            Draft.Conversation[preview.Index].Answer.Answered && !string.IsNullOrWhiteSpace(preview.Answer)).Select(preview => preview.Index).ToHashSet();
+        var selected = indexes.Where(available.Contains).Distinct().ToArray();
+        if (selected.Length == 0) return;
+        questionCommitting = true; Draft.ConversationImportError = null; store.Save(Draft); RefreshStatus();
+        try { await (ImportQuestionCards ?? throw new InvalidOperationException("问答卡片导入尚未连接。"))(selected); }
+        catch (Exception ex) { Draft.ConversationImportError = ex.Message; store.Save(Draft); }
+        finally { questionCommitting = false; RefreshConversation(); }
     }
 
     private async Task ConfirmAsync()
     {
-        if (committing || ContentRunning || FollowUpBusy || Draft.Content == null || UnresolvedAnswer || Draft.ImportState == ImportState.Verified) return;
+        if (QuestionView) { await ImportQuestionsAsync(followUp.SelectedIndexes); return; }
+        if (Busy || Draft.Content == null || UnresolvedAnswer || Draft.ImportState == ImportState.Verified) return;
         committing = true;
         try
         {

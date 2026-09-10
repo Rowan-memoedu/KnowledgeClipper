@@ -43,7 +43,8 @@ public enum PracticeChoice { Both, Reading, Writing }
 public enum ImportState { Unconfirmed, Ready, Writing, Unknown, Verified, Failed }
 
 public sealed record LanguageFields(string Pronunciation, string Meaning, string? GeneratedSentence, int? GeneratedTargetStart);
-public sealed record BasicFields(string Front, string Back);
+public sealed record BasicFields(string Front, string Back, string? Context = null);
+public sealed record QuestionCardPreview(int Index, string Question, string Answer, string Context, ImportState State, bool Frozen, string? Error);
 public sealed record QuestionAnswer(string AnswerState, string? AnswerText, string[] UnresolvedReasons)
 {
     [JsonIgnore] public bool Answered => AnswerState == "answered";
@@ -60,7 +61,7 @@ public sealed record ConversationTurn(string Question, QuestionAnswer Answer);
 public sealed record InputMetadata(string Source = "selection", string Intent = "auto", bool QuestionMarkRouting = false, bool ReadRequested = false);
 public sealed record ModeRoute(string ModeId, string OutputKind, bool FollowUpDefault, bool RequiresContext);
 public sealed record ContentResult(string ModeId, LanguageFields? Fields = null, BasicFields? Basic = null, QuestionAnswer? Answer = null);
-public sealed record ContentPreview(string SelectedText, ContentResult? Content);
+public sealed record ContentPreview(string SelectedText, ContentResult? Content, IReadOnlyList<ConversationTurn>? Conversation = null);
 public sealed record ModeDefinition(string Id, string Name, bool Enabled, string Description, string PromptFile, string SchemaFile,
     string OutputKind = "language", bool FollowUpDefault = false, bool RequiresContext = true);
 public sealed record ModeFile(ModeDefinition[] Modes);
@@ -77,6 +78,7 @@ public sealed record LanguageSettings
     public PracticeChoice Practice { get; init; } = PracticeChoice.Both;
     public bool GlobalSelection { get; init; }
     public bool TypedInputAutoRead { get; init; } = true;
+    public bool QuestionCardIncludeContext { get; init; } = true;
     public bool ContextEnabled { get; init; }
     public string ContextGranularity { get; init; } = "sentence";
     public string PythonPath { get; init; } = @"D:\Applications\RemNoteQuickClipperRuntime\edge-tts-7.2.8\Scripts\python.exe";
@@ -116,6 +118,8 @@ public sealed class ClipDraft
     public BasicFields? EditedBasic { get; set; }
     public List<ConversationTurn> Conversation { get; set; } = [];
     public Dictionary<int, string> FollowUpCards { get; set; } = new();
+    public Dictionary<int, string> EditedAnswers { get; set; } = new();
+    public string? ConversationImportError { get; set; }
     public CaptureMaterial? ConversationMaterial { get; init; }
     public ContentResult? ConversationContent { get; init; }
     public string? PendingFollowUp { get; set; }
@@ -133,8 +137,18 @@ public sealed class ClipDraft
     public string? ImportError { get; set; }
     public ConcurrentDictionary<string, DateTimeOffset> Times { get; set; } = new();
     [JsonIgnore] public SemaphoreSlim ImportGate { get; } = new(1, 1);
+    [JsonIgnore] public SemaphoreSlim ConversationImportGate { get; } = new(1, 1);
     [JsonIgnore] public ContentResult? PreviewContent => Content == null ? null : Content with
         { Fields = EditedFields ?? Content.Fields, Basic = EditedBasic ?? Content.Basic };
+    [JsonIgnore] public bool SupportsSpeech
+    {
+        get
+        {
+            var kind = Route?.OutputKind ?? Configuration.Modes.FirstOrDefault(m => m.Definition.Id == ModeId)?.Definition.OutputKind
+                ?? Content?.ModeId ?? ModeId;
+            return kind == null ? !(Input.QuestionMarkRouting && ContentModule.IsQuestion(Original.SelectedText)) : kind is "language" or "translation";
+        }
+    }
     [JsonIgnore] public DateTimeOffset? LastSpeechAt => Times.TryGetValue("speechRequested", out var requested) ? requested :
         Times.TryGetValue("speechStarted", out var started) ? started : AudioPath != null ? Original.CapturedAt : null;
 }
@@ -152,8 +166,23 @@ public sealed class DraftStore(string root)
         return draft;
     }
     public IEnumerable<ClipDraft> Recent() => ReadDrafts().Take(20);
-    public IEnumerable<ClipDraft> RecentSpeech() => ReadDrafts().Where(d => d.LastSpeechAt != null)
+    public IEnumerable<ClipDraft> RecentSessions() => ReadDrafts().Where(IsSession).Take(20);
+    public IEnumerable<ClipDraft> RecentSpeech() => ReadDrafts().Where(d => d.LastSpeechAt != null && d.SupportsSpeech)
         .OrderByDescending(d => d.LastSpeechAt).Take(20);
+    private bool IsSession(ClipDraft draft)
+    {
+        if (draft.ParentDraftId == null || draft.PendingFollowUp != null || draft.ConversationError != null || draft.ConversationImportError != null) return true;
+        ClipDraft? parent;
+        try { parent = Find(draft.ParentDraftId); }
+        catch (Exception ex) when (ex is JsonException or IOException) { return true; }
+        if (parent == null || !parent.FollowUpCards.Values.Contains(draft.Id) || draft.Conversation.Count > parent.Conversation.Count) return true;
+        // Old single-card previews could grow their own conversation; keep those branches accessible.
+        return draft.Conversation.Where((turn, index) => {
+            var previous = parent.Conversation[index];
+            return turn.Question != previous.Question || turn.Answer.AnswerState != previous.Answer.AnswerState ||
+                turn.Answer.AnswerText != previous.Answer.AnswerText || !turn.Answer.UnresolvedReasons.SequenceEqual(previous.Answer.UnresolvedReasons);
+        }).Any();
+    }
     private IEnumerable<ClipDraft> ReadDrafts()
     {
         var path = Path.Combine(root, "language-drafts");

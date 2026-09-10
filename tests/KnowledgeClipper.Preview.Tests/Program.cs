@@ -114,80 +114,62 @@ internal static class Program
                 preview.Close();
             }
 
-            ClipDraft Basic(bool unresolved = false) {
-                var material = new CaptureMaterial("保留本次原始输入。", null, "generated_allowed", null, "Basic 预览检查", 0, DateTimeOffset.UtcNow);
-                var answer = new QuestionAnswer(unresolved ? "unresolved" : "answered", unresolved ? null : "第一轮回答", unresolved ? new[] { "尚缺具体条件" } : Array.Empty<string>());
-                return new ClipDraft { Original = material, Material = material, Settings = new(), Configuration = configuration,
-                    ModeId = unresolved ? "question" : "translation", Route = new(unresolved ? "question" : "translation", unresolved ? "question" : "translation", unresolved, false),
-                    Content = unresolved ? new("question", Answer: answer) : new("translation", Basic: new("不采用的模型正面", "Preserve the original input.")),
-                    Conversation = unresolved ? new() { new(material.SelectedText, answer) } : new() };
-            }
-            var basic = Basic(); var basicImports = 0;
+            var basicMaterial = new CaptureMaterial("保留本次原始输入。", null, "generated_allowed", null, "Basic 预览检查", 0, DateTimeOffset.UtcNow);
+            var basic = new ClipDraft { Original = basicMaterial, Material = basicMaterial, Settings = new(), Configuration = configuration,
+                ModeId = "translation", Route = new("translation", "translation", false, false),
+                Content = new("translation", Basic: new("不采用的模型正面", "Preserve the original input.")) };
+            var basicImports = 0;
             using (var preview = new LanguageDraftForm(basic, store, () => { basicImports++; basic.ImportState = ImportState.Verified; basic.CardIds = new long[] { 3 }; return Task.CompletedTask; }, () => Task.CompletedTask, () => { }))
             {
                 preview.Show(); await Task.Delay(100);
                 var front = Find<TextBox>(preview, "basic-front"); var back = Find<TextBox>(preview, "basic-back");
-                Check(front.ReadOnly && front.Text == basic.Original.SelectedText && !back.ReadOnly, "Basic preview uses immutable original front and editable back");
+                var toggle = Find<Button>(preview, "follow-up-toggle"); var confirm = Find<Button>(preview, "confirm");
+                Check(front.ReadOnly && front.Text == basic.Original.SelectedText && !back.ReadOnly, "Basic preview preserves original front and editable back");
                 Check(!Find<TextBox>(preview, "pronunciation").Visible && !Find<ComboBox>(preview, "practice").Visible && !Find<TabControl>(preview, "faces").Visible,
-                    "Basic preview hides language fields and two-card practice choices");
-                Check(!Find<LanguageFollowUpPanel>(preview, "follow-up").Visible, "translation follow-up starts collapsed");
-                back.Text = "Edited translation.";
-                Check(basic.EditedBasic.Front == basic.Original.SelectedText && basic.EditedBasic.Back == back.Text, "Basic edits preserve the original front");
-                preview.Size = preview.MinimumSize; await Task.Delay(100);
+                    "Basic preview hides language fields and practice choices");
+                Check(!Find<LanguageFollowUpPanel>(preview, "follow-up").Visible, "translation starts on the original card view");
+                back.Text = "Edited translation."; preview.Size = preview.MinimumSize; await Task.Delay(100);
                 var size = preview.Size;
-                var confirm = Find<Button>(preview, "confirm");
-                Check(preview.ClientRectangle.Contains(preview.RectangleToClient(confirm.RectangleToScreen(confirm.ClientRectangle))), "Basic confirmation remains fully visible at 192 DPI minimum size");
-                Find<Button>(preview, "follow-up-toggle").PerformClick(); await Task.Delay(100);
-                Check(Find<LanguageFollowUpPanel>(preview, "follow-up").Visible && preview.Size == size, "opening follow-up keeps the preview window size fixed");
-                var followInput = Find<TextBox>(preview, "follow-up-input"); var send = Find<Button>(preview, "follow-up-send");
-                Check(preview.ClientRectangle.Contains(preview.RectangleToClient(confirm.RectangleToScreen(confirm.ClientRectangle))) &&
-                    followInput.Bottom <= send.Parent.Top, "expanded follow-up keeps confirmation visible and input clear of its action row");
-                using (var bitmap = new Bitmap(preview.Width, preview.Height)) { preview.DrawToBitmap(bitmap, new Rectangle(Point.Empty, preview.Size)); bitmap.Save(Path.Combine(artifacts, "basic-follow-up-minimum.png")); }
-                followInput.Text = "没有问号也要继续这轮对话";
-                preview.ContentRunning = true;
-                Check(!confirm.Enabled && !send.Enabled, "content processing immediately blocks confirmation and follow-up");
-                preview.ContentRunning = false;
+                toggle.PerformClick(); await Task.Delay(60);
+                Check(Find<LanguageFollowUpPanel>(preview, "follow-up").Visible && !Find<TableLayoutPanel>(preview, "basic-fields").Visible &&
+                    toggle.Text == "返回原卡片" && !confirm.Enabled, "follow-up switches away from the original card and scopes confirmation to the empty question list");
+                Check(preview.Size == size && preview.ClientRectangle.Contains(preview.RectangleToClient(confirm.RectangleToScreen(confirm.ClientRectangle))),
+                    "view switching preserves size and the fixed footer at 192 DPI");
+                toggle.PerformClick(); await Task.Delay(50);
+                Check(Find<TableLayoutPanel>(preview, "basic-fields").Visible && back.Text == "Edited translation." && confirm.Enabled,
+                    "returning restores the edited original card and its confirmation");
                 confirm.PerformClick(); await Task.Delay(50);
                 var frozenBasic = basic.ConfirmedNote;
                 Check(basicImports == 1 && frozenBasic.IsBasic && frozenBasic.Ordinals.SequenceEqual(new[] { 0 }) &&
                     frozenBasic.Fields["Front"] == AnkiNoteDraft.Html(basic.Original.SelectedText) && frozenBasic.Fields["Back"] == "Edited translation.",
-                    "one Basic confirmation freezes one card with the edited back");
-                back.Text = "programmatic edit after freeze";
-                Check(back.ReadOnly && ReferenceEquals(basic.ConfirmedNote, frozenBasic) && basic.Content.Basic.Back == "Edited translation.", "confirmed Basic content cannot be overwritten by later UI edits");
+                    "Basic confirmation still freezes exactly one edited card");
+                toggle.PerformClick();
+                var followInput = Find<TextBox>(preview, "follow-up-input"); var send = Find<Button>(preview, "follow-up-send");
+                followInput.Text = "没有问号也要继续这轮对话";
+                preview.ContentRunning = true;
+                Check(!confirm.Enabled && !send.Enabled, "content processing blocks question import and follow-up");
+                preview.ContentRunning = false;
                 var calls = 0; string received = null;
-                var firstReply = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-                Func<string, Task> fail = async text => { calls++; received = text; await firstReply.Task; };
+                var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                Func<string, Task> fail = async text => { calls++; received = text; await release.Task; };
                 preview.SubmitFollowUp += fail;
                 send.PerformClick(); send.PerformClick();
-                Check(calls == 1 && !send.Enabled && followInput.ReadOnly && received == "没有问号也要继续这轮对话", "follow-up sends the same text once without punctuation routing");
-                firstReply.SetException(new InvalidOperationException("本次网络失败")); await Task.Delay(100);
-                Check(followInput.Text == received && basic.PendingFollowUp == received && Find<Label>(preview, "conversation-error").Text.Contains("网络失败"), "failed follow-up preserves the pending input and visible error");
+                Check(calls == 1 && !send.Enabled && followInput.ReadOnly && received == followInput.Text, "follow-up forwards unpunctuated input only once while pending");
+                release.SetException(new InvalidOperationException("本次网络失败")); await Task.Delay(80);
+                Check(followInput.Text == received && basic.PendingFollowUp == received && Find<Label>(preview, "conversation-error").Text.Contains("网络失败"),
+                    "failed follow-up retains its input and error");
                 preview.SubmitFollowUp -= fail;
                 preview.SubmitFollowUp += text => { calls++; basic.Conversation.Add(new(text, new("answered", "这轮的新答案", Array.Empty<string>()))); return Task.CompletedTask; };
-                send.PerformClick(); await Task.Delay(100);
-                Check(calls == 2 && followInput.Text.Length == 0 && basic.PendingFollowUp == null && basic.ConversationError == null, "successful follow-up clears only the submitted input");
-                Check(ReferenceEquals(basic.ConfirmedNote, frozenBasic) && frozenBasic.Fields["Back"] == "Edited translation.", "follow-up keeps the original confirmed card unchanged");
-                ConversationTurn picked = null; var previews = 0;
-                preview.PreviewFollowUpCard += turn => { picked = turn; previews++; };
-                var card = Find<Button>(preview, "follow-up-card"); card.PerformClick(); card.PerformClick();
-                Check(previews == 1 && ReferenceEquals(picked, basic.Conversation.Last()), "answered last turn raises one separate card-preview event");
+                send.PerformClick(); await Task.Delay(80);
+                Check(calls == 2 && followInput.Text.Length == 0 && basic.PendingFollowUp == null && basic.ConversationError == null, "successful follow-up clears the submitted input");
+                Check(ReferenceEquals(basic.ConfirmedNote, frozenBasic) && frozenBasic.Fields["Back"] == "Edited translation." && confirm.Enabled &&
+                    confirm.Text.Contains("1 张问答卡"), "confirmed original stays frozen while the current question view can import its own answer");
+                Check(preview.Controls.Find("knowledge-clipper.language.conversation", true).Length == 0 &&
+                    preview.Controls.Find("knowledge-clipper.language.follow-up-card", true).Length == 0, "question view has no duplicated transcript or separate-window card action");
                 preview.Close();
             }
-            var unresolved = Basic(true);
-            unresolved.Conversation.Add(new("继续补充", new("unresolved", null, new[] { "仍需数据" })));
-            using (var preview = new LanguageDraftForm(unresolved, store, () => throw new Exception("must not import unresolved answer"), () => Task.CompletedTask, () => { }))
-            {
-                preview.Show(); await Task.Delay(100);
-                Check(Find<LanguageFollowUpPanel>(preview, "follow-up").Visible && !Find<Button>(preview, "confirm").Visible,
-                    "unresolved question opens conversation and offers no card confirmation");
-                var transcript = Find<TextBox>(preview, "conversation").Text;
-                Check(transcript.IndexOf("1. 问：", StringComparison.Ordinal) < transcript.IndexOf("2. 问：", StringComparison.Ordinal) && transcript.Contains("仍需数据"),
-                    "conversation preserves ordered questions and unresolved reasons");
-                Check(!Find<Button>(preview, "follow-up-card").Visible, "unresolved last turn cannot produce a card preview");
-                Find<TextBox>(preview, "follow-up-input").Text = "补充充分条件";
-                Check(Find<Button>(preview, "follow-up-send").Enabled, "unresolved answers still permit follow-up");
-                preview.Close();
-            }
+
+            await QuestionPreviewChecks.RunAsync(configuration, store, artifacts, Check);
 
             var missingContext = new CaptureMaterial("aa", null, "unavailable", null, "overlapping context fixture", 0, DateTimeOffset.UtcNow);
             var contextDraft = new ClipDraft { Original = missingContext, Material = missingContext, Settings = new(), Configuration = configuration };

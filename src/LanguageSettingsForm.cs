@@ -31,6 +31,9 @@ internal sealed class LanguageSettingsForm : Form
         var typedAutoRead = new CheckBox { Text = "文字框输入后自动朗读（问题除外）", Checked = value.TypedInputAutoRead, AutoSize = true,
             Name = "knowledge-clipper.language.typed-auto-read", AccessibleName = "knowledge-clipper.language.typed-auto-read" };
         Add("文字输入", typedAutoRead);
+        var questionCardContext = new CheckBox { Text = "问答卡正面附带前序问答上下文（新会话生效）", Checked = value.QuestionCardIncludeContext, AutoSize = true,
+            Name = "knowledge-clipper.language.question-card-context", AccessibleName = "knowledge-clipper.language.question-card-context" };
+        Add("问答卡片", questionCardContext);
         var context = new CheckBox { Text = "使用来源上下文", Checked = value.ContextEnabled, AutoSize = true };
         var granularity = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList }; granularity.Items.AddRange(new[] { "一句", "一段" }); granularity.SelectedIndex = value.ContextGranularity == "paragraph" ? 1 : 0;
         Add("上下文", context); Add("上下文范围", granularity);
@@ -119,6 +122,7 @@ internal sealed class LanguageSettingsForm : Form
             try
             {
                 var changed = value with { GlobalSelection = globalSelection.Checked, TypedInputAutoRead = typedAutoRead.Checked,
+                    QuestionCardIncludeContext = questionCardContext.Checked,
                     ContextEnabled = context.Checked, ContextGranularity = granularity.SelectedIndex == 1 ? "paragraph" : "sentence",
                     Practice = (PracticeChoice)practice.SelectedIndex, AutoVoice = autoVoice.Checked, Voice = voice.Text.Trim(), EnglishVoice = englishVoice.Text.Trim(),
                     RatePercent = (int)rate.Value, VolumePercent = (int)volume.Value, PitchHz = (int)pitch.Value,

@@ -21,7 +21,7 @@ M2 只增加选区入口：选中文字后显示浮点，点击后把当次文�
 | 选中文字按钮、全局浮点 | `intent=auto`，保留本次来源上下文状态；普通中文仍默认语言学习；是否朗读保持原按钮含义 |
 | 已有材料后的主动追问 | 携带原材料、已有内容和有序问答，直接回答本轮，不按问号重新分类、不重新捕获 |
 
-模式确定后，`outputKind`、`followUpDefault` 和 `requiresContext` 随草稿保存，分别控制字段映射、追问默认展开和语言上下文处理。翻译/问答使用简单单卡：正面原始输入，反面英文译文或本轮答案。语言模式仍用原有练习选择；默认收起追问，用户可主动展开。
+模式确定后，`outputKind`、`followUpDefault` 和 `requiresContext` 随草稿保存，分别控制字段映射、追问默认展开和语言上下文处理。翻译使用简单单卡：正面原始输入，反面英文译文。问答每轮一张卡，正面为本轮问题，反面为本轮答案；前序问答默认放入正面的独立辅助字段，可在设置中关闭。语言模式仍用原有练习选择；默认收起追问，用户可主动展开。
 
 ## 构建与使用
 
@@ -40,13 +40,14 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 3. 在预览核对读音、语境义、句子及练习类型。可选理解与朗读、书写或两者；关闭窗口保留草稿和未确认的编辑。
 4. 点击固定在预览底部的“确认制卡并导入 Anki”，等待 Anki 实际回读。Anki 不可用时草稿保留；不确定的写入先查询，不盲目再添加。
 5. 点击悬浮窗“重播”，或右键“重播上一条 / 最近朗读”，立即播放上一条并打开最近 20 条朗读记录。每条可点击文字或“播放”重听，点击“继续制卡”打开该条预览。完整音频直接复用；关闭记录面板不停止播放。
-6. 右键“设置…”调整语音、内容 API、Anki 目标和已有提示词；“最近草稿 / 朗读”也包含仅摘录的草稿。停止朗读不取消制卡。
+6. 右键“设置…”调整语音、内容 API、Anki 目标和已有提示词；“最近草稿 / 朗读”也包含仅摘录的草稿。问答等非语言草稿隐藏播放按钮，点击文字可查看内容；每个会话只显示一条记录，内部逐轮卡片不重复列出。旧版单卡窗口中独立继续的问答或未发送输入仍可访问。停止朗读不取消制卡。
 7. 在“设置…”开启“全局语言学习”并保存，可在普通应用拖选、双击或用 Shift＋方向键、Ctrl+A 选词；点击蓝色“读”点进入同一流程。关闭开关立即停止监视，原入口继续可用。浮点不抢焦点，选区变化、取消、切换来源或约 12 秒未使用会收起。
 8. 在悬浮窗文字框输入后按 Enter 提交；右键“提问…”或启动参数 `--open-question` 打开可换行的大文字框，Ctrl+Enter 提交。中文翻译不要求来源例句，不限制为单词长度。
-9. 问答预览默认展开追问；语言、翻译预览可点底部“追问”。继续输入不要求问号，发送失败保留文字，关闭后可在最近草稿恢复历史。点“将这轮问答制卡”打开对应单卡预览，再确认导入；同一轮重新打开复用已有草稿，原先确认的卡片保持冻结。
-10. 设置中可开关“文字框输入后自动朗读”，并在现有模式页切换语言、翻译、问答，编辑各自提示词与默认展开追问。旧个人模式覆盖与新内置模式按 ID 合并，保留已有编辑。
+9. 问答预览按轮次显示问题、可编辑答案和辅助上下文。底部默认一次导入全部待确认问答；也可取消勾选，或点某轮“导入本张”。已导入轮次自动跳过；确认时固定本批次全部卡面，中途失败保留已完成结果和剩余卡面，重试先核对身份。旧草稿已确认的卡片及模板保持不变，不重复添加。
+10. 语言、翻译预览可点底部“追问”，并可“返回原卡片”；底部导入按钮跟随当前视图。继续输入不要求问号，发送失败保留文字，关闭后可从最近草稿恢复。未解答的轮次不创建空卡，后续追问继续使用有序历史和当前有效的编辑或冻结答案。
+11. 设置中可开关“文字框输入后自动朗读”和“问答卡正面附带前序问答上下文”；设置用于后续新建会话，已确认卡面保持冻结。现有模式页可切换语言、翻译、问答，编辑各自提示词与默认展开追问。旧个人模式覆盖与新内置模式按 ID 合并，保留已有编辑。
 
-当前本机配置仍指向隔离牌组 `KnowledgeClipper Canary::Architecture 20260910`，用于工程验收。语言专用类型是一份共享字段配两个原生模板；翻译/问答使用“零碎知识剪藏 · 问答与翻译”的一个“正反面”模板。已有用户模板不会被覆盖。
+当前本机配置仍指向隔离牌组 `KnowledgeClipper Canary::Architecture 20260910`，用于工程验收。语言专用类型是一份共享字段配两个原生模板；翻译与旧问答使用“零碎知识剪藏 · 问答与翻译”。新问答使用“零碎知识剪藏 · 多轮问答”的一个“正反面”模板：`Front` 和 `Back` 分别保存本轮问题与答案，`Context` 独立保存前序问答，以较小字号显示在正面辅助区域；关闭上下文时该字段为空。已有用户模板不会被覆盖。
 
 ## 配置和模块
 
@@ -83,6 +84,7 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 | 浮窗与 DPI | 当前实际 192 DPI 下首次 UIA、状态、预览开关尺寸稳定；手动缩放、逻辑尺寸保存恢复、启动后完全可见均已检查 |
 | M2 自动选词 | 35 项取词局部检查与 18 项界面检查通过；四个指定应用由用户实测正常，两个浮点草稿共 4 张卡片已只读核验 |
 | 文字框与追问 | 路由/会话 29 项、单卡 Anki 局部 15 项、预览 39 项；真实桌面集成 62 项通过，一张翻译卡与一张追问子卡已写入和回读；用户三项手测通过，另有一张正式问答卡只读核验 |
+| 逐轮问答与批量导入 | 真实桌面集成 103 项通过：先单独导入第 2 轮，再导入剩余 2 轮，恰好 3 张卡；另一个关闭上下文的会话只导入所选一轮，共 4 张实际卡片，字段、卡面、数量及可复习状态均回读 |
 
 证据集中在 [validation](D:/Artifacts/KnowledgeClipper/validation)：[语音](D:/Artifacts/KnowledgeClipper/validation/speech.json)、[最终播放状态](D:/Artifacts/KnowledgeClipper/validation/speech-state.json)、[Anki 真实丢响应恢复](D:/Artifacts/KnowledgeClipper/validation/anki-mixed-writing-lost-response.json)、[预览确认](D:/Artifacts/KnowledgeClipper/validation/m1-preview-confirmation.json)、[窗口缩小复现](D:/Artifacts/KnowledgeClipper/validation/window-size-before.json)。首次取词自动检查未取得前台、静音、Anki 模板大小写及 HTTP chunked 兼容失败均保留；它们不覆盖后续真实结果。
 
@@ -92,7 +94,9 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 
 M2 证据：[局部取词](D:/Artifacts/KnowledgeClipper/m2-local/selection-checks.txt)、[界面连接](D:/Artifacts/KnowledgeClipper/validation/selection-ui-check.json)、[用户验收与实际卡片](D:/Artifacts/KnowledgeClipper/validation/m2-user-retest.json)。浮点携带的选区时间、来源和原文位置已在实际草稿中核对；未新增查词或独立内容流程。当前检查环境为实际 192 DPI；无可用文本范围时点使用鼠标位置或来源窗口位置，未收到输入事件的程序内部自动改选由过期机制收起。
 
-文字框与追问证据：[本阶段验收](D:/Artifacts/KnowledgeClipper/validation/m3-input-validation.json)、[真实桌面与 Anki](D:/AppData/KnowledgeClipper/canary/input-ui/input-ui-canary.json)、[用户制卡回读](D:/Artifacts/KnowledgeClipper/validation/m3-user-anki-readback.json)。用户确认中文/英文/问号分流、追问制卡和保留行为均正常；正式悬浮窗手测后仍为 696×424、192 DPI。追问请求同时提供当前预览的编辑字段和原始会话，保留历史，不改写已确认卡片。新增/删除模式面板与内容效果优化仍后置。
+文字框与追问证据：[上一阶段验收](D:/Artifacts/KnowledgeClipper/validation/m3-input-validation.json)、[真实桌面与 Anki](D:/AppData/KnowledgeClipper/canary/input-ui/input-ui-canary.json)、[用户制卡回读](D:/Artifacts/KnowledgeClipper/validation/m3-user-anki-readback.json)。用户确认中文/英文/问号分流、追问制卡和保留行为均正常；正式悬浮窗手测后仍为 696×424、192 DPI。追问请求提供原材料、初始内容和当前有效问答；当前视图包含用户编辑或已确认冻结的答案，原始历史单独保留。新增/删除模式面板与内容效果优化仍后置。
+
+逐轮批量导入证据：[本轮验证汇总](D:/Artifacts/KnowledgeClipper/validation/m4-question-cards-validation.json)、[真实桌面与 4 张 Anki 卡片](D:/AppData/KnowledgeClipper/canary/question-batch/input-ui-canary.json)、[首次完整集成日志](D:/Artifacts/KnowledgeClipper/validation/m4-question-batch-ui-first.txt)、[预览局部检查](D:/Artifacts/KnowledgeClipper/question-preview-local/preview-checks.txt)、[旧草稿可访问性](D:/Artifacts/KnowledgeClipper/validation/m4-routing-history-local.txt)。最近草稿不显示内部重复卡片，非语言条目无播放按钮；当前问答窗口关闭后保留历史、编辑及逐轮导入身份。局部检查为问答卡 33 项、预览 53 项、路由与历史 34 项；最终构建 0 警告、0 错误，使用原 4 张实际卡片完成 64 项恢复和回读检查，无新增卡片。新版悬浮窗已启动并核对可见，默认提问框已发出；本轮界面调整的用户复测仍待完成。
 
 常规接口检查使用 [Workflow.Tests](tests/KnowledgeClipper.Workflow.Tests/KnowledgeClipper.Workflow.Tests.csproj)；内容、语音、Anki 和捕获各有薄 CLI，均调用生产实现。真实写入和播放检查只针对明确的隔离输入与目标，不作为每次构建的自动步骤。没有新变化或未解决问题时，不重跑整批外部检查。
 
