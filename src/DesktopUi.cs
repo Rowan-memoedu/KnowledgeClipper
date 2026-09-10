@@ -79,6 +79,7 @@ namespace KnowledgeClipper
         private readonly TextBox inlineQuestionInput;
         private readonly Panel dragFrame, contextSection, originalSection;
         private readonly NotifyIcon tray;
+        private bool explicitExit;
         private readonly ToolStripMenuItem contextItem, originalItem;
         private readonly ToolTip toolTips;
         private UserSettings settings;
@@ -159,7 +160,7 @@ namespace KnowledgeClipper
             titleBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 80)); titleBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10)); titleBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
             var titleLabel = new Label { Text = "零碎知识剪藏", Name = AutomationCatalogV11.WindowTitleAutomationId, AccessibleName = "零碎知识剪藏", AccessibleDescription = "桌面知识采集悬浮窗", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(8, 0, 0, 0), BackColor = Color.FromArgb(246, 248, 250), ForeColor = Color.FromArgb(79, 94, 108), Font = new Font("微软雅黑", 8.5F), Cursor = Cursors.SizeAll };
             minimizeButton = WindowButton("—", AutomationCatalogV11.WindowMinimizeAutomationId, false); minimizeButton.AccessibleDescription = "最小化到系统托盘";
-            closeButton = WindowButton("×", AutomationCatalogV11.WindowCloseAutomationId, true); closeButton.AccessibleDescription = "关闭悬浮窗并退出";
+            closeButton = WindowButton("×", AutomationCatalogV11.WindowCloseAutomationId, true); closeButton.AccessibleDescription = "隐藏到系统托盘，保留全局选词";
             titleBar.Controls.Add(titleLabel, 0, 0); titleBar.Controls.Add(minimizeButton, 1, 0); titleBar.Controls.Add(closeButton, 2, 0);
             var sections = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 1, Margin = Padding.Empty, Padding = new Padding(2), BackColor = Color.FromArgb(246, 248, 250) };
             sections.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.333F)); sections.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.333F)); sections.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.334F));
@@ -296,10 +297,19 @@ namespace KnowledgeClipper
             menu.Items.Add("其他功能设置…", null, delegate { OpenSettings(true); });
             menu.Items.Add("恢复默认大小", null, delegate { RestoreDefaultSize(); }).Name = "knowledge-clipper.desktop.menu.window.restore-size";
             menu.Items.Add("打开数据目录", null, delegate { Process.Start(new ProcessStartInfo(config.WorkDirectory) { UseShellExecute = true }); });
-            menu.Items.Add(new ToolStripSeparator()); menu.Items.Add("退出", null, delegate { Close(); });
+            menu.Items.Add("显示悬浮窗", null, delegate { RestoreFromTray(); }).Name = "knowledge-clipper.desktop.menu.show";
+            menu.Items.Add(new ToolStripSeparator()); menu.Items.Add("退出", null, delegate { ExitApplication(); }).Name = "knowledge-clipper.desktop.menu.exit";
             ContextMenuStrip = menu;
             tray = new NotifyIcon { Visible = true, Text = "零碎知识剪藏", Icon = SystemIcons.Application, ContextMenuStrip = menu };
             tray.DoubleClick += delegate { RestoreFromTray(); };
+            FormClosing += (_, e) => {
+                if (!explicitExit && e.CloseReason == CloseReason.UserClosing)
+                {
+                    e.Cancel = true;
+                    SaveWindowBounds();
+                    Hide();
+                }
+            };
             Deactivate += delegate { if (!inlineSubmitInProgress && !inlineActivationPending) RestoreNoActivate(); };
             ResizeEnd += delegate { SaveWindowBounds(); };
             FormClosed += delegate { applicationBinding?.Dispose(); applicationBinding = null; if (flashcardDraftUseCases != null) flashcardDraftUseCases.Changed -= RenderFlashcardDraft; if (flashcardPreviewForm != null && !flashcardPreviewForm.IsDisposed) flashcardPreviewForm.Close(); if (settingsForm != null && !settingsForm.IsDisposed) settingsForm.Close(); if (screenshotSession != null) screenshotSession.CloseFromOwner(); toolTips.Dispose(); tray.Visible = false; tray.Dispose(); };
@@ -1259,6 +1269,7 @@ namespace KnowledgeClipper
         }
 
         private void HideToTray() { dragging = false; Hide(); }
+        private void ExitApplication() { explicitExit = true; Close(); }
         private void RestoreFromTray() { if (IsDisposed) return; WindowState = FormWindowState.Normal; EnsureWindowSize(); Location = EnsureVisible(Location); Show(); TopMost = true; BringToFront(); }
         private Size LoadSize() { try { var path = Path.Combine(config.WorkDirectory, "size.txt"); if (File.Exists(path)) { var p = File.ReadAllText(path).Split(','); int width, height; if (p.Length == 2 && int.TryParse(p[0], out width) && int.TryParse(p[1], out height)) return ClampSize(new Size(width, height)); } } catch { } return DefaultClientSize; }
         private Point LoadPosition() { try { var path = Path.Combine(config.WorkDirectory, "position.txt"); if (File.Exists(path)) { var p = File.ReadAllText(path).Split(','); int x, y; if (p.Length == 2 && int.TryParse(p[0], out x) && int.TryParse(p[1], out y)) return EnsureVisible(new Point(x, y)); } } catch { } var area = Screen.PrimaryScreen.WorkingArea; return new Point(area.Right - Width - 20, area.Top + area.Height / 3); }

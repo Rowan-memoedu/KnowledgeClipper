@@ -15,6 +15,7 @@ internal sealed class LanguageSelectionMonitor : IDisposable
     private readonly object gate = new();
     private readonly Form dispatcher;
     private readonly LanguageDesktopCapture capture;
+    private readonly Func<LanguageSettings, long, Point, CancellationToken, Task<SelectionSnapshot>> readSelection;
     private readonly Func<Point, bool> isDotPoint;
     private readonly Action<SelectionSnapshot> selected;
     private readonly Action invalidated;
@@ -36,6 +37,7 @@ internal sealed class LanguageSelectionMonitor : IDisposable
     {
         this.dispatcher = dispatcher;
         capture = new LanguageDesktopCapture(helperPath);
+        readSelection = capture.ReadSelectionAsync;
         this.isDotPoint = isDotPoint;
         this.selected = selected;
         this.invalidated = invalidated;
@@ -176,7 +178,7 @@ internal sealed class LanguageSelectionMonitor : IDisposable
     {
         try
         {
-            var result = await capture.ReadSelectionAsync(configuration, ticket.Window, ticket.Anchor, cancellation.Token);
+            var result = await readSelection(configuration, ticket.Window, ticket.Anchor, cancellation.Token);
             if (result == null) return;
             SelectionSnapshot snapshot;
             lock (gate)
@@ -191,7 +193,7 @@ internal sealed class LanguageSelectionMonitor : IDisposable
         catch (SelectionUnavailableException) { }
         catch (Exception ex)
         {
-            if (!cancellation.IsCancellationRequested) Fail(ticket.Session, "全局选词已停止：" + ex.Message);
+            if (!cancellation.IsCancellationRequested) ReadFailed(ticket, ex.Message);
         }
         finally
         {
@@ -208,6 +210,24 @@ internal sealed class LanguageSelectionMonitor : IDisposable
     {
         // Kill/clipboard cancellation callbacks must never run inside a low-level hook.
         if (reading != null) _ = reading.CancelAsync();
+    }
+
+    private void ReadFailed(SelectionReadTicket ticket, string message)
+    {
+        long epoch;
+        lock (gate)
+        {
+            // A helper/clipboard failure belongs to one read, not the user's
+            // enabled watcher. A delayed failure must not cancel a newer gesture.
+            if (!running || state.Session != ticket.Session || state.Epoch != ticket.Epoch) return;
+            state.Invalidate();
+            pending = null;
+            epoch = state.Epoch;
+        }
+        Post(ticket.Session, epoch, () => {
+            invalidated();
+            error("本次选词未完成（监视仍开启）：" + message);
+        });
     }
 
     private static async Task CancelLifetimeAsync(CancellationTokenSource cancellation)

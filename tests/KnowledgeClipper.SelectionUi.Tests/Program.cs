@@ -50,7 +50,7 @@ internal static class Program
         var parameter = Expression.Parameter(snapshotType);
         var action = Expression.Lambda(typeof(Action<>).MakeGenericType(snapshotType),
             Expression.Call(typeof(Program).GetMethod(nameof(Selected), BindingFlags.Static | BindingFlags.NonPublic)!, Expression.Convert(parameter, typeof(object))), parameter).Compile();
-        using (var dot = (Form)assembly.GetType("KnowledgeClipper.LanguageSelectionDot", true)!.GetConstructors(Instance).Single().Invoke([action]))
+        using (var dot = (Form)assembly.GetType("KnowledgeClipper.LanguageSelectionDot", true)!.GetConstructors(Instance).Single(c => c.GetParameters().Length == 1 && c.GetParameters()[0].ParameterType == action.GetType()).Invoke([action]))
         {
             foreach (var screen in Screen.AllScreens)
             {
@@ -103,8 +103,13 @@ internal static class Program
         Call(connectedDot, "ShowSelection", Snapshot(Screen.FromControl(main).WorkingArea.Location));
         Button(connectedDot, "knowledge-clipper.language.selection-dot.read").PerformClick();
         Check(!connectedDot.Visible && !Directory.Exists(Path.Combine(dataRoot, "language-drafts")), "disabled or stale dot cannot create a draft or call content services");
+        await Toggle(true);
         main.Close();
-        Check(!Running() && connectedDot.IsDisposed, "closing the app disposes its watcher and dot");
+        Check(!main.Visible && !main.IsDisposed && Running() && !connectedDot.IsDisposed, "closing the main window hides it and preserves the enabled watcher");
+        Call(main, "RestoreFromTray");
+        Check(main.Visible && main.Size == initialSize && Running(), "tray restores the same window and running watcher");
+        Call(main, "ExitApplication");
+        Check(!Running() && connectedDot.IsDisposed, "explicit exit disposes its watcher and dot");
         WorkflowJson.Save(args[1], new { passed = true, checks = Checks, dataRoot, scope = "production UI through semantic controls; no simulated mouse or keyboard input and no external content, TTS or Anki request" });
     }
 }

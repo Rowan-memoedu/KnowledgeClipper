@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup>
+    <None Include="speech-fixture.py" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Include="../../workflow/StreamingSpeech.cs" Link="StreamingSpeech.cs" />
+    <Compile Include="../../workflow/SpeechVoiceCatalog.cs" Link="SpeechVoiceCatalog.cs" />
+    <Compile Include="../../workflow/WindowsPlaybackMonitor.cs" Link="WindowsPlaybackMonitor.cs" />
+    <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+  </ItemGroup>
+</Project>

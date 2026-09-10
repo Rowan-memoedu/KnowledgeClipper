@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <OutputPath>D:\Artifacts\KnowledgeClipper\maintenance\dot\bin\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\LanguageSelectionDot.cs" Link="Production\LanguageSelectionDot.cs" />
+  </ItemGroup>
+</Project>

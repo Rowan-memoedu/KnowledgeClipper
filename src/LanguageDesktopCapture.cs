@@ -78,17 +78,29 @@ internal sealed class LanguageDesktopCapture(string helper)
             token.ThrowIfCancellationRequested();
             CheckSource();
             WindowsContextSnapshot context = null;
-            if (settings.ContextEnabled)
-                new WindowsUiAutomationContextProvider().TryRead(capturedText, settings.ContextGranularity, out context);
+            // Word completion is capture semantics, independent of whether source
+            // context is enabled for card generation. The provider verifies the
+            // native selection range (or an unambiguous complete document).
+            new WindowsUiAutomationContextProvider().TryRead(capturedText, settings.ContextGranularity, out context);
             token.ThrowIfCancellationRequested();
             CheckSource();
-            var material = new CaptureMaterial(capturedText, context == null ? null : context.Prefix + capturedText + context.Suffix,
-                context != null ? "source" : settings.ContextEnabled ? "unavailable" : "generated_allowed",
-                context == null ? null : context.Prefix.Length, title, before, frozen?.CapturedAt ?? DateTimeOffset.UtcNow);
-            material.Validate();
-            return material;
+            return BuildMaterial(capturedText, context, settings.ContextEnabled, title, before,
+                frozen?.CapturedAt ?? DateTimeOffset.UtcNow);
         });
         CheckSource();
+        return material;
+    }
+
+    internal static CaptureMaterial BuildMaterial(string text, WindowsContextSnapshot context, bool contextEnabled,
+        string source, long window, DateTimeOffset capturedAt)
+    {
+        var completed = LanguageSelectionBoundary.Complete(text, context?.Prefix, context?.Suffix);
+        var includeContext = contextEnabled && context != null;
+        var material = new CaptureMaterial(completed.Text,
+            includeContext ? completed.Prefix + completed.Text + completed.Suffix : null,
+            includeContext ? "source" : contextEnabled ? "unavailable" : "generated_allowed",
+            includeContext ? completed.Prefix.Length : null, source, window, capturedAt);
+        material.Validate();
         return material;
     }
 

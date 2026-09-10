@@ -20,6 +20,8 @@ internal static class Program
         try
         {
             CheckState();
+            CheckReadRecovery();
+            CheckWordBoundaries();
             CheckGestures();
             CheckInputLifecycle();
             CheckFaults(Path.GetFullPath(args[0]));
@@ -75,6 +77,77 @@ internal static class Program
         var input = New("DesktopInput", keyboard, message, key, x, y, window, 20u, time);
         return (bool)Call(tracker, "Observe", input, window, own)!;
     }
+    private static void CheckReadRecovery()
+    {
+        using var dispatcher = new Forms.Form();
+        var snapshotType = Type("SelectionSnapshot");
+        var callbackType = typeof(Action<>).MakeGenericType(snapshotType);
+        var ignored = System.Linq.Expressions.Expression.Parameter(snapshotType);
+        var callback = System.Linq.Expressions.Expression.Lambda(callbackType,
+            System.Linq.Expressions.Expression.Empty(), ignored).Compile();
+        using var monitor = (IDisposable)New("LanguageSelectionMonitor", dispatcher, "unused.cjs",
+            (Func<Point, bool>)(_ => false), callback, (Action)(() => { }), (Action<string>)(_ => { }));
+        var state = monitor.GetType().GetField("state", All)!.GetValue(monitor)!;
+        Call(state, "Start");
+        monitor.GetType().GetField("running", All)!.SetValue(monitor, true);
+        var session = Property(state, "Session");
+        var failed = Ticket(state);
+        // Exercise the production ReadAsync catch/finally, replacing only the
+        // external reader with a bounded failure. No native gesture is claimed.
+        var reader = monitor.GetType().GetField("readSelection", All)!;
+        reader.SetValue(monitor, typeof(Program).GetMethod(nameof(FailSelection), All)!
+            .MakeGenericMethod(snapshotType).CreateDelegate(reader.FieldType));
+        ((Task)Call(monitor, "ReadAsync", failed, new LanguageSettings(), new CancellationTokenSource())!).GetAwaiter().GetResult();
+        Check((bool)Property(monitor, "IsRunning")! && Equals(session, Property(state, "Session")),
+            "one helper failure preserves the enabled watcher session");
+        var next = Publish(state, Ticket(state))!;
+        Check(next != null && Consume(state, next), "next selection remains consumable without importing or restarting");
+        Call(state, "Invalidate");
+        var newer = Publish(state, Ticket(state))!;
+        Call(monitor, "ReadFailed", failed, "delayed old failure");
+        Check(Consume(state, newer), "delayed failure cannot invalidate a newer selection");
+    }
+
+    private static Task<T> FailSelection<T>(LanguageSettings settings, long window, Point anchor, CancellationToken cancellation)
+        => Task.FromException<T>(new InvalidOperationException("bounded helper failure"));
+
+    private static void CheckWordBoundaries()
+    {
+        foreach (var (selected, prefix, suffix, expected, expectedPrefix) in new[] {
+            ("ell", "Say h", "o now.", "hello", "Say "),
+            ("ick brown fo", "The qu", "x jumps.", "quick brown fox", "The "),
+            ("world", "hello ", ".", "world", "hello "),
+            ("can", "", "'t stop.", "can't", ""),
+            ("per", "a co-o", "ative effort", "co-operative", "a "),
+            ("中文", "before ", " after", "中文", "before "),
+            ("ell", "h", "o", "hello", ""),
+            ("hello world.", "First. ", " Next.", "hello world.", "First. "),
+            ("x", new string('a', 4000), " ", "x", new string('a', 4000))
+        })
+        {
+            var result = Type("LanguageSelectionBoundary").GetMethod("Complete", All)!.Invoke(null, [selected, prefix, suffix])!;
+            var actual = (string)Property(result, "Text")!;
+            var before = (string)Property(result, "Prefix")!;
+            var after = (string)Property(result, "Suffix")!;
+            Check(actual == expected && before == expectedPrefix, "verified edge completion: " + selected);
+            Check(before + actual + after == prefix + selected + suffix, "completion preserves source and exact offset: " + selected);
+        }
+        var unavailable = Type("LanguageSelectionBoundary").GetMethod("Complete", All)!.Invoke(null, ["ell", null, null])!;
+        Check((string)Property(unavailable, "Text")! == "ell", "unverified source never guesses missing letters");
+        var context = New("WindowsContextSnapshot");
+        context.GetType().GetField("Prefix", All)!.SetValue(context, "Say h");
+        context.GetType().GetField("Suffix", All)!.SetValue(context, "o now.");
+        foreach (var enabled in new[] { true, false })
+        {
+            var material = (CaptureMaterial)Type("LanguageDesktopCapture").GetMethod("BuildMaterial", All)!
+                .Invoke(null, ["ell", context, enabled, "verified fixture", 42L, DateTimeOffset.UtcNow])!;
+            Check(material.SelectedText == "hello" && (enabled
+                ? material.ContextText == "Say hello now." && material.TargetStart == 4 && material.ContextOrigin == "source"
+                : material.ContextText == null && material.TargetStart == null && material.ContextOrigin == "generated_allowed"),
+                "capture completion preserves context setting " + enabled + " and source offset");
+        }
+    }
+
     private static void CheckGestures()
     {
         var tracker = New("SelectionGestureTracker");

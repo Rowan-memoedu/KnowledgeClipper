@@ -1,8 +1,11 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using System.Security.Cryptography;
 
 namespace KnowledgeClipper.Workflow;
+
+public enum SpeechPurpose { Selection, Translation, Sentence }
 
 public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisposable
 {
@@ -38,8 +41,21 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
         }
     }
 
-    public async Task SpeakAsync(ClipDraft draft, bool replay, Action changed, Action<int>? playerStarted = null)
+    public Task SpeakAsync(ClipDraft draft, bool replay, Action changed, Action<int>? playerStarted = null) =>
+        SpeakTextAsync(draft, draft.Original.SelectedText, SpeechPurpose.Selection, replay, changed, playerStarted);
+
+    public static string SelectVoice(string text, LanguageSettings settings) =>
+        settings.AutoVoice && text.Any(c => c is >= 'a' and <= 'z' or >= 'A' and <= 'Z')
+            ? settings.EnglishVoice : settings.Voice;
+
+    // Persisted audio is reusable only for the same purpose, exact text, voice and synthesis settings.
+    public static string AudioCacheKey(string text, SpeechPurpose purpose, LanguageSettings settings) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
+        { text, purpose, voice = SelectVoice(text, settings), settings.RatePercent, settings.VolumePercent, settings.PitchHz })))).ToLowerInvariant();
+
+    public async Task SpeakTextAsync(ClipDraft draft, string text, SpeechPurpose purpose, bool replay, Action changed, Action<int>? playerStarted = null)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(text);
         var invokedAt = DateTimeOffset.UtcNow;
         CancellationTokenSource mine;
         lock (gate) { current?.Cancel(); current = mine = new(); attempts[draft.Id] = mine; }
@@ -61,8 +77,11 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
         {
             var settings = draft.Settings;
             Directory.CreateDirectory(audioRoot);
+            var cacheKey = AudioCacheKey(text, purpose, settings);
+            var cached = Path.Combine(audioRoot, draft.Id + "-" + cacheKey + ".mp3");
+            // Unique partial paths prevent a cancelled request from deleting the next request's stream.
             var audio = Path.Combine(audioRoot, draft.Id + "-" + Guid.NewGuid().ToString("N") + ".mp3");
-            var reuse = replay && draft.AudioPath != null && File.Exists(draft.AudioPath);
+            var reuse = replay && File.Exists(cached);
             if (!reuse) incompleteAudio = Path.ChangeExtension(audio, ".partial");
             PreparedHelper selectedHelper;
             lock (gate)
@@ -81,13 +100,14 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
             using var registration = token.Register(() => { try { if (!process.HasExited) process.Kill(true); }
                 catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { } });
             var stderr = process.StandardError.ReadToEndAsync();
-            var voice = settings.AutoVoice && !draft.Original.SpokenText.Any(c => c is >= '\u3400' and <= '\u9fff') ? settings.EnglishVoice : settings.Voice;
-            await process.StandardInput.WriteLineAsync(JsonSerializer.Serialize(new { text = draft.Original.SpokenText, voice,
+            var voice = SelectVoice(text, settings);
+            await process.StandardInput.WriteLineAsync(JsonSerializer.Serialize(new { text, voice,
                 rate = settings.RatePercent, volume = settings.VolumePercent, pitch = settings.PitchHz, ffplay = settings.FfplayPath,
-                audio = reuse ? draft.AudioPath : audio, replay = reuse }, WorkflowJson.Options).AsMemory(), token).ConfigureAwait(false);
+                audio = reuse ? cached : audio, replay = reuse }, WorkflowJson.Options).AsMemory(), token).ConfigureAwait(false);
             process.StandardInput.Close();
             Update(() => {
                 draft.SpeechStatus = reuse ? "重播中" : "正在连接朗读"; draft.SpeechError = null;
+                if (reuse && purpose != SpeechPurpose.Sentence) draft.AudioPath = cached;
                 foreach (var name in new[] { "helperReady", "playerStarted", "firstAudioChunk", "audioOutputStarted", "audioComplete", "playbackComplete" }) draft.Times.TryRemove(name, out _);
                 draft.Times["speechStarted"] = invokedAt;
             });
@@ -107,7 +127,11 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
                 Update(() => {
                     draft.Times[name] = data.RootElement.TryGetProperty("at", out var at) ? at.GetDateTimeOffset() : DateTimeOffset.UtcNow;
                     if (name == "firstAudioChunk") draft.SpeechStatus = "已收到音频，正在开始播放";
-                    if (name == "audioComplete") draft.AudioPath = audio;
+                    if (name == "audioComplete")
+                    {
+                        File.Move(audio, cached, true);
+                        if (purpose != SpeechPurpose.Sentence) draft.AudioPath = cached;
+                    }
                 });
             }
             await process.WaitForExitAsync(token).ConfigureAwait(false);
