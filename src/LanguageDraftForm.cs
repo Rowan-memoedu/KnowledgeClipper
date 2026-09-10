@@ -11,17 +11,25 @@ namespace KnowledgeClipper;
 internal sealed class LanguageDraftForm : Form
 {
     internal ClipDraft Draft { get; }
-    internal bool ContentRunning { get; set; }
+    private bool contentRunning, followUpRunning;
+    internal bool ContentRunning { get => contentRunning; set { contentRunning = value; if (followUp != null) RefreshStatus(); } }
+    internal bool FollowUpRunning { get => followUpRunning; set { followUpRunning = value; if (followUp != null) RefreshStatus(); } }
     private readonly DraftStore store;
     private readonly Func<Task> import, replay;
     private readonly Label status, source;
     private readonly TextBox pronunciation, meaning, example, reading, writing;
+    private readonly TextBox basicFront, basicBack;
+    private readonly TableLayoutPanel languageFields, basicFields;
+    private readonly TabControl tabs;
+    private readonly LanguageFollowUpPanel followUp;
     private readonly Button confirm, retry;
     private readonly ComboBox practice;
     private readonly Panel decision;
     private readonly CancellationTokenSource lifetime = new();
     private bool committing, loadingFields;
     internal event Action RetryContent;
+    internal event Func<string, Task> SubmitFollowUp;
+    internal event Action<ConversationTurn> PreviewFollowUpCard;
     internal CancellationToken Lifetime => lifetime.Token;
 
     internal LanguageDraftForm(ClipDraft draft, DraftStore store, Func<Task> import, Func<Task> replay, Action stop)
@@ -37,14 +45,14 @@ internal sealed class LanguageDraftForm : Form
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         var scroll = new Panel { Name = "knowledge-clipper.language.content-scroll", Dock = DockStyle.Fill, AutoScroll = true, Margin = Padding.Empty };
         var layout = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            MinimumSize = new Size(0, 680), Padding = new Padding(16), ColumnCount = 1, RowCount = 7 };
-        for (var i = 0; i < 7; i++) layout.RowStyles.Add(new RowStyle(i == 5 ? SizeType.Percent : SizeType.AutoSize, i == 5 ? 100 : 0));
+            MinimumSize = new Size(0, 680), Padding = new Padding(16), ColumnCount = 1, RowCount = 8 };
+        for (var i = 0; i < 8; i++) layout.RowStyles.Add(new RowStyle(i == 5 ? SizeType.Percent : SizeType.AutoSize, i == 5 ? 100 : 0));
         status = new Label { AutoSize = true, MaximumSize = new Size(760, 0), Text = "正在处理内容…", Name = "knowledge-clipper.language.status", AccessibleName = "knowledge-clipper.language.status" };
         source = new Label { AutoSize = true, MaximumSize = new Size(760, 0), ForeColor = Color.DimGray,
             Text = "目标：" + draft.Material.SelectedText.TakeText(120) + "\n来源：" + draft.Material.SourceTitle.TakeText(80) + "\n导入：" + draft.Settings.AnkiDeck + " · " + draft.Settings.AnkiModel };
         layout.Controls.Add(status, 0, 0); layout.Controls.Add(source, 0, 1);
         decision = new Panel { Dock = DockStyle.Top, AutoSize = true }; layout.Controls.Add(decision, 0, 2);
-        var fields = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 2 };
+        var fields = languageFields = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 2 };
         fields.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); fields.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         pronunciation = Editor("knowledge-clipper.language.pronunciation", 42);
         meaning = Editor("knowledge-clipper.language.meaning", 60);
@@ -52,11 +60,20 @@ internal sealed class LanguageDraftForm : Form
         fields.Controls.Add(new Label { Text = "读音", AutoSize = true }, 0, 0); fields.Controls.Add(pronunciation, 1, 0);
         fields.Controls.Add(new Label { Text = "语境义", AutoSize = true }, 0, 1); fields.Controls.Add(meaning, 1, 1);
         fields.Controls.Add(new Label { Text = "句子", AutoSize = true }, 0, 2); fields.Controls.Add(example, 1, 2);
-        layout.Controls.Add(fields, 0, 3);
+        var contentFields = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1 };
+        contentFields.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        contentFields.Controls.Add(fields, 0, 0); layout.Controls.Add(contentFields, 0, 3);
+        basicFields = new TableLayoutPanel { Name = "knowledge-clipper.language.basic-fields", Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1, Visible = false };
+        basicFields.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        basicFront = Editor("knowledge-clipper.language.basic-front", 110); basicFront.ReadOnly = true;
+        basicBack = Editor("knowledge-clipper.language.basic-back", 180);
+        basicFields.Controls.Add(new Label { Text = "正面 · 原文", AutoSize = true }, 0, 0); basicFields.Controls.Add(basicFront, 0, 1);
+        basicFields.Controls.Add(new Label { Text = "反面 · 翻译或答案", AutoSize = true }, 0, 2); basicFields.Controls.Add(basicBack, 0, 3);
+        contentFields.Controls.Add(basicFields, 0, 1);
         practice = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 240, Name = "knowledge-clipper.language.practice", AccessibleName = "knowledge-clipper.language.practice" };
         practice.Items.AddRange(new object[] { "两者：理解与朗读 + 书写", "理解与朗读", "书写练习" }); practice.SelectedIndex = (int)draft.Practice;
         layout.Controls.Add(practice, 0, 4);
-        var tabs = new TabControl { Name = "knowledge-clipper.language.faces", Dock = DockStyle.Fill, MinimumSize = new Size(100, 130) };
+        tabs = new TabControl { Name = "knowledge-clipper.language.faces", Dock = DockStyle.Fill, MinimumSize = new Size(100, 130) };
         reading = Editor("knowledge-clipper.language.reading-preview", 150); reading.Dock = DockStyle.Fill; reading.ReadOnly = true;
         writing = Editor("knowledge-clipper.language.writing-preview", 150); writing.Dock = DockStyle.Fill; writing.ReadOnly = true;
         var readTab = new TabPage("理解与朗读 · 正反面"); readTab.Controls.Add(reading); tabs.TabPages.Add(readTab);
@@ -73,10 +90,21 @@ internal sealed class LanguageDraftForm : Form
         retry = Button("重试内容", "knowledge-clipper.language.retry-content"); retry.Click += (_, _) => RetryContent?.Invoke();
         var replayButton = Button("重播 / 重新朗读", "knowledge-clipper.language.replay"); replayButton.Click += async (_, _) => await this.replay();
         var stopButton = Button("停止朗读", "knowledge-clipper.language.stop"); stopButton.Click += (_, _) => stop();
-        controls.Controls.AddRange(new Control[] { retry, replayButton, stopButton });
+        followUp = new LanguageFollowUpPanel(draft, store, async question => {
+            if (ContentRunning || FollowUpRunning || committing) throw new InvalidOperationException("请等待当前处理完成后追问。");
+            var handler = SubmitFollowUp ?? throw new InvalidOperationException("追问功能尚未连接。");
+            await handler(question);
+        }, turn => {
+            var handler = PreviewFollowUpCard ?? throw new InvalidOperationException("问答制卡预览尚未连接。");
+            handler(turn);
+        });
+        followUp.StateChanged += RefreshStatus;
+        followUp.Toggle.Click += (_, _) => { if (followUp.Visible) scroll.ScrollControlIntoView(followUp); };
+        layout.Controls.Add(followUp, 0, 6);
+        controls.Controls.AddRange(new Control[] { retry, replayButton, stopButton, followUp.Toggle });
         actions.Controls.Add(confirm, 0, 0); actions.Controls.Add(controls, 0, 1);
         var note = new Label { Name = "knowledge-clipper.language.preview-note", Text = "关闭窗口会保留草稿，可从悬浮窗的“最近草稿”继续。", AutoSize = true, ForeColor = Color.DimGray };
-        layout.Controls.Add(note, 0, 6);
+        layout.Controls.Add(note, 0, 7);
         scroll.Controls.Add(layout); root.Controls.Add(scroll, 0, 0); root.Controls.Add(actions, 0, 1); Controls.Add(root);
         void Fit() {
             note.MaximumSize = source.MaximumSize = status.MaximumSize = new Size(Math.Max(250, scroll.ClientSize.Width - 55), 0);
@@ -85,6 +113,7 @@ internal sealed class LanguageDraftForm : Form
         scroll.SizeChanged += (_, _) => Fit(); Fit();
         pronunciation.TextChanged += (_, _) => SaveEdits(); meaning.TextChanged += (_, _) => SaveEdits(); example.TextChanged += (_, _) => SaveEdits(); practice.SelectedIndexChanged += (_, _) => SaveEdits();
         example.MouseUp += (_, _) => SaveEdits(); example.KeyUp += (_, _) => SaveEdits();
+        basicBack.TextChanged += (_, _) => SaveEdits();
         FormClosed += (_, _) => lifetime.Cancel();
         if (draft.Content != null) ContentReady();
         RefreshStatus();
@@ -98,7 +127,18 @@ internal sealed class LanguageDraftForm : Form
     {
         if (IsDisposed || Draft.Content == null) return;
         loadingFields = true;
+        UpdateContentKind();
+        if (IsBasic)
+        {
+            basicFront.Text = Draft.Original.SelectedText;
+            basicBack.Text = UnresolvedAnswer ? Draft.Content.Answer.DisplayText :
+                Draft.EditedBasic?.Back ?? Draft.Content.Basic?.Back ?? Draft.Content.Answer?.DisplayText ?? "";
+            loadingFields = false;
+            source.Text = "来源：" + Draft.Material.SourceTitle.TakeText(80) + "\n导入：" + Draft.Settings.AnkiDeck + " · 单张卡片";
+            RefreshConversation(); RefreshStatus(); return;
+        }
         var fields = Draft.EditedFields ?? Draft.Content.Fields;
+        if (fields == null) { loadingFields = false; RefreshConversation(); RefreshStatus(); return; }
         pronunciation.Text = fields.Pronunciation; meaning.Text = fields.Meaning;
         example.Text = Draft.Material.ContextText ?? fields.GeneratedSentence;
         practice.SelectedIndex = (int)Draft.Practice;
@@ -107,6 +147,26 @@ internal sealed class LanguageDraftForm : Form
         source.Text = "目标：" + Draft.Material.SelectedText.TakeText(120) + "\n来源：" + Draft.Material.SourceTitle.TakeText(80) + " · " +
             (Draft.Material.ContextText == null ? "AI 生成例句" : Draft.Material.ContextOrigin == "user" ? "用户提供原文" : "来源原文") + "\n导入：" + Draft.Settings.AnkiDeck + " · " + Draft.Settings.AnkiModel;
         RenderFaces(); RefreshStatus();
+    }
+
+    private bool IsBasic => Draft.Route != null ? Draft.Route.OutputKind != "language" :
+        Draft.Content?.Basic != null || Draft.Content?.Answer != null;
+    private bool UnresolvedAnswer => Draft.Content?.Answer is { Answered: false };
+    private bool FollowUpBusy => FollowUpRunning || followUp?.Sending == true;
+    private void UpdateContentKind()
+    {
+        var basic = IsBasic;
+        languageFields.Visible = practice.Visible = tabs.Visible = !basic;
+        basicFields.Visible = basic && !UnresolvedAnswer;
+        Text = (basic ? "卡片预览 · " : "语言卡片预览 · ") + Draft.Original.SelectedText.TakeText(24);
+    }
+
+    internal void RefreshConversation()
+    {
+        if (IsDisposed) return;
+        UpdateContentKind();
+        followUp.RefreshView(ContentRunning || FollowUpRunning || committing);
+        RefreshStatus();
     }
 
     private LanguageFields EditedFields()
@@ -126,7 +186,7 @@ internal sealed class LanguageDraftForm : Form
 
     private void RenderFaces()
     {
-        if (Draft.Content == null || reading == null) return;
+        if (Draft.Content == null || reading == null || IsBasic) return;
         var fields = EditedFields();
         var sentence = Draft.Material.ContextText ?? fields.GeneratedSentence ?? "";
         var start = Draft.Material.TargetStart ?? fields.GeneratedTargetStart;
@@ -141,6 +201,12 @@ internal sealed class LanguageDraftForm : Form
     private void SaveEdits()
     {
         if (loadingFields || Draft.Content == null || Draft.ConfirmedNote != null) return;
+        if (IsBasic)
+        {
+            if (UnresolvedAnswer) return;
+            Draft.EditedBasic = new BasicFields(Draft.Original.SelectedText, basicBack.Text);
+            store.Save(Draft); RefreshStatus(); return;
+        }
         Draft.EditedFields = EditedFields(); Draft.Practice = (PracticeChoice)practice.SelectedIndex;
         store.Save(Draft); RenderFaces();
     }
@@ -148,26 +214,41 @@ internal sealed class LanguageDraftForm : Form
     internal void RefreshStatus()
     {
         if (IsDisposed) return;
-        status.Text = (committing ? "正在核对 Anki 写入结果…" : Draft.ImportState == ImportState.Verified ? "已核对 Anki：" + Draft.CardIds.Length + " 张可复习卡片" : Draft.ImportError ?? Draft.ContentError ?? (Draft.Content == null ? "正在准备内容…" : "内容已就绪，请核对后确认")) + "\n" + Draft.SpeechStatus + (Draft.SpeechError == null ? "" : " · " + Draft.SpeechError);
-        confirm.Enabled = Draft.Content != null && !ContentRunning && !committing && Draft.ImportState != ImportState.Verified;
+        UpdateContentKind();
+        status.Text = (committing ? "正在核对 Anki 写入结果…" : Draft.ImportState == ImportState.Verified ? "已核对 Anki：" + Draft.CardIds.Length + " 张可复习卡片" : Draft.ImportError ?? Draft.ContentError ?? (Draft.Content == null ? "正在准备内容…" : UnresolvedAnswer ? "暂未解答，可继续追问或补充条件。" : "内容已就绪，请核对后确认")) + "\n" + Draft.SpeechStatus + (Draft.SpeechError == null ? "" : " · " + Draft.SpeechError);
+        confirm.Visible = !UnresolvedAnswer || Draft.ConfirmedNote != null;
+        confirm.Enabled = Draft.Content != null && !ContentRunning && !FollowUpBusy && !committing && !UnresolvedAnswer &&
+            (!IsBasic || !string.IsNullOrWhiteSpace(basicBack.Text)) && Draft.ImportState != ImportState.Verified;
         confirm.Text = committing ? "正在处理 Anki…" : ContentRunning || Draft.Content == null ? "等待内容准备完成…" :
             Draft.ImportState == ImportState.Unknown ? "核对写入结果" : Draft.ConfirmedNote == null ? "确认制卡并导入 Anki" : Draft.ImportState == ImportState.Verified ? "已导入" : "重试导入";
-        retry.Enabled = !ContentRunning && Draft.Content == null;
+        retry.Enabled = !ContentRunning && !FollowUpBusy && Draft.Content == null;
         pronunciation.ReadOnly = meaning.ReadOnly = Draft.ConfirmedNote != null;
         example.ReadOnly = Draft.ConfirmedNote != null || Draft.Material.ContextText != null;
         practice.Enabled = Draft.ConfirmedNote == null;
+        basicFront.ReadOnly = true;
+        basicBack.ReadOnly = Draft.ConfirmedNote != null || UnresolvedAnswer;
+        followUp.RefreshView(ContentRunning || FollowUpRunning || committing);
     }
 
     private async Task ConfirmAsync()
     {
-        if (committing || ContentRunning || Draft.Content == null || Draft.ImportState == ImportState.Verified) return;
+        if (committing || ContentRunning || FollowUpBusy || Draft.Content == null || UnresolvedAnswer || Draft.ImportState == ImportState.Verified) return;
         committing = true;
         try
         {
             if (Draft.ConfirmedNote == null)
             {
-                var fields = EditedFields(); ContentModule.ValidateFields(Draft.Material, fields);
-                Draft.Content = Draft.Content with { Fields = fields }; Draft.Practice = (PracticeChoice)practice.SelectedIndex;
+                if (IsBasic)
+                {
+                    if (string.IsNullOrWhiteSpace(basicBack.Text)) throw new InvalidOperationException("请填写卡片反面。");
+                    Draft.EditedBasic = new BasicFields(Draft.Original.SelectedText, basicBack.Text);
+                    Draft.Content = Draft.Content with { Basic = Draft.EditedBasic };
+                }
+                else
+                {
+                    var fields = EditedFields(); ContentModule.ValidateFields(Draft.Material, fields);
+                    Draft.Content = Draft.Content with { Fields = fields }; Draft.Practice = (PracticeChoice)practice.SelectedIndex;
+                }
                 Draft.ConfirmedNote = AnkiNoteDraft.From(Draft); Draft.ImportState = ImportState.Ready;
                 Draft.Times["confirmed"] = DateTimeOffset.UtcNow; store.Save(Draft);
             }

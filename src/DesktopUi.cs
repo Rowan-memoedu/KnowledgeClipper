@@ -175,8 +175,8 @@ namespace KnowledgeClipper
             {
                 Name = AutomationCatalogV12.InlineQuestionInputAutomationId,
                 AccessibleName = AutomationCatalogV12.InlineQuestionInputAutomationId,
-                AccessibleDescription = "输入问题，按 Enter 提问",
-                PlaceholderText = "输入问题，按 Enter 提问",
+                AccessibleDescription = "输入文字或问题；末尾问号提问，否则学习词句，中文译成英文",
+                PlaceholderText = "输入文字或问题，Enter 提交",
                 Dock = DockStyle.Fill,
                 Margin = new Padding(4, 4, 4, 3),
                 BorderStyle = BorderStyle.FixedSingle,
@@ -959,6 +959,7 @@ namespace KnowledgeClipper
 
         private async Task OpenQuestionAsync()
         {
+            if (languageFlow != null) { languageFlow.OpenInput(); return; }
             var state = controller.Snapshot();
             if (state.questionSession == null || !state.questionSession.open) state = controller.Execute(Action(AutomationCatalog.QuestionOpen, null));
             if (!state.questionSession.open)
@@ -1054,6 +1055,16 @@ namespace KnowledgeClipper
             var restoreAfterQuestion = previousForegroundWindow;
             inlineSubmitInProgress = true;
             inlineQuestionInput.Enabled = false;
+            if (languageFlow != null)
+            {
+                try
+                {
+                    RestoreNoActivate();
+                    if (await languageFlow.StartTextAsync(original)) inlineQuestionInput.Clear();
+                }
+                finally { inlineQuestionInput.Enabled = true; inlineSubmitInProgress = false; }
+                return;
+            }
             SetStatus("正在提交问题…", Color.FromArgb(38, 116, 242), Color.White);
             if (questionUseCases != null)
             {

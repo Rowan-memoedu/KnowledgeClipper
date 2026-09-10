@@ -1,17 +1,33 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace KnowledgeClipper.Workflow;
 
 public sealed record AnkiNoteDraft(string Deck, string Model, Dictionary<string, string> Fields, string[] Tags, int[] Ordinals)
 {
+    public const string BasicModelName = "零碎知识剪藏 · 问答与翻译";
+    [JsonIgnore] public bool IsBasic => Fields.ContainsKey("Front") && Fields.ContainsKey("Back");
     public static string Html(string value) => WebUtility.HtmlEncode(value).Replace("\r\n", "\n").Replace("\n", "<br>");
     public static AnkiNoteDraft From(ClipDraft draft)
     {
         var material = draft.Material;
         material.Validate();
+        if (draft.Content?.Basic is { } basic)
+        {
+            if (!string.Equals(basic.Front, draft.Original.SelectedText, StringComparison.Ordinal))
+                throw new InvalidDataException("卡片正面必须保留本次原始输入。");
+            if (string.IsNullOrWhiteSpace(basic.Back)) throw new InvalidDataException("译文或答案尚未完成。");
+            return new(draft.Settings.AnkiDeck, BasicModelName, new()
+            {
+                ["ClipId"] = draft.Id,
+                ["Front"] = Html(draft.Original.SelectedText),
+                ["Back"] = Html(basic.Back),
+                ["Source"] = Html(material.SourceTitle)
+            }, ["KnowledgeClipper", "kc_" + draft.Id], [0]);
+        }
         var fields = draft.Content?.Fields ?? throw new InvalidOperationException("内容尚未完成。");
         ContentModule.ValidateFields(material, fields);
         var sentence = material.ContextText ?? fields.GeneratedSentence!;
@@ -39,6 +55,7 @@ public sealed class AnkiConnection(HttpClient http, string endpoint)
     // AnkiConnect's template objects use case-sensitive Name/Front/Back keys.
     private static readonly JsonSerializerOptions ApiJson = new();
     private static readonly string[] FieldNames = ["ClipId", "Target", "SentenceBefore", "SentenceAfter", "Pronunciation", "Meaning", "Source", "Origin", "ReadingEnabled", "WritingEnabled"];
+    private static readonly string[] BasicFieldNames = ["ClipId", "Front", "Back", "Source"];
     public async Task<JsonElement> CallAsync(string action, object? parameters = null, CancellationToken ct = default)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -65,25 +82,30 @@ public sealed class AnkiConnection(HttpClient http, string endpoint)
 
     private async Task PrepareAsync(AnkiNoteDraft note, CancellationToken ct)
     {
+        var fieldNames = note.IsBasic ? BasicFieldNames : FieldNames;
+        var templateNames = note.IsBasic ? new[] { "正反面" } : new[] { "理解与朗读", "书写练习" };
+        var cardTemplates = note.IsBasic
+            ? new[] { new { Name = "正反面", Front = "{{#Front}}<div>{{Front}}</div>{{/Front}}", Back = "<div>{{Back}}</div>" } }
+            : new[]
+            {
+                new { Name = "理解与朗读", Front = "{{#ReadingEnabled}}<div>{{SentenceBefore}}<span class='target'>{{Target}}</span>{{SentenceAfter}}</div><div class='origin'>{{Origin}}</div>{{/ReadingEnabled}}", Back = "{{FrontSide}}<hr id='answer'><div>{{Target}} · {{Pronunciation}}</div><div>{{Meaning}}</div>" },
+                new { Name = "书写练习", Front = "{{#WritingEnabled}}<div>{{SentenceBefore}}<span class='hint'>［{{Pronunciation}} · {{Meaning}}］</span>{{SentenceAfter}}</div><div class='origin'>{{Origin}}</div>{{/WritingEnabled}}", Back = "{{FrontSide}}<hr id='answer'><div class='target'>{{Target}}</div><div>{{SentenceBefore}}{{Target}}{{SentenceAfter}}</div>" }
+            };
         if (!(await ModelsAsync(ct)).Contains(note.Model, StringComparer.Ordinal))
         {
             await CallAsync("createModel", new
             {
-                modelName = note.Model, inOrderFields = FieldNames, isCloze = false,
+                modelName = note.Model, inOrderFields = fieldNames, isCloze = false,
                 css = ".card{font-family:'Microsoft YaHei',sans-serif;font-size:24px;text-align:left;line-height:1.8;padding:20px;color:#253449;background:#fafbfc}.target{color:#235ba5;font-weight:bold}.hint{color:#8b5516}.origin{font-size:14px;color:#718096;margin-top:20px}",
-                cardTemplates = new[]
-                {
-                    new { Name = "理解与朗读", Front = "{{#ReadingEnabled}}<div>{{SentenceBefore}}<span class='target'>{{Target}}</span>{{SentenceAfter}}</div><div class='origin'>{{Origin}}</div>{{/ReadingEnabled}}", Back = "{{FrontSide}}<hr id='answer'><div>{{Target}} · {{Pronunciation}}</div><div>{{Meaning}}</div>" },
-                    new { Name = "书写练习", Front = "{{#WritingEnabled}}<div>{{SentenceBefore}}<span class='hint'>［{{Pronunciation}} · {{Meaning}}］</span>{{SentenceAfter}}</div><div class='origin'>{{Origin}}</div>{{/WritingEnabled}}", Back = "{{FrontSide}}<hr id='answer'><div class='target'>{{Target}}</div><div>{{SentenceBefore}}{{Target}}{{SentenceAfter}}</div>" }
-                }
+                cardTemplates
             }, ct);
         }
         var fields = (await CallAsync("modelFieldNames", new { modelName = note.Model }, ct)).EnumerateArray().Select(x => x.GetString()).ToArray();
-        if (!FieldNames.All(name => fields.Contains(name, StringComparer.Ordinal)))
-            throw new InvalidDataException("所选笔记类型缺少语言共享字段，请选择专用语言类型；已有类型不会被修改。");
+        if (!fieldNames.All(name => fields.Contains(name, StringComparer.Ordinal)))
+            throw new InvalidDataException("所选笔记类型缺少本次卡片字段，请选择对应专用类型；已有类型不会被修改。");
         var templates = await CallAsync("modelTemplates", new { modelName = note.Model }, ct);
-        if (!templates.EnumerateObject().Select(p => p.Name).SequenceEqual(new[] { "理解与朗读", "书写练习" }))
-            throw new InvalidDataException("所选类型的卡片模板不兼容，请选择专用语言类型。");
+        if (!templates.EnumerateObject().Select(p => p.Name).SequenceEqual(templateNames))
+            throw new InvalidDataException("所选类型的卡片模板不兼容，请选择对应专用类型。");
         if (!(await DecksAsync(ct)).Contains(note.Deck, StringComparer.Ordinal)) await CallAsync("createDeck", new { deck = note.Deck }, ct);
     }
 
@@ -160,8 +182,8 @@ public sealed class AnkiConnection(HttpClient http, string endpoint)
                 throw new InvalidDataException("实际卡片已暂停或暂时埋藏，当前不可复习。");
             var question = card.GetProperty("question").GetString() ?? "";
             var answer = card.GetProperty("answer").GetString() ?? "";
-            var neededQuestion = ordinal == 0 ? new[] { "Target" } : new[] { "Pronunciation", "Meaning" };
-            var neededAnswer = ordinal == 0 ? new[] { "Target", "Pronunciation", "Meaning" } : new[] { "Target" };
+            var neededQuestion = expected.IsBasic ? new[] { "Front" } : ordinal == 0 ? new[] { "Target" } : new[] { "Pronunciation", "Meaning" };
+            var neededAnswer = expected.IsBasic ? new[] { "Back" } : ordinal == 0 ? new[] { "Target", "Pronunciation", "Meaning" } : new[] { "Target" };
             if (!neededQuestion.All(f => Plain(question).Contains(Plain(expected.Fields[f]), StringComparison.Ordinal)) ||
                 !neededAnswer.All(f => Plain(answer).Contains(Plain(expected.Fields[f]), StringComparison.Ordinal)))
                 throw new InvalidDataException("Anki 实际卡面缺少本次练习内容。");

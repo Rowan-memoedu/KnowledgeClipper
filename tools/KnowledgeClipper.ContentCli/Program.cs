@@ -22,8 +22,20 @@ try
     settings.Validate();
     using var http = new HttpClient();
     var module = new ContentModule(http, () => ContentCredentials.Resolve());
-    var mode = options.GetValueOrDefault("--mode") ?? await module.ClassifyAsync(material, config, settings, CancellationToken.None);
-    var result = await module.ProcessAsync(material, mode, config, settings, CancellationToken.None);
+    var metadata = data.TryGetProperty("input", out var meta) ? meta.Deserialize<InputMetadata>(WorkflowJson.Options) : new InputMetadata();
+    object result;
+    if (data.TryGetProperty("followUp", out var followUp))
+    {
+        var initial = data.TryGetProperty("initialContent", out var ic) ? ic.Deserialize<ContentResult>(WorkflowJson.Options) : null;
+        var conversation = data.TryGetProperty("conversation", out var turns) ? turns.Deserialize<ConversationTurn[]>(WorkflowJson.Options)! : [];
+        var preview = data.TryGetProperty("currentPreview", out var cp) ? cp.Deserialize<ContentPreview>(WorkflowJson.Options) : null;
+        result = await module.AnswerAsync(material, initial, conversation, followUp.GetString()!, config, settings, CancellationToken.None, currentPreview: preview);
+    }
+    else
+    {
+        var mode = options.GetValueOrDefault("--mode") ?? await module.ClassifyAsync(material, config, settings, CancellationToken.None, metadata);
+        result = await module.ProcessAsync(material, mode, config, settings, CancellationToken.None);
+    }
     var json = JsonSerializer.Serialize(result, WorkflowJson.Options);
     if (options.TryGetValue("--output", out var output)) WorkflowJson.Save(output, result);
     else Console.WriteLine(json);

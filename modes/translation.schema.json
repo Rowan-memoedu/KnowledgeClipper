@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "中文译英文",
+  "description": "本次完整材料的英文译文。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["translation"],
+  "properties": {
+    "translation": {
+      "title": "英文译文",
+      "description": "保留本次完整原意的自然英文译文，不附原文、解释或卡片字段。",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    }
+  }
+}

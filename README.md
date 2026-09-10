@@ -12,6 +12,17 @@ Windows 悬浮式知识采集工具。活动源码位于 `D:\Projects\RemNote Qu
 
 M2 只增加选区入口：选中文字后显示浮点，点击后把当次文字和来源交给普通摘录/朗读共用的流程。内容、TTS、预览和 Anki 导入均复用既有实现；浮点显示时不创建草稿或发起内容请求。后续如接入查词等工具，也应进入共用内容流程，不能只作用于某个入口。用户已在 Chrome、记事本、资源管理器、Obsidian 通过选词与启停验收；Chrome 和 Obsidian 各有一条浮点制卡草稿写入并回读，共 4 张可复习卡片。
 
+文字框输入、中文翻译和追问已迁入同一主流程，并通过本阶段真实集成与用户验收。入口只注入材料和 `InputMetadata`；分类、处理、追问、预览与导入共用后端，不根据来源窗口另建内容流程。
+
+| 输入 | 入口元数据与默认行为 |
+|---|---|
+| 文字框末尾为 `?` 或 `？`（忽略末尾空白） | `questionMarkRouting=true`，直接问答，不自动朗读 |
+| 文字框无末尾问号 | `intent=lookup`，无上下文；中文或中文为主的材料译成英文，其他自然语言词句走语言学习；自动朗读由设置控制 |
+| 选中文字按钮、全局浮点 | `intent=auto`，保留本次来源上下文状态；普通中文仍默认语言学习；是否朗读保持原按钮含义 |
+| 已有材料后的主动追问 | 携带原材料、已有内容和有序问答，直接回答本轮，不按问号重新分类、不重新捕获 |
+
+模式确定后，`outputKind`、`followUpDefault` 和 `requiresContext` 随草稿保存，分别控制字段映射、追问默认展开和语言上下文处理。翻译/问答使用简单单卡：正面原始输入，反面英文译文或本轮答案。语言模式仍用原有练习选择；默认收起追问，用户可主动展开。
+
 ## 构建与使用
 
 使用当前构建脚本，不再运行旧 .NET Framework 的整批 Canary 构建：
@@ -31,8 +42,11 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 5. 点击悬浮窗“重播”，或右键“重播上一条 / 最近朗读”，立即播放上一条并打开最近 20 条朗读记录。每条可点击文字或“播放”重听，点击“继续制卡”打开该条预览。完整音频直接复用；关闭记录面板不停止播放。
 6. 右键“设置…”调整语音、内容 API、Anki 目标和已有提示词；“最近草稿 / 朗读”也包含仅摘录的草稿。停止朗读不取消制卡。
 7. 在“设置…”开启“全局语言学习”并保存，可在普通应用拖选、双击或用 Shift＋方向键、Ctrl+A 选词；点击蓝色“读”点进入同一流程。关闭开关立即停止监视，原入口继续可用。浮点不抢焦点，选区变化、取消、切换来源或约 12 秒未使用会收起。
+8. 在悬浮窗文字框输入后按 Enter 提交；右键“提问…”或启动参数 `--open-question` 打开可换行的大文字框，Ctrl+Enter 提交。中文翻译不要求来源例句，不限制为单词长度。
+9. 问答预览默认展开追问；语言、翻译预览可点底部“追问”。继续输入不要求问号，发送失败保留文字，关闭后可在最近草稿恢复历史。点“将这轮问答制卡”打开对应单卡预览，再确认导入；同一轮重新打开复用已有草稿，原先确认的卡片保持冻结。
+10. 设置中可开关“文字框输入后自动朗读”，并在现有模式页切换语言、翻译、问答，编辑各自提示词与默认展开追问。旧个人模式覆盖与新内置模式按 ID 合并，保留已有编辑。
 
-当前本机配置仍指向隔离牌组 `KnowledgeClipper Canary::Architecture 20260910`，用于完成 M1 验收。专用笔记类型是一份共享字段配两个原生模板；已有用户模板不会被覆盖。
+当前本机配置仍指向隔离牌组 `KnowledgeClipper Canary::Architecture 20260910`，用于工程验收。语言专用类型是一份共享字段配两个原生模板；翻译/问答使用“零碎知识剪藏 · 问答与翻译”的一个“正反面”模板。已有用户模板不会被覆盖。
 
 ## 配置和模块
 
@@ -44,7 +58,15 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 - 本机设置和草稿在 `D:\AppData\KnowledgeClipper`，提示词覆盖文件在其 `modes` 子目录，完整任务音频在 `D:\Caches\KnowledgeClipper\audio`。
 - API Key 使用设置中的安全输入框或既有环境配置；不进入仓库、提示词、命令行参数或回执。
 
-截图、原图、OCR、问答和 RemNote 尚未迁入新主流程；相关旧源码与入口保留，当前构建未验收它们的可用性。旧候选、SDK 和历史报告不作为新流程的运行前提或验收证据。
+截图、原图、OCR 和 RemNote 尚未迁入新主流程；相关旧源码与入口保留，当前构建未验收它们的可用性。旧候选、SDK 和历史报告不作为新流程的运行前提或验收证据。
+
+共用内容 CLI 接受 `selectedText`、可选上下文及 `input` 元数据；指定 `followUp` 时，附带可选 `initialContent` 和 `conversation`，直接调用同一追问模块。例如：
+
+~~~powershell
+& 'D:\Applications\RemNoteQuickClipperRuntime\dotnet-sdk-8.0.424\dotnet.exe' 'D:\Artifacts\KnowledgeClipper\build\KnowledgeClipper.ContentCli\Release\net8.0\KnowledgeClipper.ContentCli.dll' --input 'D:\Artifacts\KnowledgeClipper\validation\m3-typed-zh.json' --modes 'D:\Projects\RemNote Quick Clipper\modes' --output 'D:\Artifacts\KnowledgeClipper\validation\m3-typed-zh-result.json'
+~~~
+
+有限重试、输出结构校验及原文保真由生产模块负责。中文翻译只返回 `translation`；问答返回回答状态、答案或未解决原因。无法回答时不创建空卡，可以补充条件继续追问。接口不承诺无限模型上下文，超时或截断会保留草稿并报错。
 
 ## 已核验的边界
 
@@ -60,6 +82,7 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 | 真实朗读入口 | 修复后用户复测通过；点击至实际输出 3.00 秒、预览 3.54 秒，预览早于播放结束；真实来源材料和两条分支均保留在本次草稿中 |
 | 浮窗与 DPI | 当前实际 192 DPI 下首次 UIA、状态、预览开关尺寸稳定；手动缩放、逻辑尺寸保存恢复、启动后完全可见均已检查 |
 | M2 自动选词 | 35 项取词局部检查与 18 项界面检查通过；四个指定应用由用户实测正常，两个浮点草稿共 4 张卡片已只读核验 |
+| 文字框与追问 | 路由/会话 29 项、单卡 Anki 局部 15 项、预览 39 项；真实桌面集成 62 项通过，一张翻译卡与一张追问子卡已写入和回读；用户三项手测通过，另有一张正式问答卡只读核验 |
 
 证据集中在 [validation](D:/Artifacts/KnowledgeClipper/validation)：[语音](D:/Artifacts/KnowledgeClipper/validation/speech.json)、[最终播放状态](D:/Artifacts/KnowledgeClipper/validation/speech-state.json)、[Anki 真实丢响应恢复](D:/Artifacts/KnowledgeClipper/validation/anki-mixed-writing-lost-response.json)、[预览确认](D:/Artifacts/KnowledgeClipper/validation/m1-preview-confirmation.json)、[窗口缩小复现](D:/Artifacts/KnowledgeClipper/validation/window-size-before.json)。首次取词自动检查未取得前台、静音、Anki 模板大小写及 HTTP chunked 兼容失败均保留；它们不覆盖后续真实结果。
 
@@ -68,6 +91,8 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 用户复测对应草稿为 `b0ccda88c648434b921be4632bd80796`，运行数据留在本机应用目录。重播与继续制卡复测后，笔记 `1789018923487` 的 2 张实际卡片已只读回查：确认字段一致、卡面有内容、未暂停或埋藏，见[用户重播与制卡复测](D:/Artifacts/KnowledgeClipper/validation/history-user-retest.json)。人工验证由工程先准备测试条件并确认悬浮窗可见，再通过默认提问框通知和收集结果，不额外询问是否准备好。提示词 Thread 已按用户要求结束本轮优化，现有修改与评估保留，后续由用户继续。
 
 M2 证据：[局部取词](D:/Artifacts/KnowledgeClipper/m2-local/selection-checks.txt)、[界面连接](D:/Artifacts/KnowledgeClipper/validation/selection-ui-check.json)、[用户验收与实际卡片](D:/Artifacts/KnowledgeClipper/validation/m2-user-retest.json)。浮点携带的选区时间、来源和原文位置已在实际草稿中核对；未新增查词或独立内容流程。当前检查环境为实际 192 DPI；无可用文本范围时点使用鼠标位置或来源窗口位置，未收到输入事件的程序内部自动改选由过期机制收起。
+
+文字框与追问证据：[本阶段验收](D:/Artifacts/KnowledgeClipper/validation/m3-input-validation.json)、[真实桌面与 Anki](D:/AppData/KnowledgeClipper/canary/input-ui/input-ui-canary.json)、[用户制卡回读](D:/Artifacts/KnowledgeClipper/validation/m3-user-anki-readback.json)。用户确认中文/英文/问号分流、追问制卡和保留行为均正常；正式悬浮窗手测后仍为 696×424、192 DPI。追问请求同时提供当前预览的编辑字段和原始会话，保留历史，不改写已确认卡片。新增/删除模式面板与内容效果优化仍后置。
 
 常规接口检查使用 [Workflow.Tests](tests/KnowledgeClipper.Workflow.Tests/KnowledgeClipper.Workflow.Tests.csproj)；内容、语音、Anki 和捕获各有薄 CLI，均调用生产实现。真实写入和播放检查只针对明确的隔离输入与目标，不作为每次构建的自动步骤。没有新变化或未解决问题时，不重跑整批外部检查。
 

@@ -9,7 +9,7 @@ using KnowledgeClipper.Workflow;
 var options = new Dictionary<string, string>();
 for (var i = 0; i < args.Length; i += 2)
 {
-    if (i + 1 >= args.Length || !args[i].StartsWith("--")) throw new ArgumentException("--input 文件 --result 文件 --settings 文件 --modes 目录 --practice Both|Reading|Writing --output 文件 [--lose-add-response true]");
+    if (i + 1 >= args.Length || !args[i].StartsWith("--")) throw new ArgumentException("--input 文件 --result 文件 --settings 文件 --modes 目录 --output 文件 [--practice Both|Reading|Writing] [--lose-add-response true]");
     options.Add(args[i], args[i + 1]);
 }
 if (options.TryGetValue("--verify-draft", out var existingDraft))
@@ -44,8 +44,7 @@ try
     settings.Validate();
     var config = ModeConfigurationLoader.Load(options["--modes"]);
     var content = WorkflowJson.Read<ContentResult>(options["--result"]);
-    ContentModule.ValidateFields(material, content.Fields);
-    var practice = Enum.Parse<PracticeChoice>(options["--practice"], true);
+    var practice = Enum.Parse<PracticeChoice>(options.GetValueOrDefault("--practice", "Both"), true);
     var draft = new ClipDraft { Original = material, Material = material, Settings = settings, Configuration = config,
         ModeId = content.ModeId, Content = content, Practice = practice, ImportState = ImportState.Ready };
     draft.ConfirmedNote = AnkiNoteDraft.From(draft);
@@ -55,8 +54,8 @@ try
     evidence["draftPath"] = Path.Combine(dataRoot, "language-drafts", draft.Id + ".json");
     evidence["draftId"] = draft.Id;
     evidence["deck"] = settings.AnkiDeck;
-    evidence["model"] = settings.AnkiModel;
-    evidence["practice"] = practice.ToString();
+    evidence["model"] = draft.ConfirmedNote.Model;
+    evidence["practice"] = draft.ConfirmedNote.IsBasic ? "Basic" : practice.ToString();
     evidence["confirmedNote"] = draft.ConfirmedNote;
     var anki = new AnkiConnection(http, settings.AnkiEndpoint);
     var version = await anki.CallAsync("version");
@@ -92,24 +91,38 @@ try
     evidence["readback"] = new { noteIds, cardIds, notes, cards, suspended };
     Check(noteIds.GetArrayLength() == 1 && noteIds[0].GetInt64() == draft.NoteId, "exactly one actual note by operation tag");
     Check(cardIds.EnumerateArray().Select(x => x.GetInt64()).Order().SequenceEqual(draft.CardIds.Order()), "findCards and notesInfo identify the same cards");
-    Check(draft.CardIds.Length == (practice == PracticeChoice.Both ? 2 : 1), "actual card count matches selected practice");
+    Check(draft.CardIds.Length == draft.ConfirmedNote!.Ordinals.Length, "actual card count matches confirmed note type and practice");
     var noteFields = notes[0].GetProperty("fields");
     foreach (var field in draft.ConfirmedNote!.Fields)
         Check(noteFields.GetProperty(field.Key).GetProperty("value").GetString() == field.Value, "actual field matches confirmation: " + field.Key);
-    var recoveredSentence = Plain(noteFields.GetProperty("SentenceBefore").GetProperty("value").GetString()!)
-        + Plain(noteFields.GetProperty("Target").GetProperty("value").GetString()!)
-        + Plain(noteFields.GetProperty("SentenceAfter").GetProperty("value").GetString()!);
-    Check(recoveredSentence == (material.ContextText ?? content.Fields.GeneratedSentence), "source or generated sentence preserved exactly");
+    if (draft.ConfirmedNote.IsBasic)
+    {
+        Check(noteFields.GetProperty("Front").GetProperty("value").GetString() == AnkiNoteDraft.Html(material.SelectedText), "Basic front preserves the original input");
+        Check(noteFields.GetProperty("Back").GetProperty("value").GetString() == AnkiNoteDraft.Html(content.Basic!.Back), "Basic back preserves the confirmed translation or answer");
+    }
+    else
+    {
+        var recoveredSentence = Plain(noteFields.GetProperty("SentenceBefore").GetProperty("value").GetString()!)
+            + Plain(noteFields.GetProperty("Target").GetProperty("value").GetString()!)
+            + Plain(noteFields.GetProperty("SentenceAfter").GetProperty("value").GetString()!);
+        Check(recoveredSentence == (material.ContextText ?? content.Fields!.GeneratedSentence), "source or generated sentence preserved exactly");
+    }
     foreach (var card in cards.EnumerateArray())
     {
         Check(card.GetProperty("note").GetInt64() == draft.NoteId && card.GetProperty("deckName").GetString() == settings.AnkiDeck, "actual card belongs to selected note and deck");
         Check(card.GetProperty("queue").GetInt32() >= 0, "actual card is neither suspended nor buried");
         var question = Plain(card.GetProperty("question").GetString()!);
         var answer = Plain(card.GetProperty("answer").GetString()!);
+        if (draft.ConfirmedNote.IsBasic)
+        {
+            Check(card.GetProperty("ord").GetInt32() == 0 && question.Contains(Plain(draft.ConfirmedNote.Fields["Front"]), StringComparison.Ordinal)
+                && answer.Contains(Plain(draft.ConfirmedNote.Fields["Back"]), StringComparison.Ordinal), "actual Basic card renders the original front and confirmed back");
+            continue;
+        }
         Check(!string.IsNullOrWhiteSpace(question) && answer.Contains(material.SelectedText, StringComparison.Ordinal), "rendered actual card has question and target answer");
         if (card.GetProperty("ord").GetInt32() == 1)
         {
-            Check(question.Contains(content.Fields.Pronunciation, StringComparison.Ordinal) && question.Contains(content.Fields.Meaning, StringComparison.Ordinal), "writing front exposes pronunciation and meaning hints");
+            Check(question.Contains(content.Fields!.Pronunciation, StringComparison.Ordinal) && question.Contains(content.Fields.Meaning, StringComparison.Ordinal), "writing front exposes pronunciation and meaning hints");
             var contextWithoutTarget = (material.ContextText ?? content.Fields.GeneratedSentence!).Remove(material.TargetStart ?? content.Fields.GeneratedTargetStart!.Value, material.SelectedText.Length);
             if (!contextWithoutTarget.Contains(material.SelectedText, StringComparison.Ordinal) && !content.Fields.Meaning.Contains(material.SelectedText, StringComparison.Ordinal) && !content.Fields.Pronunciation.Contains(material.SelectedText, StringComparison.Ordinal))
                 Check(!question.Contains(material.SelectedText, StringComparison.Ordinal), "writing front masks the selected target");
@@ -122,7 +135,7 @@ try
     evidence["status"] = "passed";
     evidence["completedAt"] = DateTimeOffset.UtcNow;
     WorkflowJson.Save(outputPath, evidence);
-    Console.WriteLine($"PASS Anki interface: note {draft.NoteId}; {draft.CardIds.Length} actual reviewable cards; {practice}; response-loss injection {loseResponse}.");
+    Console.WriteLine($"PASS Anki interface: note {draft.NoteId}; {draft.CardIds.Length} actual reviewable cards; {evidence["practice"]}; response-loss injection {loseResponse}.");
     Console.WriteLine("Evidence: " + Path.GetFullPath(outputPath));
     return 0;
 }
@@ -187,9 +200,10 @@ static async Task<int> VerifyExistingAsync(string draftPath, string output)
         if (matches.GetArrayLength() == 0)
         {
             // Diagnose the same metadata calls without entering any write preparation.
-            report["modelNamesIncludesTarget"] = (await anki.ModelsAsync()).Contains(draft.Settings.AnkiModel);
-            report["modelFields"] = await anki.CallAsync("modelFieldNames", new { modelName = draft.Settings.AnkiModel });
-            report["templates"] = await anki.CallAsync("modelTemplates", new { modelName = draft.Settings.AnkiModel });
+            var model = draft.ConfirmedNote?.Model ?? (draft.Content?.Basic != null ? AnkiNoteDraft.BasicModelName : draft.Settings.AnkiModel);
+            report["modelNamesIncludesTarget"] = (await anki.ModelsAsync()).Contains(model);
+            report["modelFields"] = await anki.CallAsync("modelFieldNames", new { modelName = model });
+            report["templates"] = await anki.CallAsync("modelTemplates", new { modelName = model });
             report["deckNamesIncludesTarget"] = (await anki.DecksAsync()).Contains(draft.Settings.AnkiDeck);
             report["status"] = "not-found-no-write";
             Console.WriteLine("No note for this draft; metadata responds; no write attempted.");

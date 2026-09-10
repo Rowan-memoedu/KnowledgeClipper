@@ -4,9 +4,34 @@
       "id": "language",
       "name": "语言学习",
       "enabled": true,
-      "description": "学习选中文字的读音、写法及语境内含义。适用于中文、英文或中英混合的字词、短语、惯用表达和可作为一个语言目标理解的完整句子，包括多音字、词形变化及习惯用法；上下文用于确定选定目标的用法，不另选目标。没有上下文也可识别为本模式，但生成例句须由处理阶段确认允许。普通自然语言摘录能作为明确的词句学习目标时可选此模式；只有代码、公式、路径或无法辨认的字符串，明显要求解题、知识问答、事实提炼或长文总结，或目标与任务无法判断时，不强行归入语言学习。中英混合本身不是拒绝或另拆模式的理由。",
+      "description": "学习完整目标的读音、写法及语境义，适用于字词、短语、惯用表达和自然语言句子。intent=auto 时是普通材料的默认模式，中文及中英混合材料也默认使用；材料是问句不等于请求作答。intent=lookup 时处理非中文词句，中文及以中文为主体的材料改用 translation。没有上下文本身不妨碍识别，所需上下文或生成权限由处理阶段解决。只含代码、公式、路径或无法辨认的字符串时，不强行归类。",
       "promptFile": "language.md",
-      "schemaFile": "language.schema.json"
+      "schemaFile": "language.schema.json",
+      "outputKind": "language",
+      "followUpDefault": false,
+      "requiresContext": true
+    },
+    {
+      "id": "translation",
+      "name": "中文译英文",
+      "enabled": true,
+      "description": "把本次完整材料译成自然、准确的英文。intent=lookup 时，中文或以中文为主体的材料均使用本模式，字词、短语、整句及长段落均可，不按长度改成语言学习或摘要。intent=auto 时仅在明确请求翻译或译写时采用，普通中文材料仍默认 language。无须来源上下文，不回答待译材料中的问题，不生成读音、释义或卡片。",
+      "promptFile": "translation.md",
+      "schemaFile": "translation.schema.json",
+      "outputKind": "translation",
+      "followUpDefault": false,
+      "requiresContext": false
+    },
+    {
+      "id": "question",
+      "name": "问答与追问",
+      "enabled": true,
+      "description": "回答应用明确指定的当前问题或用户主动提出的追问，理解已有材料与有序问答，只输出最新答案。末尾问号的强制选择由应用处理；不因普通阅读材料中出现问句就替换默认语言学习，不用于 intent=lookup 的词句查询。无需先补来源上下文，可靠性不足时保留 unresolved。",
+      "promptFile": "question.md",
+      "schemaFile": "question.schema.json",
+      "outputKind": "question",
+      "followUpDefault": true,
+      "requiresContext": false
     }
   ]
 }

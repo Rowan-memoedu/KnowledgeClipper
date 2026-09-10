@@ -23,6 +23,7 @@ internal sealed class LanguageDesktopFlow : IDisposable
     private readonly List<LanguageDraftForm> forms = new();
     private ClipDraft latest, lastSpeech;
     private LanguageReadingHistoryForm history;
+    private LanguageInputForm inputForm;
     private bool capturing;
     internal bool IsPlaying => speech.IsPlaying;
     internal LanguageSettings Settings { get; private set; }
@@ -68,22 +69,53 @@ internal sealed class LanguageDesktopFlow : IDisposable
             var captureStartedAt = DateTimeOffset.UtcNow;
             var material = await capture.CaptureAsync(settings, frozen);
             capturing = false;
-            var draft = new ClipDraft { Original = material, Material = material, Settings = settings,
-                Configuration = configuration, Practice = settings.Practice };
-            draft.Times["requested"] = requestedAt;
+            var draft = StartMaterial(material, new InputMetadata(frozen == null ? "selection-button" : "selection-dot", ReadRequested: read), settings, configuration, requestedAt);
             if (frozen != null) draft.Times["selectionObserved"] = frozen.CapturedAt;
             draft.Times["captureStarted"] = captureStartedAt;
-            draft.Times["captured"] = DateTimeOffset.UtcNow;
-            latest = draft;
-            // Start the audio connection before constructing/showing the preview on the UI thread.
-            if (read) _ = PlayAsync(draft, false);
-            var form = OpenDraft(draft);
-            draft.Times["previewOpened"] = DateTimeOffset.UtcNow;
             store.Save(draft);
-            _ = ProcessAsync(draft, form);
         }
         catch (Exception ex) { status("取词未完成：" + ex.Message); }
         finally { capturing = false; }
+    }
+
+    internal Task<bool> StartTextAsync(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return Task.FromResult(false);
+        try
+        {
+            var settings = Settings with { };
+            var material = new CaptureMaterial(text, null, "generated_allowed", null, "文字框输入", 0, DateTimeOffset.UtcNow);
+            StartMaterial(material, new InputMetadata("typed", "lookup", QuestionMarkRouting: true,
+                ReadRequested: settings.TypedInputAutoRead), settings, ModeConfigurationLoader.Load(ModeDefaults, ModeOverrides), DateTimeOffset.UtcNow);
+            return Task.FromResult(true);
+        }
+        catch (Exception ex) { status("输入未提交：" + ex.Message); return Task.FromResult(false); }
+    }
+
+    internal void OpenInput()
+    {
+        if (inputForm == null || inputForm.IsDisposed) inputForm = new LanguageInputForm(StartTextAsync);
+        if (!inputForm.Visible) inputForm.Show(owner);
+        inputForm.Activate();
+    }
+
+    // Every entry stops at this boundary: material + metadata, then the same draft and modules.
+    private ClipDraft StartMaterial(CaptureMaterial material, InputMetadata input, LanguageSettings settings,
+        ContentConfiguration configuration, DateTimeOffset requestedAt)
+    {
+        material.Validate();
+        var draft = new ClipDraft { Original = material, Material = material, Input = input, Settings = settings,
+            Configuration = configuration, Practice = settings.Practice };
+        draft.Times["requested"] = requestedAt;
+        draft.Times["captured"] = DateTimeOffset.UtcNow;
+        latest = draft;
+        // Do not wait for classification/content before opening the audio connection.
+        if (input.ReadRequested && !(input.QuestionMarkRouting && ContentModule.IsQuestion(material.SelectedText))) _ = PlayAsync(draft, false);
+        var form = OpenDraft(draft);
+        draft.Times["previewOpened"] = DateTimeOffset.UtcNow;
+        store.Save(draft);
+        _ = ProcessAsync(draft, form);
+        return draft;
     }
 
     private LanguageDraftForm OpenDraft(ClipDraft draft)
@@ -95,6 +127,8 @@ internal sealed class LanguageDesktopFlow : IDisposable
             () => PlayAsync(draft, true), () => speech.Stop());
         forms.Add(form);
         form.RetryContent += () => _ = ProcessAsync(draft, form);
+        form.SubmitFollowUp += text => FollowUpAsync(draft, form, text);
+        form.PreviewFollowUpCard += turn => OpenFollowUpCard(draft, turn);
         form.FormClosed += (_, _) => { forms.Remove(form); store.Save(draft); };
         form.Show(owner);
         return form;
@@ -107,27 +141,71 @@ internal sealed class LanguageDesktopFlow : IDisposable
         try
         {
             draft.ContentError = null;
-            if (draft.Material.NeedsContextChoice)
+            var content = new ContentModule(http, () => ContentCredentials.Resolve(DesktopCredentialSettings.Load(dataRoot).DeepSeekApiKey));
+            if (draft.ModeId == null)
+            {
+                try { draft.ModeId = await content.ClassifyAsync(draft.Material, draft.Configuration, draft.Settings, form.Lifetime, draft.Input); }
+                catch (ModeChoiceRequiredException ex) { draft.ModeId = await form.ChooseModeAsync(ex.Message); }
+                if (draft.ModeId == null) return;
+                draft.Times["classified"] = DateTimeOffset.UtcNow;
+            }
+            draft.Route = ModeConfigurationLoader.Route(draft.Configuration, draft.ModeId);
+            if (draft.Route.RequiresContext && draft.Material.NeedsContextChoice)
             {
                 var material = await form.ResolveContextAsync();
                 if (material == null) return;
                 draft.Material = material; store.Save(draft);
             }
-            var content = new ContentModule(http, () => ContentCredentials.Resolve(DesktopCredentialSettings.Load(dataRoot).DeepSeekApiKey));
-            if (draft.ModeId == null)
-            {
-                try { draft.ModeId = await content.ClassifyAsync(draft.Material, draft.Configuration, draft.Settings, form.Lifetime); }
-                catch (ModeChoiceRequiredException ex) { draft.ModeId = await form.ChooseModeAsync(ex.Message); }
-                if (draft.ModeId == null) return;
-                draft.Times["classified"] = DateTimeOffset.UtcNow;
-            }
             draft.Content = await content.ProcessAsync(draft.Material, draft.ModeId, draft.Configuration, draft.Settings, form.Lifetime);
+            if (draft.Content.Answer != null && draft.Conversation.Count == 0)
+                draft.Conversation.Add(new ConversationTurn(draft.Material.SelectedText, draft.Content.Answer));
             draft.Times["previewReady"] = DateTimeOffset.UtcNow;
             if (!form.IsDisposed) form.ContentReady();
         }
         catch (OperationCanceledException) { draft.ContentError = "已停止内容处理，原材料已保留。"; }
         catch (Exception ex) { draft.ContentError = ex.Message; }
         finally { form.ContentRunning = false; Changed(draft, form); }
+    }
+
+    private async Task FollowUpAsync(ClipDraft draft, LanguageDraftForm form, string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+        draft.PendingFollowUp = text; draft.ConversationError = null; store.Save(draft);
+        try
+        {
+            var content = new ContentModule(http, () => ContentCredentials.Resolve(DesktopCredentialSettings.Load(dataRoot).DeepSeekApiKey));
+            var answer = await content.AnswerAsync(draft.ConversationMaterial ?? draft.Material, draft.ConversationContent ?? draft.PreviewContent, draft.Conversation.ToArray(), text,
+                draft.Configuration, draft.Settings, form.Lifetime, currentPreview: new(draft.Original.SelectedText, draft.PreviewContent));
+            draft.Conversation.Add(new ConversationTurn(text, answer));
+            draft.PendingFollowUp = null;
+            draft.Times["followUpAnswered"] = DateTimeOffset.UtcNow;
+        }
+        catch (OperationCanceledException) { draft.ConversationError = "追问已停止，输入已保留。"; }
+        catch (Exception ex) { draft.ConversationError = ex.Message; }
+        finally { store.Save(draft); if (!form.IsDisposed) form.RefreshConversation(); }
+    }
+
+    private void OpenFollowUpCard(ClipDraft parent, ConversationTurn turn)
+    {
+        if (!turn.Answer.Answered) return;
+        var index = parent.Conversation.IndexOf(turn);
+        if (index < 0) return;
+        if (turn.Question == parent.Original.SelectedText && turn.Answer.AnswerText == parent.Content?.Answer?.AnswerText)
+        { OpenDraft(parent); return; }
+        if (parent.FollowUpCards.TryGetValue(index, out var previous) && store.Find(previous) is { } existing)
+        { OpenDraft(LiveDraft(existing)); return; }
+        var mode = parent.Configuration.Modes.Single(m => m.Definition.OutputKind == "question");
+        var material = new CaptureMaterial(turn.Question, null, "generated_allowed", null, parent.Original.SourceTitle, 0, DateTimeOffset.UtcNow);
+        var draft = new ClipDraft { Original = material, Material = material, Input = parent.Input with { Intent = "question", ReadRequested = false },
+            Settings = parent.Settings, Configuration = parent.Configuration, ParentDraftId = parent.Id,
+            ConversationMaterial = parent.ConversationMaterial ?? parent.Material, ConversationContent = parent.ConversationContent ?? parent.PreviewContent,
+            ModeId = mode.Definition.Id, Route = ModeConfigurationLoader.Route(parent.Configuration, mode.Definition.Id),
+            Content = new ContentResult(mode.Definition.Id, Basic: new(turn.Question, turn.Answer.AnswerText!), Answer: turn.Answer),
+            Conversation = parent.Conversation.Take(index + 1).ToList() };
+        draft.Times["previewReady"] = DateTimeOffset.UtcNow;
+        latest = draft; store.Save(draft);
+        parent.FollowUpCards[index] = draft.Id; store.Save(parent);
+        OpenDraft(draft);
     }
 
     private void Changed(ClipDraft draft, LanguageDraftForm form)
@@ -179,5 +257,5 @@ internal sealed class LanguageDesktopFlow : IDisposable
         history.Activate();
     }
 
-    public void Dispose() { history?.Close(); foreach (var f in forms.ToArray()) f.Close(); speech.Dispose(); http.Dispose(); }
+    public void Dispose() { inputForm?.Close(); history?.Close(); foreach (var f in forms.ToArray()) f.Close(); speech.Dispose(); http.Dispose(); }
 }

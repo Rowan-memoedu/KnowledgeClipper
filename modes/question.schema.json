@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "当前问题的回答",
+  "description": "只承载本轮答案及未解决原因，不包含历史问答或卡片结构。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["answer_state", "answer_text", "unresolved_reasons"],
+  "properties": {
+    "answer_state": {
+      "title": "回答状态",
+      "type": "string",
+      "enum": ["answered", "unresolved"]
+    },
+    "answer_text": {
+      "title": "本轮答案",
+      "description": "answered 时为非空纯文本；unresolved 时为 null。",
+      "type": ["string", "null"],
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "unresolved_reasons": {
+      "title": "未解决原因",
+      "description": "answered 时为空数组；unresolved 时至少提供一个简短、稳定的机器原因。",
+      "type": "array",
+      "items": {"type": "string", "minLength": 1, "pattern": "\\S"}
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "answer_state": {"enum": ["answered"]},
+        "answer_text": {"type": "string"},
+        "unresolved_reasons": {"type": "array", "maxItems": 0, "enum": [[]]}
+      }
+    },
+    {
+      "properties": {
+        "answer_state": {"enum": ["unresolved"]},
+        "answer_text": {"type": "null"},
+        "unresolved_reasons": {"minItems": 1}
+      }
+    }
+  ]
+}

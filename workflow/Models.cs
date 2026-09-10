@@ -43,8 +43,26 @@ public enum PracticeChoice { Both, Reading, Writing }
 public enum ImportState { Unconfirmed, Ready, Writing, Unknown, Verified, Failed }
 
 public sealed record LanguageFields(string Pronunciation, string Meaning, string? GeneratedSentence, int? GeneratedTargetStart);
-public sealed record ContentResult(string ModeId, LanguageFields Fields);
-public sealed record ModeDefinition(string Id, string Name, bool Enabled, string Description, string PromptFile, string SchemaFile);
+public sealed record BasicFields(string Front, string Back);
+public sealed record QuestionAnswer(string AnswerState, string? AnswerText, string[] UnresolvedReasons)
+{
+    [JsonIgnore] public bool Answered => AnswerState == "answered";
+    [JsonIgnore] public string DisplayText => Answered ? AnswerText! : "暂未解答：" + string.Join("；", UnresolvedReasons.Select(reason => reason switch
+    {
+        "missing_facts" => "缺少必要条件，请补充相关事实",
+        "conflicting_context" => "已有信息存在冲突，请说明以哪项为准",
+        "unsafe_high_risk" => "现有信息不足以可靠回答，请补充条件",
+        "cannot_answer_reliably" => "暂时无法可靠回答，可以补充条件继续追问",
+        _ => reason
+    }));
+}
+public sealed record ConversationTurn(string Question, QuestionAnswer Answer);
+public sealed record InputMetadata(string Source = "selection", string Intent = "auto", bool QuestionMarkRouting = false, bool ReadRequested = false);
+public sealed record ModeRoute(string ModeId, string OutputKind, bool FollowUpDefault, bool RequiresContext);
+public sealed record ContentResult(string ModeId, LanguageFields? Fields = null, BasicFields? Basic = null, QuestionAnswer? Answer = null);
+public sealed record ContentPreview(string SelectedText, ContentResult? Content);
+public sealed record ModeDefinition(string Id, string Name, bool Enabled, string Description, string PromptFile, string SchemaFile,
+    string OutputKind = "language", bool FollowUpDefault = false, bool RequiresContext = true);
 public sealed record ModeFile(ModeDefinition[] Modes);
 public sealed record ModeSnapshot(ModeDefinition Definition, string Prompt, string Schema);
 public sealed record ContentConfiguration(string ClassificationPrompt, ModeSnapshot[] Modes);
@@ -58,6 +76,7 @@ public sealed record LanguageSettings
     public string AnkiModel { get; init; } = "零碎知识剪藏 · 语言共享字段";
     public PracticeChoice Practice { get; init; } = PracticeChoice.Both;
     public bool GlobalSelection { get; init; }
+    public bool TypedInputAutoRead { get; init; } = true;
     public bool ContextEnabled { get; init; }
     public string ContextGranularity { get; init; } = "sentence";
     public string PythonPath { get; init; } = @"D:\Applications\RemNoteQuickClipperRuntime\edge-tts-7.2.8\Scripts\python.exe";
@@ -90,8 +109,18 @@ public sealed class ClipDraft
     public required LanguageSettings Settings { get; init; }
     public required ContentConfiguration Configuration { get; init; }
     public string? ModeId { get; set; }
+    public InputMetadata Input { get; init; } = new();
+    public ModeRoute? Route { get; set; }
     public ContentResult? Content { get; set; }
     public LanguageFields? EditedFields { get; set; }
+    public BasicFields? EditedBasic { get; set; }
+    public List<ConversationTurn> Conversation { get; set; } = [];
+    public Dictionary<int, string> FollowUpCards { get; set; } = new();
+    public CaptureMaterial? ConversationMaterial { get; init; }
+    public ContentResult? ConversationContent { get; init; }
+    public string? PendingFollowUp { get; set; }
+    public string? ConversationError { get; set; }
+    public string? ParentDraftId { get; init; }
     public string? ContentError { get; set; }
     public string? SpeechError { get; set; }
     public string? AudioPath { get; set; }
@@ -104,6 +133,8 @@ public sealed class ClipDraft
     public string? ImportError { get; set; }
     public ConcurrentDictionary<string, DateTimeOffset> Times { get; set; } = new();
     [JsonIgnore] public SemaphoreSlim ImportGate { get; } = new(1, 1);
+    [JsonIgnore] public ContentResult? PreviewContent => Content == null ? null : Content with
+        { Fields = EditedFields ?? Content.Fields, Basic = EditedBasic ?? Content.Basic };
     [JsonIgnore] public DateTimeOffset? LastSpeechAt => Times.TryGetValue("speechRequested", out var requested) ? requested :
         Times.TryGetValue("speechStarted", out var started) ? started : AudioPath != null ? Original.CapturedAt : null;
 }
@@ -111,6 +142,15 @@ public sealed class ClipDraft
 public sealed class DraftStore(string root)
 {
     public void Save(ClipDraft draft) => WorkflowJson.Save(Path.Combine(root, "language-drafts", draft.Id + ".json"), draft);
+    public ClipDraft? Find(string id)
+    {
+        if (!Guid.TryParseExact(id, "N", out _)) return null;
+        var path = Path.Combine(root, "language-drafts", id + ".json");
+        if (!File.Exists(path)) return null;
+        var draft = WorkflowJson.Read<ClipDraft>(path);
+        if (draft.ImportState == ImportState.Writing) draft.ImportState = ImportState.Unknown;
+        return draft;
+    }
     public IEnumerable<ClipDraft> Recent() => ReadDrafts().Take(20);
     public IEnumerable<ClipDraft> RecentSpeech() => ReadDrafts().Where(d => d.LastSpeechAt != null)
         .OrderByDescending(d => d.LastSpeechAt).Take(20);
