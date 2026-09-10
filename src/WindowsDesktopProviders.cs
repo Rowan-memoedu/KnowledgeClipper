@@ -423,10 +423,22 @@ namespace KnowledgeClipper
                     if (textElement != null && textElement.TryGetCurrentPattern(TextPattern.Pattern, out raw)) pattern = raw as TextPattern;
                 }
                 if (pattern == null) return false;
-                var document = pattern.DocumentRange;
-                var documentText = document.GetText(MaximumDocumentCharacters);
-                if (string.IsNullOrWhiteSpace(documentText)) return false;
+                return TryReadFromPattern(pattern, selectedText, granularity, out context);
+            }
+            catch (ElementNotAvailableException) { return false; }
+            catch (InvalidOperationException) { return false; }
+            catch (COMException) { return false; }
+        }
 
+        // Kept separate from focus discovery so the exact native range handling
+        // can also be checked against an ordinary, independently pumped Edit control.
+        internal bool TryReadFromPattern(TextPattern pattern, string selectedText, string granularity, out WindowsContextSnapshot context)
+        {
+            context = null;
+            if (pattern == null || string.IsNullOrWhiteSpace(selectedText)) return false;
+            try
+            {
+                var document = pattern.DocumentRange;
                 var ranges = pattern.GetSelection();
                 var selectedRanges = ranges == null ? new TextPatternRange[0] : ranges.Where(range => !string.IsNullOrWhiteSpace(range.GetText(-1))).ToArray();
                 // Never bind stale clipboard text to a different UIA selection (or
@@ -437,15 +449,26 @@ namespace KnowledgeClipper
                 string prefix, suffix;
                 if (selection != null)
                 {
-                    var before = document.Clone();
+                    // Read next to the actual selected range. Reading the first
+                    // 200k characters of a document prefix can silently substitute
+                    // remote text when this selection occurs beyond that limit.
+                    var before = selection.Clone();
                     before.MoveEndpointByRange(TextPatternRangeEndpoint.End, selection, TextPatternRangeEndpoint.Start);
-                    prefix = before.GetText(MaximumDocumentCharacters);
-                    var after = document.Clone();
+                    before.MoveEndpointByUnit(TextPatternRangeEndpoint.Start, TextUnit.Character, -MaximumSegmentCharacters);
+                    prefix = before.GetText(-1);
+                    var after = selection.Clone();
                     after.MoveEndpointByRange(TextPatternRangeEndpoint.Start, selection, TextPatternRangeEndpoint.End);
-                    suffix = after.GetText(MaximumDocumentCharacters);
+                    after.MoveEndpointByUnit(TextPatternRangeEndpoint.End, TextUnit.Character, MaximumSegmentCharacters);
+                    suffix = after.GetText(-1);
+                    if (before.CompareEndpoints(TextPatternRangeEndpoint.End, selection, TextPatternRangeEndpoint.Start) != 0 ||
+                        after.CompareEndpoints(TextPatternRangeEndpoint.Start, selection, TextPatternRangeEndpoint.End) != 0) return false;
                 }
                 else
                 {
+                    // Without a native selection range, uniqueness is meaningful
+                    // only if the complete document fits within the read bound.
+                    var documentText = document.GetText(MaximumDocumentCharacters + 1);
+                    if (string.IsNullOrWhiteSpace(documentText) || documentText.Length > MaximumDocumentCharacters) return false;
                     var index = documentText.IndexOf(selectedText, StringComparison.Ordinal);
                     if (index < 0 || documentText.IndexOf(selectedText, index + selectedText.Length, StringComparison.Ordinal) >= 0) return false;
                     prefix = documentText.Substring(0, index);

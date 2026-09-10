@@ -1,0 +1,6 @@
+{
+  "name": "knowledge-clipper-selection",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": { "selection-hook": "2.1.1" }
+}

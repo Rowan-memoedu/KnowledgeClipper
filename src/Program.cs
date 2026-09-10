@@ -44,6 +44,7 @@ namespace KnowledgeClipper
         [STAThread]
         private static int Main(string[] args)
         {
+            InitializeDpi();
             if (args != null && args.Length == 1 && string.Equals(args[0], "--startup-diagnostic", StringComparison.Ordinal))
                 return StartupDiagnostics.Run(AppDomain.CurrentDomain.BaseDirectory, Console.Out);
             if (args != null && args.Length == 1 && string.Equals(args[0], "--single-instance-diagnostic", StringComparison.Ordinal))
@@ -76,9 +77,9 @@ namespace KnowledgeClipper
                     ProductionStartupPolicy.Apply(config);
                     var credentials = DesktopCredentialSettings.Load(config.WorkDirectory);
                     var desktop = LegacyDesktopAdapter.CreateBoundClipperDependencies(config, captureFixturePath);
-                    using (var orchestrator = CandidateOrchestratorHost.StartIfConfigured(AppDomain.CurrentDomain.BaseDirectory, null, credentials))
                     using (var form = new BoundClipperForm(desktop))
                     {
+                        form.EnableLanguageWorkflow();
                         if (launchView != DesktopLaunchView.Default)
                             form.Shown += async delegate { await form.OpenLaunchViewAsync(launchView); };
                         Application.Run(form);
@@ -87,6 +88,13 @@ namespace KnowledgeClipper
                 catch (Exception ex) { MessageBox.Show(ex.Message, "零碎知识剪藏", MessageBoxButtons.OK, MessageBoxIcon.Error); return 1; }
             }
             return 0;
+        }
+
+        internal static void InitializeDpi()
+        {
+            // UI Automation/WPF can otherwise initialize system DPI awareness on
+            // the first capture, after an unaware floating HWND already exists.
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         }
     }
 

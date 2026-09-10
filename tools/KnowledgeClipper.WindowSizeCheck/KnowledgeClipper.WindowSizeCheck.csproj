@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <DesktopAssemblyPath Condition="'$(DesktopAssemblyPath)' == ''">D:\Artifacts\KnowledgeClipper\build\RemNoteQuickClipper.Desktop\Release\net8.0-windows\win-x64\KnowledgeClipper.dll</DesktopAssemblyPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="KnowledgeClipper">
+      <HintPath>$(DesktopAssemblyPath)</HintPath>
+    </Reference>
+    <ProjectReference Include="..\..\workflow\KnowledgeClipper.Workflow.csproj" />
+    <Content Include="..\..\contracts\core\v2.4\settings-control\**\*" Link="contracts\core\v2.4\settings-control\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\contracts\core\v2.1\profile-resolver.v2.1.json" Link="contracts\core\v2.1\profile-resolver.v2.1.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\contracts\core\v2.5\checkpoints\v2.5.1-20260830T075400Z\checkpoint.json" Link="contracts\core\v2.5\checkpoints\v2.5.1-20260830T075400Z\checkpoint.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

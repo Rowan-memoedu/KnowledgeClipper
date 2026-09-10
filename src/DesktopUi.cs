@@ -63,7 +63,7 @@ namespace KnowledgeClipper
         }
     }
 
-    internal sealed class BoundClipperForm : Form, IDesktopApplicationView
+    internal sealed partial class BoundClipperForm : Form, IDesktopApplicationView
     {
         private static readonly Size DefaultClientSize = new Size(344, 210);
         private const int ResizeFrameThickness = 7;
@@ -98,7 +98,7 @@ namespace KnowledgeClipper
         private long readToAnkiTerminalRevision;
         private string workflowSettingsRevision;
         private readonly List<FloatingControlMetrics> floatingMetrics = new List<FloatingControlMetrics>();
-        private bool applyingContentScale;
+        private bool applyingContentScale, scalingForDpi;
 
         private sealed class FloatingControlMetrics
         {
@@ -132,6 +132,7 @@ namespace KnowledgeClipper
         internal BoundClipperForm(BoundClipperDependencies dependencies)
         {
             if (dependencies == null) throw new ArgumentNullException(nameof(dependencies));
+            SuspendLayout();
             config = dependencies.Config;
             controller = dependencies.Controller;
             settings = dependencies.InitialSettings.Copy();
@@ -143,7 +144,8 @@ namespace KnowledgeClipper
             ocrHumanResolution = dependencies.OcrHumanResolution;
             Name = "knowledge-clipper.desktop.floating-window"; AccessibleName = Name;
             FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; TopMost = true; StartPosition = FormStartPosition.Manual;
-            MinimumSize = DefaultClientSize; ResizeRedraw = true; ClientSize = LoadSize(); Location = LoadPosition(); BackColor = Color.FromArgb(246, 248, 250); AutoScaleMode = AutoScaleMode.Dpi;
+            MinimumSize = DefaultClientSize; ResizeRedraw = true; ClientSize = LoadSize(); Location = LoadPosition(); BackColor = Color.FromArgb(246, 248, 250);
+            AutoScaleDimensions = new SizeF(96F, 96F); AutoScaleMode = AutoScaleMode.Dpi;
 
             var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Margin = Padding.Empty, Padding = new Padding(2), BackColor = Color.FromArgb(222, 229, 236) };
             root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -192,19 +194,21 @@ namespace KnowledgeClipper
             dragFrame.Controls.Add(root); Controls.Add(dragFrame);
             CaptureFloatingMetrics(dragFrame);
             ClientSizeChanged += delegate { ApplyFloatingContentScale(); };
-            Shown += delegate { ApplyFloatingContentScale(); };
+            Shown += delegate { ApplyFloatingContentScale(); Location = EnsureVisible(Location); };
             DpiChanged += delegate { BeginInvoke((MethodInvoker)ApplyFloatingContentScale); };
             Disposed += delegate { foreach (var metric in floatingMetrics) { metric.OwnedFont?.Dispose(); metric.BaseFont?.Dispose(); } };
             ApplyFloatingContentScale();
 
             clipButton.Click += async delegate
             {
-                if (applicationBinding != null) await ExecuteReadToAnkiAsync(ApplicationCommandKind.ClipToAnki);
+                if (languageFlow != null) await languageFlow.StartAsync(false);
+                else if (applicationBinding != null) await ExecuteReadToAnkiAsync(ApplicationCommandKind.ClipToAnki);
                 else await ExecuteAsync(AutomationCatalog.ClipCapture, null);
             };
             readButton.Click += async delegate
             {
-                if (applicationBinding != null) await ExecuteReadToAnkiAsync(ApplicationCommandKind.ReadToAnki);
+                if (languageFlow != null) await languageFlow.StartAsync(true);
+                else if (applicationBinding != null) await ExecuteReadToAnkiAsync(ApplicationCommandKind.ReadToAnki);
                 else await ExecuteAsync(AutomationCatalog.ReadCapture, null);
             };
             screenshotButton.Click += async delegate { await ExecuteScreenshotAsync(AutomationCatalog.ScreenshotStart); };
@@ -212,7 +216,8 @@ namespace KnowledgeClipper
             originalButton.Click += async delegate { await SetOriginalImageModeAsync(!settings.OriginalImageMode); };
             statusButton.Click += async delegate
             {
-                if (statusButton.Text == "查看答案") await OpenQuestionAsync();
+                if (languageFlow != null) languageFlow.ShowRecent();
+                else if (statusButton.Text == "查看答案") await OpenQuestionAsync();
                 else if (applicationBinding != null && readToAnkiView != null && readToAnkiView.CanReplay && statusButton.Text.Contains("重播")) await ExecuteReadToAnkiAsync(ApplicationCommandKind.ReadToAnkiReplay);
                 else if (statusButton.Text == "▶ 重播") await ExecuteAsync(AutomationCatalog.PlaybackReplay, null);
             };
@@ -268,6 +273,7 @@ namespace KnowledgeClipper
             menu.Items.Add(contextItem); menu.Items.Add(originalItem); menu.Items.Add(new ToolStripSeparator());
             var stopRead = menu.Items.Add("停止朗读", null, async delegate
             {
+                if (languageFlow != null) { languageFlow.Stop(); return; }
                 var capturedTarget = readToAnkiView?.PlaybackTarget;
                 if (applicationBinding != null && readToAnkiView?.CanStop == true && capturedTarget != null)
                     await applicationBinding.InvokeAsync(InvocationSource.Pointer,
@@ -278,13 +284,15 @@ namespace KnowledgeClipper
             stopRead.Enabled = false;
             menu.Opening += async delegate
             {
+                if (languageFlow != null) { stopRead.Enabled = languageFlow.IsPlaying; return; }
                 stopRead.Enabled = false;
                 if (dependencies.Application?.ReadToAnkiUseCases == null) return;
                 await dependencies.Application.ReadToAnkiUseCases.RefreshPlaybackControlAsync(CancellationToken.None);
                 if (!IsDisposed) stopRead.Enabled = readToAnkiView?.CanStop == true;
             };
-            menu.Items.Add("查询最近任务", null, async delegate { await ExecuteAsync(AutomationCatalog.TaskStatusQueryRecent, null); }).Name = AutomationCatalogV11.AutomationIds[AutomationCatalog.TaskStatusQueryRecent];
+            menu.Items.Add("最近草稿 / 任务", null, async delegate { if (languageFlow != null) languageFlow.ShowRecent(); else await ExecuteAsync(AutomationCatalog.TaskStatusQueryRecent, null); }).Name = AutomationCatalogV11.AutomationIds[AutomationCatalog.TaskStatusQueryRecent];
             menu.Items.Add("设置…", null, delegate { OpenSettings(); }).Name = "knowledge-clipper.desktop.menu.settings";
+            menu.Items.Add("其他功能设置…", null, delegate { OpenSettings(true); });
             menu.Items.Add("恢复默认大小", null, delegate { RestoreDefaultSize(); }).Name = "knowledge-clipper.desktop.menu.window.restore-size";
             menu.Items.Add("打开数据目录", null, delegate { Process.Start(new ProcessStartInfo(config.WorkDirectory) { UseShellExecute = true }); });
             menu.Items.Add(new ToolStripSeparator()); menu.Items.Add("退出", null, delegate { Close(); });
@@ -308,6 +316,7 @@ namespace KnowledgeClipper
                 controller.Execute(Action(AutomationCatalog.ContextSet, new SemanticActionArguments { enabled = settings.ContextModeEnabled, granularity = settings.ContextGranularity }));
                 controller.Execute(Action(AutomationCatalog.OriginalImageSet, new SemanticActionArguments { enabled = settings.OriginalImageMode }));
             }
+            ResumeLayout(true);
         }
 
         protected override bool ShowWithoutActivation { get { return true; } }
@@ -324,7 +333,7 @@ namespace KnowledgeClipper
 
         private void ApplyFloatingContentScale()
         {
-            if (applyingContentScale || IsDisposed || floatingMetrics.Count == 0 || WindowState == FormWindowState.Minimized) return;
+            if (applyingContentScale || scalingForDpi || IsDisposed || floatingMetrics.Count == 0 || WindowState == FormWindowState.Minimized) return;
             applyingContentScale = true;
             // Always derive from immutable design metrics, never the previous resize.
             // Pixel dimensions include monitor DPI; point fonts must not apply DPI twice.
@@ -390,7 +399,7 @@ namespace KnowledgeClipper
 
         protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
         {
-            if (floatingMetrics != null && floatingMetrics.Count > 0 && WindowState == FormWindowState.Normal
+            if (!scalingForDpi && floatingMetrics != null && floatingMetrics.Count > 0 && WindowState == FormWindowState.Normal
                 && (specified & BoundsSpecified.Size) != 0)
             {
                 var size = NormalizeFloatingSize(width, height);
@@ -401,7 +410,7 @@ namespace KnowledgeClipper
 
         protected override void SetClientSizeCore(int width, int height)
         {
-            if (floatingMetrics != null && floatingMetrics.Count > 0 && WindowState == FormWindowState.Normal)
+            if (!scalingForDpi && floatingMetrics != null && floatingMetrics.Count > 0 && WindowState == FormWindowState.Normal)
             {
                 var chromeWidth = Width - ClientSize.Width;
                 var chromeHeight = Height - ClientSize.Height;
@@ -411,6 +420,14 @@ namespace KnowledgeClipper
             // WinForms writes its cached client size after SetBoundsCore returns.
             // Normalize here too so that cache cannot restore the unscaled axis.
             base.SetClientSizeCore(width, height);
+        }
+
+        protected override void ScaleControl(SizeF factor, BoundsSpecified specified)
+        {
+            var previous = scalingForDpi;
+            scalingForDpi = true;
+            try { base.ScaleControl(factor, specified); }
+            finally { scalingForDpi = previous; }
         }
 
         private void KeepWholeWindowScale(int edge, IntPtr rectangle)
@@ -440,7 +457,16 @@ namespace KnowledgeClipper
 
         protected override void WndProc(ref Message m)
         {
-            if (m.Msg == 0x0046 && m.LParam != IntPtr.Zero && floatingMetrics.Count > 0
+            if (m.Msg == 0x02E0) // WM_DPICHANGED: use WinForms' suggested physical bounds.
+            {
+                var previous = scalingForDpi;
+                scalingForDpi = true;
+                try { base.WndProc(ref m); }
+                finally { scalingForDpi = previous; }
+                if (IsHandleCreated && !IsDisposed) BeginInvoke((MethodInvoker)ApplyFloatingContentScale);
+                return;
+            }
+            if (!scalingForDpi && m.Msg == 0x0046 && m.LParam != IntPtr.Zero && floatingMetrics.Count > 0
                 && WindowState == FormWindowState.Normal) // WM_WINDOWPOSCHANGING, including native/UIA resize
             {
                 var position = Marshal.PtrToStructure<FloatingWindowPosition>(m.LParam);
@@ -518,6 +544,7 @@ namespace KnowledgeClipper
 
         private async Task SetContextModeAsync(bool enabled)
         {
+            if (languageFlow != null) { languageFlow.SaveSettings(languageFlow.Settings with { ContextEnabled = enabled }); return; }
             SaveAuthoritativeCaptureModes(enabled, settings.ContextGranularity, settings.OriginalImageMode);
             ApplyModeVisuals();
             await ExecuteAsync(AutomationCatalog.ContextSet, new SemanticActionArguments { enabled = enabled, granularity = settings.ContextGranularity });
@@ -893,8 +920,9 @@ namespace KnowledgeClipper
             return new SemanticActionEnvelope { schemaVersion = AutomationCatalogV13.IsKnownAction(action) ? AutomationCatalogV13.ActionSchemaVersion : AutomationCatalogV11.ActionSchemaVersion, requestId = "ui-" + Guid.NewGuid().ToString("N"), action = action, arguments = arguments };
         }
 
-        private void OpenSettings()
+        private void OpenSettings(bool legacy = false)
         {
+            if (languageFlow != null && !legacy) { OpenLanguageSettings(); return; }
             if (settingsForm != null && !settingsForm.IsDisposed)
             {
                 settingsForm.Show(); settingsForm.BringToFront(); settingsForm.Activate(); return;
@@ -1219,26 +1247,33 @@ namespace KnowledgeClipper
         }
 
         private void HideToTray() { dragging = false; Hide(); }
-        private void RestoreFromTray() { if (IsDisposed) return; WindowState = FormWindowState.Normal; EnsureWindowSize(); Show(); TopMost = true; BringToFront(); }
+        private void RestoreFromTray() { if (IsDisposed) return; WindowState = FormWindowState.Normal; EnsureWindowSize(); Location = EnsureVisible(Location); Show(); TopMost = true; BringToFront(); }
         private Size LoadSize() { try { var path = Path.Combine(config.WorkDirectory, "size.txt"); if (File.Exists(path)) { var p = File.ReadAllText(path).Split(','); int width, height; if (p.Length == 2 && int.TryParse(p[0], out width) && int.TryParse(p[1], out height)) return ClampSize(new Size(width, height)); } } catch { } return DefaultClientSize; }
         private Point LoadPosition() { try { var path = Path.Combine(config.WorkDirectory, "position.txt"); if (File.Exists(path)) { var p = File.ReadAllText(path).Split(','); int x, y; if (p.Length == 2 && int.TryParse(p[0], out x) && int.TryParse(p[1], out y)) return EnsureVisible(new Point(x, y)); } } catch { } var area = Screen.PrimaryScreen.WorkingArea; return new Point(area.Right - Width - 20, area.Top + area.Height / 3); }
-        private static Size ClampSize(Size value)
+        private Size ClampSize(Size value)
         {
             var bounds = SystemInformation.VirtualScreen;
             // Legacy size.txt may contain only a widened/tall frame. Convert it to
             // one zoom before controls or the HWND exist; do not clamp axes apart.
             var scale = Math.Max(1, Math.Max(value.Width / (double)DefaultClientSize.Width,
                 value.Height / (double)DefaultClientSize.Height));
-            var maximum = Math.Max(1, Math.Min(bounds.Width / (double)DefaultClientSize.Width,
-                bounds.Height / (double)DefaultClientSize.Height));
+            var maximum = Math.Max(1, Math.Min(bounds.Width * 96.0 / DeviceDpi / DefaultClientSize.Width,
+                bounds.Height * 96.0 / DeviceDpi / DefaultClientSize.Height));
             scale = Math.Min(scale, maximum);
             return new Size((int)Math.Round(DefaultClientSize.Width * scale), (int)Math.Round(DefaultClientSize.Height * scale));
         }
-        private void EnsureWindowSize() { var safe = ClampSize(ClientSize); if (ClientSize != safe) ClientSize = safe; }
-        internal void RestoreDefaultSize() { ClientSize = DefaultClientSize; SaveWindowBounds(); SetStatus("已恢复默认大小", Color.FromArgb(38, 116, 242), Color.White); }
-        private Point EnsureVisible(Point point) { foreach (var screen in Screen.AllScreens) if (screen.WorkingArea.Contains(point)) return point; return Screen.PrimaryScreen.WorkingArea.Location; }
+        private Size LogicalFloatingSize(Size pixels) => new Size((int)Math.Round(pixels.Width * 96.0 / DeviceDpi), (int)Math.Round(pixels.Height * 96.0 / DeviceDpi));
+        private Size PhysicalFloatingSize(Size logical) => new Size((int)Math.Round(logical.Width * DeviceDpi / 96.0), (int)Math.Round(logical.Height * DeviceDpi / 96.0));
+        private void EnsureWindowSize() { var safe = PhysicalFloatingSize(ClampSize(LogicalFloatingSize(ClientSize))); if (ClientSize != safe) ClientSize = safe; }
+        internal void RestoreDefaultSize() { ClientSize = PhysicalFloatingSize(DefaultClientSize); SaveWindowBounds(); SetStatus("已恢复默认大小", Color.FromArgb(38, 116, 242), Color.White); }
+        private Point EnsureVisible(Point point)
+        {
+            var area = Screen.FromPoint(point).WorkingArea;
+            return new Point(Math.Clamp(point.X, area.Left, Math.Max(area.Left, area.Right - Width)),
+                Math.Clamp(point.Y, area.Top, Math.Max(area.Top, area.Bottom - Height)));
+        }
         private void SavePosition() { try { Directory.CreateDirectory(config.WorkDirectory); File.WriteAllText(Path.Combine(config.WorkDirectory, "position.txt"), Location.X + "," + Location.Y, new UTF8Encoding(false)); } catch { } }
-        private void SaveWindowBounds() { try { EnsureWindowSize(); Directory.CreateDirectory(config.WorkDirectory); File.WriteAllText(Path.Combine(config.WorkDirectory, "size.txt"), ClientSize.Width + "," + ClientSize.Height, new UTF8Encoding(false)); SavePosition(); } catch { } }
+        private void SaveWindowBounds() { try { EnsureWindowSize(); Directory.CreateDirectory(config.WorkDirectory); var logical = LogicalFloatingSize(ClientSize); File.WriteAllText(Path.Combine(config.WorkDirectory, "size.txt"), logical.Width + "," + logical.Height, new UTF8Encoding(false)); SavePosition(); } catch { } }
         private string LogPath { get { var root = Path.Combine(config.WorkDirectory, "logs"); Directory.CreateDirectory(root); return Path.Combine(root, "desktop-ui.log"); } }
         private void Log(string value) { try { File.AppendAllText(LogPath, DateTime.Now.ToString("o") + " " + value + Environment.NewLine, new UTF8Encoding(false)); } catch { } }
         private static string ShortStatus(string value) { value = (value ?? "失败").Replace("\r", " ").Replace("\n", " ").Trim(); return value.Length > 24 ? value.Substring(0, 24) + "…" : value; }

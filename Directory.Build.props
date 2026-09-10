@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>D:\Caches\KnowledgeClipper\build\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <BaseOutputPath>D:\Artifacts\KnowledgeClipper\build\$(MSBuildProjectName)\</BaseOutputPath>
+    <DefaultItemExcludes>$(DefaultItemExcludes);**\bin\**;**\obj\**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

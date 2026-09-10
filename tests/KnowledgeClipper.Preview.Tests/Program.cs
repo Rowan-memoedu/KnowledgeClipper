@@ -1,0 +1,112 @@
+using System.Text.Json;
+using KnowledgeClipper;
+using KnowledgeClipper.Workflow;
+
+internal static class Program
+{
+    [STAThread]
+    static int Main(string[] args)
+    {
+        Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
+        Application.EnableVisualStyles();
+        var result = 0;
+        using var context = new ApplicationContext();
+        using var timer = new System.Windows.Forms.Timer { Interval = 10 };
+        timer.Tick += async (_, _) => {
+            timer.Stop();
+            try { await RunAsync(args); }
+            catch (Exception ex) { Console.Error.WriteLine(ex.ToString()); result = 1; }
+            finally { context.ExitThread(); }
+        };
+        timer.Start(); Application.Run(context); return result;
+    }
+
+    static async Task RunAsync(string[] args)
+    {
+        try
+        {
+            var root = args[0]; var artifacts = args[1];
+            var store = new DraftStore(Path.Combine(artifacts, "preview-state"));
+            var configuration = ModeConfigurationLoader.Load(Path.Combine(root, "modes"));
+            ClipDraft Create() => new() {
+                Original = new("严谨", null, "generated_allowed", null, "预览组件检查", 0, DateTimeOffset.UtcNow),
+                Material = new("严谨", null, "generated_allowed", null, "预览组件检查", 0, DateTimeOffset.UtcNow),
+                Settings = new LanguageSettings { AnkiDeck = "KnowledgeClipper Canary::Architecture 20260910" },
+                Configuration = configuration, ModeId = "language", Practice = PracticeChoice.Both,
+                Content = WorkflowJson.Read<ContentResult>(Path.Combine(artifacts, "m1-zh-result.json"))
+            };
+            static T Find<T>(Form form, string suffix) where T : Control => (T)form.Controls.Find("knowledge-clipper.language." + suffix, true).Single();
+            void Check(bool value, string name) { if (!value) throw new Exception(name); Console.WriteLine("PASS " + name); }
+
+            // The production preview is used directly; this checks UI state, not capture or model quality.
+            var draft = Create();
+            using (var preview = new LanguageDraftForm(draft, store, () => Task.CompletedTask, () => Task.CompletedTask, () => { }))
+            {
+                preview.Show(); await Task.Delay(100);
+                Check(Find<TextBox>(preview, "reading-preview").Text.Contains("反面") && Find<TextBox>(preview, "writing-preview").Text.Contains("［"), "readable card faces");
+                var longMeaning = string.Concat(Enumerable.Repeat("长内容排版检查，可滚动阅读。", 40));
+                Find<TextBox>(preview, "meaning").Text = longMeaning;
+                Find<ComboBox>(preview, "practice").SelectedIndex = 2;
+                preview.Size = preview.MinimumSize; await Task.Delay(100);
+                var host = preview.Controls.OfType<Panel>().Single();
+                var confirm = Find<Button>(preview, "confirm");
+                host.ScrollControlIntoView(confirm); await Task.Delay(100);
+                var confirmBounds = host.RectangleToClient(confirm.RectangleToScreen(confirm.ClientRectangle));
+                Check(host.ClientRectangle.Contains(confirmBounds), "confirmation reachable at minimum size: " + confirmBounds + " / " + host.ClientRectangle);
+                using (var bitmap = new Bitmap(preview.Width, preview.Height)) { preview.DrawToBitmap(bitmap, new Rectangle(Point.Empty, preview.Size)); bitmap.Save(Path.Combine(artifacts, "m1-preview-minimum.png")); }
+                preview.Close();
+                var saved = store.Recent().Single(d => d.Id == draft.Id);
+                Check(saved.EditedFields.Meaning == longMeaning && saved.Practice == PracticeChoice.Writing, "unconfirmed edits persist");
+                using var reopened = new LanguageDraftForm(saved, store, () => Task.CompletedTask, () => Task.CompletedTask, () => { });
+                Check(Find<TextBox>(reopened, "meaning").Text == longMeaning && Find<ComboBox>(reopened, "practice").SelectedIndex == 2, "reopened preview retains edits");
+            }
+
+            var missingContext = new CaptureMaterial("aa", null, "unavailable", null, "overlapping context fixture", 0, DateTimeOffset.UtcNow);
+            var contextDraft = new ClipDraft { Original = missingContext, Material = missingContext, Settings = new(), Configuration = configuration };
+            using (var preview = new LanguageDraftForm(contextDraft, store, () => Task.CompletedTask, () => Task.CompletedTask, () => { }))
+            {
+                preview.Show();
+                var resolved = preview.ResolveContextAsync();
+                var input = Find<TextBox>(preview, "user-context");
+                input.Text = "😀aaa"; input.Select(0, 0);
+                Find<Button>(preview, "use-context").PerformClick();
+                Check(!resolved.IsCompleted, "overlapping supplied targets require the actual selection");
+                input.Select(3, 2);
+                Find<Button>(preview, "use-context").PerformClick();
+                var material = await resolved;
+                material.Validate();
+                Check(material.TargetStart == 3 && material.ContextOrigin == "user" && material.ContextText == input.Text, "explicit supplied selection preserves exact UTF16 occurrence");
+                preview.Close();
+            }
+
+            // Actual confirmation/import uses the unchanged live Content CLI result and production adapter.
+            if (args.Contains("--anki"))
+            {
+                var resume = Array.IndexOf(args, "--resume");
+                var actual = resume >= 0 ? WorkflowJson.Read<ClipDraft>(args[resume + 1]) : Create(); var calls = 0; var finished = false;
+                actual.SpeechStatus = "朗读失败，可重新朗读"; actual.SpeechError = "界面独立性检查";
+                using var http = new HttpClient();
+                using var preview = new LanguageDraftForm(actual, store, async () => {
+                    calls++;
+                    try { await new AnkiConnection(http, actual.Settings.AnkiEndpoint).ImportAsync(actual, store); }
+                    catch (Exception ex) { Console.Error.WriteLine(ex.ToString()); throw; }
+                    finally { finished = true; }
+                }, () => Task.CompletedTask, () => { });
+                preview.Show(); await Task.Delay(100);
+                using (var bitmap = new Bitmap(preview.Width, preview.Height)) { preview.DrawToBitmap(bitmap, new Rectangle(Point.Empty, preview.Size)); bitmap.Save(Path.Combine(artifacts, "m1-preview-before-confirm.png")); }
+                Check(actual.NoteId == null, "preview does not import before confirmation");
+                Find<Button>(preview, "confirm").PerformClick();
+                var deadline = DateTime.UtcNow.AddSeconds(100);
+                while (!finished && DateTime.UtcNow < deadline) await Task.Delay(50);
+                await Task.Delay(100);
+                Check(actual.ImportState == ImportState.Verified, "one preview confirmation creates verified Anki cards: " + actual.ImportError);
+                Find<Button>(preview, "confirm").PerformClick(); await Task.Delay(100);
+                Check(calls == 1 && actual.CardIds.Length == 2, "repeated confirmation does not invoke importer");
+                Check(Find<TextBox>(preview, "meaning").ReadOnly && !Find<ComboBox>(preview, "practice").Enabled, "confirmed preview remains frozen");
+                WorkflowJson.Save(Path.Combine(artifacts, "m1-preview-confirmation.json"), new { actual.Id, actual.NoteId, actual.CardIds, calls, actual.ImportState, actual.ConfirmedNote, actual.Times });
+                preview.Close();
+            }
+        }
+        catch { throw; }
+    }
+}

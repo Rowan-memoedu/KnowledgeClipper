@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "语言学习共享内容",
+  "description": "一个选定目标的读音、语境义及必要时生成的例句；来源原文由应用保存。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pronunciation",
+    "meaning",
+    "generatedSentence",
+    "generatedTargetStart"
+  ],
+  "properties": {
+    "pronunciation": {
+      "title": "读音",
+      "description": "目标在本次语境中的完整读音：中文用带声调拼音，英文用 IPA，混合目标按原顺序组合。",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "meaning": {
+      "title": "语境义",
+      "description": "目标在本次语境中的简洁中文释义或表达作用，也作为书写回忆提示，避免直接泄露目标写法。",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "generatedSentence": {
+      "title": "AI 生成例句",
+      "description": "真实或用户上下文存在时为 null；仅在获准生成且没有上下文时提供含目标原样文本的自然例句。",
+      "type": ["string", "null"],
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "generatedTargetStart": {
+      "title": "例句中目标的起始位置",
+      "description": "模型返回 null；获准生成的例句必须含且仅含一次原样目标，由应用确定其 UTF-16 下标。兼容旧整数输出，但以应用的唯一精确匹配为准。",
+      "type": ["integer", "null"],
+      "minimum": 0
+    }
+  },
+  "anyOf": [
+    {
+      "properties": {
+        "generatedSentence": {"type": "null"},
+        "generatedTargetStart": {"type": "null"}
+      }
+    },
+    {
+      "properties": {
+        "generatedSentence": {"type": "string"},
+        "generatedTargetStart": {"type": ["integer", "null"]}
+      }
+    }
+  ]
+}

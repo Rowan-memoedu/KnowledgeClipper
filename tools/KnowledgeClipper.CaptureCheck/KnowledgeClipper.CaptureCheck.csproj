@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="KnowledgeClipper">
+      <HintPath>D:\Artifacts\KnowledgeClipper\build\RemNoteQuickClipper.Desktop\Release\net8.0-windows\win-x64\KnowledgeClipper.dll</HintPath>
+    </Reference>
+    <ProjectReference Include="..\..\workflow\KnowledgeClipper.Workflow.csproj" />
+  </ItemGroup>
+</Project>

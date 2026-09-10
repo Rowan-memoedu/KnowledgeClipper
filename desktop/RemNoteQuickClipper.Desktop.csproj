@@ -23,8 +23,6 @@
     <Deterministic>true</Deterministic>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
-    <CoreV3ReadToAnkiSdkRoot>D:\Artifacts\KnowledgeClipper\remnote-destinations\sdk-integration-20260909-04</CoreV3ReadToAnkiSdkRoot>
-    <CoreV3ReadToAnkiContractsRoot>$(CoreV3ReadToAnkiSdkRoot)</CoreV3ReadToAnkiContractsRoot>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\src\Core.cs" Link="Core.cs" />
@@ -44,6 +42,8 @@
     <Compile Include="..\src\LoopbackProviderOverrides.cs" Link="LoopbackProviderOverrides.cs" />
     <Compile Include="..\src\StartupDiagnostics.cs" Link="StartupDiagnostics.cs" />
     <Compile Include="..\src\DesktopUi.cs" Link="DesktopUi.cs" />
+    <Compile Include="..\src\DesktopUi.Language.cs" Link="DesktopUi.Language.cs" />
+    <Compile Include="..\src\Language*.cs" Link="%(Filename)%(Extension)" />
     <Compile Include="..\src\FlashcardPreviewUi.cs" Link="FlashcardPreviewUi.cs" />
     <Compile Include="..\src\CardResolutionUi.cs" Link="CardResolutionUi.cs" />
     <Compile Include="..\src\WindowsDesktopProviders.cs" Link="WindowsDesktopProviders.cs" />
@@ -61,17 +61,13 @@
     <Content Include="..\contracts\desktop-automation\**\*" Link="contracts\desktop-automation\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\contracts\v1\**\*" Link="contracts\v1\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\receipts\contracts-v1-stable-checkpoint-20260825T115938Z.json" Link="receipts\contracts-v1-stable-checkpoint-20260825T115938Z.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="..\tests\RemNoteQuickClipper.Speech.Tests\bin\out\r103308cb4b\settings-companion\descriptor.json" Link="descriptors\speech-settings-companion.v1.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="..\content-worker\releases\content.deepseek-0.7.0-win-x64-formal-20260828T103735Z\app\descriptors\content-companion-descriptor.v1.json" Link="descriptors\content-companion-descriptor.v1.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="..\releases\knowledge-clipper-anki-exporter-v1.2.1-20260828T104000Z\win-x64\workers\anki\contracts\anki-destination-settings-descriptor.v1.json" Link="descriptors\anki-destination-settings-descriptor.v1.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\workers\image-ocr\candidates\1.2.2\image-ocr-capability-config-descriptor.v4.json" Link="descriptors\image-ocr-capability-config-descriptor.v4.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\workers\image-ocr\candidates\1.2.3\image-ocr-capability-config-descriptor.v5.json" Link="descriptors\image-ocr-capability-config-descriptor.v5.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="KnowledgeClipper.Core.V3.Client">
-      <HintPath>$(CoreV3ReadToAnkiSdkRoot)\KnowledgeClipper.Core.V3.Client.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Content Include="$(CoreV3ReadToAnkiContractsRoot)\KnowledgeClipper.Core.V3.Contracts.dll" Link="KnowledgeClipper.Core.V3.Contracts.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <ProjectReference Include="..\core-v3\src\KnowledgeClipper.Core.V3.Client\KnowledgeClipper.Core.V3.Client.csproj" />
+    <ProjectReference Include="..\workflow\KnowledgeClipper.Workflow.csproj" />
+    <Content Include="..\modes\**\*" Link="modes\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\helpers\**\*" Exclude="..\helpers\node_modules\.package-lock.json" Link="helpers\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
