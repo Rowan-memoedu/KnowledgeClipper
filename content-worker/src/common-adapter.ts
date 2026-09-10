@@ -185,7 +185,9 @@ export async function runCommonRequest(requestPath: string, workerRoot: string):
         request,
         bundlePath: workerResult.languagePracticeDecisionPath,
         kind: "language-practice-decision",
-        manifestName: "language-practice-decision.artifact.v1.json",
+        contractVersion: workerResult.languagePracticeDecisionContractVersion!,
+        bundleSchemaVersion: workerResult.languagePracticeDecisionSchemaVersion!,
+        manifestName: workerResult.languagePracticeDecisionContractVersion === "2.0.0" ? "language-practice-decision.artifact.v2.json" : "language-practice-decision.artifact.v1.json",
         inputRefs: [...request.inputRefs, learningRef],
         dataClass,
       }));

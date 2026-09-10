@@ -7,6 +7,7 @@
     <LangVersion>latest</LangVersion>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AssemblyName>QualityV3.DesktopGatewayConformance.Tests</AssemblyName>
+    <CoreV3ReadToAnkiSdkRoot>D:\Artifacts\KnowledgeClipper\read-to-anki\rta-20260903T192608Z-29b07e80\core-v3</CoreV3ReadToAnkiSdkRoot>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\..\src\KnowledgeClipper.Desktop.Application\*.cs" Link="Application\%(Filename)%(Extension)" />
@@ -15,9 +16,9 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="KnowledgeClipper.Core.V3.Client">
-      <HintPath>..\..\..\core-v3\releases\20260902T060054Z-foundation.2\artifacts\net8.0\KnowledgeClipper.Core.V3.Client.dll</HintPath>
+      <HintPath>$(CoreV3ReadToAnkiSdkRoot)\KnowledgeClipper.Core.V3.Client.dll</HintPath>
       <Private>true</Private>
     </Reference>
-    <Content Include="..\..\..\core-v3\releases\20260902T060054Z-foundation.2\artifacts\net8.0\KnowledgeClipper.Core.V3.Contracts.dll" Link="KnowledgeClipper.Core.V3.Contracts.dll" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(CoreV3ReadToAnkiSdkRoot)\KnowledgeClipper.Core.V3.Contracts.dll" Link="KnowledgeClipper.Core.V3.Contracts.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

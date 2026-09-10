@@ -23,10 +23,26 @@ namespace KnowledgeClipper.Desktop.Application.V3
         IReadOnlyList<string> UninitializedRoutes,
         string NoticeCode);
 
+    internal sealed record ReadToAnkiViewProjection(
+        string OperationId,
+        ReadToAnkiPlaybackStatus Playback,
+        ReadToAnkiPipelineStatus Pipeline,
+        bool AttentionRequired,
+        bool CanReplay,
+        bool NeedsLanguageChoice,
+        bool IsProcessing,
+        string NoticeCode)
+    {
+        internal CardResolutionPrompt CardResolution { get; init; }
+        internal PlaybackTarget PlaybackTarget { get; init; }
+        internal bool CanStop { get; init; }
+    }
+
     internal sealed record DesktopViewProjection(
         long Revision,
         QuestionViewProjection Question,
-        AnkiReadinessViewProjection AnkiReadiness);
+        AnkiReadinessViewProjection AnkiReadiness,
+        ReadToAnkiViewProjection ReadToAnki);
 
     internal interface IDesktopApplicationView
     {
@@ -58,6 +74,7 @@ namespace KnowledgeClipper.Desktop.Application.V3
         private void Render(DesktopApplicationState state)
         {
             var question = state.Question;
+            var readToAnki = state.ReadToAnki;
             state.ModuleActions.TryGetValue(ModuleActionKind.AnkiProbe, out var anki);
             var readiness = anki?.AnkiReadiness;
             view.Render(new DesktopViewProjection(
@@ -77,11 +94,24 @@ namespace KnowledgeClipper.Desktop.Application.V3
                     readiness?.OptionalRoutesUninitialized ?? false,
                     readiness?.CurrentTarget,
                     readiness?.UninitializedRoutes ?? Array.Empty<string>(),
-                    anki?.NoticeCode)));
+                    anki?.NoticeCode),
+                new ReadToAnkiViewProjection(
+                    readToAnki.OperationId,
+                    readToAnki.Playback,
+                    readToAnki.Pipeline,
+                    readToAnki.AttentionRequired,
+                    ReadToAnkiUseCases.CanReplay(readToAnki),
+                    readToAnki.Pipeline == ReadToAnkiPipelineStatus.WaitingUserChoice && readToAnki.AttentionRequired,
+                    IsReadToAnkiProcessing(readToAnki),
+                    readToAnki.NoticeCode) { CardResolution = readToAnki.CardResolution, PlaybackTarget = readToAnki.PlaybackTarget, CanStop = readToAnki.CanStop }));
         }
 
         private static bool IsSettled(OperationStatus status) =>
             status == OperationStatus.Succeeded || status == OperationStatus.WaitingInput;
+
+        private static bool IsReadToAnkiProcessing(ReadToAnkiFeatureState state) =>
+            state.Playback is ReadToAnkiPlaybackStatus.Accepted or ReadToAnkiPlaybackStatus.Playing ||
+            state.Pipeline is ReadToAnkiPipelineStatus.Accepted or ReadToAnkiPipelineStatus.Reviewing or ReadToAnkiPipelineStatus.CreatingCards or ReadToAnkiPipelineStatus.WritingAnki;
 
         public void Dispose()
         {

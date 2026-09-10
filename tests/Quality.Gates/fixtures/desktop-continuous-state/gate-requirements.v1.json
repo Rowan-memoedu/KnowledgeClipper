@@ -1,0 +1,16 @@
+{
+  "schema": "kc.quality.desktop-continuous-state-requirements/1",
+  "status": "WAITING-OWNER-CANDIDATES",
+  "required": {
+    "automationContract": ["append-only desktop-automation/1.4.0", "accept-candidate submit-correction cancel", "schema/code parity", "existing control binding", "legacy IDs rejected", "actual harness resolves IDs only from highest compatible contract packaged in candidate"],
+    "externalUiaSurface": ["select exactly one window by PID plus root automationId", "reject zero or multiple windows", "production WinForms provider exposes root context read extract and card-resolution IDs", "evidence is an external no-business-click UIA dump", "in-process Control.Name is not acceptance evidence"],
+    "typedStateMachine": ["choice clears", "unresolved exactly AwaitingCardResolution", "unresolved Anki writes zero", "cards-only playback exactly NotRequested", "ready preview", "unresolved human decision", "failed/cancelled stop spinner", "new Extract/Read available"],
+    "continuousScenario": ["one process without restart", "real external WPF TextPattern selection", "actual Read and Extract buttons", "Context on with one state source", "Read both preview2 confirm exact2", "Extract then Read", "resolution accept/correction/cancel", "resize preserves state", "failure recovery", "pre-preview zero writes", "duplicate confirm zero"],
+    "context": ["floating toggle/profile/task snapshot same revision", "exact selectedText", "ordered non-empty contextSegments", "Content receives selection+context", "Speech receives selectedText only", "off control", "unavailable typed visible failure"],
+    "faultRecovery": ["Content unresolved", "Speech failed", "Core/pipe failed", "each typed, spinner terminal, later actions available, no restart"],
+    "productionRoute": ["KnowledgeClipper.exe", "real button UIA", "clipboard capture", "typed gateway", "Core process"],
+    "automationSeam": ["must use production KnowledgeClipper.exe single-instance entry", "must not use test-only mutex isolation", "may isolate pipe data-root and Canary destination deck", "destination must be SHA-bound by authority settings snapshot", "actual UI request cannot override destination", "must not inject selectedText context or final input"],
+    "compiler": ["locked dotnet compiler", "full Windows script exit 0"]
+  },
+  "rejected": ["direct final text injection", "direct Core IPC", "receipt replay", "legacy-only task package", "restart to clear state", "mixed candidate evidence"]
+}

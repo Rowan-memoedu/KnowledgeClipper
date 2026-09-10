@@ -1,0 +1,23 @@
+{
+  "authorization": {"authorizationId": "authorization-offline-canary", "policy": "isolated-canary-deck"},
+  "body": {
+    "data": {
+      "action": "confirm_card_draft",
+      "draft": {
+        "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "token": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "sourceOperationId": "operation-offline-semantic-gate"
+    },
+    "schema": "kc.read-aloud-cards-command/1"
+  },
+  "commandId": "command-confirm-offline-semantic-gate",
+  "expectedRevision": null,
+  "idempotencyKey": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "inputs": [],
+  "operation": "clip.read-aloud-cards",
+  "operationId": "operation-offline-semantic-gate",
+  "schema": "kc.command/2",
+  "subject": {"id": "operation-offline-semantic-gate", "type": "operation"}
+}

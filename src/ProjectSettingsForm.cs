@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using KnowledgeClipper.Desktop.Application;
 using KnowledgeClipper.Desktop.Core;
+using KnowledgeClipper.Desktop.Application.V3;
+using System.Threading;
 
 namespace KnowledgeClipper
 {
@@ -105,7 +107,7 @@ namespace KnowledgeClipper
 
     }
 
-    internal sealed class SettingsForm : Form
+    internal sealed partial class SettingsForm : Form
     {
         private static readonly Color Canvas = Color.FromArgb(246, 248, 251);
         private static readonly Color Ink = Color.FromArgb(31, 42, 55);
@@ -123,6 +125,11 @@ namespace KnowledgeClipper
         private readonly ContentSettingsDescriptorView contentDescriptor;
         private readonly SpeechSettingsDescriptorView speechDescriptor;
         private readonly DesktopAnkiProbeHost ankiProbeHost;
+        private readonly DesktopCompositionRoot typedApplication;
+        private CancellationTokenSource ankiProbeCancellation;
+        private int ankiProbeInFlight;
+        private ComboBox ankiProbeRoute;
+        internal const string AnkiProbeRouteId = "knowledge-clipper.desktop.settings.export.anki.probe-route";
         private readonly DesktopModuleActionHost moduleActionHost;
         private DesktopModuleSettingsDocument moduleSettings;
         private readonly ProcessAudio previewAudio;
@@ -135,14 +142,14 @@ namespace KnowledgeClipper
         private WorkflowSettingsDocument workflowDocument
         {
             get { return settingsDraft.Document; }
-            set { settingsDraft.Replace(value); }
+            set { InvalidateRemNoteObservation(); settingsDraft.Replace(value); }
         }
         private bool changingProfile;
-        private ComboBox workflowSelector, processingProfile;
+        private ComboBox workflowSelector, processingProfile, ankiDeckPreset;
         private ComboBox languageOverride, chinese, english, spanish, japanese, korean, contextGranularity, ocrModel, ocrLanguage, remnoteSink, promptVersion, contentDefaultChoice, contentModel;
         private CheckBox contextMode, originalImageMode, speechAutoPlay, remnoteDestination, ankiDestination, ocrTable, ocrFormula, contentPromptAfterRecognition;
         private NumericUpDown rate, volume, pitch, ocrTimeout, ocrPoll, contentMaxRetries;
-        private TextBox deepSeekCredential, mineruCredential, ocrScript, remnoteRootId, remnoteRootTitle, ankiProfile, ankiEndpoint, ankiProbeStatus, ankiInitializeStatus, speechVoiceCatalogAvailability, speechPreviewAvailability, remnoteProbeStatus, remnoteDiscoverTargetStatus, remnoteBoundTargetStatus;
+        private TextBox deepSeekCredential, mineruCredential, ocrScript, remnoteRootId, remnoteRootTitle, ankiProfile, ankiEndpoint, ankiDeckRoutes, ankiProbeStatus, ankiInitializeStatus, speechVoiceCatalogAvailability, speechPreviewAvailability, remnoteProbeStatus, remnoteDiscoverTargetStatus, remnoteBoundTargetStatus;
         private Button promptCopy, promptOpen, promptValidate, promptDiff, ankiProbe, ankiInitialize, voiceDiscovery, speechPreview, remnoteProbe, remnoteDiscoverTarget;
         private string speechCatalogJson;
 
@@ -188,8 +195,12 @@ namespace KnowledgeClipper
             contentDescriptor = dependencies.ContentDescriptor;
             speechDescriptor = dependencies.SpeechDescriptor;
             ankiProbeHost = dependencies.AnkiProbeHost;
+            typedApplication = dependencies.Application;
+            FormClosing += (_, __) => ankiProbeCancellation?.Cancel();
+            FormClosing += (_, __) => remNoteScope.Dispose();
             moduleActionHost = dependencies.ModuleActionHost;
             settingsDraft = dependencies.SettingsDraft;
+            foreach (var profile in settingsDraft.Document.Profiles) remNoteOriginalSettings[profile.Key] = profile.Value.Remnote;
             previewAudio = dependencies.PreviewAudio;
 
             Text = "零碎知识剪藏 · 设置";
@@ -235,6 +246,7 @@ namespace KnowledgeClipper
             Controls.Add(shell);
             navigation.SelectedIndex = 0;
             BindProfiles();
+            Shown += async (_, __) => await RestoreRemNoteBindingAsync();
             RestoreSpeechCatalogCache();
 
             FormClosed += delegate { previewAudio.Dispose(); };
@@ -371,37 +383,47 @@ namespace KnowledgeClipper
             var exportAdvanced = Tier(export, "进阶");
             remnoteRootId = new TextBox { Width = 430, ReadOnly = true, Name = SettingsAutomationCatalog.ExportRemNoteRootId, AccessibleName = SettingsAutomationCatalog.ExportRemNoteRootId, AccessibleDescription = "只读；仅由已验证的 public discovery action 更新" };
             remnoteRootTitle = new TextBox { Width = 430, Text = "剪藏", Name = SettingsAutomationCatalog.ExportRemNoteRootTitle, AccessibleName = SettingsAutomationCatalog.ExportRemNoteRootTitle };
+            remnoteRootTitle.TextChanged += (_, __) => RemNoteSelectorChanged();
             remnoteSink = Choice(new[] { "mcp-direct", "markdown-zip" }, 0, SettingsAutomationCatalog.ExportRemNoteSink);
             ankiProfile = new TextBox { Width = 430, Text = moduleSettings.AnkiExpectedProfile, Name = SettingsAutomationCatalog.ExportAnkiProfile, AccessibleName = SettingsAutomationCatalog.ExportAnkiProfile };
             ankiEndpoint = new TextBox { Width = 430, Text = moduleSettings.AnkiEndpoint, Name = SettingsAutomationCatalog.ExportAnkiEndpoint, AccessibleName = SettingsAutomationCatalog.ExportAnkiEndpoint };
+            ankiDeckPreset = Choice(new[] { "knowledge-clipper-default", "custom" }, moduleSettings.AnkiDeckPreset == "custom" ? 1 : 0, SettingsAutomationCatalog.ExportAnkiDeckPreset);
+            ankiDeckRoutes = new TextBox { Width = 430, Text = JsonSerializer.Serialize(moduleSettings.AnkiDeckRoutes ?? new Dictionary<string, string>(), ContractJson.Options), Name = SettingsAutomationCatalog.ExportAnkiDeckRoutes, AccessibleName = SettingsAutomationCatalog.ExportAnkiDeckRoutes, AccessibleDescription = "JSON map；custom 时下一任务生效" };
             remnoteBoundTargetStatus = AddReadOnly(exportCommon, "RemNote 当前绑定目标", CurrentRemNoteTargetDisplay(), SettingsAutomationCatalog.ExportRemNoteBoundTarget);
             AddRow(exportAdvanced, "RemNote 根节点 ID（自动发现，只读）", remnoteRootId); AddRow(exportAdvanced, "RemNote 根节点标题（发现条件）", remnoteRootTitle); AddRow(exportAdvanced, "RemNote 写入方式", remnoteSink);
             remnoteDiscoverTarget = ActionButton("按标题自动发现 RemNote 目标", SettingsAutomationCatalog.ExportRemNoteDiscoverTarget, Color.White);
-            remnoteDiscoverTarget.Enabled = moduleActionHost.CanDiscoverRemNoteTarget;
-            Conditional(remnoteDiscoverTarget, remnoteDiscoverTarget.Enabled ? "Core IPC 1.3 · exact-title + unique + exact-readback；成功后点击保存，对下一任务生效" : "conditional · 当前 authority 未提供 Core IPC 1.3 remnote.discover-target");
+            remnoteDiscoverTarget.Enabled = typedApplication != null;
+            Conditional(remnoteDiscoverTarget, "显式只读发现 · Core typed SDK 验证唯一目标和证据；保存后下一任务生效");
             remnoteDiscoverTarget.Click += async delegate { await RunRemNoteTargetDiscoveryAsync(); };
             AddWide(exportAdvanced, remnoteDiscoverTarget);
             remnoteDiscoverTargetStatus = AddReadOnly(exportAdvanced, "RemNote 自动发现状态", remnoteDiscoverTarget.Enabled ? "未运行 · 仅使用标题作为发现条件" : "conditional · public discovery action unavailable", SettingsAutomationCatalog.ExportRemNoteDiscoverTargetStatus);
             remnoteProbe = ActionButton("RemNote 只读连接检查", SettingsAutomationCatalog.ExportRemNoteProbe, Color.White);
-            remnoteProbe.Enabled = moduleActionHost.CanRun;
-            Conditional(remnoteProbe, remnoteProbe.Enabled ? "Core IPC 1.2 · remnote.probe · status/search/list/read · externalWriteCount=0；Desktop 不直连" : "conditional · 当前候选未提供 Core IPC 1.2 module-action");
+            remnoteProbe.Enabled = typedApplication != null;
+            Conditional(remnoteProbe, "显式只读检查 · 使用 Core verified binding；历史证据恢复不代表当前连接就绪");
             remnoteProbe.Click += async delegate { await RunRemNoteProbeAsync(); };
             AddWide(exportAdvanced, remnoteProbe);
             remnoteProbeStatus = AddReadOnly(exportAdvanced, "RemNote 检查状态", moduleActionHost.CanRun ? "未运行 · 仅显式只读检查" : "conditional · Core action unavailable", SettingsAutomationCatalog.ExportRemNoteProbeStatus);
-            AddRow(exportAdvanced, "Anki profile", ankiProfile); AddRow(exportAdvanced, "AnkiConnect endpoint", ankiEndpoint);
+            AddRow(exportAdvanced, "Anki profile", ankiProfile); AddRow(exportAdvanced, "AnkiConnect endpoint", ankiEndpoint); AddRow(exportAdvanced, "Anki 牌组方案（下一任务）", ankiDeckPreset); AddRow(exportAdvanced, "自定义 deckRoutes（JSON，下一任务）", ankiDeckRoutes);
             AddReadOnly(exportAdvanced, "Anki 配置工件", "每个新任务由 authority 模块模板生成并以 SHA-256 绑定", SettingsAutomationCatalog.ExportAnkiConfig);
             var semanticAnkiProbe = SemanticButton("只读连接检查", SettingsAutomationCatalog.ExportAnkiProbe, Color.White, RunAnkiProbeAsync);
             ankiProbe = semanticAnkiProbe;
-            ankiProbe.Enabled = ankiProbeHost != null && ankiProbeHost.CanRun;
-            Conditional(ankiProbe, ankiProbeHost == null || ankiProbeHost.Capability == null ? "Anki 1.2.1 descriptor 不可读" : ankiProbeHost.Capability.StatusText + "；可能弹出 Anki permission；仅经 Core resolver + worker-owned loopback read-only probe，禁止桌面直连、provision 或 write");
+            ankiProbeRoute = new ComboBox { Width = 430, DropDownStyle = ComboBoxStyle.DropDownList, Name = AnkiProbeRouteId, AccessibleName = AnkiProbeRouteId };
+            ankiProbeRoute.DropDown += (_, __) => RefreshAnkiProbeRoutes();
+            ankiDeckPreset.SelectedIndexChanged += (_, __) => RefreshAnkiProbeRoutes();
+            ankiDeckRoutes.TextChanged += (_, __) => RefreshAnkiProbeRoutes();
+            ankiProfile.TextChanged += (_, __) => RefreshAnkiProbeRoutes();
+            RefreshAnkiProbeRoutes();
+            AddRow(exportAdvanced, "检查目标（route key，不修改默认目标）", ankiProbeRoute);
+            ankiProbe.Enabled = typedApplication != null;
+            Conditional(ankiProbe, "仅经同一 typed Core SDK 做只读检查；可能弹出 Anki permission；不初始化、不写卡；保存设置不会触发检查");
             AddWide(exportAdvanced, ankiProbe);
-            ankiProbeStatus = AddReadOnly(exportAdvanced, "连接检查状态", ankiProbeHost == null || ankiProbeHost.Capability == null ? "conditional · descriptor unavailable" : ankiProbeHost.Capability.StatusText, SettingsAutomationCatalog.ExportAnkiProbeStatus);
+            ankiProbeStatus = AddReadOnly(exportAdvanced, "连接检查状态", "未运行 · 多个 route 时请明确选择检查目标", SettingsAutomationCatalog.ExportAnkiProbeStatus);
             ankiInitialize = ActionButton("初始化受管资源（会写入 Anki）", SettingsAutomationCatalog.ExportAnkiInitialize, Color.FromArgb(255, 245, 224));
             ankiInitialize.Enabled = false;
             Conditional(ankiInitialize, "explicit-only · 仅创建缺失的受管牌组/模型；不写卡、不删除、不修改现有资源；普通连接检查绝不触发");
             ankiInitialize.Click += async delegate { await RunAnkiInitializationAsync(); };
             AddWide(exportAdvanced, ankiInitialize);
-            ankiInitializeStatus = AddReadOnly(exportAdvanced, "初始化状态", ankiProbeHost != null && ankiProbeHost.CanInitializeManaged ? "等待只读检查返回 needs_initialization" : "conditional · 等待 Core/authority 公共 initialize-managed action", SettingsAutomationCatalog.ExportAnkiInitializeStatus);
+            ankiInitializeStatus = AddReadOnly(exportAdvanced, "初始化状态", "未启用 · 只读检查不创建牌组、模型、卡片或媒体", SettingsAutomationCatalog.ExportAnkiInitializeStatus);
             var clipDaily = Check("摘录到 RemNote：剪藏 → 当日节点", false, SettingsAutomationCatalog.ExportClipDaily);
             clipDaily.Checked = true; clipDaily.Enabled = false; Conditional(clipDaily, "固定映射为 clip-daily-route；制卡固定 card-export"); AddWide(exportAdvanced, clipDaily);
             AddUnsupported(Tier(export, "开发 / 诊断"), "Exporter 状态与回执", "等待 Core health projection；制卡设置不包含日期字段", SettingsAutomationCatalog.ExportHealth);
@@ -486,7 +508,11 @@ namespace KnowledgeClipper
             if (contentDefaultChoice.Enabled) contentDefaultChoice.AccessibleDescription = "supported: Content 0.7.0 companion + Core adapter v3; published in SHA-bound content-config-snapshot/1.1.0";
             if (contentModel.Enabled) contentModel.AccessibleDescription = "supported: next-task content-config-snapshot/1.1.0 runtimePolicy.provider.model";
             if (contentMaxRetries.Enabled) contentMaxRetries.AccessibleDescription = "supported: next-task content-config-snapshot/1.1.0 runtimePolicy.provider.maxRetries";
-            remnoteDestination.Enabled = settingsService.RemNoteExporterV2Available() && settingsService.Capabilities.Editable("/remnote");
+            // Editing the next-task destination is governed by the admitted settings
+            // adapter. Runtime availability is validated when the immutable snapshot is
+            // published; tying this control to an obsolete 2.0.0 evidence filename made
+            // newer admitted exporters look unavailable in the UI.
+            remnoteDestination.Enabled = settingsService.Capabilities.Editable("/remnote");
             remnoteRootId.Enabled = remnoteDestination.Enabled;
             remnoteRootTitle.Enabled = remnoteSink.Enabled = remnoteDestination.Enabled;
             ankiDestination.Enabled = settingsService.Capabilities.Editable("/anki/enabled");
@@ -708,84 +734,6 @@ namespace KnowledgeClipper
             finally { speechPreview.Enabled = moduleActionHost.CanRun && !string.IsNullOrWhiteSpace(speechCatalogJson); }
         }
 
-        private async Task RunRemNoteProbeAsync()
-        {
-            if (!moduleActionHost.CanRun) return;
-            string rootId, rootTitle;
-            if (!TryGetCurrentRemNoteTarget(out rootId, out rootTitle))
-            {
-                remnoteProbeStatus.Text = "未运行 · 当前 profile 尚未绑定 RemNote 目标；可在进阶目标配置中设置并保存";
-                status.Text = "RemNote 检查未运行；普通检查不会要求临时填写 Rem ID。";
-                return;
-            }
-            remnoteProbe.Enabled = false; remnoteProbeStatus.Text = "检查中 · status/search/list/read · 写入=0"; status.Text = "正在执行 RemNote 只读连接检查…";
-            try
-            {
-                var probeId = "desktop-remnote-probe-" + Guid.NewGuid().ToString("N");
-                var payload = new { schemaVersion = "remnote-public-probe-request.v2", probeId, authorizationScope = "configured-destination", timeoutMs = 15000, operations = new[] { "status", "search", "list", "read" }, target = new { rootRemId = rootId, rootTitle } };
-                var result = await moduleActionHost.RunAsync("remnote.probe", payload);
-                using var document = JsonDocument.Parse(result.OutputJson); var root = document.RootElement;
-                var healthy = root.GetProperty("state").GetString() == "healthy" && root.GetProperty("admission").GetString() == "ready" && root.GetProperty("targetBinding").GetProperty("matched").GetBoolean();
-                remnoteProbeStatus.Text = (healthy ? "就绪" : "阻塞") + " · state=" + root.GetProperty("state").GetString() + " · exact-readback=" + root.GetProperty("targetBinding").GetProperty("matched").GetBoolean().ToString().ToLowerInvariant() + " · writes=0";
-                status.Text = healthy ? "RemNote 只读检查就绪；目标设置对下一任务生效。" : "RemNote 只读检查未就绪；不会尝试写入。";
-            }
-            catch (Exception ex) { remnoteProbeStatus.Text = "检查失败 · " + ex.Message; status.Text = "RemNote 只读检查失败；写入=0。"; }
-            finally { remnoteProbe.Enabled = moduleActionHost.CanRun; }
-        }
-
-        private async Task RunRemNoteTargetDiscoveryAsync()
-        {
-            if (!moduleActionHost.CanDiscoverRemNoteTarget) return;
-            var requestedTitle = string.IsNullOrWhiteSpace(remnoteRootTitle.Text) ? "剪藏" : remnoteRootTitle.Text.Trim();
-            remnoteDiscoverTarget.Enabled = false;
-            remnoteDiscoverTargetStatus.Text = "发现中 · exact-title + unique + exact-readback · 写入=0";
-            status.Text = "正在按精确标题发现 RemNote 目标…";
-            try
-            {
-                var payload = new
-                {
-                    schemaVersion = "remnote-target-discovery-request.v1",
-                    discoveryId = "desktop-remnote-discovery-" + Guid.NewGuid().ToString("N"),
-                    authorizationScope = "configured-destination",
-                    timeoutMs = 15000,
-                    operations = new[] { "status", "search", "list", "read" },
-                    selector = new { rootTitle = requestedTitle, expectedType = "document", match = "exact", uniqueness = "required" }
-                };
-                var result = await moduleActionHost.RunAsync("remnote.discover-target", payload);
-                using var document = JsonDocument.Parse(result.OutputJson);
-                var root = document.RootElement;
-                var selection = root.GetProperty("selection");
-                var persistable = root.GetProperty("state").GetString() == "healthy" && root.GetProperty("admission").GetString() == "ready" &&
-                    selection.GetProperty("resolution").GetString() == "unique" && selection.GetProperty("exactReadback").GetBoolean() && selection.GetProperty("persistableBinding").GetBoolean();
-                if (persistable)
-                {
-                    var resolvedId = selection.GetProperty("resolvedRootRemId").GetString();
-                    var observedTitle = selection.GetProperty("observedTitle").GetString();
-                    if (string.IsNullOrWhiteSpace(resolvedId) || string.IsNullOrWhiteSpace(observedTitle)) throw new InvalidDataException("settings.remnote-target-discovery-binding-empty");
-                    settingsDraft.StageVerifiedRemNoteBinding(resolvedId, observedTitle);
-                    remnoteRootId.Text = resolvedId;
-                    remnoteRootTitle.Text = observedTitle;
-                    remnoteBoundTargetStatus.Text = "verified_pending · 标题=" + observedTitle + " · ID=" + MaskIdentifier(resolvedId) + " · 下一任务生效";
-                    remnoteDiscoverTargetStatus.Text = "唯一匹配 · exact-readback=true · writes=0 · 点击保存后生效";
-                    status.Text = "已发现唯一 RemNote 目标；同一窗口可先执行只读检查，点击保存后对下一任务生效。";
-                }
-                else
-                {
-                    settingsDraft.RecordRemNoteDiscoveryFailure();
-                    var reasonCodes = root.GetProperty("reasonCodes").EnumerateArray().Select(item => item.GetString()).Where(item => !string.IsNullOrWhiteSpace(item));
-                    remnoteDiscoverTargetStatus.Text = "未绑定 · resolution=" + selection.GetProperty("resolution").GetString() + " · reasons=" + string.Join(",", reasonCodes) + " · writes=0";
-                    status.Text = "RemNote 目标未形成唯一精确读回；原绑定保持不变。";
-                }
-            }
-            catch (Exception ex)
-            {
-                settingsDraft.RecordRemNoteDiscoveryFailure();
-                remnoteDiscoverTargetStatus.Text = "发现失败 · " + ex.Message + " · 原绑定保持不变";
-                status.Text = "RemNote 自动发现失败；未更改当前绑定。";
-            }
-            finally { remnoteDiscoverTarget.Enabled = moduleActionHost.CanDiscoverRemNoteTarget; }
-        }
-
         private bool TryGetCurrentRemNoteTarget(out string rootId, out string rootTitle)
         {
             rootId = null;
@@ -826,28 +774,95 @@ namespace KnowledgeClipper
 
         private static string Sha256(byte[] bytes) { using var sha = SHA256.Create(); return Convert.ToHexString(sha.ComputeHash(bytes)).ToLowerInvariant(); }
 
-        private async Task RunAnkiProbeAsync()
+        private string BuildAnkiProbeDraft()
         {
-            if (ankiProbeHost == null || !ankiProbeHost.CanRun) return;
-            ankiProbe.Enabled = false; ankiProbeStatus.Text = "检查中 · 只读，可能弹出 Anki permission";
+            var draft = moduleSettingsStore.Load();
+            draft.AnkiExpectedProfile = ankiProfile.Text.Trim();
+            draft.AnkiEndpoint = ankiEndpoint.Text.Trim();
+            draft.AnkiDeckPreset = Convert.ToString(ankiDeckPreset.SelectedItem);
+            if (draft.AnkiDeckPreset == "custom")
+                draft.AnkiDeckRoutes = JsonSerializer.Deserialize<Dictionary<string, string>>(ankiDeckRoutes.Text, ContractJson.Options);
+            return DesktopTaskSettingsArtifacts.BuildAnkiProbeConfigurationJson(settingsService, draft);
+        }
+
+        private void RefreshAnkiProbeRoutes()
+        {
+            if (ankiProbeRoute == null) return;
+            var selected = Convert.ToString(ankiProbeRoute.SelectedItem);
+            ankiProbeRoute.Items.Clear();
             try
             {
-                var result = await ankiProbeHost.RunAsync(ankiProfile.Text, ankiEndpoint.Text);
-                ankiProbeStatus.Text = result.DisplayText;
-                ankiInitialize.Enabled = result.NeedsInitialization && result.InitializationWouldWrite && ankiProbeHost.CanInitializeManaged;
-                ankiInitializeStatus.Text = result.NeedsInitialization
-                    ? (ankiProbeHost.CanInitializeManaged ? "需要初始化 · 仅在点击下方显式写入按钮后执行" : "需要初始化 · 当前 Core/authority 尚未提供公共 initialize-managed action")
-                    : result.Status == "migration_required" ? "需要迁移 · 不自动修改现有资源" : "无需初始化";
-                status.Text = result.IsReady ? "Anki 只读连接检查就绪；未执行 provision/write。" :
-                    result.NeedsInitialization ? "Anki 连接正常但缺少受管资源；本次检查写入=0。" :
-                    (IsLocalAnkiProbePackageFailure(result) ? "Anki 检查任务包或 Worker 启动失败；尚未连接 Anki。" : "Anki 只读连接检查未就绪；请按 reasonCode/step 修正。");
+                using var document = JsonDocument.Parse(BuildAnkiProbeDraft());
+                foreach (var route in document.RootElement.GetProperty("deck_routes").EnumerateObject())
+                    ankiProbeRoute.Items.Add(route.Name);
+                if (ankiProbeRoute.Items.Contains(selected)) ankiProbeRoute.SelectedItem = selected;
+                else if (ankiProbeRoute.Items.Count == 1) ankiProbeRoute.SelectedIndex = 0;
+            }
+            catch { /* Invalid draft is explained on explicit probe; never save or guess a route. */ }
+        }
+
+        internal void CancelAnkiProbe() => ankiProbeCancellation?.Cancel();
+
+        private async Task RunAnkiProbeAsync()
+        {
+            if (typedApplication == null || Interlocked.CompareExchange(ref ankiProbeInFlight, 1, 0) != 0) return;
+            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            ankiProbeCancellation = cancellation;
+            ankiProbe.Enabled = false;
+            ankiInitialize.Enabled = false;
+            ankiProbeStatus.ForeColor = Muted;
+            ankiProbeStatus.AccessibleDescription = "{\"ready\":false,\"state\":\"checking\"}";
+            ankiProbeStatus.Text = "检查中 · 只读，可能弹出 Anki permission";
+            try
+            {
+                var json = BuildAnkiProbeDraft();
+                var route = Convert.ToString(ankiProbeRoute.SelectedItem);
+                using var document = JsonDocument.Parse(json);
+                if (string.IsNullOrWhiteSpace(route) || !document.RootElement.GetProperty("deck_routes").TryGetProperty(route, out _))
+                    throw new InvalidOperationException("需要选择检查目标（route key）；本次未连接 Anki");
+                var artifact = await typedApplication.Artifacts.PublishAsync("anki-configuration", json, cancellation.Token);
+                await typedApplication.Commands.InvokeAsync(InvocationSource.Pointer,
+                    new ApplicationCommand(ApplicationCommandKind.AnkiProbe)
+                    {
+                        Arguments = new Dictionary<string, object> { ["configuration"] = artifact, ["selectedRoute"] = route }
+                    }, cancellation.Token);
+                var result = typedApplication.State.Snapshot().ModuleActions[ModuleActionKind.AnkiProbe];
+                if (IsDisposed || Disposing) return;
+                var ready = result.Status == OperationStatus.Succeeded && result.Output != null &&
+                    result.AnkiReadiness?.CurrentTargetReady == true && result.AnkiReadiness.CurrentTarget == route;
+                var optional = result.AnkiReadiness?.UninitializedRoutes ?? Array.Empty<string>();
+                ankiProbeStatus.Text = (ready ? "当前目标可用" : "未就绪 / 未核实") + " · route=" + route +
+                    (optional.Count > 0 ? " · 其他可选路线未就绪：" + string.Join("、", optional) : "") +
+                    " · " + result.Status + " · " + result.NoticeCode + " · writes=0";
+                ankiProbeStatus.AccessibleDescription = JsonSerializer.Serialize(new { ready, route, terminalState = result.Status.ToString(),
+                    notice = result.NoticeCode, evidence = result.Output?.Id, optionalRoutesNotReady = optional, externalMutation = false });
+                ankiProbeStatus.ForeColor = ready ? Color.FromArgb(36, 130, 82) : Muted;
+                status.Text = ready ? "Anki 当前检查目标可用；未初始化或写入。" : "Anki 检查未就绪；请查看目标、状态和原因。";
+            }
+            catch (OperationCanceledException)
+            {
+                if (!IsDisposed && !Disposing)
+                {
+                    ankiProbeStatus.Text = "已取消或超时 · 未核实 · 不自动重试";
+                    ankiProbeStatus.AccessibleDescription = "{\"ready\":false,\"terminalState\":\"CancelledOrTimedOut\",\"evidence\":null}";
+                    status.Text = "Anki 检查已取消或超时，结果未核实。";
+                }
             }
             catch (Exception ex)
             {
-                ankiProbeStatus.Text = "检查失败 · " + ex.Message;
-                status.Text = "Anki 只读连接检查失败。";
+                if (!IsDisposed && !Disposing)
+                {
+                    ankiProbeStatus.Text = "检查失败 · " + ex.Message;
+                    ankiProbeStatus.AccessibleDescription = "{\"ready\":false,\"terminalState\":\"Failed\",\"evidence\":null}";
+                    status.Text = "Anki 只读检查未就绪。";
+                }
             }
-            finally { ankiProbe.Enabled = ankiProbeHost.CanRun; }
+            finally
+            {
+                ankiProbeCancellation = null;
+                Interlocked.Exchange(ref ankiProbeInFlight, 0);
+                if (!IsDisposed && !Disposing) ankiProbe.Enabled = typedApplication != null;
+            }
         }
 
         private async Task RunAnkiInitializationAsync()
@@ -881,20 +896,23 @@ namespace KnowledgeClipper
 
         private void SaveAndClose()
         {
+            InvalidateRemNoteObservation();
             try
             {
                 CaptureControlsIntoActiveProfile();
                 var committedWorkflow = settingsDraft.PrepareCommit();
                 settingsService.Save(committedWorkflow);
-                settingsDraft.MarkPersisted(settingsService.CurrentRevision);
                 moduleSettings.AnkiExpectedProfile = ankiProfile.Text.Trim(); moduleSettings.AnkiEndpoint = ankiEndpoint.Text.Trim();
+                moduleSettings.AnkiDeckPreset = Convert.ToString(ankiDeckPreset.SelectedItem);
+                moduleSettings.AnkiDeckRoutes = JsonSerializer.Deserialize<Dictionary<string, string>>(ankiDeckRoutes.Text, ContractJson.Options) ?? new Dictionary<string, string>(StringComparer.Ordinal);
                 moduleSettings.ContentLanguagePracticeDefault = Convert.ToString(contentDefaultChoice.SelectedItem);
                 moduleSettings.ContentProviderModel = Convert.ToString(contentModel.SelectedItem);
                 moduleSettings.ContentProviderMaxRetries = (int)contentMaxRetries.Value;
+                PrepareRemNoteBindingPersistence();
                 moduleSettingsStore.Save(moduleSettings);
                 var value = Collect();
                 new DesktopCredentialSettings { DeepSeekApiKey = deepSeekCredential.Text, MineruApiToken = mineruCredential.Text }.Save(config.WorkDirectory);
-                value.Save(config); SavedSettings = value; DialogResult = DialogResult.OK; Close();
+                value.Save(config); settingsDraft.MarkPersisted(settingsService.CurrentRevision); SavedSettings = value; DialogResult = DialogResult.OK; Close();
             }
             catch (Exception ex) { status.Text = "保存失败：" + ex.Message; }
         }
@@ -952,6 +970,7 @@ namespace KnowledgeClipper
 
         private void ApplyActiveProfile()
         {
+            InvalidateRemNoteObservation();
             WorkflowSettingsProfile profile;
             if (!workflowDocument.Profiles.TryGetValue(workflowDocument.ActiveProfileId, out profile)) return;
             var workflow = profile.Workflow;
@@ -974,8 +993,9 @@ namespace KnowledgeClipper
             var image = profile.ImageOcr;
             if (image != null) { ocrModel.SelectedIndex = 0; ocrLanguage.SelectedIndex = image.ProviderSettings.Language == "en" ? 1 : 0; ocrTable.Checked = image.ProviderSettings.EnableTable; ocrFormula.Checked = image.ProviderSettings.EnableFormula; ocrTimeout.Value = ClampDecimal(image.ProviderSettings.TimeoutSeconds, ocrTimeout); ocrPoll.Value = ClampDecimal(image.ProviderSettings.PollIntervalSeconds, ocrPoll); ocrScript.Text = image.MineruScriptPath ?? ""; }
             var remnote = profile.Remnote;
-            if (remnote != null) { remnoteRootId.Text = remnote.Target.RootRemId ?? ""; remnoteRootTitle.Text = remnote.Target.RootTitle; remnoteSink.SelectedIndex = remnote.Advanced.Sink == "markdown-zip" ? 1 : 0; }
+            if (remnote != null) { remnoteRootId.Text = remnote.Target.RootRemId ?? ""; SetRemNoteSelector(remnote.Target.RootTitle); remnoteSink.SelectedIndex = remnote.Advanced.Sink == "markdown-zip" ? 1 : 0; }
             if (remnoteBoundTargetStatus != null) remnoteBoundTargetStatus.Text = CurrentRemNoteTargetDisplay();
+            if (Visible) _ = RestoreRemNoteBindingAsync();
             if (destinations.Count > 0) status.Text = "当前导出目标将在新任务中冻结为 v2 快照；未满足必要配置时失败封闭。";
         }
 
@@ -1001,7 +1021,7 @@ namespace KnowledgeClipper
                 Speech = speech
                 ,ImageOcr = new ImageOcrSettings("image-ocr-settings.v1", new ImageOcrProviderSettings("vlm", ocrLanguage.SelectedIndex == 1 ? "en" : "ch", ocrTable.Checked, ocrFormula.Checked, (int)ocrTimeout.Value, (int)ocrPoll.Value), string.IsNullOrWhiteSpace(ocrScript.Text) ? null : ocrScript.Text.Trim())
                 ,Remnote = new RemNoteDestinationSettings("remnote-destination-settings.v1", remnoteDestination.Checked,
-                    new RemNoteTargetSettings(string.IsNullOrWhiteSpace(remnoteRootId.Text) ? null : remnoteRootId.Text.Trim(), string.IsNullOrWhiteSpace(remnoteRootTitle.Text) ? "剪藏" : remnoteRootTitle.Text.Trim()),
+                    current.Remnote?.Target ?? new RemNoteTargetSettings(null, "剪藏"),
                     new RemNoteAdvancedSettings(remnoteSink.SelectedIndex == 1 ? "markdown-zip" : "mcp-direct", "clip-daily-route", "card-export", "Asia/Shanghai", "yyyy-MM-dd"))
             };
             var profiles = new Dictionary<string, WorkflowSettingsProfile>(workflowDocument.Profiles, StringComparer.Ordinal) { [workflowDocument.ActiveProfileId] = updated };

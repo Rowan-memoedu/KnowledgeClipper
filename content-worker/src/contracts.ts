@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { CategoryRegistry, CommonArtifactManifest, ManifestFile, OcrArtifactProvenanceRef, OcrHumanResolutionDiff, OcrHumanResolutionInput, OcrProofreadBundle, OcrProofreadItem, OcrTextSource, SourceSegment, StandardInput, TaskManifest } from "./types.js";
-import { fileDigest, packagePath, readJson, requireString, sha256, stableStringify } from "./util.js";
+import { fileDigest, packagePath, readJson, requireString, segmentText, sha256, stableStringify } from "./util.js";
 
 export interface ValidatedOcrHumanResolution {
   input: OcrHumanResolutionInput;
@@ -42,7 +42,8 @@ export async function loadContracts(manifestPath: string, inputPath: string, com
         files: commonManifest!.files.map((file) => ({ path: file.path, sha256: file.sha256, size: file.bytes, media_type: file.mediaType })),
       }
     : legacyManifest!;
-  if (!(["standard-input/1.0.0", "standard-input/2.0.0", "standard-input/3.0.0", "standard-input/4.0.0", "standard-input/5.0.0"] as string[]).includes(input.schema_version)) throw new Error(`UNSUPPORTED_SCHEMA ${input.schema_version}`);
+  if (!(["standard-input/1.0.0", "standard-input/2.0.0", "standard-input/3.0.0", "standard-input/4.0.0", "standard-input/5.0.0", "standard-input/6.0.0", "standard-input/7.0.0", "standard-input/8.0.0"] as string[]).includes(input.schema_version)) throw new Error(`UNSUPPORTED_SCHEMA ${input.schema_version}`);
+  if ((input.schema_version === "standard-input/8.0.0") !== (input.language_practice_resume !== undefined)) throw new Error("INPUT_INVALID language_practice_resume requires standard-input/8.0.0");
   requireString(manifest.package_id, "manifest.package_id");
   requireString(input.package_id, "input.package_id");
   requireString(input.task_id, "input.task_id");
@@ -81,6 +82,7 @@ export async function loadContracts(manifestPath: string, inputPath: string, com
     if (seenItems.has(item.item_id)) throw new Error(`INPUT_INVALID duplicate item_id ${item.item_id}`);
     seenItems.add(item.item_id);
     validateLanguagePracticeInput(item);
+    await validateLanguageSelection(item, input.schema_version, packageRoot, filesByPath);
     if (!item.source || !["text", "ocr_text", "conversation", "media_set", "question_workflow"].includes(item.source.kind)) throw new Error(`INPUT_INVALID source ${item.item_id}`);
     if (item.source.kind === "ocr_text" && !["standard-input/4.0.0", "standard-input/5.0.0"].includes(input.schema_version)) throw new Error(`INPUT_INVALID ocr_text requires standard-input/4.0.0 or standard-input/5.0.0 ${item.item_id}`);
     if (input.schema_version === "standard-input/5.0.0" && item.source.kind !== "ocr_text") throw new Error(`INPUT_INVALID standard-input/5.0.0 requires ocr_text ${item.item_id}`);
@@ -127,6 +129,74 @@ export async function loadContracts(manifestPath: string, inputPath: string, com
     ocrHumanResolutions,
     ...(commonManifest ? { commonInputManifest: commonManifest } : {}),
   };
+}
+
+async function validateLanguageSelection(item: StandardInput["items"][number], schemaVersion: StandardInput["schema_version"], packageRoot: string, filesByPath: Map<string, ManifestFile>): Promise<void> {
+  const selection = item.language_selection;
+  if (!selection) {
+    if (["standard-input/6.0.0", "standard-input/7.0.0", "standard-input/8.0.0"].includes(schemaVersion)) throw new Error(`INPUT_INVALID missing language_selection ${item.item_id}`);
+    return;
+  }
+  if (!["standard-input/6.0.0", "standard-input/7.0.0", "standard-input/8.0.0"].includes(schemaVersion) || item.source.kind !== "text") throw new Error(`INPUT_INVALID language_selection requires standard-input/6.0.0+ text ${item.item_id}`);
+  assertExactKeys(selection, ["schema_version", "selected_text", "selected_text_sha256", "target_text", "target_text_sha256", "context_enabled", "context_segments"], "language_selection");
+  if (selection.schema_version !== "language-selection/1.0.0" || typeof selection.context_enabled !== "boolean") throw new Error("INPUT_INVALID language_selection identity");
+  requireString(selection.selected_text, "language_selection.selected_text");
+  if (selection.selected_text.trim() === "" || sha256(selection.selected_text) !== selection.selected_text_sha256) throw new Error("INPUT_TAMPERED language_selection.selected_text");
+  requireString(selection.target_text, "language_selection.target_text");
+  if (selection.target_text.trim() === "" || sha256(selection.target_text) !== selection.target_text_sha256 || !selection.selected_text.includes(selection.target_text)) throw new Error("INPUT_TAMPERED language_selection.target_text");
+  const selected = filesByPath.get(item.source.material_path);
+  if (!selected) throw new Error(`INPUT_INVALID undeclared material ${item.source.material_path}`);
+  await verifyDeclaredFile(packageRoot, selected);
+  const selectedText = await readFile(packagePath(packageRoot, item.source.material_path), "utf8");
+  if (selectedText.replace(/(?:\r\n|\r|\n)+$/u, "") !== selection.selected_text) throw new Error("INPUT_TAMPERED language_selection selected material");
+  if (!Array.isArray(selection.context_segments)) throw new Error("INPUT_INVALID language_selection.context_segments");
+  if (selection.context_enabled && selection.context_segments.length === 0) throw new Error("INPUT_INVALID language_selection missing context");
+  for (const [index, segment] of selection.context_segments.entries()) {
+    assertExactKeys(segment, ["segment_id", "order", "material_path", "sha256"], `language_selection.context_segments[${index}]`);
+    requireIdentifier(segment.segment_id, "language_selection.context_segments[].segment_id");
+    if (segment.order !== index) throw new Error("INPUT_INVALID language_selection context order");
+    const declaration = filesByPath.get(segment.material_path);
+    if (!declaration || declaration.sha256 !== segment.sha256) throw new Error("INPUT_TAMPERED language_selection context binding");
+    await verifyDeclaredFile(packageRoot, declaration);
+  }
+  const resolution = item.human_overrides?.languageTargetResolution;
+  if (resolution) {
+    assertExactKeys(resolution, ["schema_version", "decision_id", "target_token", "action", "selected_text", "selected_text_sha256", "confirmed", ...(resolution.candidateOccurrence ? ["candidateOccurrence"] : [])], "human_overrides.languageTargetResolution");
+    if (!["language-target-resolution/1.0.0", "language-target-resolution/2.0.0"].includes(resolution.schema_version) || resolution.confirmed !== true || !["accept_candidate", "user_correction"].includes(resolution.action)) throw new Error("INPUT_INVALID languageTargetResolution");
+    if (schemaVersion === "standard-input/7.0.0" && resolution.schema_version !== "language-target-resolution/2.0.0") throw new Error("INPUT_INVALID standard-input/7.0.0 requires language-target-resolution/2.0.0");
+    if (sha256(resolution.selected_text) !== resolution.selected_text_sha256) throw new Error("INPUT_TAMPERED languageTargetResolution selected_text");
+    const expectedToken = sha256(stableStringify({ item_id: item.item_id, selected_text_sha256: selection.selected_text_sha256, target_text_sha256: selection.target_text_sha256, context_enabled: selection.context_enabled, context_segment_sha256s: selection.context_segments.map((entry) => entry.sha256) }));
+    if (resolution.target_token !== expectedToken) throw new Error("INPUT_STALE languageTargetResolution target_token");
+    if (resolution.action === "accept_candidate") {
+      if (resolution.selected_text !== selection.target_text) throw new Error("INPUT_TAMPERED accept_candidate selected_text");
+      if (schemaVersion === "standard-input/7.0.0" && !resolution.candidateOccurrence) throw new Error("INPUT_INVALID accept_candidate candidateOccurrence required");
+      if (resolution.candidateOccurrence) await validateCandidateOccurrence(resolution.candidateOccurrence, selection, packageRoot);
+    } else if (resolution.candidateOccurrence) {
+      throw new Error("INPUT_INVALID user_correction forbids candidateOccurrence");
+    }
+  }
+}
+
+async function validateCandidateOccurrence(occurrence: { segmentId: string; order: number; start: number; end: number; exactText: string; sourceSha256: string }, selection: NonNullable<StandardInput["items"][number]["language_selection"]>, packageRoot: string): Promise<void> {
+  assertExactKeys(occurrence, ["segmentId", "order", "start", "end", "exactText", "sourceSha256"], "languageTargetResolution.candidateOccurrence");
+  const context = selection.context_segments[occurrence.order];
+  if (!context || context.sha256 !== occurrence.sourceSha256) throw new Error("INPUT_STALE candidateOccurrence sourceSha256");
+  const source = await readFile(packagePath(packageRoot, context.material_path), "utf8");
+  const parts = segmentText(source, context.material_path, "text");
+  const matches = parts.flatMap((part) => {
+    const segmentId = `${context.segment_id}-${part.segment_id}`;
+    const result: Array<{ segmentId: string; order: number; start: number; end: number; exactText: string; sourceSha256: string }> = [];
+    let cursor = 0;
+    while (true) {
+      const start = part.text.indexOf(selection.target_text, cursor);
+      if (start < 0) break;
+      result.push({ segmentId, order: occurrence.order, start, end: start + selection.target_text.length, exactText: selection.target_text, sourceSha256: sha256(part.text) });
+      cursor = start + selection.target_text.length;
+    }
+    return result;
+  });
+  const exactMatches = matches.filter((entry) => stableStringify(entry) === stableStringify(occurrence));
+  if (exactMatches.length !== 1) throw new Error("INPUT_STALE candidateOccurrence coordinates");
 }
 
 async function validateOcrHumanResolution(

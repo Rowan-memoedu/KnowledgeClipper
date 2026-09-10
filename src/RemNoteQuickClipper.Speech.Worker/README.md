@@ -18,6 +18,7 @@
 - 权威候选文件：`KnowledgeClipper.Speech.Worker.exe`
 - Registry 探测：`KnowledgeClipper.Speech.Worker.exe describe --json`
 - 标准执行：`KnowledgeClipper.Speech.Worker.exe run --request <absolute-request.json>`
+- 1.2.6 修复标准入口的长路径解析：request、attempt 和 job 父目录统一使用 `LongPathFileSystem`；保留 `jobs/<taskId>`、attempt、outputs 与取消信号边界校验。离线回归覆盖 266 字符 request、440 字符 request 与超过 260 字符的 job 根。
 - 设置查询：`KnowledgeClipper.Speech.Worker.exe settings describe --json`
 - 设置校验/快照：`KnowledgeClipper.Speech.Worker.exe settings adapt --input <absolute-settings-adapter-input.json> --json`；这是 Core/Desktop 接线接口，不是 registry stage entrypoint。
 - 项目设置 companion：

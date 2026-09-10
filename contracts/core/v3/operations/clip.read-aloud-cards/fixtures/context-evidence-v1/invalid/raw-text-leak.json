@@ -1,0 +1,24 @@
+{
+  "contextSnapshot": {
+    "artifactId": "task-context-001",
+    "kind": "task-context-snapshot",
+    "manifestPath": "artifacts/task-context-001/artifact.json",
+    "sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  },
+  "capture": {
+    "artifactId": "capture-001",
+    "kind": "capture-text",
+    "manifestPath": "artifacts/capture-001/artifact.json",
+    "sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+  },
+  "selectedTextSha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+  "targetTextSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "spokenTextSha256": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+  "speechContextMode": "selection_only",
+  "contextRequested": false,
+  "contextApplied": false,
+  "contextStatus": "off",
+  "contextGranularity": "none",
+  "contextSegments": [],
+  "rawText": "must never be projected"
+}

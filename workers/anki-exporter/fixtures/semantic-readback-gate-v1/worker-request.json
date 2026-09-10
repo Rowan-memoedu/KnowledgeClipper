@@ -1,0 +1,21 @@
+{
+  "attemptId": "attempt-offline-semantic-gate",
+  "idempotencyKey": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "operation": "export",
+  "operationId": "operation-offline-semantic-gate",
+  "payload": {
+    "expectedCardCount": 2,
+    "expectedCards": [
+      {"back": "resilient /rɪˈzɪliənt/ 有韧性的", "cardId": "stable-language-context", "front": "The material remains resilient under change."},
+      {"back": "resilient", "cardId": "stable-language-writing", "front": "The material remains （/rɪˈzɪliənt/；有韧性的） under change."}
+    ],
+    "expectedDeck": "零碎知识剪藏::Canary::SemanticGate",
+    "sideEffectAuthorization": {"authorizationId": "authorization-offline-canary", "mode": "explicit-user-action", "scope": "isolated-canary-deck"}
+  },
+  "requestId": "request-offline-semantic-gate",
+  "runId": "run-offline-semantic-gate",
+  "schemaVersion": "1.0.0",
+  "stageId": "anki-export",
+  "taskId": "task-offline-semantic-gate",
+  "workerId": "export.anki"
+}

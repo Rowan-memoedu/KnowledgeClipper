@@ -1,0 +1,6 @@
+{
+  "provenance": "Unmodified classification response from Actual T050622; no new live call",
+  "sourceLearningSha256": "4b729f85f6db7baa2060f66611c9866cb64fa1df3e1e084dbf7be8bc58ee1cb9",
+  "responseSha256": "1bddc634342c192fe2672d5e218df1d1f4084e97273a79db19e3b567605ac2a9",
+  "response": { "units": [{ "answer_state": "provided", "category_id": "general_learning", "context_state": "provided", "risk_state": "ordinary", "source_segment_indexes": [0], "subtype": "concept", "supplied_answer": "A deterministic external sentence with deliberate context.", "unit_id": "unit-1", "unresolved_reasons": [] }] }
+}

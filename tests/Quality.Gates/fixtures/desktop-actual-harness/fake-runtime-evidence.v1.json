@@ -1,0 +1,22 @@
+{
+  "schema": "kc.quality.desktop-actual-harness-runtime/1",
+  "candidateInventoryVerified": true,
+  "isolation": {"process": true, "window": true, "localAppData": true, "pipe": true, "dataRoot": true, "destination": true, "businessInputInjected": false},
+  "settingsUiPath": "--open-settings",
+  "preTaskCounts": {"tasks": 0, "ankiWrites": 0, "externalCalls": 0},
+  "scenarios": {
+    "start-failure": {"externalCalls": 0, "ankiWrites": 0, "cleanupAttempted": true, "ownedProcessesRemaining": 0, "cleanupIdempotent": true, "cleanupNullSafe": true},
+    "zero-window": {"externalCalls": 0, "ankiWrites": 0, "cleanupAttempted": true, "ownedProcessesRemaining": 0, "cleanupIdempotent": true, "cleanupNullSafe": true},
+    "multiple-window": {"externalCalls": 0, "ankiWrites": 0, "cleanupAttempted": true, "ownedProcessesRemaining": 0, "cleanupIdempotent": true, "cleanupNullSafe": true},
+    "settings-open-failure": {"externalCalls": 0, "ankiWrites": 0, "cleanupAttempted": true, "ownedProcessesRemaining": 0, "cleanupIdempotent": true, "cleanupNullSafe": true},
+    "settings-save-failure": {"externalCalls": 0, "ankiWrites": 0, "cleanupAttempted": true, "ownedProcessesRemaining": 0, "cleanupIdempotent": true, "cleanupNullSafe": true},
+    "pipe-connect-failure": {"externalCalls": 0, "ankiWrites": 0, "cleanupAttempted": true, "ownedProcessesRemaining": 0, "cleanupIdempotent": true, "cleanupNullSafe": true},
+    "task-submit-failure": {"externalCalls": 0, "ankiWrites": 0, "cleanupAttempted": true, "ownedProcessesRemaining": 0, "cleanupIdempotent": true, "cleanupNullSafe": true},
+    "state-timeout": {"externalCalls": 0, "ankiWrites": 0, "cleanupAttempted": true, "ownedProcessesRemaining": 0, "cleanupIdempotent": true, "cleanupNullSafe": true},
+    "anki-adapter-failure": {"externalCalls": 0, "ankiWrites": 0, "cleanupAttempted": true, "ownedProcessesRemaining": 0, "cleanupIdempotent": true, "cleanupNullSafe": true},
+    "success": {"externalCalls": 0, "ankiWrites": 0, "cleanupAttempted": true, "ownedProcessesRemaining": 0, "cleanupIdempotent": true, "cleanupNullSafe": true},
+    "cleanup-close-throws": {"externalCalls": 0, "ankiWrites": 0, "cleanupAttempted": true, "ownedProcessesRemaining": 0, "cleanupIdempotent": true, "cleanupNullSafe": true},
+    "cleanup-kill-required": {"externalCalls": 0, "ankiWrites": 0, "cleanupAttempted": true, "ownedProcessesRemaining": 0, "cleanupIdempotent": true, "cleanupNullSafe": true}
+  },
+  "fullStateMachineReachedWithFakes": true
+}

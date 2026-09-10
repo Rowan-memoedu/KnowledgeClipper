@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.read-aloud-cards-projection/2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "operationId", "actionState", "activeCommandId", "terminalCommandId", "terminalSequence",
+    "playback", "pipeline", "attentionRequired", "notice", "cardGeneration", "languageCardChoice",
+    "cardResolution", "frozenLanguageCardChoice", "cardDraft", "semanticReadback", "lifecycle", "outputs"
+  ],
+  "properties": {
+    "operationId": { "type": "string", "minLength": 1 },
+    "actionState": { "enum": ["running", "completed", "failed", "cancelled", "unknown_external_state", "not_found"] },
+    "activeCommandId": { "type": ["string", "null"] },
+    "terminalCommandId": { "type": ["string", "null"] },
+    "terminalSequence": { "type": "integer", "minimum": 0 },
+    "playback": { "enum": ["not_requested", "accepted", "playing", "idle_replayable", "failed", "stopped"] },
+    "pipeline": { "enum": ["accepted", "reviewing", "waiting_language_card_choice", "awaiting_card_resolution", "awaiting_card_confirmation", "writing_anki", "completed", "cancelled", "partially_failed", "failed", "unknown_external_state"] },
+    "attentionRequired": { "type": "boolean" },
+    "notice": { "type": ["string", "null"] },
+    "cardGeneration": { "type": ["object", "null"] },
+    "languageCardChoice": { "type": ["object", "null"] },
+    "cardResolution": { "type": ["object", "null"] },
+    "frozenLanguageCardChoice": { "type": ["string", "null"] },
+    "cardDraft": { "type": ["object", "null"] },
+    "semanticReadback": { "type": ["object", "null"] },
+    "lifecycle": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ankiConnectionStatusArtifact", "captureArtifact", "reviewArtifact", "synthesisArtifact", "playbackArtifact", "cardBundleArtifact", "ankiReadbackArtifact"],
+      "properties": {
+        "ankiConnectionStatusArtifact": { "type": ["object", "null"] },
+        "captureArtifact": { "type": ["object", "null"] },
+        "reviewArtifact": { "type": ["object", "null"] },
+        "synthesisArtifact": { "type": ["object", "null"] },
+        "playbackArtifact": { "type": ["object", "null"] },
+        "cardBundleArtifact": { "type": ["object", "null"] },
+        "ankiReadbackArtifact": { "type": ["object", "null"] }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "actionState": { "const": "running" } }, "required": ["actionState"] },
+      "then": {
+        "properties": {
+          "activeCommandId": { "type": "string", "minLength": 1 },
+          "pipeline": { "enum": ["accepted", "reviewing", "writing_anki"] },
+          "attentionRequired": { "const": false },
+          "cardGeneration": { "const": null },
+          "languageCardChoice": { "const": null },
+          "cardResolution": { "const": null },
+          "frozenLanguageCardChoice": { "const": null },
+          "cardDraft": { "const": null },
+          "semanticReadback": { "const": null }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "actionState": { "enum": ["completed", "failed", "cancelled", "unknown_external_state"] } }, "required": ["actionState"] },
+      "then": {
+        "properties": {
+          "activeCommandId": { "const": null },
+          "terminalCommandId": { "type": "string", "minLength": 1 },
+          "terminalSequence": { "type": "integer", "minimum": 1 }
+        }
+      }
+    }
+  ]
+}

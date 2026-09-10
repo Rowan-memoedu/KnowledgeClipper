@@ -108,12 +108,17 @@ internal sealed class CoreV3ProtocolClient
                 throw new CoreV3ClientException("response_correlation_mismatch", "Core v3 response correlationId does not match the request.");
             }
 
+            if (response.MessageType == "protocol-error" || !response.Ok)
+            {
+                throw new CoreV3ClientException(response.Error?.Code ?? "request_rejected", response.Error?.Message ?? "Core v3 request failed.");
+            }
+
             if (response.MessageType != expectedResponseType)
             {
                 throw new CoreV3ClientException("response_type_mismatch", $"Expected '{expectedResponseType}' but received '{response.MessageType}'.");
             }
 
-            if (!response.Ok || response.Payload is null)
+            if (response.Payload is null)
             {
                 throw new CoreV3ClientException(response.Error?.Code ?? "request_rejected", response.Error?.Message ?? "Core v3 request failed.");
             }

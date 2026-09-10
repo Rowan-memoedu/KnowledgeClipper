@@ -1,0 +1,28 @@
+{
+  "operationId": "clip-read-aloud-cards-example",
+  "actionState": "running",
+  "activeCommandId": "command-resolution-2",
+  "terminalCommandId": "command-initial-1",
+  "terminalSequence": 5,
+  "playback": "accepted",
+  "pipeline": "accepted",
+  "attentionRequired": false,
+  "notice": null,
+  "cardGeneration": null,
+  "languageCardChoice": null,
+  "cardResolution": null,
+  "frozenLanguageCardChoice": null,
+  "cardDraft": null,
+  "semanticReadback": null,
+  "settingsEvidence": null,
+  "lifecycle": ["command.accepted", "operation.started"],
+  "outputs": {
+    "ankiConnectionStatusArtifact": null,
+    "captureArtifact": null,
+    "reviewArtifact": null,
+    "synthesisArtifact": null,
+    "playbackArtifact": null,
+    "cardBundleArtifact": null,
+    "ankiReadbackArtifact": null
+  }
+}

@@ -2,10 +2,13 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Web.Script.Serialization;
+using KnowledgeClipper.Core.V3.Client;
 using KnowledgeClipper.Desktop.Core;
 
 namespace KnowledgeClipper
@@ -23,18 +26,33 @@ namespace KnowledgeClipper
         public int MaxActiveTasks { get; set; }
         public string AuthorityCheckpointId { get; set; }
         public string AuthorityTreeSha256 { get; set; }
+        public string RuntimeKind { get; set; }
+        public string RepositoryRoot { get; set; }
+        public string Binding { get; set; }
+        public string RuntimeToolsDescriptor { get; set; }
+        public string RuntimeToolsDescriptorSha256 { get; set; }
+
+        internal bool IsCoreV3 { get { return string.Equals(RuntimeKind, "core-v3", StringComparison.Ordinal); } }
 
         internal static CandidateIntegrationConfig Load(string baseDirectory)
         {
-            var root = Path.GetFullPath(baseDirectory);
+            var root = Path.GetFullPath(baseDirectory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             var path = Path.Combine(root, "candidate-integration.json");
             if (!File.Exists(path)) return null;
             var value = new JavaScriptSerializer().Deserialize<CandidateIntegrationConfig>(File.ReadAllText(path, Encoding.UTF8));
-            if (value == null || value.SchemaVersion != "knowledge-clipper-candidate-integration.v1") throw new InvalidDataException("candidate-integration.schema-invalid");
+            if (value == null || (value.SchemaVersion != "knowledge-clipper-candidate-integration.v1" && value.SchemaVersion != "knowledge-clipper-candidate-integration.v2" && value.SchemaVersion != "knowledge-clipper-candidate-integration.v3")) throw new InvalidDataException("candidate-integration.schema-invalid");
             value.OrchestratorExecutable = ResolveInside(root, value.OrchestratorExecutable, "orchestrator");
-            value.IpcConfig = ResolveInside(root, value.IpcConfig, "ipc-config");
+            value.RuntimeKind = string.IsNullOrWhiteSpace(value.RuntimeKind) ? "legacy-v1" : value.RuntimeKind.Trim();
+            if (value.IsCoreV3)
+            {
+                value.RepositoryRoot = ResolveDirectoryInside(root, value.RepositoryRoot, "repository-root");
+                value.Binding = ResolveInside(root, value.Binding, "binding");
+                value.IpcConfig = string.IsNullOrWhiteSpace(value.IpcConfig) ? value.Binding : ResolveInside(root, value.IpcConfig, "ipc-config");
+            }
+            else value.IpcConfig = ResolveInside(root, value.IpcConfig, "ipc-config");
             value.Registry = ResolveInside(root, value.Registry, "registry");
             value.ReleaseRoot = ResolveInside(root, value.ReleaseRoot, "release-root");
+            if (!string.IsNullOrWhiteSpace(value.RuntimeToolsDescriptor)) value.RuntimeToolsDescriptor = ResolveInside(root, value.RuntimeToolsDescriptor, "runtime-tools-descriptor");
             value.JobsRoot = Path.GetFullPath(Environment.ExpandEnvironmentVariables(value.JobsRoot ?? "%LOCALAPPDATA%\\KnowledgeClipper\\jobs"));
             value.PipeName = string.IsNullOrWhiteSpace(value.PipeName) ? NamedPipeCommonIpcClient.DefaultPipeName : value.PipeName.Trim();
             if (value.MaxActiveTasks < 1) value.MaxActiveTasks = 4;
@@ -47,7 +65,14 @@ namespace KnowledgeClipper
             var expanded = Environment.ExpandEnvironmentVariables(value);
             var path = Path.GetFullPath(Path.IsPathRooted(expanded) ? expanded : Path.Combine(root, expanded));
             var prefix = root.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-            if (!path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("candidate-integration." + name + "-outside-candidate");
+            if (!path.Equals(root, StringComparison.OrdinalIgnoreCase) && !path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("candidate-integration." + name + "-outside-candidate");
+            return path;
+        }
+
+        private static string ResolveDirectoryInside(string root, string value, string name)
+        {
+            var path = ResolveInside(root, value, name);
+            if (!Directory.Exists(path)) throw new DirectoryNotFoundException("candidate-integration." + name + "-missing:" + path);
             return path;
         }
     }
@@ -77,12 +102,19 @@ namespace KnowledgeClipper
             var start = new ProcessStartInfo
             {
                 FileName = configuration.OrchestratorExecutable,
-                Arguments = "serve --ipc-config " + Quote(configuration.IpcConfig) + " --jobs-root " + Quote(configuration.JobsRoot) + " --registry " + Quote(configuration.Registry) + " --release-root " + Quote(configuration.ReleaseRoot) + " --max-active-tasks " + configuration.MaxActiveTasks,
                 WorkingDirectory = Path.GetDirectoryName(configuration.OrchestratorExecutable),
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 WindowStyle = ProcessWindowStyle.Hidden
             };
+            if (configuration.IsCoreV3)
+            {
+                AddArgument(start, "--repository-root"); AddArgument(start, configuration.RepositoryRoot);
+                AddArgument(start, "--binding"); AddArgument(start, configuration.Binding);
+                AddArgument(start, "--data-root"); AddArgument(start, configuration.JobsRoot);
+                AddArgument(start, "--pipe-name"); AddArgument(start, configuration.PipeName);
+            }
+            else start.Arguments = "serve --ipc-config " + Quote(configuration.IpcConfig) + " --jobs-root " + Quote(configuration.JobsRoot) + " --registry " + Quote(configuration.Registry) + " --release-root " + Quote(configuration.ReleaseRoot) + " --max-active-tasks " + configuration.MaxActiveTasks;
             if (credentials != null) credentials.ApplyTo(start);
             LoopbackProviderOverrides.ApplyTo(start);
             var process = Process.Start(start);
@@ -104,13 +136,34 @@ namespace KnowledgeClipper
             process.Dispose();
         }
 
-        private static void Validate(CandidateIntegrationConfig value)
+        internal static void Validate(CandidateIntegrationConfig value)
         {
             if (!File.Exists(value.OrchestratorExecutable)) throw new FileNotFoundException("candidate-orchestrator.executable-missing", value.OrchestratorExecutable);
-            if (!File.Exists(value.IpcConfig)) throw new FileNotFoundException("candidate-orchestrator.ipc-config-missing", value.IpcConfig);
+            if (value.IsCoreV3)
+            {
+                if (!Directory.Exists(value.RepositoryRoot)) throw new DirectoryNotFoundException("candidate-orchestrator.repository-root-missing:" + value.RepositoryRoot);
+                if (!File.Exists(value.Binding)) throw new FileNotFoundException("candidate-orchestrator.binding-missing", value.Binding);
+            }
+            else if (!File.Exists(value.IpcConfig)) throw new FileNotFoundException("candidate-orchestrator.ipc-config-missing", value.IpcConfig);
             if (!File.Exists(value.Registry)) throw new FileNotFoundException("candidate-orchestrator.registry-missing", value.Registry);
             if (!Directory.Exists(value.ReleaseRoot)) throw new DirectoryNotFoundException("candidate-orchestrator.release-root-missing:" + value.ReleaseRoot);
             if (string.IsNullOrWhiteSpace(value.AuthorityCheckpointId) || string.IsNullOrWhiteSpace(value.AuthorityTreeSha256)) throw new InvalidDataException("candidate-orchestrator.authority-binding-missing");
+            if (value.IsCoreV3)
+            {
+                VerifyRuntimeTool(value.RuntimeToolsDescriptor, value.RuntimeToolsDescriptorSha256, "descriptor");
+            }
+        }
+
+        private static void VerifyRuntimeTool(string path, string expectedSha256, string name)
+        {
+            if (!File.Exists(path)) throw new FileNotFoundException("candidate-runtime-tools." + name + "-missing", path);
+            if (string.IsNullOrWhiteSpace(expectedSha256) || !Regex.IsMatch(expectedSha256, "^[A-Fa-f0-9]{64}$")) throw new InvalidDataException("candidate-runtime-tools." + name + "-sha256-invalid");
+            using (var stream = File.OpenRead(path))
+            using (var sha = SHA256.Create())
+            {
+                var actual = BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", "");
+                if (!actual.Equals(expectedSha256, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("candidate-runtime-tools." + name + "-sha256-mismatch");
+            }
         }
 
         private static bool PipeAvailable(string pipeName, int timeoutMilliseconds)
@@ -127,6 +180,11 @@ namespace KnowledgeClipper
         }
 
         private static string Quote(string value) { return "\"" + value.Replace("\"", "\\\"") + "\""; }
+
+        private static void AddArgument(ProcessStartInfo start, string value)
+        {
+            start.ArgumentList.Add(value);
+        }
     }
 
     internal static class CandidateIntegrationCanary
@@ -138,9 +196,22 @@ namespace KnowledgeClipper
                 using (var host = CandidateOrchestratorHost.StartIfConfigured(baseDirectory, jobsRoot))
                 {
                     if (host.Configuration == null || !host.Configuration.AutoStart || !host.StartedByDesktop) throw new InvalidOperationException("candidate-orchestrator.was-not-started-by-desktop");
-                    var clock = new CandidateCanaryClock();
-                    var commands = new FileDesktopCommonCommandSource(jobsRoot, clock, new SystemCommonIdProvider());
-                    var result = new NamedPipeCommonIpcClient(host.Configuration.PipeName, 5000).Query(commands.PrepareRecentQuery());
+                    var action = "task.status.query-recent";
+                    var itemCount = 0;
+                    if (host.Configuration.IsCoreV3)
+                    {
+                        var capabilities = new CoreV3Client(host.Configuration.PipeName, new CoreV3ClientOptions(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10), TimeSpan.FromMilliseconds(100))).GetCapabilitiesAsync().GetAwaiter().GetResult();
+                        itemCount = capabilities.Operations.Count;
+                        action = "capabilities.get";
+                        if (!capabilities.Operations.Any(item => item.Operation == "clip.read-aloud-cards" && item.Available)) throw new InvalidOperationException("candidate-core-v3.read-to-anki-unavailable");
+                    }
+                    else
+                    {
+                        var clock = new CandidateCanaryClock();
+                        var commands = new FileDesktopCommonCommandSource(jobsRoot, clock, new SystemCommonIdProvider());
+                        var result = new NamedPipeCommonIpcClient(host.Configuration.PipeName, 5000).Query(commands.PrepareRecentQuery());
+                        itemCount = result == null || result.items == null ? 0 : result.items.Count;
+                    }
                     var report = new
                     {
                         schemaVersion = "knowledge-clipper-desktop-integration-canary.v1",
@@ -149,8 +220,9 @@ namespace KnowledgeClipper
                         orchestratorProcessId = host.ProcessId,
                         authorityCheckpointId = host.Configuration.AuthorityCheckpointId,
                         authorityTreeSha256 = host.Configuration.AuthorityTreeSha256,
-                        action = "task.status.query-recent",
-                        queryItemCount = result == null || result.items == null ? 0 : result.items.Count,
+                        runtimeKind = host.Configuration.RuntimeKind,
+                        action = action,
+                        queryItemCount = itemCount,
                         namedPipeInvoked = true,
                         externalWorkerInvoked = false,
                         physicalSpeakerInvoked = false,

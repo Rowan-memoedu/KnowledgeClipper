@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.read-to-anki-context-evidence/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contextSnapshot", "capture", "selectedTextSha256", "targetTextSha256", "spokenTextSha256", "speechContextMode",
+    "contextRequested", "contextApplied", "contextStatus", "contextGranularity", "contextSegments"
+  ],
+  "$defs": {
+    "artifactEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "kind", "manifestPath", "sha256"],
+      "properties": {
+        "artifactId": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "manifestPath": { "type": "string", "pattern": "^artifacts/[A-Za-z0-9._-]+/artifact\\.json$" },
+        "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }
+      }
+    }
+  },
+  "properties": {
+    "contextSnapshot": { "allOf": [{ "$ref": "#/$defs/artifactEvidence" }, { "properties": { "kind": { "const": "task-context-snapshot" } } }] },
+    "capture": { "allOf": [{ "$ref": "#/$defs/artifactEvidence" }, { "properties": { "kind": { "const": "capture-text" } } }] },
+    "selectedTextSha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+    "targetTextSha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+    "spokenTextSha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" },
+    "speechContextMode": { "enum": ["selection_only", "selection_plus_sentence", "selection_plus_paragraph"] },
+    "contextRequested": { "type": "boolean" },
+    "contextApplied": { "type": "boolean" },
+    "contextStatus": { "enum": ["off", "applied", "unavailable"] },
+    "contextGranularity": { "enum": ["none", "sentence", "paragraph"] },
+    "contextSegments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["order", "role", "artifact"],
+        "properties": {
+          "order": { "type": "integer", "minimum": 0 },
+          "role": { "enum": ["prefix", "suffix"] },
+          "artifact": { "allOf": [{ "$ref": "#/$defs/artifactEvidence" }, { "properties": { "kind": { "const": "question-context" } } }] }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "contextApplied": { "const": true } }, "required": ["contextApplied"] },
+      "then": { "properties": { "contextRequested": { "const": true }, "contextStatus": { "const": "applied" }, "speechContextMode": { "enum": ["selection_plus_sentence", "selection_plus_paragraph"] }, "contextSegments": { "minItems": 1 } } }
+    },
+    {
+      "if": { "properties": { "contextRequested": { "const": false } }, "required": ["contextRequested"] },
+      "then": { "properties": { "contextApplied": { "const": false }, "contextStatus": { "const": "off" }, "contextGranularity": { "const": "none" }, "speechContextMode": { "const": "selection_only" }, "contextSegments": { "maxItems": 0 } } }
+    },
+    {
+      "if": { "properties": { "contextStatus": { "const": "unavailable" } }, "required": ["contextStatus"] },
+      "then": { "properties": { "contextRequested": { "const": true }, "contextApplied": { "const": false }, "speechContextMode": { "const": "selection_only" }, "contextSegments": { "maxItems": 0 } } }
+    }
+  ]
+}

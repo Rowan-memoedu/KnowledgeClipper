@@ -22,7 +22,7 @@ from typing import Any, Callable
 
 
 API_VERSION = 6
-EXPORTER_VERSION = "1.4.0"
+EXPORTER_VERSION = "1.5.0"
 SUPPORTED_BUNDLE_KINDS = {"CardBundle", "LearningBundle"}
 SUPPORTED_BUNDLE_SCHEMAS = {"1.0", "1.1"}
 MANAGED_FIELDS = (
@@ -61,6 +61,7 @@ PROBE_READ_ONLY_ACTIONS = {
     "deckNames",
 }
 INITIALIZE_OPERATION = "initialize-managed"
+SEMANTIC_READBACK_OPERATION = "semantic-readback"
 INITIALIZE_ALLOWED_ACTIONS = PROBE_READ_ONLY_ACTIONS | {"createModel", "createDeck"}
 MUTATING_ANKI_ACTIONS = {
     "createModel",
@@ -443,7 +444,7 @@ def validate_worker_request(request: dict[str, Any], task: dict[str, Any], reque
         raise ContractError("COMMON_CONTRACT_INVALID", "worker-request.taskId does not match task-manifest")
     if request["workerId"] != WORKER_ID:
         raise ContractError("WRONG_WORKER", f"worker-request.workerId must be {WORKER_ID}")
-    if request["operation"] not in {"export", "validate", "probe", INITIALIZE_OPERATION}:
+    if request["operation"] not in {"export", "validate", "probe", INITIALIZE_OPERATION, SEMANTIC_READBACK_OPERATION}:
         raise ContractError("OPERATION_UNSUPPORTED", f"Unsupported operation: {request['operation']}")
     if not isinstance(request.get("idempotencyKey"), str) or not SHA256.fullmatch(request["idempotencyKey"]):
         raise ContractError("COMMON_CONTRACT_INVALID", "worker-request.idempotencyKey must be sha256")
@@ -1122,6 +1123,8 @@ class Exporter:
         self.effect_attempted = False
         self.unknown_effect = False
         self.item_diagnostics: list[dict[str, Any]] = []
+        self.api_version: int | None = None
+        self.readback_rows: list[dict[str, Any]] = []
 
     def _error_record(self, exc: ExporterError, *, card_id: str | None = None) -> dict[str, Any]:
         return {"timestamp": utc_now(), "card_id": card_id, "error_code": exc.code, "message": str(exc), "retryable": exc.retryable}
@@ -1142,6 +1145,9 @@ class Exporter:
                 self.package = load_package(self.job_root, self.task, self.request, self.request_path)
             if self.request["operation"] in {"probe", INITIALIZE_OPERATION}:
                 pass
+            elif self.request["operation"] == SEMANTIC_READBACK_OPERATION:
+                self._run_semantic_readback()
+                status = "SUCCEEDED"
             elif self.validate_only:
                 for card in self.package.bundle["cards"]:
                     self._check_cancel()
@@ -1194,6 +1200,7 @@ class Exporter:
         effect_by_operation = {
             "validate": {"effect_class": "local-read-only", "network_scope": "none", "external_mutation": False, "local_artifact_write": True, "may_prompt_user": False},
             "probe": {"effect_class": "provider-read-only", "network_scope": "loopback-only", "external_mutation": False, "local_artifact_write": True, "may_prompt_user": True},
+            SEMANTIC_READBACK_OPERATION: {"effect_class": "provider-read-only", "network_scope": "loopback-only", "external_mutation": False, "local_artifact_write": True, "may_prompt_user": True},
             "export": {"effect_class": "provider-write", "network_scope": "loopback-only", "external_mutation": True, "local_artifact_write": True, "may_prompt_user": True},
             INITIALIZE_OPERATION: {"effect_class": "provider-write", "network_scope": "loopback-only", "external_mutation": True, "local_artifact_write": True, "may_prompt_user": True},
         }
@@ -1217,6 +1224,21 @@ class Exporter:
                 "bundle_sha256": sha256_file(self.package.bundle_path),
                 "config_sha256": sha256_file(self.package.config_path),
             }
+            readback_path = self.writer.output_root / "readback.json"
+            if path_is_file(readback_path):
+                result["readback_evidence"] = {
+                    "schema_version": "anki-export-readback.v1",
+                    "path": self.writer.relative(readback_path),
+                    "sha256": sha256_file(readback_path),
+                    "card_count": len(self.readback_rows),
+                    "redaction": "excludes-profile-endpoint-model-user-notes-and-secrets",
+                }
+            if self.request["operation"] == SEMANTIC_READBACK_OPERATION:
+                result["verification_scope"] = {
+                    "scope": "postflight-readback-only",
+                    "external_mutation": False,
+                    "prior_scenario_writes_inferred": False,
+                }
         elif self.probe_config_path is not None:
             result["inputs"] = {
                 "task_manifest_sha256": sha256_file(self.task_manifest_path),
@@ -1236,7 +1258,8 @@ class Exporter:
         artifact_id = "anki-evidence-" + sha256_bytes(self.request["attemptId"].encode("utf-8"))[:24]
         is_probe = self.request["operation"] == "probe"
         is_initialize = self.request["operation"] == INITIALIZE_OPERATION
-        manifest_name = "anki-connection-status.artifact.json" if is_probe else ("anki-managed-initialization-status.artifact.json" if is_initialize else "anki-export-evidence.artifact.json")
+        is_semantic_readback = self.request["operation"] == SEMANTIC_READBACK_OPERATION
+        manifest_name = "anki-connection-status.artifact.json" if is_probe else ("anki-managed-initialization-status.artifact.json" if is_initialize else ("anki-semantic-readback.artifact.json" if is_semantic_readback else "anki-export-evidence.artifact.json"))
         manifest_path = self.writer.output_root / manifest_name
         files = []
         for name in sorted(os.listdir(native_fs_path(self.writer.output_root))):
@@ -1244,10 +1267,17 @@ class Exporter:
             if path_is_file(path) and path.name != manifest_name:
                 media_type = "application/x-ndjson" if path.suffix == ".ndjson" else "application/json"
                 files.append({"path": self.writer.relative(path), "sha256": sha256_file(path), "bytes": path_size(path), "mediaType": media_type})
-        kind = "anki-connection-status" if is_probe else ("anki-managed-initialization-status" if is_initialize else "anki-export-evidence")
-        media_type = "application/vnd.knowledge-clipper.anki-connection-status+json" if is_probe else ("application/vnd.knowledge-clipper.anki-managed-initialization-status+json" if is_initialize else "application/vnd.rqc.anki-export-evidence+json")
-        entrypoint_name = "connection-status.json" if is_probe else ("receipt.json" if is_initialize else "receipt.json")
+        kind = "anki-connection-status" if is_probe else ("anki-managed-initialization-status" if is_initialize else ("anki-semantic-readback" if is_semantic_readback else "anki-export-evidence"))
+        media_type = "application/vnd.knowledge-clipper.anki-connection-status+json" if is_probe else ("application/vnd.knowledge-clipper.anki-managed-initialization-status+json" if is_initialize else ("application/vnd.knowledge-clipper.anki-semantic-readback+json" if is_semantic_readback else "application/vnd.rqc.anki-export-evidence+json"))
+        entrypoint_name = "connection-status.json" if is_probe else ("receipt.json" if is_initialize else ("readback.json" if is_semantic_readback else "receipt.json"))
         metadata = {"entrypoint": self.writer.relative(self.writer.output_root / entrypoint_name)}
+        readback_path = self.writer.output_root / "readback.json"
+        if not is_probe and not is_initialize and path_is_file(readback_path):
+            metadata["readback"] = {
+                "path": self.writer.relative(readback_path),
+                "sha256": sha256_file(readback_path),
+                "schemaVersion": "anki-export-readback.v1",
+            }
         if is_initialize and path_exists(self.writer.output_root / "initialization-status.json"):
             metadata["statusPath"] = self.writer.relative(self.writer.output_root / "initialization-status.json")
         artifact = {
@@ -1311,7 +1341,7 @@ class Exporter:
             "itemDiagnostics": self.item_diagnostics,
             "warnings": warnings,
             "error": error,
-            "sideEffects": [] if self.request["operation"] == "probe" else [{"kind": "anki.initialize-managed" if self.request["operation"] == INITIALIZE_OPERATION else "anki.export", "idempotencyKey": self.request["idempotencyKey"], "state": side_state, "receiptRef": artifact_ref}],
+            "sideEffects": [] if self.request["operation"] in {"probe", SEMANTIC_READBACK_OPERATION} else [{"kind": "anki.initialize-managed" if self.request["operation"] == INITIALIZE_OPERATION else "anki.export", "idempotencyKey": self.request["idempotencyKey"], "state": side_state, "receiptRef": artifact_ref}],
             "metrics": dict(self.counts),
             "payload": {
                 "moduleStatus": status,
@@ -1319,6 +1349,8 @@ class Exporter:
                 "operation": self.request["operation"],
                 "connectionStatus": self.connection_status.get("status") if self.connection_status else None,
                 "initializationStatus": self.initialization_status.get("status") if self.initialization_status else None,
+                "semanticReadbackOnly": self.request["operation"] == SEMANTIC_READBACK_OPERATION,
+                "priorScenarioWritesInferred": False if self.request["operation"] == SEMANTIC_READBACK_OPERATION else None,
             },
         }
 
@@ -1340,6 +1372,224 @@ class Exporter:
             raise
         self._check_cancel()
         return result
+
+    def _run_semantic_readback(self) -> None:
+        """Verify the expected cards through provider reads without reconciling them.
+
+        This is intentionally stricter than export's query-before-write path.  A
+        missing or drifted note is evidence that an explicit export reconcile is
+        still required; this operation never tries to make the provider current.
+        """
+        assert self.package is not None
+        if "anki-semantic-readback" not in self.task["requestedOutputs"]:
+            raise ContractError(
+                "REQUESTED_OUTPUT_INVALID",
+                "semantic-readback task must request anki-semantic-readback",
+            )
+        payload = self.request["payload"]
+        _exact_keys(
+            payload,
+            {"expectedCardCount", "expectedCards", "expectedDeck"},
+            {"reconcileOfAttemptId"},
+            "semantic-readback.payload",
+        )
+        expected_cards = payload.get("expectedCards")
+        expected_count = payload.get("expectedCardCount")
+        expected_deck = payload.get("expectedDeck")
+        if (
+            isinstance(expected_count, bool)
+            or not isinstance(expected_count, int)
+            or expected_count < 1
+            or not isinstance(expected_cards, list)
+            or len(expected_cards) != expected_count
+            or not isinstance(expected_deck, str)
+            or not expected_deck
+        ):
+            raise ContractError("SEMANTIC_EXPECTATION_INVALID", "semantic-readback expected cards/deck are invalid")
+        if "reconcileOfAttemptId" in payload:
+            _identifier(payload["reconcileOfAttemptId"], "semantic-readback.reconcileOfAttemptId")
+
+        ready_cards = [card for card in self.package.bundle["cards"] if card["status"] == "ready"]
+        if len(ready_cards) != len(self.package.bundle["cards"]) or len(ready_cards) != expected_count:
+            raise ContractError(
+                "SEMANTIC_EXPECTATION_INVALID",
+                "semantic-readback requires every bundle card to be ready and expected",
+            )
+
+        expected_rendered: list[tuple[dict[str, Any], dict[str, str], list[str], str]] = []
+        for ordinal, (card, expected) in enumerate(zip(ready_cards, expected_cards, strict=True)):
+            if not isinstance(expected, dict):
+                raise ContractError("SEMANTIC_EXPECTATION_INVALID", f"expectedCards[{ordinal}] must be an object")
+            _exact_keys(
+                expected,
+                {"cardId", "front", "back"},
+                {"template", "noteId", "ankiCardId"},
+                f"expectedCards[{ordinal}]",
+            )
+            if "noteId" in expected and (
+                isinstance(expected["noteId"], bool)
+                or not isinstance(expected["noteId"], int)
+                or expected["noteId"] <= 0
+            ):
+                raise ContractError("SEMANTIC_EXPECTATION_INVALID", f"expectedCards[{ordinal}].noteId is invalid")
+            if "ankiCardId" in expected and (
+                isinstance(expected["ankiCardId"], bool)
+                or not isinstance(expected["ankiCardId"], int)
+                or expected["ankiCardId"] <= 0
+            ):
+                raise ContractError("SEMANTIC_EXPECTATION_INVALID", f"expectedCards[{ordinal}].ankiCardId is invalid")
+            fields, used_media = render_card(card, self.package)
+            deck = self.package.config["deck_routes"][card["deck_route_key"]]
+            if (
+                expected.get("cardId") != card["card_id"]
+                or expected.get("front") != fields["Front"]
+                or expected.get("back") != fields["Back"]
+                or deck != expected_deck
+            ):
+                raise ContractError(
+                    "SEMANTIC_EXPECTATION_MISMATCH",
+                    f"expectedCards[{ordinal}] does not equal the rendered CardBundle card",
+                )
+            expected_rendered.append((card, fields, used_media, deck))
+
+        observed_actions: list[str] = []
+
+        def audit(record: dict[str, Any]) -> None:
+            action = record.get("action")
+            if isinstance(action, str):
+                observed_actions.append(action)
+            self.writer.append("operations.ndjson", record)
+
+        config = self.package.config
+        self.client = AnkiClient(config["endpoint"], float(config.get("timeout_seconds", 15)), audit)
+        self._check_cancel()
+        permission = self.client.invoke("requestPermission")
+        if not isinstance(permission, dict) or permission.get("permission") != "granted":
+            raise EnvironmentBlocked("PERMISSION_DENIED", "AnkiConnect permission was not granted")
+        version = self.client.invoke("version")
+        if not isinstance(version, int) or version < API_VERSION:
+            raise EnvironmentBlocked("API_VERSION_UNSUPPORTED", f"AnkiConnect API v{API_VERSION}+ required, got {version!r}")
+        self.api_version = version
+        active_profile = self.client.invoke("getActiveProfile")
+        expected_profile = config.get("expected_profile")
+        if expected_profile and active_profile != expected_profile:
+            raise EnvironmentBlocked("WRONG_PROFILE", f"Expected Anki profile {expected_profile!r}, got {active_profile!r}")
+        read_actions = {"findNotes", "notesInfo", "cardsInfo", "retrieveMediaFile"}
+        reflected = self.client.invoke("apiReflect", {"scopes": ["actions"], "actions": sorted(read_actions)})
+        reflected_actions = set(reflected.get("actions", [])) if isinstance(reflected, dict) else set()
+        if not read_actions.issubset(reflected_actions):
+            raise EnvironmentBlocked(
+                "API_ACTIONS_MISSING",
+                f"AnkiConnect is missing semantic readback actions: {sorted(read_actions - reflected_actions)}",
+            )
+
+        checked_media: set[str] = set()
+        for ordinal, (card, fields, used_media, deck) in enumerate(expected_rendered):
+            expected = expected_cards[ordinal]
+            self._check_cancel()
+            for media_id in used_media:
+                if media_id in checked_media:
+                    continue
+                item = self.package.media_by_id[media_id]
+                filename = media_filename(item)
+                stored = self.client.invoke("retrieveMediaFile", {"filename": filename})
+                try:
+                    stored_sha = sha256_bytes(base64.b64decode(stored, validate=True))
+                except (ValueError, TypeError) as exc:
+                    raise AnkiCallError("MEDIA_READBACK_INVALID", f"Invalid media readback for {filename}") from exc
+                if stored_sha != item["sha256"]:
+                    raise AnkiCallError("READBACK_MISMATCH", f"Media readback hash mismatch for {filename}")
+                checked_media.add(media_id)
+
+            note_ids = self.client.invoke(
+                "findNotes",
+                {"query": f'RQC_ID:"{search_escape(card["card_id"])}"'},
+            )
+            if (
+                not isinstance(note_ids, list)
+                or not all(isinstance(note_id, int) and not isinstance(note_id, bool) for note_id in note_ids)
+            ):
+                raise AnkiCallError("ANKI_RESPONSE_INVALID", "findNotes must return an array of integer note IDs", retryable=True)
+            if not note_ids:
+                raise AnkiCallError("READBACK_NOTE_MISSING", f"No Anki note found for {card['card_id']}")
+            if len(note_ids) > 1:
+                raise AnkiCallError("DUPLICATE_ID_CONFLICT", f"Multiple Anki notes found for {card['card_id']}")
+            note_id = note_ids[0]
+            if "noteId" in expected and note_id != expected["noteId"]:
+                raise AnkiCallError("READBACK_IDENTITY_MISMATCH", f"Anki noteId differs for {card['card_id']}")
+            current = self._read_note(note_id)
+            mapping = config["note_types"][card["note_type_key"]]
+            if current.get("modelName") != mapping["model_name"]:
+                raise AnkiCallError("MODEL_SCHEMA_CONFLICT", f"Existing note uses {current.get('modelName')!r}")
+            try:
+                current_revision = int(current["fields"]["RQC_Revision"]["value"])
+                current_hash = current["fields"]["RQC_ContentHash"]["value"]
+            except (KeyError, TypeError, ValueError) as exc:
+                raise AnkiCallError("EXISTING_NOTE_INVALID", f"Existing managed note is missing revision/hash for {card['card_id']}") from exc
+            if current_revision != card["revision"] or current_hash != card["content_hash"]:
+                raise AnkiCallError("READBACK_NOT_CURRENT", f"Existing note is not the expected revision/content for {card['card_id']}")
+            tags = sorted(set(card.get("tags", [])) | {"rqc_managed"})
+            readback = self._verify_note(note_id, fields, deck, tags, card, "ALREADY_CURRENT")
+            if "ankiCardId" in expected and readback["notesInfo"]["cardIds"] != [expected["ankiCardId"]]:
+                raise AnkiCallError("READBACK_IDENTITY_MISMATCH", f"Anki cardId differs for {card['card_id']}")
+            self.readback_rows.append(readback)
+            self.counts["already_current"] += 1
+            self.writer.append(
+                "items.ndjson",
+                {"timestamp": utc_now(), "card_id": card["card_id"], "revision": card["revision"], "status": "ALREADY_CURRENT", "note_id": note_id},
+            )
+            self.item_diagnostics.append({"itemId": card["card_id"], "status": "completed", "outputs": [], "error": None})
+
+        forbidden = sorted(set(observed_actions) & MUTATING_ANKI_ACTIONS)
+        if forbidden:
+            raise AnkiCallError("PROBE_SIDE_EFFECT_VIOLATION", f"Semantic readback invoked mutating actions: {forbidden}")
+        self.writer.write_once(
+            "preflight.json",
+            {
+                "status": "SUCCEEDED",
+                "mode": "semantic-readback-only",
+                "timestamp": utc_now(),
+                "api_version": version,
+                "active_profile_sha256": sha256_bytes(str(active_profile).encode("utf-8")),
+                "actions_verified": sorted(read_actions),
+                "mutating_actions_observed": [],
+                "effect_scope": "postflight-readback-only",
+                "prior_scenario_writes_inferred": False,
+            },
+        )
+        self._write_readback_evidence(require_complete=True)
+
+    def _write_readback_evidence(self, *, require_complete: bool) -> None:
+        assert self.package is not None
+        expected_order = [
+            card["card_id"]
+            for card in self.package.bundle["cards"]
+            if card["status"] == "ready"
+        ]
+        actual_order = [row["sourceCardId"] for row in self.readback_rows]
+        accepted_order = expected_order if require_complete else [
+            card_id for card_id in expected_order if card_id in set(actual_order)
+        ]
+        if actual_order != accepted_order:
+            raise AnkiCallError("READBACK_ORDER_INVALID", "Readback evidence no longer follows CardBundle order")
+        self.writer.write_once("readback.json", {
+            "schemaVersion": "anki-export-readback.v1",
+            "worker": {"workerId": WORKER_ID, "workerVersion": EXPORTER_VERSION},
+            "taskId": self.request["taskId"],
+            "runId": self.request["runId"],
+            "stageId": self.request["stageId"],
+            "attemptId": self.request["attemptId"],
+            "dataClass": "personal",
+            "redaction": "excludes-profile-endpoint-model-user-notes-and-secrets",
+            "api": {"version": self.api_version, "actions": ["notesInfo", "cardsInfo"]},
+            "sourceBundle": {
+                "bundleId": self.package.bundle.get("bundle_id"),
+                "sha256": sha256_file(self.package.bundle_path),
+            },
+            "cardCount": len(self.readback_rows),
+            "cards": self.readback_rows,
+            "cardsSha256": sha256_bytes(json_bytes(self.readback_rows)),
+        })
 
     def _check_cancel(self) -> None:
         signal_path = safe_relative_path(self.job_root, self.request["cancelSignal"]["path"])
@@ -1380,6 +1630,7 @@ class Exporter:
         version = self.client.invoke("version")
         if not isinstance(version, int) or version < API_VERSION:
             raise EnvironmentBlocked("API_VERSION_UNSUPPORTED", f"AnkiConnect API v{API_VERSION}+ required, got {version!r}")
+        self.api_version = version
         active_profile = self.client.invoke("getActiveProfile")
         expected_profile = config.get("expected_profile")
         if expected_profile and active_profile != expected_profile:
@@ -1408,7 +1659,17 @@ class Exporter:
                 continue
             unknown_before = self.unknown_effect
             try:
-                status, note_id = self._export_card(card)
+                status, note_id, readback = self._export_card(card)
+                if any(row["notesInfo"]["noteId"] == note_id for row in self.readback_rows):
+                    raise AnkiCallError("READBACK_DUPLICATE_NOTE_ID", f"Multiple source cards resolved to note {note_id}")
+                observed_card_ids = {
+                    value
+                    for row in self.readback_rows
+                    for value in row["notesInfo"]["cardIds"]
+                }
+                if observed_card_ids.intersection(readback["notesInfo"]["cardIds"]):
+                    raise AnkiCallError("READBACK_DUPLICATE_CARD_ID", f"Multiple source cards resolved to the same Anki card for {card['card_id']}")
+                self.readback_rows.append(readback)
                 if status == "ALREADY_CURRENT":
                     self.counts["already_current"] += 1
                 else:
@@ -1420,6 +1681,8 @@ class Exporter:
                 self.writer.append("errors.ndjson", self._error_record(exc, card_id=card["card_id"]))
                 self.writer.append("items.ndjson", {"timestamp": utc_now(), "card_id": card["card_id"], "revision": card["revision"], "status": "FAILED", "error_code": exc.code})
                 self.item_diagnostics.append(self._item_error(card["card_id"], exc, unknown=self.unknown_effect and not unknown_before))
+        if self.readback_rows:
+            self._write_readback_evidence(require_complete=False)
 
     def _ensure_models_and_decks(self) -> None:
         assert self.package is not None and self.client is not None
@@ -1748,7 +2011,7 @@ class Exporter:
             raise AnkiCallError("READBACK_MISMATCH", f"Media readback hash mismatch for {filename}")
         self.writer.append("media.ndjson", {"timestamp": utc_now(), "media_id": media_id, "filename": filename, "status": "STORED", "sha256": expected})
 
-    def _export_card(self, card: dict[str, Any]) -> tuple[str, int]:
+    def _export_card(self, card: dict[str, Any]) -> tuple[str, int, dict[str, Any]]:
         assert self.package is not None and self.client is not None
         mapping = self.package.config["note_types"][card["note_type_key"]]
         model_name = mapping["model_name"]
@@ -1789,14 +2052,14 @@ class Exporter:
                 raise AnkiCallError("REVISION_CONFLICT", f"Same revision has different content for {card['card_id']}")
             if old_revision == card["revision"] and old_hash == card["content_hash"]:
                 self._ensure_deck(current.get("cards", []), deck)
-                self._verify_note(note_id, fields, deck)
-                return "ALREADY_CURRENT", note_id
+                readback = self._verify_note(note_id, fields, deck, tags, card, "ALREADY_CURRENT")
+                return "ALREADY_CURRENT", note_id, readback
             self._invoke_effect("updateNoteFields", {"note": {"id": note_id, "fields": {name: value for name, value in fields.items() if name != "UserNotes"}}})
             self._invoke_effect("addTags", {"notes": [note_id], "tags": " ".join(tags)})
             self._ensure_deck(current.get("cards", []), deck)
             status = "UPDATED"
-        self._verify_note(note_id, fields, deck)
-        return status, note_id
+        readback = self._verify_note(note_id, fields, deck, tags, card, status)
+        return status, note_id, readback
 
     def _read_note(self, note_id: int) -> dict[str, Any]:
         assert self.client is not None
@@ -1816,24 +2079,84 @@ class Exporter:
             if any(item.get("deckName") != deck for item in cards):
                 self._invoke_effect("changeDeck", {"cards": card_ids, "deck": deck})
 
-    def _verify_note(self, note_id: int, expected_fields: dict[str, str], deck: str) -> None:
+    def _verify_note(
+        self,
+        note_id: int,
+        expected_fields: dict[str, str],
+        deck: str,
+        expected_tags: list[str],
+        source_card: dict[str, Any],
+        outcome: str,
+    ) -> dict[str, Any]:
         assert self.client is not None
         current = self._read_note(note_id)
+        if current.get("noteId") != note_id:
+            raise AnkiCallError("READBACK_MISMATCH", f"notesInfo noteId mismatch for note {note_id}", retryable=True)
+        normalized_fields: dict[str, str] = {}
         for name in MANAGED_FIELDS:
             actual = current.get("fields", {}).get(name, {}).get("value")
             if actual != expected_fields[name]:
                 raise AnkiCallError("READBACK_MISMATCH", f"Field {name} mismatch for note {note_id}", retryable=True)
+            normalized_fields[name] = actual
+        actual_tags = current.get("tags")
+        if (
+            not isinstance(actual_tags, list)
+            or not all(isinstance(tag, str) and tag and not re.search(r"\s", tag) for tag in actual_tags)
+            or len(actual_tags) != len(set(actual_tags))
+        ):
+            raise AnkiCallError("ANKI_RESPONSE_INVALID", f"notesInfo returned invalid tags for note {note_id}", retryable=True)
+        if not set(expected_tags).issubset(actual_tags):
+            raise AnkiCallError("READBACK_MISMATCH", f"Required tags are missing for note {note_id}", retryable=True)
         card_ids = current.get("cards", [])
         if (
             not isinstance(card_ids, list)
+            or not card_ids
             or not all(isinstance(card_id, int) and not isinstance(card_id, bool) for card_id in card_ids)
+            or len(card_ids) != len(set(card_ids))
         ):
             raise AnkiCallError("ANKI_RESPONSE_INVALID", f"notesInfo returned invalid card IDs for note {note_id}", retryable=True)
         cards = self.client.invoke("cardsInfo", {"cards": card_ids}) if card_ids else []
         if not isinstance(cards, list) or not all(isinstance(item, dict) for item in cards):
             raise AnkiCallError("ANKI_RESPONSE_INVALID", "cardsInfo must return an array of card objects", retryable=True)
-        if any(item.get("deckName") != deck for item in cards):
+        by_card_id: dict[int, dict[str, Any]] = {}
+        for item in cards:
+            card_id = item.get("cardId")
+            if (
+                not isinstance(card_id, int)
+                or isinstance(card_id, bool)
+                or card_id in by_card_id
+                or item.get("note") != note_id
+                or not isinstance(item.get("deckName"), str)
+            ):
+                raise AnkiCallError("ANKI_RESPONSE_INVALID", f"cardsInfo returned invalid identity for note {note_id}", retryable=True)
+            by_card_id[card_id] = item
+        if set(by_card_id) != set(card_ids):
+            raise AnkiCallError("READBACK_MISMATCH", f"cardsInfo did not return the exact card set for note {note_id}", retryable=True)
+        ordered_cards = [
+            {"cardId": card_id, "noteId": note_id, "deckName": by_card_id[card_id]["deckName"]}
+            for card_id in card_ids
+        ]
+        if any(item["deckName"] != deck for item in ordered_cards):
             raise AnkiCallError("READBACK_MISMATCH", f"Deck mismatch for note {note_id}", retryable=True)
+        mapping = self.package.config["note_types"][source_card["note_type_key"]]
+        required_names = [mapping["field_map"][name] for name in mapping["required_fields"]]
+        notes_info = {
+            "noteId": note_id,
+            "cardIds": list(card_ids),
+            "fields": normalized_fields,
+            "requiredFieldNames": required_names,
+            "requiredFields": {name: normalized_fields[name] for name in required_names},
+            "requiredTags": list(expected_tags),
+            "tags": sorted(actual_tags),
+        }
+        semantic_body = {"notesInfo": notes_info, "cardsInfo": ordered_cards}
+        return {
+            "ordinal": len(self.readback_rows),
+            "sourceCardId": source_card["card_id"],
+            "outcome": outcome,
+            **semantic_body,
+            "semanticBodySha256": sha256_bytes(json_bytes(semantic_body)),
+        }
 
 
 def worker_description() -> dict[str, Any]:
@@ -1842,9 +2165,9 @@ def worker_description() -> dict[str, Any]:
         "workerId": WORKER_ID,
         "workerVersion": EXPORTER_VERSION,
         "contractVersion": COMMON_SCHEMA_VERSION,
-        "stages": ["anki-export", "anki-probe", "anki-initialize-managed"],
+        "stages": ["anki-export", "anki-probe", "anki-semantic-readback", "anki-initialize-managed"],
         "inputKinds": ["card-bundle", "learning-bundle", "anki-export-config"],
-        "outputKinds": ["anki-export-evidence", "anki-connection-status", "anki-managed-initialization-status"],
+        "outputKinds": ["anki-export-evidence", "anki-connection-status", "anki-semantic-readback", "anki-managed-initialization-status"],
         "concurrency": {"model": "serial", "maxParallelAttempts": 1},
         "sideEffectLevel": "external",
         "idempotencyLevel": "reconcilable",
@@ -1871,25 +2194,27 @@ def resolve_standard_request(request_path: Path) -> tuple[Path, str, str]:
     return root, "task.manifest.v1.json", suffix.as_posix()
 
 
-def publish_probe_bootstrap_contract_failure(
+def publish_read_only_bootstrap_contract_failure(
     job_root: Path,
     worker_request: str,
     exc: ExporterError,
     *,
     progress_sink: Callable[[str], None] | None = None,
 ) -> bool:
-    """Publish a definitive local failure for a verified probe request.
+    """Publish a definitive local failure for a verified read-only request.
 
     The strict task manifest remains mandatory.  This narrow bootstrap path only
     prevents a missing manifest from being misclassified by the orchestrator as
-    an unknown provider write: probe is provider-read-only, the request is
-    independently validated, and no AnkiClient has been constructed yet.
+    an unknown provider write: probe and semantic-readback are provider-read-only,
+    the request is independently validated, and no AnkiClient has been
+    constructed yet.
     """
     if exc.code != "FILE_MISSING" or path_exists(job_root / "task.manifest.v1.json"):
         return False
     request_path = safe_relative_path(job_root, worker_request)
     request = load_json(request_path)
-    if request.get("operation") != "probe":
+    operation = request.get("operation")
+    if operation not in {"probe", SEMANTIC_READBACK_OPERATION}:
         return False
     validate_worker_request(
         request,
@@ -1918,7 +2243,7 @@ def publish_probe_bootstrap_contract_failure(
             "started_at": started,
             "finished_at": utc_now(),
             "counts": {"succeeded": 0, "already_current": 0, "blocked_upstream": 0, "failed": 0},
-            "operation": "probe",
+            "operation": operation,
             "operation_effect": {
                 "effect_class": "provider-read-only",
                 "network_scope": "loopback-only",
@@ -1961,8 +2286,10 @@ def publish_probe_bootstrap_contract_failure(
         "payload": {
             "moduleStatus": "CONTRACT_REJECTED",
             "validateOnly": False,
-            "operation": "probe",
+            "operation": operation,
             "connectionStatus": None,
+            "semanticReadbackOnly": operation == SEMANTIC_READBACK_OPERATION,
+            "priorScenarioWritesInferred": False if operation == SEMANTIC_READBACK_OPERATION else None,
             "bootstrapFailure": True,
         },
     }
@@ -1997,7 +2324,7 @@ def main(argv: list[str] | None = None) -> int:
     except ExporterError as exc:
         if "job_root" in locals() and "worker_request" in locals():
             try:
-                if publish_probe_bootstrap_contract_failure(
+                if publish_read_only_bootstrap_contract_failure(
                     job_root,
                     worker_request,
                     exc,

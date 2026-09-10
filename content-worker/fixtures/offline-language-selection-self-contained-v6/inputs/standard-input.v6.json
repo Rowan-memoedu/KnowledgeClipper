@@ -1,0 +1,7 @@
+{
+  "schema_version": "standard-input/6.0.0", "package_id": "language-selection-self-contained-v6", "task_id": "language-selection-self-contained-v6", "input_version": "1", "mode": "card",
+  "human_overrides": { "languagePracticeMode": "both" },
+  "items": [{ "item_id": "item-selected-word", "source": { "kind": "text", "material_path": "materials/selected.txt" },
+    "language_selection": { "schema_version": "language-selection/1.0.0", "selected_text": "assumption /əˈsʌmpʃən/ means a premise accepted for reasoning.", "selected_text_sha256": "93b71936750752af4ba03fe37953a4b173e69bbcc17bf90da4bf19f3907b956e", "target_text": "assumption", "target_text_sha256": "c081dd376ba93a530dd044cffc81e70953e86d86f7d0796dc26bc1597302573d", "context_enabled": false, "context_segments": [] },
+    "hints": { "category_id": "language_en", "answer_state": "not_applicable", "context_state": "provided" } }]
+}

@@ -870,6 +870,17 @@ namespace KnowledgeClipper
         public int ContentProviderMaxRetries { get; set; } = 3;
         public string AnkiExpectedProfile { get; set; } = "账户 1";
         public string AnkiEndpoint { get; set; } = "http://127.0.0.1:8765";
+        public string AnkiDeckPreset { get; set; } = "knowledge-clipper-default";
+        public Dictionary<string, string> AnkiDeckRoutes { get; set; } = new Dictionary<string, string>(StringComparer.Ordinal);
+        // Local cache of SDK references plus their exact business configuration. Not a
+        // verified binding and never copied into a public workflow/task snapshot.
+        public Dictionary<string, DesktopRemNoteSavedBinding> RemNoteBindings { get; set; } = new(StringComparer.Ordinal);
+    }
+
+    internal sealed record DesktopRemNoteSavedBinding(RemNoteDestinationSettings Settings, KnowledgeClipper.Core.V3.Client.RemNoteBindingReference Reference)
+    {
+        internal bool Matches(RemNoteDestinationSettings current) => Settings?.Target != null && Reference != null && current?.Target != null &&
+            Settings.Target.RootRemId == current.Target.RootRemId && Settings.Target.RootTitle == current.Target.RootTitle;
     }
 
     internal sealed class DesktopModuleSettingsStore
@@ -909,12 +920,17 @@ namespace KnowledgeClipper
             if (value.ContentProviderMaxRetries < 1 || value.ContentProviderMaxRetries > 5) throw new InvalidDataException("settings.content-provider-max-retries-invalid");
             if (string.IsNullOrWhiteSpace(value.AnkiExpectedProfile)) throw new InvalidDataException("settings.anki-profile-required");
             if (!Uri.TryCreate(value.AnkiEndpoint, UriKind.Absolute, out var endpoint) || endpoint.Host != "127.0.0.1" || endpoint.Scheme != "http") throw new InvalidDataException("settings.anki-loopback-endpoint-required");
+            if (!new[] { "knowledge-clipper-default", "custom" }.Contains(value.AnkiDeckPreset, StringComparer.Ordinal)) throw new InvalidDataException("settings.anki-deck-preset-invalid");
+            if (value.AnkiDeckPreset == "custom" && (value.AnkiDeckRoutes == null || value.AnkiDeckRoutes.Count == 0 || value.AnkiDeckRoutes.Any(pair => string.IsNullOrWhiteSpace(pair.Key) || string.IsNullOrWhiteSpace(pair.Value)))) throw new InvalidDataException("settings.anki-deck-routes-required");
             Directory.CreateDirectory(Path.GetDirectoryName(path));
-            if (File.Exists(path)) File.Copy(path, path + ".bak", true);
             var temporary = path + ".tmp-" + Guid.NewGuid().ToString("N");
-            File.WriteAllBytes(temporary, JsonSerializer.SerializeToUtf8Bytes(value, ContractJson.Options));
-            File.Move(temporary, path, true);
-            File.Copy(path, path + ".bak", true);
+            try
+            {
+                File.WriteAllBytes(temporary, JsonSerializer.SerializeToUtf8Bytes(value, ContractJson.Options));
+                if (File.Exists(path)) File.Replace(temporary, path, path + ".bak");
+                else File.Move(temporary, path);
+            }
+            finally { if (File.Exists(temporary)) File.Delete(temporary); }
         }
     }
 
@@ -1134,6 +1150,16 @@ namespace KnowledgeClipper
             return PublishAnki(taskRoot, taskId, settings, local, createdAt).Reference;
         }
 
+        internal static string BuildAnkiConfigurationJson(DesktopWorkflowSettingsService settings, DesktopModuleSettingsStore localStore)
+        {
+            if (settings == null) throw new ArgumentNullException(nameof(settings));
+            if (localStore == null) throw new ArgumentNullException(nameof(localStore));
+            return Encoding.UTF8.GetString(BuildAnkiConfigurationBytes(settings, localStore.Load()));
+        }
+
+        internal static string BuildAnkiProbeConfigurationJson(DesktopWorkflowSettingsService settings, DesktopModuleSettingsDocument draft)
+            => Encoding.UTF8.GetString(BuildAnkiConfigurationBytes(settings, draft));
+
         private static DesktopPublishedTaskInput PublishContent(string taskRoot, string taskId, DesktopWorkflowSettingsService settings, DesktopModuleSettingsStore localStore, DateTimeOffset createdAt)
         {
             using var validation = new DesktopContentSettingsHost(settings, localStore).ReadCachedValidation();
@@ -1189,11 +1215,7 @@ namespace KnowledgeClipper
 
         private static DesktopPublishedTaskInput PublishAnki(string taskRoot, string taskId, DesktopWorkflowSettingsService settings, DesktopModuleSettingsDocument local, DateTimeOffset createdAt)
         {
-            if (string.IsNullOrWhiteSpace(local.AnkiExpectedProfile)) throw new InvalidDataException("settings.anki-profile-required");
-            var template = Path.Combine(settings.AuthorityReleaseRoot, "workers", "anki", "config", "anki-export.v1.example.json");
-            var node = JsonNode.Parse(File.ReadAllBytes(template)).AsObject();
-            node["expected_profile"] = local.AnkiExpectedProfile.Trim(); node["endpoint"] = local.AnkiEndpoint.Trim(); node["provision_managed"] = false;
-            var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(node, ContractJson.Options);
+            var payloadBytes = BuildAnkiConfigurationBytes(settings, local);
             var artifactId = "anki.config." + Sha(payloadBytes).Substring(0, 24);
             var relativeRoot = "artifacts/" + artifactId;
             var payloadPath = relativeRoot + "/anki-export.v1.json";
@@ -1204,6 +1226,26 @@ namespace KnowledgeClipper
             var manifestBytes = JsonSerializer.SerializeToUtf8Bytes(manifest, ContractJson.Options);
             WriteOnce(Path.Combine(taskRoot, manifestPath.Replace('/', Path.DirectorySeparatorChar)), manifestBytes);
             return new DesktopPublishedTaskInput { Reference = new ArtifactReference(artifactId, "anki-export-config", "1.0.0", manifestPath, Sha(manifestBytes)) };
+        }
+
+        private static byte[] BuildAnkiConfigurationBytes(DesktopWorkflowSettingsService settings, DesktopModuleSettingsDocument local)
+        {
+            if (string.IsNullOrWhiteSpace(local.AnkiExpectedProfile)) throw new InvalidDataException("settings.anki-profile-required");
+            if (!Uri.TryCreate(local.AnkiEndpoint, UriKind.Absolute, out var endpoint) || endpoint.Scheme != "http" || endpoint.Host != "127.0.0.1") throw new InvalidDataException("settings.anki-loopback-endpoint-required");
+            var template = Path.Combine(settings.AuthorityReleaseRoot, "workers", "anki", "config", "anki-export.v1.example.json");
+            if (!File.Exists(template)) throw new FileNotFoundException("settings.anki-authority-template-missing", template);
+            var node = JsonNode.Parse(File.ReadAllBytes(template)).AsObject();
+            node["expected_profile"] = local.AnkiExpectedProfile.Trim();
+            node["endpoint"] = local.AnkiEndpoint.Trim();
+            node["provision_managed"] = false;
+            if (local.AnkiDeckPreset == "custom")
+            {
+                if (local.AnkiDeckRoutes == null || local.AnkiDeckRoutes.Count == 0 || local.AnkiDeckRoutes.Any(pair => string.IsNullOrWhiteSpace(pair.Key) || string.IsNullOrWhiteSpace(pair.Value))) throw new InvalidDataException("settings.anki-deck-routes-required");
+                var routes = new JsonObject();
+                foreach (var pair in local.AnkiDeckRoutes.OrderBy(pair => pair.Key, StringComparer.Ordinal)) routes[pair.Key] = pair.Value.Trim();
+                node["deck_routes"] = routes;
+            }
+            return JsonSerializer.SerializeToUtf8Bytes(node, ContractJson.Options);
         }
 
         private static object ArtifactManifest(string id, string kind, string mediaType, IReadOnlyList<object> files, string entrypoint, DateTimeOffset createdAt, string stageId, string workerId, string workerVersion) => new

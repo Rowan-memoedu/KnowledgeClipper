@@ -32,6 +32,12 @@ py -3 (Join-Path $tests 'validate_contracts_v12.py')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 py -3 (Join-Path $tests 'validate_contracts_v13.py')
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+py -3 (Join-Path $tests 'validate_contracts_v14.py')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+py -3 (Join-Path $tests 'validate_contracts_v15.py')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+py -3 (Join-Path $tests 'validate_contracts_v16.py')
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Get-Content -LiteralPath (Join-Path $contract 'fixtures\semantic-actions.valid.ndjson') |
     & (Join-Path $output 'DesktopSemanticHarness.exe') (Join-Path $contract 'fixtures\fake-scenario.v1.json') |

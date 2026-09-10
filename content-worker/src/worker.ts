@@ -3,6 +3,7 @@ import path from "node:path";
 import { loadCategoryRegistry, loadContracts, type LoadedContracts } from "./contracts.js";
 import { ContentGateError, extractOcrLexicalAuditCandidates, validateCards, validateClassification, validateCleaning, validateOcrLexicalAudit, validateOcrProofreading } from "./gates.js";
 import { loadPrompt } from "./prompts.js";
+import { loadLanguageResume } from "./language-resume.js";
 import type { ContentProvider, ProviderRequest } from "./provider.js";
 import type {
   AiTrace,
@@ -37,14 +38,14 @@ import type {
 import { packagePath, readJson, segmentText, sha256, stableStringify } from "./util.js";
 
 export const WORKER_ID = "content.deepseek" as const;
-export const WORKER_VERSION = "0.9.5";
+export const WORKER_VERSION = "0.12.0";
 const LEARNING_FILE = "learning-bundle.schema-v1.json";
 const LEARNING_V2_FILE = "learning-bundle.schema-v2.json";
 const LEARNING_V3_FILE = "learning-bundle.schema-v3.json";
 const OCR_PROOFREAD_FILE = "ocr-proofread-bundle.schema-v1.json";
 const OCR_HUMAN_RESOLUTION_FILE = "ocr-human-resolution-bundle.schema-v1.json";
 const CARD_FILE = "card-bundle.schema-v1.json";
-const LANGUAGE_DECISION_FILE = "language-practice-decision.schema-v1.json";
+const LANGUAGE_DECISION_FILE = "language-practice-decision.schema-v2.json";
 const QUESTION_ANSWER_FILE = "question-answer.schema-v1.json";
 
 interface PendingCard {
@@ -80,6 +81,8 @@ export interface WorkerResult {
   cardBundleSha256?: string;
   languagePracticeDecisionPath?: string;
   languagePracticeDecisionSha256?: string;
+  languagePracticeDecisionSchemaVersion?: "language-practice-decision/1.0.0" | "language-practice-decision/2.0.0";
+  languagePracticeDecisionContractVersion?: "1.0.0" | "2.0.0";
   questionAnswerPath?: string;
   questionAnswerSha256?: string;
   releaseState: LearningBundle["release_state"];
@@ -92,11 +95,12 @@ export async function runWorker(paths: WorkerPaths, provider: ContentProvider): 
   validateOperation(paths.operation, contracts.input);
   const registry = await loadCategoryRegistry(paths.registryPath);
   const registryRaw = await readFile(paths.registryPath);
+  const resumedLearning = await loadLanguageResume(contracts, paths);
   const traces: AiTrace[] = [];
   const processed: ProcessedItem[] = [];
   for (const inputItem of contracts.input.items) {
     throwIfCancelled(paths.signal);
-    processed.push(await processItem(inputItem, contracts, registry, paths.promptRoot, provider, traces, paths.signal, paths.languagePracticeDefault));
+    processed.push(await processItem(inputItem, contracts, registry, paths.promptRoot, provider, traces, paths.signal, paths.languagePracticeDefault, resumedLearning));
   }
 
   const items = processed.map((entry) => entry.item);
@@ -252,7 +256,7 @@ export async function runWorker(paths: WorkerPaths, provider: ContentProvider): 
   let languageDecisionJson: string | undefined;
   if (languageDecisions.length > 0) {
     languageDecision = {
-      schema_version: "language-practice-decision/1.0.0",
+      schema_version: languageDecisions.some((decision) => decision.target_token) ? "language-practice-decision/2.0.0" : "language-practice-decision/1.0.0",
       decision_bundle_id: `language-decision-${sha256(`${learningHash}\0${languageDecisions.map((decision) => decision.decision_id).join("\0")}`).slice(0, 24)}`,
       package_id: contracts.input.package_id,
       task_id: contracts.input.task_id,
@@ -347,6 +351,8 @@ export async function runWorker(paths: WorkerPaths, provider: ContentProvider): 
     ...(cardBundleSha256 ? { cardBundleSha256 } : {}),
     ...(languagePracticeDecisionPath ? { languagePracticeDecisionPath } : {}),
     ...(languagePracticeDecisionSha256 ? { languagePracticeDecisionSha256 } : {}),
+    ...(languageDecision ? { languagePracticeDecisionSchemaVersion: languageDecision.schema_version } : {}),
+    ...(languageDecision ? { languagePracticeDecisionContractVersion: languageDecision.schema_version.endsWith("2.0.0") ? "2.0.0" as const : "1.0.0" as const } : {}),
     ...(questionAnswerPath ? { questionAnswerPath } : {}),
     ...(questionAnswerSha256 ? { questionAnswerSha256 } : {}),
     releaseState,
@@ -354,11 +360,14 @@ export async function runWorker(paths: WorkerPaths, provider: ContentProvider): 
   };
 }
 
-async function processItem(inputItem: StandardInputItem, contracts: LoadedContracts, registry: CategoryRegistry, promptRoot: string, provider: ContentProvider, traces: AiTrace[], signal?: AbortSignal, languagePracticeDefault?: "ask" | LanguagePracticeMode): Promise<ProcessedItem> {
+async function processItem(inputItem: StandardInputItem, contracts: LoadedContracts, registry: CategoryRegistry, promptRoot: string, provider: ContentProvider, traces: AiTrace[], signal?: AbortSignal, languagePracticeDefault?: "ask" | LanguagePracticeMode, resumedLearning?: LearningBundle): Promise<ProcessedItem> {
   if (inputItem.source.kind === "media_set") return processMediaItem(inputItem, contracts);
   if (inputItem.source.kind === "question_workflow") return processQuestionWorkflowItem(inputItem, contracts, registry, promptRoot, provider, traces, signal);
   const source = await loadTextSource(inputItem, contracts);
-  const sourceRefs = [{ path: inputItem.source.material_path, sha256: contracts.filesByPath.get(inputItem.source.material_path)?.sha256 ?? "" }];
+  const sourceRefs = [
+    { path: inputItem.source.material_path, sha256: contracts.filesByPath.get(inputItem.source.material_path)?.sha256 ?? "" },
+    ...(inputItem.language_selection?.context_segments ?? []).map((segment) => ({ path: segment.material_path, sha256: segment.sha256 })),
+  ];
   let ocrProofread: OcrProofreadItem | undefined;
   let ocrHumanResolution: OcrHumanResolutionRecord | undefined;
   const baseItem = (): LearningItem => ({
@@ -493,7 +502,11 @@ async function processItem(inputItem: StandardInputItem, contracts: LoadedContra
         }
       }
     }
-    const cleaningRaw = await callStage(provider, traces, promptRoot, "cleaning", `cleaning:${inputItem.item_id}`, {
+    const frozenItem = resumedLearning?.items.find(item => item.item_id === inputItem.item_id);
+    if (resumedLearning && (!frozenItem || stableStringify(frozenItem.source_segments) !== stableStringify(workingSegments))) throw new Error("INPUT_STALE language_practice_resume source segments");
+    const cleaningRaw = resumedLearning
+      ? resumedLearning.ai_trace.find(trace => trace.call_key === `cleaning:${inputItem.item_id}`)?.response
+      : await callStage(provider, traces, promptRoot, "cleaning", `cleaning:${inputItem.item_id}`, {
       item_id: inputItem.item_id,
       source_text: workingText,
       segments: workingSegments,
@@ -506,17 +519,40 @@ async function processItem(inputItem: StandardInputItem, contracts: LoadedContra
       assertHumanResolvedCharactersPreserved(cleaning.removals, workingSegments, ocrHumanResolution.protected_ranges);
       cleaning.gates.push({ gate_id: "cleaning.human-resolution-protected", status: "pass", evidence: `${ocrHumanResolution.protected_ranges.length} 个用户明确字符范围未被清洗删除或回改` });
     }
-    const classificationRaw = await callStage(provider, traces, promptRoot, "classification", `classification:${inputItem.item_id}`, {
+    const classificationRaw = frozenItem ? { units: frozenItem.units.map(unit => ({
+      unit_id: unit.unit_id,
+      source_segment_indexes: unit.source_segment_ids.map(id => workingSegments.findIndex(segment => segment.segment_id === id)),
+      category_id: unit.category_id, subtype: unit.subtype, answer_state: unit.answer_state,
+      context_state: unit.context_state, risk_state: unit.risk_state,
+      ...(unit.question ? { question: unit.question } : {}),
+      ...(unit.supplied_answer ? { supplied_answer: unit.supplied_answer } : {}),
+      ...(unit.target_term ? { target_term: unit.target_term } : {}),
+      unresolved_reasons: unit.unresolved_reasons.filter(reason => reason !== "language_practice_mode_required"),
+    })) } : await callStage(provider, traces, promptRoot, "classification", `classification:${inputItem.item_id}`, {
       item_id: inputItem.item_id,
       cleaned_text: cleaning.response.cleaned_text,
       segments: workingSegments.filter((segment) => cleaning.activeSegmentIndexes.includes(segment.segment_index)),
       category_registry: registry,
       hints: inputItem.hints ?? {},
       human_overrides: inputItem.human_overrides ?? {},
+      ...(inputItem.language_selection ? { language_selection: {
+        schema_version: inputItem.language_selection.schema_version,
+        selected_text: inputItem.language_selection.selected_text,
+        selected_text_sha256: inputItem.language_selection.selected_text_sha256,
+        target_text: inputItem.language_selection.target_text,
+        target_text_sha256: inputItem.language_selection.target_text_sha256,
+        context_enabled: inputItem.language_selection.context_enabled,
+        context_segments: inputItem.language_selection.context_segments,
+      } } : {}),
     }, undefined, signal);
     const modelClassification = validateClassification(classificationRaw, workingSegments, cleaning.activeSegmentIndexes, registry);
     const overriddenCandidates = modelClassification.units.map((unit) => applyHumanOverrides(unit, inputItem));
     const classification = validateClassification({ units: overriddenCandidates }, workingSegments, cleaning.activeSegmentIndexes, registry);
+    const selectedTarget = inputItem.human_overrides?.languageTargetResolution?.selected_text ?? inputItem.language_selection?.target_text;
+    if (selectedTarget) {
+      for (const candidate of classification.units) if (isLanguageCategory(candidate.category_id)) candidate.target_term = selectedTarget;
+    }
+    if (resumedLearning) classification.gates.push({ gate_id: "classification.frozen-resume", status: "pass", evidence: `Validated prior learning ${contracts.input.language_practice_resume!.learning_ref.payload_sha256}; decision ${contracts.input.language_practice_resume!.decision_ref.payload_sha256}; cleaning/classification provider calls skipped` });
     if (inputItem.human_overrides?.units) classification.gates.push({ gate_id: "classification.human-overrides", status: "pass", evidence: "human_overrides 已重新通过完整分类契约与来源门禁" });
     const units: LearningUnit[] = [];
     const cards: PendingCard[] = [];
@@ -540,6 +576,7 @@ async function processItem(inputItem: StandardInputItem, contracts: LoadedContra
       if (unit.answer_state === "ambiguous") reasons.push("answer_state_ambiguous");
       if (unit.answer_state === "missing" && unit.risk_state !== "ordinary") reasons.push("needs_research");
       if (isLanguage && !unit.target_term) reasons.push("target_term_ambiguous");
+      if (!isLanguage && inputItem.hints?.requested_templates?.some(template => !category.allowed_templates.includes(template))) reasons.push("requested_template_category_conflict");
       if (isLanguage && !languagePracticeMode) {
         reasons.push("language_practice_mode_required");
         decisions.push(makeLanguageDecision(inputItem.item_id, unit, assignedSegments, ["language_practice_mode_required"], {
@@ -551,7 +588,7 @@ async function processItem(inputItem: StandardInputItem, contracts: LoadedContra
         decisions.push(makeLanguageDecision(inputItem.item_id, unit, assignedSegments, ["language_writing_target_not_unique"], {
           currentMode: languagePracticeMode,
           targetOccurrenceCount: 0,
-          requestedOverridePaths: [`human_overrides.units.${unit.unit_id}.target_term`],
+          requestedOverridePaths: ["human_overrides.languageTargetResolution"],
         }));
       }
       if (reasons.length > 0) {
@@ -587,13 +624,16 @@ async function processItem(inputItem: StandardInputItem, contracts: LoadedContra
         const targetTerm = unit.target_term!;
         const writingSource = stripOuterTerminalLineEndings(assignedSegments.map((segment) => segment.text).join("\n\n"));
         const uniqueWritingBody = assignedSegments.length === 1 && writingSource.trim() !== "";
-        const occurrenceCount = uniqueWritingBody ? countLiteralOccurrences(writingSource, targetTerm) : 0;
+        const chosenOccurrence = inputItem.human_overrides?.languageTargetResolution?.action === "accept_candidate"
+          ? inputItem.human_overrides.languageTargetResolution.candidateOccurrence
+          : undefined;
+        const occurrenceCount = chosenOccurrence ? 1 : uniqueWritingBody ? countLiteralOccurrences(writingSource, targetTerm) : 0;
         if (!uniqueWritingBody || occurrenceCount !== 1) {
           unitReasons.push("language_writing_target_not_unique");
           decisions.push(makeLanguageDecision(inputItem.item_id, unit, assignedSegments, ["language_writing_target_not_unique"], {
             currentMode: languagePracticeMode,
             targetOccurrenceCount: occurrenceCount,
-            requestedOverridePaths: [`human_overrides.units.${unit.unit_id}.target_term`],
+            requestedOverridePaths: ["human_overrides.languageTargetResolution"],
           }));
         } else {
           const writing = await resolveLanguageWritingDetails(contracts.input, inputItem, unit, assignedSegments, category, promptRoot, provider, traces, signal);
@@ -611,7 +651,10 @@ async function processItem(inputItem: StandardInputItem, contracts: LoadedContra
               ],
             }));
           } else {
-            const front = writingSource.replace(targetTerm, `（${writing.pronunciation}；${writing.meaning}）`);
+            const replacement = `（${writing.pronunciation}；${writing.meaning}）`;
+            const front = chosenOccurrence
+              ? replaceChosenOccurrence(writingSource, assignedSegments, chosenOccurrence, replacement)
+              : writingSource.replace(targetTerm, replacement);
             const frontProvenance = writing.humanConfirmed ? "human_confirmed" as const : "generated" as const;
             const generatedContent = writing.humanConfirmed ? [] : [{ kind: "language_writing_cloze", text: front }];
             const writingResult = validateCards({
@@ -677,7 +720,7 @@ async function processItem(inputItem: StandardInputItem, contracts: LoadedContra
         gates: [...cleaning.gates, ...classification.gates],
       },
       cards,
-      decisions,
+      decisions: decisions.map((decision) => enrichLanguageDecision(decision, inputItem, workingSegments)),
       ...(ocrProofread && !ocrHumanResolution ? { ocrProofread } : {}),
       ...(ocrHumanResolution ? { ocrHumanResolution } : {}),
     };
@@ -1003,6 +1046,18 @@ async function loadTextSource(inputItem: StandardInputItem, contracts: LoadedCon
   const sourcePath = inputItem.source.material_path;
   const resolved = packagePath(contracts.packageRoot, sourcePath);
   if (inputItem.source.kind === "text" || inputItem.source.kind === "ocr_text") {
+    if (inputItem.source.kind === "text" && inputItem.language_selection) {
+      const selection = inputItem.language_selection;
+      if (!selection.context_enabled) return { text: selection.selected_text, segments: segmentText(selection.selected_text, inputItem.source.material_path, "text") };
+      const segments: SourceSegment[] = [];
+      for (const context of selection.context_segments) {
+        const contextText = await readFile(packagePath(contracts.packageRoot, context.material_path), "utf8");
+        for (const part of segmentText(contextText, context.material_path, "text")) {
+          segments.push({ ...part, segment_index: segments.length, segment_id: `${context.segment_id}-${part.segment_id}` });
+        }
+      }
+      return { text: segments.map((entry) => entry.text).join("\n\n"), segments };
+    }
     const text = await readFile(resolved, "utf8");
     if (text.trim() === "") throw new Error(`INPUT_INVALID empty source ${sourcePath}`);
     return { text, segments: segmentText(text, sourcePath, inputItem.source.kind) };
@@ -1183,6 +1238,16 @@ function stripOuterTerminalLineEndings(value: string): string {
   return value.replace(/(?:\r\n|\r|\n)+$/u, "");
 }
 
+function replaceChosenOccurrence(source: string, segments: SourceSegment[], occurrence: { segmentId: string; order: number; start: number; end: number; exactText: string; sourceSha256: string }, replacement: string): string {
+  const segmentIndex = segments.findIndex((segment) => segment.segment_id === occurrence.segmentId);
+  if (segmentIndex < 0) throw new Error("INPUT_STALE candidateOccurrence segment");
+  const offset = segments.slice(0, segmentIndex).reduce((sum, segment) => sum + segment.text.length + 2, 0);
+  const start = offset + occurrence.start;
+  const end = offset + occurrence.end;
+  if (source.slice(start, end) !== occurrence.exactText) throw new Error("INPUT_STALE candidateOccurrence replacement");
+  return source.slice(0, start) + replacement + source.slice(end);
+}
+
 function validateOperation(operation: WorkerPaths["operation"], input: StandardInput): void {
   if (!input.questionWorkflow) {
     if (operation && operation !== "understand-and-card") throw new Error(`INPUT_INVALID operation ${operation} requires questionWorkflow`);
@@ -1222,6 +1287,35 @@ function makeLanguageDecision(
     ...(details.currentMode ? { current_mode: details.currentMode } : {}),
     ...(details.pronunciationState ? { pronunciation_state: details.pronunciationState } : {}),
     ...(details.meaningState ? { meaning_state: details.meaningState } : {}),
+  };
+}
+
+function enrichLanguageDecision(decision: LanguagePracticeDecisionRecord, item: StandardInputItem, segments: SourceSegment[]): LanguagePracticeDecisionRecord {
+  const selection = item.language_selection;
+  if (!selection) return decision;
+  const targetToken = sha256(stableStringify({ item_id: item.item_id, selected_text_sha256: selection.selected_text_sha256, target_text_sha256: selection.target_text_sha256, context_enabled: selection.context_enabled, context_segment_sha256s: selection.context_segments.map((entry) => entry.sha256) }));
+  const selected = item.human_overrides?.languageTargetResolution?.selected_text ?? selection.target_text;
+  const candidates = segments.flatMap((segment, order) => {
+    const sourceSha = sha256(segment.text);
+    const positions: NonNullable<LanguagePracticeDecisionRecord["candidate_positions"]> = [];
+    let cursor = 0;
+    while (selected !== "") {
+      const start = segment.text.indexOf(selected, cursor);
+      if (start < 0) break;
+      positions.push({ segment_id: segment.segment_id, order, start, end: start + selected.length, exact_text: selected, source_sha256: sourceSha });
+      cursor = start + selected.length;
+    }
+    return positions;
+  });
+  return {
+    ...decision,
+    target_term: selected,
+    target_token: targetToken,
+    selected_text_sha256: selection.selected_text_sha256,
+    target_text_sha256: selection.target_text_sha256,
+    context_segment_sha256s: selection.context_segments.map((entry) => entry.sha256),
+    candidate_positions: candidates,
+    suggested_user_fields: ["action", "selected_text", "selected_text_sha256", "target_token", "candidateOccurrence", "confirmed"],
   };
 }
 

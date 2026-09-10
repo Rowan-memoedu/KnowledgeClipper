@@ -1,0 +1,30 @@
+{
+  "contractId": "knowledge-clipper.desktop-automation",
+  "contractVersion": "1.4.0",
+  "schemaVersion": "desktop-automation.v1.4",
+  "authorityPath": "contracts/desktop-automation/v1.4/",
+  "changeType": "additive-language-card-resolution",
+  "extends": {
+    "contract": "../v1.3/desktop-automation.contract.json",
+    "receipt": "../v1.3/contract-receipt.json",
+    "receiptSha256": "919aaf5b74712c6e1245769dbb035d81005ff8300c0bffe0c911c470b8d3087e",
+    "treeSha256": "866e70dd7af5980012b817f22950dc2132914abcf39e63091ff2aac6181cd83a"
+  },
+  "semanticActionSchemaVersion": "desktop-automation.v1.4",
+  "semanticActions": ["card-resolution.accept-candidate", "card-resolution.submit-correction", "card-resolution.cancel"],
+  "controlRoles": { "floatingRoot": "knowledge-clipper.desktop.floating-window" },
+  "automationIds": [
+    { "automationId": "knowledge-clipper.desktop.floating-window", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.card-resolution.window", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.card-resolution.occurrences", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.card-resolution.correction", "semanticAction": null },
+    { "automationId": "knowledge-clipper.desktop.card-resolution.accept", "semanticAction": "card-resolution.accept-candidate" },
+    { "automationId": "knowledge-clipper.desktop.card-resolution.correct", "semanticAction": "card-resolution.submit-correction" },
+    { "automationId": "knowledge-clipper.desktop.card-resolution.cancel", "semanticAction": "card-resolution.cancel" }
+  ],
+  "schemas": { "semanticAction": "semantic-action.schema.json", "semanticState": "../v1.1/semantic-state.schema.json", "captureBundle": "../v1/capture-bundle.v1.schema.json" },
+  "visibleWhen": "Core typed ReadAloudCardsProjection has pipeline=awaiting_card_resolution, attentionRequired=true and CardResolution is non-null.",
+  "fieldPolicy": "Candidate occurrence segmentId/order/start/end/exactText/sourceSha256, decisionId and targetToken are copied from the typed Core projection; Desktop never computes occurrence identity.",
+  "submissionPolicy": "All actions call CoreV3Client.ResolveCardResolutionAsync. Authorization remains inside the gateway ReadToAnkiOperationAuthorizationCoordinator and is absent from UI DTOs.",
+  "terminalPolicy": "After accepted submission the old prompt is cleared and resolving is shown. Only the matching terminalCommandId with terminalSequence at or after acceptedSequence may project a new preview or terminal result. Failure and cancel release the Desktop busy lease."
+}

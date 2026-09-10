@@ -1,0 +1,10 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"kc.destination-result/1","type":"object","additionalProperties":false,
+ "required":["destinationId","kind","state","reasonCode","sourceCardArtifact","configurationSnapshot","evidence","externalStateKnown","externalWriteCount"],
+ "properties":{
+   "destinationId":{"enum":["anki","remnote"]},"kind":{"enum":["anki","remnote"]},"state":{"enum":["not_started","succeeded","failed","unknown"]},
+   "reasonCode":{"type":["string","null"]},"sourceCardArtifact":{"$ref":"../../artifacts/schemas/artifact-ref.v2.schema.json"},"configurationSnapshot":{"$ref":"../../artifacts/schemas/artifact-ref.v2.schema.json"},
+   "evidence":{"oneOf":[{"type":"null"},{"$ref":"../../artifacts/schemas/artifact-ref.v2.schema.json"}]},"externalStateKnown":{"type":"boolean"},"externalWriteCount":{"type":["integer","null"],"minimum":0}
+ },
+ "allOf":[{"if":{"properties":{"state":{"const":"unknown"}}},"then":{"properties":{"externalStateKnown":{"const":false},"externalWriteCount":{"type":"null"}}}}]
+}

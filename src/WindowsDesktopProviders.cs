@@ -9,9 +9,11 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Automation;
 using System.Windows.Automation.Text;
+using KnowledgeClipper.Desktop.Application.V3;
 using KnowledgeClipper.Desktop.Core;
 
 namespace KnowledgeClipper
@@ -174,6 +176,208 @@ namespace KnowledgeClipper
         bool TryRead(string selectedText, string granularity, out WindowsContextSnapshot context);
     }
 
+    // The v3 read-to-Anki use case captures text once without staging a second
+    // legacy capture artifact. Clipboard access stays on a dedicated STA thread
+    // so the borderless UI remains responsive while the external selection keeps focus.
+    internal sealed class WindowsCurrentTextCapturePort : ICurrentTextCapturePort
+    {
+        private readonly IWindowsClipboard clipboard;
+        private readonly ICopyShortcutSender copySender;
+        private readonly int attempts;
+        private readonly int pollMilliseconds;
+        private readonly IWindowsContextProvider contextProvider;
+        private readonly Func<ContextModeState> readContextMode;
+        private readonly Action<string> tracePhase;
+
+        internal WindowsCurrentTextCapturePort()
+            : this(new SystemWindowsClipboard(), new SystemCopyShortcutSender(), 25, 40, new WindowsUiAutomationContextProvider(), null) { }
+
+        internal WindowsCurrentTextCapturePort(IWindowsClipboard clipboard, ICopyShortcutSender copySender, int attempts = 25, int pollMilliseconds = 40, IWindowsContextProvider contextProvider = null, Func<ContextModeState> readContextMode = null, Action<string> tracePhase = null)
+        {
+            this.clipboard = clipboard ?? throw new ArgumentNullException(nameof(clipboard));
+            this.copySender = copySender ?? throw new ArgumentNullException(nameof(copySender));
+            this.attempts = Math.Max(0, attempts);
+            this.pollMilliseconds = Math.Max(1, pollMilliseconds);
+            this.contextProvider = contextProvider;
+            this.readContextMode = readContextMode;
+            this.tracePhase = tracePhase;
+        }
+
+        public Task<CapturedPlainText> CaptureOnceAsync(CancellationToken cancellationToken)
+        {
+            var completion = new TaskCompletionSource<CapturedPlainText>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var thread = new Thread(() => Capture(completion, cancellationToken)) { IsBackground = true, Name = "KnowledgeClipper.TextCapture" };
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
+            return completion.Task;
+        }
+
+        private void Capture(TaskCompletionSource<CapturedPlainText> completion, CancellationToken cancellationToken)
+        {
+            ClipboardSnapshot before = null;
+            ClipboardSnapshot latest = null;
+            try
+            {
+                Trace("entered");
+                cancellationToken.ThrowIfCancellationRequested();
+                Trace("clipboard-before");
+                before = clipboard.Read();
+                var sequenceBefore = clipboard.SequenceNumber();
+                string sendError;
+                var sent = copySender.TrySend(out sendError);
+                Trace(sent ? "copy-sent" : "copy-send-failed");
+                for (var attempt = 0; sent && attempt < attempts; attempt++)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    Thread.Sleep(pollMilliseconds);
+                    if (clipboard.SequenceNumber() == sequenceBefore) continue;
+                    latest?.Dispose();
+                    latest = clipboard.Read();
+                    if (!string.IsNullOrWhiteSpace(latest?.Text)) break;
+                }
+
+                var text = !string.IsNullOrWhiteSpace(latest?.Text) ? latest.Text : before?.Text;
+                Trace(!string.IsNullOrWhiteSpace(latest?.Text) ? "latest-text-selected" : "original-clipboard-fallback");
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    var notice = sent ? "read-to-anki-text-required" : "read-to-anki-copy-shortcut-failed:" + sendError;
+                    throw new InvalidOperationException(notice);
+                }
+                var mode = readContextMode?.Invoke();
+                var contextRequested = mode?.enabled == true;
+                WindowsContextSnapshot context = null;
+                Trace(contextRequested ? "context-read-before" : "context-not-requested");
+                if (contextRequested && (contextProvider == null || !contextProvider.TryRead(text, mode.granularity, out context)))
+                    throw new InvalidOperationException("context.unavailable");
+                Trace("context-read-after");
+                var segments = new List<CapturedTextSegment>();
+                if (!string.IsNullOrWhiteSpace(context?.Prefix)) segments.Add(new CapturedTextSegment(context.Prefix, 0, "prefix"));
+                if (!string.IsNullOrWhiteSpace(context?.Suffix)) segments.Add(new CapturedTextSegment(context.Suffix, 1, "suffix"));
+                var result = new CapturedPlainText(text)
+                {
+                    TargetText = text,
+                    OrderedContextSegments = segments,
+                    ContextRequested = contextRequested,
+                    ContextGranularity = mode?.granularity,
+                    SourceWindow = ForegroundWindowTitle()
+                };
+                Trace("completed");
+                completion.TrySetResult(result);
+            }
+            catch (OperationCanceledException) { Trace("cancelled"); completion.TrySetCanceled(cancellationToken); }
+            catch (Exception exception) { Trace("failed-" + exception.GetType().Name); completion.TrySetException(exception); }
+            finally
+            {
+                latest?.Dispose();
+                before?.Dispose();
+            }
+        }
+
+        private void Trace(string phase) { try { tracePhase?.Invoke(phase); } catch { } }
+
+        private static string ForegroundWindowTitle()
+        {
+            var handle = GetForegroundWindow();
+            if (handle == IntPtr.Zero) return "unknown";
+            var length = GetWindowTextLength(handle);
+            if (length <= 0) return "unknown";
+            var value = new StringBuilder(Math.Min(length + 1, 1024));
+            return GetWindowText(handle, value, value.Capacity) > 0 ? value.ToString() : "unknown";
+        }
+
+        [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowTextLength(IntPtr hWnd);
+    }
+
+    // Explicit candidate CLI only. No ambient environment override and no Core
+    // command injection: this replaces only the existing text capture input port.
+    internal sealed class CandidateCaptureFixture : ICurrentTextCapturePort
+    {
+        private sealed record Input(string Selected, string Prefix, string Suffix);
+        private readonly Input[] inputs;
+        private readonly string fixturePath, fixtureSha256;
+        private readonly bool isQueue;
+        private readonly object gate = new object();
+        private readonly Func<ContextModeState> readMode;
+        private readonly Action<string> trace;
+        private int consumed;
+        private bool drifted;
+
+        internal CandidateCaptureFixture(string path, Func<ContextModeState> readMode, Action<string> trace = null)
+        {
+            if (!Path.IsPathFullyQualified(path) || !File.Exists(path) || new FileInfo(path).Length > 64000) throw new InvalidDataException("candidate-capture-fixture-path-or-size-invalid");
+            var bytes = File.ReadAllBytes(path);
+            using var doc = System.Text.Json.JsonDocument.Parse(bytes);
+            var root = doc.RootElement;
+            if (root.ValueKind != System.Text.Json.JsonValueKind.Object || !root.TryGetProperty("schemaVersion", out var version)) throw new InvalidDataException("candidate-capture-fixture-version-invalid");
+            isQueue = version.GetString() == "desktop-test-capture-queue.v1";
+            if (isQueue)
+            {
+                RequireFields(root, "inputs", "schemaVersion");
+                var values = root.GetProperty("inputs");
+                if (values.ValueKind != System.Text.Json.JsonValueKind.Array || values.GetArrayLength() < 1 || values.GetArrayLength() > 16) throw new InvalidDataException("candidate-capture-fixture-queue-size-invalid");
+                inputs = values.EnumerateArray().Select(value => { RequireFields(value, "prefix", "selectedText", "suffix"); return ReadInput(value); }).ToArray();
+            }
+            else
+            {
+                RequireFields(root, "prefix", "schemaVersion", "selectedText", "suffix");
+                if (version.GetString() != "desktop-test-capture.v1") throw new InvalidDataException("candidate-capture-fixture-version-invalid");
+                inputs = new[] { ReadInput(root) };
+            }
+            fixturePath = path; fixtureSha256 = Convert.ToHexString(SHA256.HashData(bytes));
+            this.readMode = readMode ?? throw new ArgumentNullException(nameof(readMode)); this.trace = trace;
+            trace?.Invoke("fixture-loaded-sha256-" + fixtureSha256);
+        }
+
+        private static void RequireFields(System.Text.Json.JsonElement value, params string[] expected)
+        {
+            if (value.ValueKind != System.Text.Json.JsonValueKind.Object) throw new InvalidDataException("candidate-capture-fixture-fields-invalid");
+            var names = value.EnumerateObject().Select(property => property.Name).ToArray();
+            if (names.Length != expected.Length || names.Distinct(StringComparer.Ordinal).Count() != expected.Length || !names.OrderBy(name => name, StringComparer.Ordinal).SequenceEqual(expected)) throw new InvalidDataException("candidate-capture-fixture-fields-invalid");
+        }
+
+        private static Input ReadInput(System.Text.Json.JsonElement value)
+        {
+            foreach (var name in new[] { "selectedText", "prefix", "suffix" }) if (value.GetProperty(name).ValueKind != System.Text.Json.JsonValueKind.String) throw new InvalidDataException("candidate-capture-fixture-text-invalid");
+            var selected = value.GetProperty("selectedText").GetString(); var prefix = value.GetProperty("prefix").GetString(); var suffix = value.GetProperty("suffix").GetString();
+            if (string.IsNullOrWhiteSpace(selected) || selected.Length > 5000 || prefix.Length > 10000 || suffix.Length > 10000) throw new InvalidDataException("candidate-capture-fixture-text-invalid");
+            return new Input(selected, prefix, suffix);
+        }
+
+        public Task<CapturedPlainText> CaptureOnceAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Input input;
+            lock (gate)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (drifted) throw new InvalidOperationException("candidate-capture-fixture-drift");
+                try
+                {
+                    if (!File.Exists(fixturePath) || new FileInfo(fixturePath).Length > 64000 || Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(fixturePath))) != fixtureSha256)
+                    { drifted = true; throw new InvalidOperationException("candidate-capture-fixture-drift"); }
+                }
+                catch (IOException) { drifted = true; throw new InvalidOperationException("candidate-capture-fixture-drift"); }
+                catch (UnauthorizedAccessException) { drifted = true; throw new InvalidOperationException("candidate-capture-fixture-drift"); }
+                if (consumed >= inputs.Length) throw new InvalidOperationException(isQueue ? "candidate-capture-fixture-queue-exhausted" : "candidate-capture-fixture-already-consumed");
+                input = inputs[consumed++];
+                trace?.Invoke("fixture-input-consumed-" + consumed);
+            }
+            var selected = input.Selected; var prefix = input.Prefix; var suffix = input.Suffix;
+            var mode = readMode();
+            var segments = new List<CapturedTextSegment>();
+            if (mode?.enabled == true)
+            {
+                if (!string.IsNullOrWhiteSpace(prefix)) segments.Add(new CapturedTextSegment(prefix, segments.Count, "prefix"));
+                if (!string.IsNullOrWhiteSpace(suffix)) segments.Add(new CapturedTextSegment(suffix, segments.Count, "suffix"));
+                if (segments.Count == 0) throw new InvalidOperationException("context.unavailable");
+            }
+            trace?.Invoke("fixture-capture-completed");
+            return Task.FromResult(new CapturedPlainText(selected) { TargetText = selected, OrderedContextSegments = segments, ContextRequested = mode?.enabled == true, ContextGranularity = mode?.granularity ?? "sentence", SourceWindow = "deterministic-capture-fixture" });
+        }
+    }
+
     internal sealed class WindowsContextSnapshot
     {
         internal string Prefix;
@@ -224,7 +428,12 @@ namespace KnowledgeClipper
                 if (string.IsNullOrWhiteSpace(documentText)) return false;
 
                 var ranges = pattern.GetSelection();
-                TextPatternRange selection = ranges == null ? null : ranges.FirstOrDefault(range => !string.IsNullOrWhiteSpace(range.GetText(-1)));
+                var selectedRanges = ranges == null ? new TextPatternRange[0] : ranges.Where(range => !string.IsNullOrWhiteSpace(range.GetText(-1))).ToArray();
+                // Never bind stale clipboard text to a different UIA selection (or
+                // silently choose one range from a multiple selection).
+                if (selectedRanges.Length > 1) return false;
+                TextPatternRange selection = selectedRanges.FirstOrDefault();
+                if (selection != null && !string.Equals(selection.GetText(-1), selectedText, StringComparison.Ordinal)) return false;
                 string prefix, suffix;
                 if (selection != null)
                 {
@@ -258,7 +467,9 @@ namespace KnowledgeClipper
             value = LimitTail(value ?? string.Empty);
             var delimiters = granularity == "paragraph" ? new[] { '\n', '\r' } : new[] { '。', '！', '？', '.', '!', '?', '\n', '\r' };
             var index = value.LastIndexOfAny(delimiters);
-            return (index >= 0 ? value.Substring(index + 1) : value).Trim();
+            // These are source segments, not display strings. Boundary whitespace
+            // is required to reconstruct prefix + selected + suffix losslessly.
+            return index >= 0 ? value.Substring(index + 1) : value;
         }
 
         private static string SliceSuffix(string value, string granularity)
@@ -266,7 +477,9 @@ namespace KnowledgeClipper
             value = LimitHead(value ?? string.Empty);
             var delimiters = granularity == "paragraph" ? new[] { '\n', '\r' } : new[] { '。', '！', '？', '.', '!', '?', '\n', '\r' };
             var index = value.IndexOfAny(delimiters);
-            return (index >= 0 ? value.Substring(0, index + 1) : value).Trim();
+            // Retain sentence punctuation but exclude the next paragraph boundary.
+            // Horizontal whitespace next to the selected text remains untouched.
+            return index >= 0 ? value.Substring(0, index + (value[index] == '\r' || value[index] == '\n' ? 0 : 1)) : value;
         }
 
         private static string LimitTail(string value) { return value.Length <= MaximumSegmentCharacters ? value : value.Substring(value.Length - MaximumSegmentCharacters); }

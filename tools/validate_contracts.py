@@ -25,6 +25,8 @@ CORE_V27_MODULE_CONTROL = ROOT / "contracts" / "core" / "v2.7" / "module-control
 CORE_V27_RETENTION = ROOT / "contracts" / "core" / "v2.7" / "retention"
 CORE_V28_DISCOVERY = ROOT / "contracts" / "core" / "v2.8" / "module-control"
 CORE_V29_ANKI_INITIALIZATION = ROOT / "contracts" / "core" / "v2.9" / "module-control"
+CORE_V3_READ_TO_ANKI = ROOT / "contracts" / "core" / "v3" / "operations" / "clip.read-aloud-cards"
+CORE_V3_DESTINATIONS = ROOT / "contracts" / "core" / "v3" / "operations" / "destinations"
 
 
 def load_json(path: Path) -> object:
@@ -50,6 +52,9 @@ def build_registry() -> tuple[Registry, dict[Path, object]]:
         + list((CORE_V27_RETENTION / "schemas").rglob("*.schema.json"))
         + list((CORE_V28_DISCOVERY / "schemas").rglob("*.schema.json"))
         + list((CORE_V29_ANKI_INITIALIZATION / "schemas").rglob("*.schema.json"))
+        + list(CORE_V3_READ_TO_ANKI.glob("*.schema.json"))
+        + list(CORE_V3_DESTINATIONS.glob("*.schema.json"))
+        + list((ROOT / "contracts" / "core" / "v3" / "artifacts" / "schemas").glob("*.schema.json"))
         + [
             ROOT / "content-worker" / "schemas" / "language-practice-decision.v1.schema.json",
             ROOT / "content-worker" / "schemas" / "question-answer.v1.schema.json",
@@ -102,6 +107,39 @@ def validate_fixture_group(
 def main() -> int:
     registry, loaded = build_registry()
     groups = [
+        (CORE_V3_DESTINATIONS / "command.v1.schema.json", CORE_V3_DESTINATIONS / "fixtures"),
+        (
+            CORE_V3_READ_TO_ANKI / "discovery-result.v1.schema.json",
+            CORE_V3_READ_TO_ANKI / "fixtures" / "discovery-v1",
+        ),
+        (
+            CORE_V3_READ_TO_ANKI / "playback-stop.v1.schema.json",
+            CORE_V3_READ_TO_ANKI / "fixtures" / "playback-stop-v1",
+        ),
+        (
+            CORE_V3_READ_TO_ANKI / "playback-control-projection.v1.schema.json",
+            CORE_V3_READ_TO_ANKI / "fixtures" / "playback-control-v1",
+        ),
+        (
+            CORE_V3_READ_TO_ANKI / "action-discovery-result.v1.schema.json",
+            CORE_V3_READ_TO_ANKI / "fixtures" / "action-discovery-v1",
+        ),
+        (
+            CORE_V3_READ_TO_ANKI / "context-evidence.v1.schema.json",
+            CORE_V3_READ_TO_ANKI / "fixtures" / "context-evidence-v1",
+        ),
+        (
+            CORE_V3_READ_TO_ANKI / "settings-evidence.v1.schema.json",
+            CORE_V3_READ_TO_ANKI / "fixtures" / "settings-evidence-v1",
+        ),
+        (
+            CORE_V3_READ_TO_ANKI / "projection.v3.schema.json",
+            CORE_V3_READ_TO_ANKI / "fixtures" / "projection-v3",
+        ),
+        (
+            CORE_V3_READ_TO_ANKI / "projection.v4.schema.json",
+            CORE_V3_READ_TO_ANKI / "fixtures" / "projection-v4",
+        ),
         (
             CORE_V27_RETENTION / "schemas" / "retention-policy.v1.schema.json",
             CORE_V27_RETENTION / "fixtures" / "retention-policy",

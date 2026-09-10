@@ -1,0 +1,30 @@
+{
+  "schema": "kc.quality.content-failure-isolation-fixture/1",
+  "candidate": "D:\\Artifacts\\KnowledgeClipper\\desktop-read-to-anki\\desktop-rta-20260903T122254Z",
+  "taskId": "task-9cc4a73c76da1d230750ca64",
+  "observed": {
+    "captureSucceeded": true,
+    "submitSucceeded": true,
+    "content": {
+      "status": "failed",
+      "errorCode": "content.gate-failed/card.same-sides"
+    },
+    "speechCompletedIndependently": false,
+    "typedTerminalFailure": false,
+    "spinnerTerminated": false,
+    "previewCreated": false,
+    "ankiAttempts": 0
+  },
+  "nextCandidateRequirements": {
+    "contentFailureDoesNotCancelSpeech": true,
+    "typedTerminalFailureRequired": true,
+    "spinnerMustTerminate": true,
+    "previewOnContentFailure": false,
+    "exportOnContentFailure": false
+  },
+  "supersedesStatusOnly": {
+    "receipt": "D:\\Artifacts\\KnowledgeClipper\\read-to-anki\\quality\\20260903T123000Z-desktop-candidate\\quality-desktop-read-to-anki-receipt.json",
+    "oldStatus": "PASS-SCOPED-USER-HANDTEST",
+    "newStatus": "SUPERSEDED-BY-REAL-USER-FAILURE"
+  }
+}

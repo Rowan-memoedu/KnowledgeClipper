@@ -1,0 +1,10 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema","$id":"kc.destination-snapshot/1","type":"object","additionalProperties":false,
+ "required":["sourceOperationId","destinations"],"properties":{
+   "sourceOperationId":{"type":"string","minLength":1},
+   "destinations":{"type":"array","maxItems":2,"items":{"type":"object","additionalProperties":false,"required":["destinationId","kind","configuration","targetIdentity","routeKey","binding"],"properties":{
+     "destinationId":{"enum":["anki","remnote"]},"kind":{"enum":["anki","remnote"]},"configuration":{"$ref":"../../artifacts/schemas/artifact-ref.v2.schema.json"},
+     "targetIdentity":{"type":"string","minLength":1},"routeKey":{"type":["string","null"]},"binding":{"oneOf":[{"type":"null"},{"$ref":"command.v1.schema.json#/$defs/binding"}]}
+   }}}
+ }
+}

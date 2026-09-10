@@ -12,14 +12,24 @@
     <SelfContained>false</SelfContained>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
+    <CoreV3ReadToAnkiSdkRoot>D:\Artifacts\KnowledgeClipper\remnote-destinations\sdk-integration-20260909-04</CoreV3ReadToAnkiSdkRoot>
+    <CoreV3ReadToAnkiContractsRoot>$(CoreV3ReadToAnkiSdkRoot)</CoreV3ReadToAnkiContractsRoot>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\src\Core.cs" Link="Core.cs" />
     <Compile Include="..\src\DesktopCredentialSettings.cs" Link="DesktopCredentialSettings.cs" />
     <Compile Include="..\src\SingleInstanceCoordinator.cs" Link="SingleInstanceCoordinator.cs" />
     <Compile Include="..\src\CandidateIntegration.cs" Link="CandidateIntegration.cs" />
+    <Compile Include="..\src\LoopbackProviderOverrides.cs" Link="LoopbackProviderOverrides.cs" />
     <Compile Include="..\src\DesktopIntegrationCanary.cs" Link="DesktopIntegrationCanary.cs" />
     <Compile Include="..\src\Compat\JavaScriptSerializer.Net8.cs" Link="Compat\JavaScriptSerializer.Net8.cs" />
     <Compile Include="..\src\RemNoteQuickClipper.Desktop.Core\*.cs" Exclude="..\src\RemNoteQuickClipper.Desktop.Core\SemanticPortProgram.cs;..\src\RemNoteQuickClipper.Desktop.Core\SemanticPortProgramV11.cs" Link="Desktop.Core\%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="KnowledgeClipper.Core.V3.Client">
+      <HintPath>$(CoreV3ReadToAnkiSdkRoot)\KnowledgeClipper.Core.V3.Client.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Content Include="$(CoreV3ReadToAnkiContractsRoot)\KnowledgeClipper.Core.V3.Contracts.dll" Link="KnowledgeClipper.Core.V3.Contracts.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

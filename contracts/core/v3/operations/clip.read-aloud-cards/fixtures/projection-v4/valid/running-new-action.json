@@ -1,0 +1,30 @@
+{
+  "operationId": "clip-operation-001",
+  "actionState": "running",
+  "activeCommandId": "command-confirm-001",
+  "terminalCommandId": "command-preview-001",
+  "terminalSequence": 4,
+  "playback": "idle_replayable",
+  "pipeline": "writing_anki",
+  "attentionRequired": false,
+  "notice": null,
+  "cardGeneration": null,
+  "languageCardChoice": null,
+  "cardResolution": null,
+  "frozenLanguageCardChoice": null,
+  "cardDraft": null,
+  "semanticReadback": null,
+  "settingsEvidence": null,
+  "contextEvidence": null,
+  "lifecycle": ["command.accepted", "operation.completed", "command.accepted", "operation.started"],
+  "outputs": {
+    "ankiConnectionStatusArtifact": null,
+    "captureArtifact": null,
+    "contextSnapshotArtifact": null,
+    "reviewArtifact": null,
+    "synthesisArtifact": null,
+    "playbackArtifact": null,
+    "cardBundleArtifact": null,
+    "ankiReadbackArtifact": null
+  }
+}

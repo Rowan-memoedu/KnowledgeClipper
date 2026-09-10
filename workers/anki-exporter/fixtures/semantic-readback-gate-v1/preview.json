@@ -1,0 +1,30 @@
+{
+  "cardDraft": {
+    "cards": [
+      {
+        "back": "resilient /rɪˈzɪliənt/ 有韧性的",
+        "cardId": "stable-language-context",
+        "cardSha256": "f37584f8705384e659e001fc63aa4e11df43ccccb2542d0d287d1d956386f34f",
+        "front": "The material remains resilient under change.",
+        "metadata": {"ordinal": 0, "sourceArtifactId": "artifact-card-bundle"},
+        "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "template": "language_context"
+      },
+      {
+        "back": "resilient",
+        "cardId": "stable-language-writing",
+        "cardSha256": "a0b1abdefab653feaf9050798f0fdf9d329d9e80fa1f39bba01c85c307db5064",
+        "front": "The material remains （/rɪˈzɪliənt/；有韧性的） under change.",
+        "metadata": {"ordinal": 1, "sourceArtifactId": "artifact-card-bundle"},
+        "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "template": "language_writing"
+      }
+    ],
+    "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sourceOperation": "clip.read-aloud-cards",
+    "token": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "operationId": "operation-offline-semantic-gate",
+  "schemaVersion": "anki-card-preview.v1"
+}

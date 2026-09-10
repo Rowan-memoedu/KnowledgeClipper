@@ -1,0 +1,22 @@
+{
+  "schema_version": "standard-input/6.0.0",
+  "package_id": "language-selection-v6",
+  "task_id": "language-selection-v6",
+  "input_version": "1",
+  "mode": "card",
+  "human_overrides": { "languagePracticeMode": "both" },
+  "items": [{
+    "item_id": "item-selected-word",
+    "source": { "kind": "text", "material_path": "materials/selected.txt" },
+    "language_selection": {
+      "schema_version": "language-selection/1.0.0",
+      "selected_text": "assumption",
+      "selected_text_sha256": "c081dd376ba93a530dd044cffc81e70953e86d86f7d0796dc26bc1597302573d",
+      "target_text": "assumption",
+      "target_text_sha256": "c081dd376ba93a530dd044cffc81e70953e86d86f7d0796dc26bc1597302573d",
+      "context_enabled": true,
+      "context_segments": [{ "segment_id": "sentence-0", "order": 0, "material_path": "materials/context.txt", "sha256": "9bb13663a648e6dcc6430b89329a8ee933106c7036a91c6eae6eb07137de9989" }]
+    },
+    "hints": { "category_id": "language_en", "answer_state": "not_applicable", "context_state": "provided" }
+  }]
+}

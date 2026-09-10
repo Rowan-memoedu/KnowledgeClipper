@@ -1,0 +1,35 @@
+{
+  "operationId": "clip-operation-001",
+  "actionState": "completed",
+  "activeCommandId": null,
+  "terminalCommandId": "command-confirm-001",
+  "terminalSequence": 8,
+  "playback": "idle_replayable",
+  "pipeline": "completed",
+  "attentionRequired": false,
+  "notice": null,
+  "cardGeneration": null,
+  "languageCardChoice": null,
+  "cardResolution": null,
+  "frozenLanguageCardChoice": "both",
+  "cardDraft": {},
+  "semanticReadback": {},
+  "settingsEvidence": {
+    "settingsSnapshot": { "artifactId": "settings", "kind": "task-settings-snapshot", "manifestPath": "artifacts/settings/artifact.json", "sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" },
+    "ankiConfiguration": { "artifactId": "config", "kind": "anki-configuration", "manifestPath": "artifacts/config/artifact.json", "sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" },
+    "destination": { "routeKey": "canary", "deckIdentity": "零碎知识剪藏::Canary::SDK", "deckSha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC" },
+    "packageProvenance": { "producer": "core-v3.phase2", "inputArtifactId": "config", "inputManifestSha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB" }
+  },
+  "contextEvidence": null,
+  "lifecycle": ["command.accepted", "operation.completed"],
+  "outputs": {
+    "ankiConnectionStatusArtifact": null,
+    "captureArtifact": {},
+    "contextSnapshotArtifact": {},
+    "reviewArtifact": {},
+    "synthesisArtifact": {},
+    "playbackArtifact": {},
+    "cardBundleArtifact": {},
+    "ankiReadbackArtifact": {}
+  }
+}

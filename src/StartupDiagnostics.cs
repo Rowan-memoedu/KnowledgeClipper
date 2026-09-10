@@ -22,8 +22,7 @@ namespace KnowledgeClipper
             "KnowledgeClipper.deps.json",
             "KnowledgeClipper.runtimeconfig.json",
             "appsettings.json",
-            "coreclr.dll",
-            "desktop-build-receipt.v1.json"
+            "coreclr.dll"
         };
 
         internal static int Run(string baseDirectory, TextWriter output)
@@ -38,6 +37,10 @@ namespace KnowledgeClipper
                 files.Add(new { name, exists, bytes = exists ? new FileInfo(path).Length : 0L });
                 if (!exists) failures.Add("missing-package-file:" + name);
             }
+            var inventoryName = File.Exists(Path.Combine(root, "candidate-file-manifest.v1.json")) ? "candidate-file-manifest.v1.json" : "desktop-build-receipt.v1.json";
+            var inventoryPath = Path.Combine(root, inventoryName);
+            files.Add(new { name = inventoryName, exists = File.Exists(inventoryPath), bytes = File.Exists(inventoryPath) ? new FileInfo(inventoryPath).Length : 0L });
+            if (!File.Exists(inventoryPath)) failures.Add("missing-package-inventory");
 
             var configPath = Path.Combine(root, "appsettings.json");
             var configParsed = false;
@@ -46,6 +49,7 @@ namespace KnowledgeClipper
             var candidateIntegrationConfigured = File.Exists(Path.Combine(root, "candidate-integration.json"));
             var candidateIntegrationParsed = false;
             var candidateOrchestratorPathsVerified = false;
+            var candidateRuntimeToolsVerified = false;
             CandidateIntegrationConfig candidateIntegration = null;
             try
             {
@@ -66,12 +70,14 @@ namespace KnowledgeClipper
                 {
                     candidateIntegration = CandidateIntegrationConfig.Load(root);
                     candidateIntegrationParsed = candidateIntegration != null;
+                    CandidateOrchestratorHost.Validate(candidateIntegration);
                     candidateOrchestratorPathsVerified = candidateIntegration != null &&
                         File.Exists(candidateIntegration.OrchestratorExecutable) &&
                         File.Exists(candidateIntegration.IpcConfig) &&
                         File.Exists(candidateIntegration.Registry) &&
                         Directory.Exists(candidateIntegration.ReleaseRoot);
                     if (!candidateOrchestratorPathsVerified) failures.Add("candidate-orchestrator-path-verification-failed");
+                    candidateRuntimeToolsVerified = !candidateIntegration.IsCoreV3 || !string.IsNullOrWhiteSpace(candidateIntegration.RuntimeToolsDescriptor);
                 }
                 catch (Exception ex)
                 {
@@ -133,6 +139,7 @@ namespace KnowledgeClipper
                 candidateIntegrationParsed,
                 candidateOrchestratorAutoStart = candidateIntegration != null && candidateIntegration.AutoStart,
                 candidateOrchestratorPathsVerified,
+                candidateRuntimeToolsVerified,
                 authorityCheckpointId = candidateIntegration == null ? null : candidateIntegration.AuthorityCheckpointId,
                 authorityTreeSha256 = candidateIntegration == null ? null : candidateIntegration.AuthorityTreeSha256,
                 singleInstanceAlreadyRunning = !singleInstanceCreated,
@@ -152,7 +159,8 @@ namespace KnowledgeClipper
 
         private static void VerifyPackageReceipt(string root, out int fileCount, out long totalBytes, out string treeSha256, out string receiptSha256)
         {
-            var receiptPath = Path.Combine(root, "desktop-build-receipt.v1.json");
+            var candidateManifest = Path.Combine(root, "candidate-file-manifest.v1.json");
+            var receiptPath = File.Exists(candidateManifest) ? candidateManifest : Path.Combine(root, "desktop-build-receipt.v1.json");
             var receiptBytes = File.ReadAllBytes(receiptPath);
             receiptSha256 = Hex(SHA256.HashData(receiptBytes));
             using var document = JsonDocument.Parse(receiptBytes);
@@ -183,14 +191,27 @@ namespace KnowledgeClipper
                 entries.Add(new PackageEntry(name, actualBytes, actualHash));
                 totalBytes += actualBytes;
             }
-            if (receipt.GetProperty("fileCount").GetInt32() != fileCount || receipt.GetProperty("totalBytes").GetInt64() != totalBytes)
+            var candidateFormat = receipt.TryGetProperty("payload", out var payload);
+            var declaredFileCount = candidateFormat ? payload.GetProperty("files").GetInt32() : receipt.GetProperty("fileCount").GetInt32();
+            var declaredTotalBytes = candidateFormat ? payload.GetProperty("bytes").GetInt64() : receipt.GetProperty("totalBytes").GetInt64();
+            if (declaredFileCount != fileCount || declaredTotalBytes != totalBytes)
                 throw new InvalidDataException("aggregate-mismatch");
             entries.Sort((left, right) => StringComparer.Ordinal.Compare(left.Name, right.Name));
             var material = new StringBuilder();
-            foreach (var entry in entries) material.Append(entry.Name).Append('\n').Append(entry.Sha256).Append('\n').Append(entry.Bytes).Append('\n');
+            foreach (var entry in entries)
+            {
+                if (candidateFormat) material.Append(entry.Name).Append('\0').Append(entry.Bytes).Append('\0').Append(entry.Sha256.ToUpperInvariant()).Append('\n');
+                else material.Append(entry.Name).Append('\n').Append(entry.Sha256).Append('\n').Append(entry.Bytes).Append('\n');
+            }
             treeSha256 = Hex(SHA256.HashData(Encoding.UTF8.GetBytes(material.ToString())));
-            if (!string.Equals(treeSha256, receipt.GetProperty("treeSha256").GetString(), StringComparison.OrdinalIgnoreCase))
+            var declaredTree = candidateFormat ? payload.GetProperty("treeSha256").GetString() : receipt.GetProperty("treeSha256").GetString();
+            if (!string.Equals(treeSha256, declaredTree, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException("tree-mismatch");
+            if (candidateFormat)
+            {
+                var physical = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories).Select(path => Path.GetRelativePath(root, path).Replace('\\', '/')).Where(path => path != "candidate-file-manifest.v1.json").ToHashSet(StringComparer.Ordinal);
+                if (!physical.SetEquals(seen)) throw new InvalidDataException("candidate-physical-inventory-mismatch");
+            }
         }
 
         private static string Hex(byte[] bytes) { return Convert.ToHexString(bytes).ToLowerInvariant(); }

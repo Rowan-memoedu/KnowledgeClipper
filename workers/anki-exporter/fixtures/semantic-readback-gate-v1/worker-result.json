@@ -1,0 +1,40 @@
+{
+  "attemptId": "attempt-offline-semantic-gate",
+  "contractVersion": "1.0.0",
+  "error": null,
+  "idempotencyKey": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "itemDiagnostics": [
+    {"error": null, "itemId": "stable-language-context", "outputs": [], "status": "completed"},
+    {"error": null, "itemId": "stable-language-writing", "outputs": [], "status": "completed"}
+  ],
+  "metrics": {"already_current": 2, "blocked_upstream": 0, "failed": 0, "succeeded": 0},
+  "operationId": "operation-offline-semantic-gate",
+  "outputs": [{
+    "artifactRef": "anki-evidence-offline-semantic-gate",
+    "contractVersion": "1.0.0",
+    "expectedSha256": "5ccdf6c11bafb9cc8517aaa491c0fbd8fa1f5b5a3b3dafbfbc7d277e7e4147e2",
+    "kind": "anki-export-evidence",
+    "manifestPath": "artifact.json"
+  }],
+  "payload": {"moduleStatus": "SUCCEEDED", "operation": "export", "validateOnly": false},
+  "requestId": "request-offline-semantic-gate",
+  "runId": "run-offline-semantic-gate",
+  "schemaVersion": "1.0.0",
+  "sideEffects": [{
+    "idempotencyKey": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "kind": "anki.export",
+    "receiptRef": {
+      "artifactRef": "anki-evidence-offline-semantic-gate",
+      "contractVersion": "1.0.0",
+      "expectedSha256": "5ccdf6c11bafb9cc8517aaa491c0fbd8fa1f5b5a3b3dafbfbc7d277e7e4147e2",
+      "kind": "anki-export-evidence",
+      "manifestPath": "artifact.json"
+    },
+    "state": "verified"
+  }],
+  "stageId": "anki-export",
+  "status": "completed",
+  "taskId": "task-offline-semantic-gate",
+  "warnings": [],
+  "worker": {"id": "export.anki", "version": "1.5.0"}
+}

@@ -6,7 +6,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const workerRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const releasesRoot = path.join(workerRoot, "releases");
+const releasesRoot = process.env.KNOWLEDGE_CLIPPER_CONTENT_RELEASES_ROOT
+  ? path.resolve(process.env.KNOWLEDGE_CLIPPER_CONTENT_RELEASES_ROOT)
+  : path.join(workerRoot, "releases");
 const packageJson = JSON.parse(await readFile(path.join(workerRoot, "package.json"), "utf8"));
 const workerVersion = packageJson.version;
 if (!/^\d+\.\d+\.\d+$/u.test(workerVersion)) throw new Error("PACKAGE_VERSION_INVALID");
@@ -56,7 +58,7 @@ await copyDirectory(path.join(workerRoot, "dist", "src"), path.join(releaseRoot,
 await copyDirectory(path.join(workerRoot, "config"), path.join(releaseRoot, "app", "config"));
 await copyDirectory(path.join(workerRoot, "prompts"), path.join(releaseRoot, "app", "prompts"));
 await copyDirectory(path.join(workerRoot, "schemas"), path.join(releaseRoot, "app", "schemas"));
-for (const documentName of ["CONTENT-SETTINGS-ADAPTER-V1.md", "DESTINATION-NEUTRAL-ARTIFACT-SEMANTICS.md", "LANGUAGE-PRACTICE-V2.md", "QUESTION-WORKFLOW-V3.md", "OCR-HUMAN-RESOLUTION-V1.md"]) {
+for (const documentName of ["CONTENT-SETTINGS-ADAPTER-V1.md", "DESTINATION-NEUTRAL-ARTIFACT-SEMANTICS.md", "LANGUAGE-PRACTICE-V2.md", "LANGUAGE-RECOGNITION-RESUME-V1.md", "QUESTION-WORKFLOW-V3.md", "OCR-HUMAN-RESOLUTION-V1.md"]) {
   await copyFileOnce(path.join(workerRoot, "docs", documentName), path.join(releaseRoot, "app", "docs", documentName));
 }
 await writeJsonOnce(path.join(releaseRoot, "app", "package.json"), {
@@ -87,8 +89,8 @@ const manifest = {
   releaseId,
   productId: "KnowledgeClipper",
   productDisplayName: "零碎知识剪藏",
-  releaseRoot: `content-worker/releases/${releaseId}`,
-  entrypoint: `content-worker/releases/${releaseId}/KnowledgeClipper.Content.Worker.exe`,
+  releaseRoot,
+  entrypoint: path.join(releaseRoot, "KnowledgeClipper.Content.Worker.exe"),
   platform: { os: "windows", architecture: "x64", runtime: "win-x64", portableAsDirectory: true, currentWorkingDirectoryIndependent: true },
   worker: {
     workerId: descriptor.workerId,

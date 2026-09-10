@@ -1,0 +1,12 @@
+{
+  "schema": "kc.quality.question-to-anki-vertical-requirements/1",
+  "status": "WAITING-OWNER-CANDIDATES",
+  "requiredEvidence": {
+    "identity": ["same sealed candidate", "manifest/tree/recursive hashes", "not superseded"],
+    "core": ["actual sealed Orchestrator process", "new immutable task", "initial", "Enter follow-up once", "new revision", "old token rejected before exporter", "confirm once", "exactly one exporter invocation", "logical committed card count equals confirmed immutable draft card count", "create-only low-level mutating API action count equals confirmed immutable draft card count", "operation-level side effect count is tracked separately and equals one", "partial and unknown external state rejected", "Anki 1.4.1 per-card Front/Back/deck/note/card exact readback", "confirm replay zero new attempt/note"],
+    "desktop": ["sealed candidate UI automation", "same button-handler -> capture -> ReadToAnkiUseCase -> typed-gateway route", "one-card and both", "Enter once", "spinner terminal", "typed failure and timeout", "shared multi-card Front/Back preview", "pre-confirm zero writes", "actual UI confirm", "Anki per-card readback", "cancel zero writes", "double-click zero duplicate", "controlled PATH and absent developer runtime environment"],
+    "regression": ["ask", "meaning-reading", "writing", "both", "Content ready plus Speech failed preserves CardDraft preview/confirm/export and emits typed Playback Failed", "Content failed plus Speech completed exposes no preview/export and emits typed Content failure"]
+  },
+  "rejectedEvidence": ["module self-report", "log parsing", "old candidate", "fake-only", "source-tree schema", "direct Core IPC bypass", "receipt replay", "prior candidate payload evidence"],
+  "outOfScope": ["RemNote", "OCR"]
+}

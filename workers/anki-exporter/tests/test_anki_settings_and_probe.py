@@ -21,8 +21,10 @@ from test_anki_exporter import (
     MODEL_FIELDS,
     base_config,
     build_job,
+    build_language_both_job,
     dump_json,
     make_exporter,
+    prepare_semantic_readback_job,
     validate_common,
 )
 
@@ -411,6 +413,26 @@ class AnkiReadOnlyProbeTests(unittest.TestCase):
                 self.assertEqual(2, exporter.main(["run", "--request", str(request_path)]))
             self.assertFalse((root / request["resultPath"]).exists())
             self.assertFalse((root / request["outputPath"]).exists())
+
+    def test_semantic_readback_missing_manifest_is_definitive_and_never_connects(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "semantic-readback"
+            job = prepare_semantic_readback_job(build_language_both_job(root))
+            request_path = (root / job["request"]).resolve()
+            request = json.loads(request_path.read_text(encoding="utf-8"))
+            result_path = root / request["resultPath"]
+            (root / job["task"]).unlink()
+            with mock.patch.object(exporter, "AnkiClient", side_effect=AssertionError("bootstrap failure opened AnkiConnect")):
+                self.assertEqual(2, exporter.main(["run", "--request", str(request_path)]))
+            result = json.loads(result_path.read_text(encoding="utf-8"))
+            self.assertEqual("failed", result["status"])
+            self.assertEqual("FILE_MISSING", result["error"]["code"])
+            self.assertEqual([], result["outputs"])
+            self.assertEqual([], result["sideEffects"])
+            self.assertTrue(result["payload"]["semanticReadbackOnly"])
+            self.assertFalse(result["payload"]["priorScenarioWritesInferred"])
+            self.assertFalse((result_path.parent / "outputs" / "operations.ndjson").exists())
+            validate_common(result_path, "worker-result.schema.json")
 
 
 class AnkiManagedInitializationTests(unittest.TestCase):

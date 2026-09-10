@@ -1,0 +1,26 @@
+{
+  "contractId": "knowledge-clipper.desktop-automation",
+  "contractVersion": "1.7.0",
+  "schemaVersion": "desktop-automation.v1.7",
+  "authorityPath": "contracts/desktop-automation/v1.7/",
+  "changeType": "additive-settings-page-selection-binding",
+  "extends": {
+    "contract": "../v1.6/desktop-automation.contract.json",
+    "receipt": "../v1.6/contract-receipt.json",
+    "receiptSha256": "6d729fb84e4c9dc4344fdf01ab9c387cf0c7998a2470280df778429a61f2d923",
+    "treeSha256": "e2dee1d19bbda091427c28f4f4d5675202e3bdc593cdab5ae0711515ea249717"
+  },
+  "semanticActions": ["settings.page.select"],
+  "automationIds": [
+    {
+      "automationId": "knowledge-clipper.desktop.settings.navigation",
+      "semanticAction": "settings.page.select",
+      "selection": "export",
+      "displaySelection": "导出",
+      "controlType": "List",
+      "interaction": "SelectionItemPattern.Select",
+      "effect": "navigation-only"
+    }
+  ],
+  "navigationBoundary": "The runner selects the existing export settings page through the stable navigation control before editing the next-task Anki route. Page selection has no business or external side effect."
+}

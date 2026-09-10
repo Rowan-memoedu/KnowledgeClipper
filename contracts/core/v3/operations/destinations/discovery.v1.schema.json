@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"kc.remnote-discovery/1","type":"object","additionalProperties":false,"required":["rootTitle"],"properties":{"rootTitle":{"type":"string","minLength":1,"pattern":"^\\S(?:[\\s\\S]*\\S)?$"}}}

@@ -1,0 +1,44 @@
+{
+  "contractId": "knowledge-clipper.desktop-automation",
+  "contractVersion": "1.5.0",
+  "schemaVersion": "desktop-automation.v1.5",
+  "authorityPath": "contracts/desktop-automation/v1.5/",
+  "changeType": "additive-write-path-control-bindings",
+  "extends": {
+    "contract": "../v1.4/desktop-automation.contract.json",
+    "receipt": "../v1.4/contract-receipt.json",
+    "receiptSha256": "b62d18c93e87f7ca42a5e27aa80709e30754435de8c58930bf8527770b140efb",
+    "treeSha256": "2cb82fbf4f0ac431313e995b299ce71de378f8b584b2e0191b4b7503227f08e8"
+  },
+  "semanticActionSchemaVersion": "desktop-automation.v1.5",
+  "semanticActions": [
+    "settings.export.anki.deck-routes.edit",
+    "settings.save",
+    "flashcard-preview.confirm"
+  ],
+  "automationIds": [
+    {
+      "automationId": "knowledge-clipper.desktop.settings.export.anki.deck-routes",
+      "semanticAction": "settings.export.anki.deck-routes.edit",
+      "controlType": "Edit",
+      "interaction": "ValuePattern.SetValue",
+      "effect": "draft-only-until-settings-save"
+    },
+    {
+      "automationId": "knowledge-clipper.desktop.settings.save",
+      "semanticAction": "settings.save",
+      "controlType": "Button",
+      "interaction": "InvokePattern.Invoke",
+      "effect": "next-task-settings-only"
+    },
+    {
+      "automationId": "knowledge-clipper.desktop.flashcard-preview.confirm",
+      "semanticAction": "flashcard-preview.confirm",
+      "controlType": "Button",
+      "interaction": "InvokePattern.Invoke",
+      "effect": "explicit-export-side-effect"
+    }
+  ],
+  "writeBoundary": "Editing deck routes changes only the settings draft. Settings save applies validated configuration to the next task and never mutates an active task. Preview confirm is an explicit user action that may authorize the already projected export destinations; it is not a claim that export completed.",
+  "sourceParity": "Production controls, SettingsAutomationCatalog or FlashcardPreviewAutomation, Windows UI Automation and external runners use these exact identifiers. Runners resolve identifiers by semanticAction from this versioned contract and do not carry fallback constants."
+}

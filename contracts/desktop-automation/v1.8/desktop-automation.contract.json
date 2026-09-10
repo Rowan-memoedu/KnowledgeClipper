@@ -1,0 +1,26 @@
+{
+  "contractId": "knowledge-clipper.desktop-automation",
+  "contractVersion": "1.8.0",
+  "schemaVersion": "desktop-automation.v1.8",
+  "authorityPath": "contracts/desktop-automation/v1.8/",
+  "changeType": "additive-existing-anki-preset-selection-binding",
+  "extends": {
+    "contract": "../v1.7/desktop-automation.contract.json",
+    "receipt": "../v1.7/contract-receipt.json",
+    "receiptSha256": "c21710cc97b9627c68b953e2209d62464e1f8f56ea30eda88e71a479abc45816",
+    "treeSha256": "9684317d97febb403e116af21bd0e5dcc8158e6dab976e14c861cffdc296133c"
+  },
+  "semanticActions": ["settings.export.anki.deck-preset.select"],
+  "automationIds": [
+    {
+      "automationId": "knowledge-clipper.desktop.settings.export.anki.deck-preset",
+      "semanticAction": "settings.export.anki.deck-preset.select",
+      "selection": "custom",
+      "displaySelection": "custom",
+      "controlType": "ComboBox",
+      "interaction": "SelectionItemPattern.Select",
+      "effect": "draft-only-until-settings-save"
+    }
+  ],
+  "settingsBoundary": "The existing preset must be selected explicitly before custom deck routes apply. Edit routes through the existing v1.5 control and save through settings.save. No deck identity is supplied by this binding; use the caller-authorized route. Validate the frozen configuration before confirming any export. This binding does not change the product default preset or publish business commands."
+}

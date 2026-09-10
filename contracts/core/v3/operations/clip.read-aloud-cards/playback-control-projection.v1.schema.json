@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.read-playback-control-projection/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["operationId", "state", "canStop", "sequence"],
+  "properties": {
+    "operationId": { "type": "string", "minLength": 1 },
+    "state": { "enum": ["playing", "completing", "stop_requested", "stopped", "idle_replayable", "ambiguous", "unknown", "unsupported"] },
+    "canStop": { "type": "boolean" },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "targetToken": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
+    "actionCommandId": { "type": ["string", "null"] },
+    "attemptId": { "type": ["string", "null"] }
+  },
+  "allOf": [
+    { "if": { "properties": { "canStop": { "const": true } } },
+      "then": { "required": ["targetToken", "actionCommandId", "attemptId"], "properties": {
+        "state": { "const": "playing" }, "targetToken": { "type": "string" },
+        "actionCommandId": { "type": "string", "minLength": 1 }, "attemptId": { "type": "string", "minLength": 1 }
+      } } }
+  ]
+}

@@ -15,6 +15,33 @@ namespace KnowledgeClipper.Desktop.Application.V3
         Task<QuestionProjection> GetQuestionAsync(string taskId, CancellationToken cancellationToken);
     }
 
+    internal interface ICurrentTextCapturePort
+    {
+        Task<CapturedPlainText> CaptureOnceAsync(CancellationToken cancellationToken);
+    }
+
+    internal interface IReadToAnkiInputArtifactPort
+    {
+        Task<ArtifactHandle> PublishCaptureTextAsync(ImmutablePlainText value, CancellationToken cancellationToken);
+    }
+
+    // Core owns orchestration. Desktop sees one use case and typed projections only.
+    internal interface IReadToAnkiPort
+    {
+        Task<ReadToAnkiSubmissionResult> SubmitAsync(ReadToAnkiSubmission submission, CancellationToken cancellationToken);
+        Task<ReadToAnkiProjection> GetProjectionAsync(string operationId, CancellationToken cancellationToken);
+        Task<ReadToAnkiSubmissionResult> ResumeLanguageChoiceAsync(ReadToAnkiChoiceSubmission submission, CancellationToken cancellationToken);
+        Task<ReadToAnkiSubmissionResult> ResolveCardAsync(CardResolutionSubmission submission, CancellationToken cancellationToken);
+        Task<ReadToAnkiPlaybackCommandResult> ReplayAsync(string operationId, CancellationToken cancellationToken);
+    }
+
+    internal interface IReadPlaybackControlPort
+    {
+        Task<PlaybackControlSnapshot> GetPlaybackControlAsync(string operationId, CancellationToken cancellationToken);
+        Task<PlaybackStopAcceptance> StopPlaybackAsync(PlaybackTarget target, CancellationToken cancellationToken);
+        Task<PlaybackControlSnapshot> WaitPlaybackStopAsync(PlaybackStopAcceptance accepted, CancellationToken cancellationToken);
+    }
+
     internal interface IModuleActionPort
     {
         Task<ModuleActionResult> ExecuteAsync(ModuleActionRequest request, CancellationToken cancellationToken);

@@ -1,0 +1,9 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-selected-word": { "cleaned_text": "assumption /əˈsʌmpʃən/ means a premise accepted for reasoning.", "removed_fragments": [], "format_anomalies": [] },
+    "classification:item-selected-word": { "units": [{ "unit_id": "unit-selected", "source_segment_indexes": [0], "category_id": "language_en", "subtype": "vocabulary_with_gloss", "answer_state": "not_applicable", "context_state": "provided", "risk_state": "ordinary", "target_term": "assumption", "unresolved_reasons": [] }] },
+    "card_generation:item-selected-word:unit-selected": { "generated_content": [{ "kind": "explanation", "text": "assumption /əˈsʌmpʃən/：假设。" }], "cards": [{ "template": "language_context", "front_blocks": [{ "type": "text", "text": "assumption /əˈsʌmpʃən/ means a premise accepted for reasoning.", "provenance": "source" }], "back_blocks": [{ "type": "text", "text": "assumption /əˈsʌmpʃən/：假设。", "provenance": "generated" }], "answer_provenance": "not_applicable" }], "unresolved_reasons": [] },
+    "language_writing:item-selected-word:unit-selected": { "pronunciation": { "value": "/əˈsʌmpʃən/", "reliability": "reliable", "evidence": "pronunciation is present in selected text" }, "meaning": { "value": "假设", "reliability": "reliable", "evidence": "definition is present in selected text" }, "unresolved_reasons": [] }
+  }
+}

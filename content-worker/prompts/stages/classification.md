@@ -34,6 +34,8 @@
 
 语义约束：
 
+- 若输入有 `language_selection`，`selected_text` 是用户实际选中的材料，`target_text` 是其中经 SHA 校验的目标，`segments` 是用于理解它的完整来源上下文。围绕选中材料判断学习类型，不要仅因上下文是完整陈述句就忽略选词；词语学习可归入适用的语言类别。选中的内容也可能是公式、命题、代码或普通知识，不得仅因字段名称、默认制卡偏好或 requested_templates 强制判为语言。语言不支持、目标含义或词语属性不明确时保留 unresolved；读音和释义由后续阶段生成，不在分类阶段编造。
+
 - `hints` 是上游已知约束；除非与来源直接冲突，不得擅自反转。
 - `language_zh`、`language_en` 是词语学习，不是题目问答；其 `answer_state` 必须为 `not_applicable`，不得把 `target_term` 同时当作 `supplied_answer`。
 - 每个 unit 的 `source_segment_indexes` 不得重复同一个索引。`target_term` 也是来源抽取字段，必须可在该单元来源分段中逐字连续定位；词形还原、拼音、IPA 与释义留给后续制卡阶段生成。

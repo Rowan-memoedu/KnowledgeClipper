@@ -1,0 +1,9 @@
+{
+  "schema": "kc.quality.desktop-actual-harness-requirements/1",
+  "status": "WAITING-FUTURE-HARNESS",
+  "authoritativeCli": {"settings": "--open-settings", "source": "src/Program.cs:21-30"},
+  "static": ["Set-StrictMode Latest", "case-insensitive automatic/reserved variable scan", "all owned resources initialized null before try", "central idempotent null-safe cleanup", "pre-task zero-write assertion"],
+  "isolation": ["owned candidate process/window", "LOCALAPPDATA", "pipe", "data-root", "authority settings snapshot destination", "no business input injection"],
+  "fakeRuntimeBranches": ["start-failure", "zero-window", "multiple-window", "settings-open-failure", "settings-save-failure", "pipe-connect-failure", "task-submit-failure", "state-timeout", "anki-adapter-failure", "success", "cleanup-close-throws", "cleanup-kill-required"],
+  "promotionRule": "offline static and fake runtime gates must pass before one actual run"
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.read-playback-stop/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["action", "targetToken"],
+  "properties": {
+    "action": { "const": "stop_playback" },
+    "targetToken": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" }
+  }
+}

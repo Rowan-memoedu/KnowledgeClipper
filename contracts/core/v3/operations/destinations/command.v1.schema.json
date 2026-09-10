@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.destination-cards-command/1",
+  "type": "object", "additionalProperties": false, "required": ["destinationMode"],
+  "properties": {
+    "destinationMode": {"const":"confirmed-cards"},
+    "capture": {"$ref":"../../artifacts/schemas/artifact-ref.v2.schema.json"},
+    "destinations": {"type":"array","maxItems":2,"items":{"$ref":"#/$defs/selection"},"allOf":[
+      {"contains":{"properties":{"kind":{"const":"anki"}},"required":["kind"]},"minContains":0,"maxContains":1},
+      {"contains":{"properties":{"kind":{"const":"remnote"}},"required":["kind"]},"minContains":0,"maxContains":1}
+    ]},
+    "languageCards":{"type":["object","null"]}, "includeSpeech":{"type":"boolean"}, "selection":{"type":["object","null"]},
+    "sessionId":{"type":"string","minLength":1},
+    "question":{"$ref":"../../artifacts/schemas/artifact-ref.v2.schema.json"},
+    "context":{"type":"array","items":{"$ref":"../../artifacts/schemas/artifact-ref.v2.schema.json"}},
+    "followUp":{"$ref":"../../artifacts/schemas/artifact-ref.v2.schema.json"},
+    "answer":{"$ref":"../../artifacts/schemas/artifact-ref.v2.schema.json"},
+    "action":{"enum":["confirm_card_draft","cancel_card_draft","choose_language_card","resolve_card_resolution","replay"]},
+    "sourceOperationId":{"type":"string","minLength":1},
+    "draft":{"type":"object","additionalProperties":false,"required":["token","revision","digest"],"properties":{
+      "token":{"type":"string","minLength":1},"revision":{"type":"string","minLength":1},"digest":{"type":"string","pattern":"^[A-Fa-f0-9]{64}$"}}},
+    "destinationSnapshot":{"$ref":"../../artifacts/schemas/artifact-ref.v2.schema.json"},
+    "grants":{"type":"array","maxItems":2,"items":{"type":"object","additionalProperties":false,"required":["kind","authorizationId","scope","targetIdentity"],"properties":{
+      "kind":{"enum":["anki","remnote"]},"authorizationId":{"type":"string","minLength":1},"scope":{"enum":["isolated-canary-deck","confirmed-remnote-root"]},"targetIdentity":{"type":"string","minLength":1}},
+      "allOf":[{"if":{"properties":{"kind":{"const":"anki"}}},"then":{"properties":{"scope":{"const":"isolated-canary-deck"}}},"else":{"properties":{"scope":{"const":"confirmed-remnote-root"}}}}]}},
+    "targetToken":{"type":"string","minLength":1},"choice":{"enum":["meaning-reading","writing","both"]},
+    "decisionId":{"type":"string","minLength":1},"resolutionAction":{"type":"string","minLength":1},"selectedText":{"type":["string","null"]},"candidateOccurrence":{"type":["object","null"]},
+    "sourceRevision":{"type":"integer","minimum":1}
+  },
+  "oneOf":[
+    {"required":["capture","destinations"],"not":{"anyOf":[{"required":["action"]},{"required":["sessionId"]}]}},
+    {"required":["sessionId","question","context","destinations"],"not":{"required":["action"]}},
+    {"required":["sessionId","followUp"],"not":{"anyOf":[{"required":["destinations"]},{"required":["action"]}]}},
+    {"required":["sessionId","answer"],"not":{"anyOf":[{"required":["destinations"]},{"required":["action"]}]}},
+    {"required":["action","sourceOperationId"],"not":{"anyOf":[{"required":["capture"]},{"required":["destinations"]}]},"allOf":[
+      {"if":{"properties":{"action":{"const":"confirm_card_draft"}}},"then":{"required":["draft","destinationSnapshot","grants"]}},
+      {"if":{"properties":{"action":{"const":"cancel_card_draft"}}},"then":{"required":["draft"],"not":{"required":["grants"]}}},
+      {"if":{"properties":{"action":{"const":"choose_language_card"}}},"then":{"required":["targetToken","choice"]}},
+      {"if":{"properties":{"action":{"const":"resolve_card_resolution"}}},"then":{"required":["targetToken","decisionId","resolutionAction"]}},
+      {"if":{"properties":{"action":{"const":"replay"}}},"then":{"required":["sourceRevision"]}}
+    ]}
+  ],
+  "$defs":{
+    "binding":{"type":"object","additionalProperties":false,"required":["discoveryOperationId","evidence","rootRemId","rootTitle"],"properties":{
+      "discoveryOperationId":{"type":"string","minLength":1},"evidence":{"$ref":"../../artifacts/schemas/artifact-ref.v2.schema.json"},"rootRemId":{"type":"string","minLength":1},"rootTitle":{"type":"string","minLength":1}}},
+    "selection":{"type":"object","additionalProperties":false,"required":["kind","configuration","routeKey","binding"],"properties":{
+      "kind":{"enum":["anki","remnote"]},"configuration":{"$ref":"../../artifacts/schemas/artifact-ref.v2.schema.json"},"routeKey":{"type":["string","null"]},"binding":{"oneOf":[{"type":"null"},{"$ref":"#/$defs/binding"}]}},
+      "allOf":[{"if":{"properties":{"kind":{"const":"anki"}}},"then":{"properties":{"binding":{"type":"null"},"routeKey":{"type":"string","minLength":1}}},"else":{"properties":{"binding":{"$ref":"#/$defs/binding"},"routeKey":{"type":"null"}}}}]}
+  }
+}

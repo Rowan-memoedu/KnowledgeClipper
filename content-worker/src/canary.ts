@@ -31,7 +31,8 @@ async function main(): Promise<void> {
 
   const stamp = new Date().toISOString().replace(/[-:.]/gu, "").replace("Z", "Z");
   const canaryId = `${stamp}-${args.fixture}-${args.mode}-${randomUUID().slice(0, 8)}`;
-  const jobRoot = path.join(workerRoot, "canary", "jobs", canaryId);
+  const canaryStore = process.env.KNOWLEDGE_CLIPPER_CONTENT_CANARY_ROOT ? path.resolve(process.env.KNOWLEDGE_CLIPPER_CONTENT_CANARY_ROOT) : path.join(workerRoot, "canary", "jobs");
+  const jobRoot = path.join(canaryStore, canaryId);
   await mkdir(path.dirname(jobRoot), { recursive: true });
   await mkdir(jobRoot, { recursive: false });
   const inputRoot = path.join(jobRoot, "inputs", "content");
@@ -39,7 +40,7 @@ async function main(): Promise<void> {
 
   const input = JSON.parse(await readFile(path.join(sourceRoot, "inputs", inputFileName), "utf8")) as {
     schema_version: string;
-    items: Array<{ source: { kind: string; material_path?: string; assets?: Array<{ material_path: string }> } }>;
+    items: Array<{ source: { kind: string; material_path?: string; assets?: Array<{ material_path: string }> }; language_selection?: { context_segments: Array<{ material_path: string }> } }>;
     questionWorkflow?: { phase: "answer" | "make-cards"; cardStructureRef?: string };
   };
   const materialPaths: string[] = [];
@@ -52,6 +53,10 @@ async function main(): Promise<void> {
     } else if (item.source.material_path) {
       materialPaths.push(item.source.material_path);
       item.source.material_path = `inputs/content/${item.source.material_path}`;
+    }
+    for (const context of item.language_selection?.context_segments ?? []) {
+      materialPaths.push(context.material_path);
+      context.material_path = `inputs/content/${context.material_path}`;
     }
   }
   if (input.questionWorkflow?.cardStructureRef) {
@@ -181,7 +186,7 @@ async function main(): Promise<void> {
 }
 
 async function firstExistingInput(sourceRoot: string): Promise<string> {
-  for (const fileName of ["standard-input.v4.json", "standard-input.v3.json", "standard-input.v2.json", "standard-input.v1.json"]) {
+  for (const fileName of ["standard-input.v7.json", "standard-input.v6.json", "standard-input.v5.json", "standard-input.v4.json", "standard-input.v3.json", "standard-input.v2.json", "standard-input.v1.json"]) {
     try {
       await access(path.join(sourceRoot, "inputs", fileName));
       return fileName;

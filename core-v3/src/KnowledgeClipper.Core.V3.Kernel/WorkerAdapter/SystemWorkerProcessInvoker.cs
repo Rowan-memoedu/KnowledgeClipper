@@ -6,6 +6,27 @@ namespace KnowledgeClipper.Core.V3.Kernel.WorkerAdapter;
 
 internal sealed class SystemWorkerProcessInvoker : IWorkerProcessInvoker
 {
+    public async Task<WorkerProcessInvocationResult> InvokePublicAsync(AdmittedAuthorityWorker worker, PublicWorkerCommandPackage package, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        if (worker.WorkerId != "export.remnote" || package.Command is not ("discover-target-public" or "probe-public")) throw new InvalidDataException("Read-only public route not admitted.");
+        using var process = new Process { StartInfo = new ProcessStartInfo(worker.Entrypoint) { WorkingDirectory = Path.GetDirectoryName(worker.Entrypoint)!, UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true } };
+        foreach (var arg in new[] { package.Command, "--request", package.RequestPath, "--json" }) process.StartInfo.ArgumentList.Add(arg);
+        if (!process.Start()) throw new InvalidOperationException("Could not start admitted read-only RemNote command.");
+        var stdout = PumpAsync(process.StandardOutput, package.StandardOutputPath, CancellationToken.None);
+        var stderr = PumpAsync(process.StandardError, package.StandardErrorPath, CancellationToken.None);
+        using var timeoutSource = new CancellationTokenSource(timeout);
+        using var stop = CancellationTokenSource.CreateLinkedTokenSource(timeoutSource.Token, cancellationToken);
+        var timedOut = false; var cancelled = false;
+        try { await process.WaitForExitAsync(stop.Token).ConfigureAwait(false); }
+        catch (OperationCanceledException)
+        {
+            timedOut = timeoutSource.IsCancellationRequested && !cancellationToken.IsCancellationRequested; cancelled = !timedOut;
+            if (!process.HasExited) process.Kill(entireProcessTree: true);
+            await process.WaitForExitAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        await Task.WhenAll(stdout, stderr).ConfigureAwait(false);
+        return new(process.ExitCode, timedOut, cancelled, package.StandardErrorPath);
+    }
     public async Task<WorkerProcessInvocationResult> InvokeAsync(
         AdmittedAuthorityWorker worker,
         LegacyAttemptPackage package,

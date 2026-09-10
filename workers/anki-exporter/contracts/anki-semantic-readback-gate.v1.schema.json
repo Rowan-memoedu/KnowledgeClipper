@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./anki-semantic-readback-gate.v1.schema.json",
+  "title": "KnowledgeClipper Anki semantic readback gate receipt v1",
+  "description": "Module-local readable receipt for exact preview, confirmation, worker and provider-readback agreement.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "verificationEffect", "binding", "assertions", "cards", "evidence"],
+  "properties": {
+    "schemaVersion": {"const": "anki-semantic-readback-gate.v1"},
+    "status": {"const": "passed"},
+    "verificationEffect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "externalApiCalls", "externalMutation", "priorScenarioWritesInferred"],
+      "properties": {
+        "scope": {"const": "offline-evidence-verification-only"},
+        "externalApiCalls": {"const": 0},
+        "externalMutation": {"const": false},
+        "priorScenarioWritesInferred": {"const": false}
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operationId", "confirmationCommandId", "previewToken", "previewRevision", "previewDigest", "workerRequestId", "workerAttemptId", "workerVersion", "expectedDeck", "expectedCardCount"],
+      "properties": {
+        "operationId": {"type": "string", "minLength": 1},
+        "confirmationCommandId": {"type": "string", "minLength": 1},
+        "previewToken": {"type": "string", "minLength": 1},
+        "previewRevision": {"type": "string", "minLength": 1},
+        "previewDigest": {"type": "string", "minLength": 1},
+        "workerRequestId": {"type": "string", "minLength": 1},
+        "workerAttemptId": {"type": "string", "minLength": 1},
+        "workerVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$"},
+        "expectedDeck": {"type": "string", "minLength": 1},
+        "expectedCardCount": {"type": "integer", "minimum": 1}
+      }
+    },
+    "assertions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exactCardinality", "exactStableIdentity", "exactOrder", "exactFrontBack", "exactDeck", "exactNoteCardOwnership", "shaBoundEvidence"],
+      "properties": {
+        "exactCardinality": {"const": true},
+        "exactStableIdentity": {"const": true},
+        "exactOrder": {"const": true},
+        "exactFrontBack": {"const": true},
+        "exactDeck": {"const": true},
+        "exactNoteCardOwnership": {"const": true},
+        "shaBoundEvidence": {"const": true}
+      }
+    },
+    "cards": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/card"}
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {"$ref": "#/$defs/evidence"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ordinal", "stableCardId", "previewCardSha256", "template", "front", "back", "deck", "noteId", "cardId", "outcome"],
+      "properties": {
+        "ordinal": {"type": "integer", "minimum": 0},
+        "stableCardId": {"type": "string", "minLength": 1},
+        "previewCardSha256": {"$ref": "#/$defs/sha256"},
+        "template": {"type": "string", "minLength": 1},
+        "front": {"type": "string", "minLength": 1},
+        "back": {"type": "string", "minLength": 1},
+        "deck": {"type": "string", "minLength": 1},
+        "noteId": {"type": "integer", "minimum": 1},
+        "cardId": {"type": "integer", "minimum": 1},
+        "outcome": {"enum": ["CREATED", "UPDATED", "ALREADY_CURRENT"]}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "path", "sha256"],
+      "properties": {
+        "name": {"enum": ["preview", "confirmationCommand", "workerRequest", "workerResult", "artifactManifest", "readback"]},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

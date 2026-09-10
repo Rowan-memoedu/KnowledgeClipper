@@ -47,6 +47,7 @@ class FakeAnkiState:
         self.fail_after_store_once = False
         self.fail_after_create_model_once = False
         self.fail_after_create_deck_once = False
+        self.readback_defect = None
         self.forced_results = {}
         self.calls = []
 
@@ -137,21 +138,31 @@ class FakeAnkiState:
             result = []
             for note_id in params["notes"]:
                 note = self.notes[note_id]
-                result.append({
+                value = {
                     "noteId": note_id,
                     "modelName": note["modelName"],
                     "fields": {name: {"value": value, "order": index} for index, (name, value) in enumerate(note["fields"].items())},
                     "tags": list(note["tags"]),
                     "cards": list(note["cards"]),
                     "profile": self.profile,
-                })
+                }
+                if self.readback_defect == "empty_cards":
+                    value["cards"] = []
+                elif self.readback_defect == "missing_front":
+                    value["fields"].pop("Front", None)
+                elif self.readback_defect == "missing_required_tag":
+                    value["tags"] = []
+                result.append(value)
             return result
         if action == "cardsInfo":
             result = []
             for card_id in params["cards"]:
                 for note_id, note in self.notes.items():
                     if card_id in note["cards"]:
-                        result.append({"cardId": card_id, "note": note_id, "deckName": note["card_decks"][card_id]})
+                        value = {"cardId": card_id, "note": note_id, "deckName": note["card_decks"][card_id]}
+                        result.append(value)
+                        if self.readback_defect == "duplicate_cards_info":
+                            result.append(copy.deepcopy(value))
             return result
         if action == "updateNoteFields":
             note_id = params["note"]["id"]
@@ -324,7 +335,9 @@ def build_job(root, endpoint, *, revision=1, answer="四", unresolved=False, pat
     }
     dump_json(root / "plans" / "initial-plan.json", {"fixture": True})
     dump_json(root / "task.manifest.v1.json", task)
-    run_id, stage_id, attempt_id = "run-" + root.name, "anki-export", "attempt-1"
+    run_id = "run-" + root.name
+    stage_id = "anki-semantic-readback" if operation == exporter.SEMANTIC_READBACK_OPERATION else "anki-export"
+    attempt_id = "attempt-1"
     attempt = f"runs/{run_id}/stages/{stage_id}/attempts/{attempt_id}"
     request_rel = f"{attempt}/request.json"
     payload = {"validateOnly": operation == "validate"}
@@ -878,6 +891,47 @@ def build_language_both_job(root):
     return job
 
 
+def prepare_semantic_readback_job(job):
+    root = job["root"]
+    request_path = root / job["request"]
+    request = json.loads(request_path.read_text(encoding="utf-8"))
+    bundle_ref = next(ref for ref in request["inputRefs"] if ref["kind"] in {"card-bundle", "learning-bundle"})
+    bundle_manifest = json.loads((root / bundle_ref["manifestPath"]).read_text(encoding="utf-8"))
+    bundle = json.loads((root / bundle_manifest["metadata"]["entrypoint"]).read_text(encoding="utf-8"))
+    config_ref = next(ref for ref in request["inputRefs"] if ref["kind"] == "anki-export-config")
+    config_manifest = json.loads((root / config_ref["manifestPath"]).read_text(encoding="utf-8"))
+    config = json.loads((root / config_manifest["metadata"]["entrypoint"]).read_text(encoding="utf-8"))
+    package_view = type("PackageView", (), {
+        "config": config,
+        "media_by_id": {item["media_id"]: item for item in bundle["media"]},
+    })()
+    expected = []
+    expected_decks = set()
+    for card in bundle["cards"]:
+        fields, _ = exporter.render_card(card, package_view)
+        expected.append({"cardId": card["card_id"], "front": fields["Front"], "back": fields["Back"]})
+        expected_decks.add(config["deck_routes"][card["deck_route_key"]])
+    if len(expected_decks) != 1:
+        raise AssertionError("semantic readback fixture requires one destination deck")
+    request["operation"] = exporter.SEMANTIC_READBACK_OPERATION
+    request["payload"] = {
+        "expectedCardCount": len(expected),
+        "expectedCards": expected,
+        "expectedDeck": next(iter(expected_decks)),
+    }
+    request["idempotencyKey"] = exporter.sha256_bytes(exporter.json_bytes({
+        "operation": exporter.SEMANTIC_READBACK_OPERATION,
+        "expectedCards": expected,
+        "expectedDeck": request["payload"]["expectedDeck"],
+    }))
+    dump_json(request_path, request)
+    task_path = root / job["task"]
+    task = json.loads(task_path.read_text(encoding="utf-8"))
+    task["requestedOutputs"] = ["anki-semantic-readback"]
+    dump_json(task_path, task)
+    return job
+
+
 def make_exporter(job):
     return exporter.Exporter(job["root"], job["task"], job["request"])
 
@@ -899,7 +953,222 @@ def validate_attempt_outputs(run):
     validate_common(run.writer.result_path, "worker-result.schema.json")
 
 
+def validate_readback_evidence(run):
+    path = run.writer.output_root / "readback.json"
+    value = json.loads(path.read_text(encoding="utf-8"))
+    schema = json.loads((WORKER / "contracts" / "anki-export-readback.v1.schema.json").read_text(encoding="utf-8"))
+    Draft202012Validator(schema, format_checker=FormatChecker()).validate(value)
+    assert value["cardCount"] == len(value["cards"])
+    assert value["cardsSha256"] == exporter.sha256_bytes(exporter.json_bytes(value["cards"]))
+    for row in value["cards"]:
+        body = {"notesInfo": row["notesInfo"], "cardsInfo": row["cardsInfo"]}
+        assert row["semanticBodySha256"] == exporter.sha256_bytes(exporter.json_bytes(body))
+    receipt = json.loads((run.writer.output_root / "receipt.json").read_text(encoding="utf-8"))
+    manifest_name = (
+        "anki-semantic-readback.artifact.json"
+        if run.request["operation"] == exporter.SEMANTIC_READBACK_OPERATION
+        else "anki-export-evidence.artifact.json"
+    )
+    manifest = json.loads((run.writer.output_root / manifest_name).read_text(encoding="utf-8"))
+    expected_sha = exporter.sha256_file(path)
+    assert receipt["readback_evidence"]["sha256"] == expected_sha
+    assert manifest["metadata"]["readback"] == {
+        "path": run.writer.relative(path),
+        "sha256": expected_sha,
+        "schemaVersion": "anki-export-readback.v1",
+    }
+    declared = next(item for item in manifest["files"] if item["path"] == run.writer.relative(path))
+    assert declared["sha256"] == expected_sha
+    return value
+
+
 class AnkiExporterTests(unittest.TestCase):
+    def test_export_evidence_contains_sha_bound_secret_free_semantic_readback(self):
+        with tempfile.TemporaryDirectory() as temp, FakeAnkiServer() as fake:
+            root = Path(temp)
+            job = build_job(root / "first", fake.endpoint)
+            seed_job_managed_resources(fake.state, job)
+            run = make_exporter(job)
+            self.assertEqual("SUCCEEDED", run.run())
+            evidence = validate_readback_evidence(run)
+            row = evidence["cards"][0]
+            note = row["notesInfo"]
+            cards = row["cardsInfo"]
+            self.assertEqual(0, row["ordinal"])
+            self.assertEqual("rqc-canary-fixed", row["sourceCardId"])
+            self.assertEqual("CREATED", row["outcome"])
+            self.assertEqual([note["noteId"]], [item["noteId"] for item in cards])
+            self.assertEqual(note["cardIds"], [item["cardId"] for item in cards])
+            self.assertEqual("零碎知识剪藏::Canary", cards[0]["deckName"])
+            self.assertEqual("四", note["fields"]["Back"])
+            self.assertEqual({"Front", "Back"}, set(note["requiredFieldNames"]))
+            self.assertEqual({"rqc_canary", "rqc_managed"}, set(note["requiredTags"]))
+            serialized = json.dumps(evidence, ensure_ascii=False)
+            self.assertNotIn("Canary Profile", serialized)
+            self.assertNotIn(fake.endpoint, serialized)
+            self.assertNotIn("RQC Basic v1", serialized)
+            self.assertNotIn("UserNotes", serialized)
+
+            fake.state.notes[note["noteId"]]["fields"]["UserNotes"] = "private manual note"
+            replay_job = build_job(root / "replay", fake.endpoint)
+            replay = make_exporter(replay_job)
+            self.assertEqual("SUCCEEDED", replay.run())
+            replay_evidence = validate_readback_evidence(replay)
+            replay_row = replay_evidence["cards"][0]
+            self.assertEqual("ALREADY_CURRENT", replay_row["outcome"])
+            self.assertEqual(note["noteId"], replay_row["notesInfo"]["noteId"])
+            self.assertEqual(note["cardIds"], replay_row["notesInfo"]["cardIds"])
+            self.assertNotIn("private manual note", json.dumps(replay_evidence, ensure_ascii=False))
+
+    def test_multicard_readback_preserves_bundle_order(self):
+        with tempfile.TemporaryDirectory() as temp, FakeAnkiServer() as fake:
+            job = build_language_both_job(Path(temp) / "language-live")
+            mutate_job_config(job, lambda config: config.update({"endpoint": fake.endpoint, "expected_profile": fake.state.profile}))
+            request_path = job["root"] / job["request"]
+            request = json.loads(request_path.read_text(encoding="utf-8"))
+            request["operation"] = "export"
+            request["payload"] = {"validateOnly": False}
+            dump_json(request_path, request)
+            seed_job_managed_resources(fake.state, job)
+            run = make_exporter(job)
+            self.assertEqual("SUCCEEDED", run.run())
+            evidence = validate_readback_evidence(run)
+            self.assertEqual(["language-context-card", "language-writing-card"], [row["sourceCardId"] for row in evidence["cards"]])
+            self.assertEqual([0, 1], [row["ordinal"] for row in evidence["cards"]])
+
+    def test_semantic_readback_operation_is_exact_and_provider_read_only(self):
+        with tempfile.TemporaryDirectory() as temp, FakeAnkiServer() as fake:
+            root = Path(temp)
+            first = build_language_both_job(root / "semantic-source")
+            mutate_job_config(first, lambda config: config.update({"endpoint": fake.endpoint, "expected_profile": fake.state.profile}))
+            first_request_path = first["root"] / first["request"]
+            first_request = json.loads(first_request_path.read_text(encoding="utf-8"))
+            first_request["operation"] = "export"
+            first_request["payload"] = {"validateOnly": False}
+            dump_json(first_request_path, first_request)
+            seed_job_managed_resources(fake.state, first)
+            first_run = make_exporter(first)
+            self.assertEqual("SUCCEEDED", first_run.run())
+            first_evidence = validate_readback_evidence(first_run)
+
+            readback_job = prepare_semantic_readback_job(build_language_both_job(root / "semantic-readback"))
+            mutate_job_config(readback_job, lambda config: config.update({"endpoint": fake.endpoint, "expected_profile": fake.state.profile}))
+            readback_request_path = readback_job["root"] / readback_job["request"]
+            readback_request = json.loads(readback_request_path.read_text(encoding="utf-8"))
+            for expected, observed in zip(readback_request["payload"]["expectedCards"], first_evidence["cards"], strict=True):
+                expected["noteId"] = observed["notesInfo"]["noteId"]
+                expected["ankiCardId"] = observed["notesInfo"]["cardIds"][0]
+            readback_request["idempotencyKey"] = exporter.sha256_bytes(exporter.json_bytes(readback_request["payload"]))
+            dump_json(readback_request_path, readback_request)
+            calls_before = len(fake.state.calls)
+            run = make_exporter(readback_job)
+            self.assertEqual("SUCCEEDED", run.run())
+            new_actions = [item["action"] for item in fake.state.calls[calls_before:]]
+            self.assertFalse(set(new_actions) & exporter.MUTATING_ANKI_ACTIONS)
+            evidence = validate_readback_evidence(run)
+            self.assertEqual(["language-context-card", "language-writing-card"], [row["sourceCardId"] for row in evidence["cards"]])
+            self.assertEqual([0, 1], [row["ordinal"] for row in evidence["cards"]])
+            self.assertEqual(["ALREADY_CURRENT", "ALREADY_CURRENT"], [row["outcome"] for row in evidence["cards"]])
+            result = json.loads(run.writer.result_path.read_text(encoding="utf-8"))
+            self.assertEqual([], result["sideEffects"])
+            self.assertTrue(result["payload"]["semanticReadbackOnly"])
+            self.assertEqual("anki-semantic-readback", result["outputs"][0]["kind"])
+            receipt = json.loads((run.writer.output_root / "receipt.json").read_text(encoding="utf-8"))
+            self.assertEqual(False, receipt["operation_effect"]["external_mutation"])
+            self.assertEqual("provider-read-only", receipt["operation_effect"]["effect_class"])
+
+    def test_semantic_readback_rejects_content_drift_without_mutation(self):
+        with tempfile.TemporaryDirectory() as temp, FakeAnkiServer() as fake:
+            root = Path(temp)
+            first = build_language_both_job(root / "semantic-drift-source")
+            mutate_job_config(first, lambda config: config.update({"endpoint": fake.endpoint, "expected_profile": fake.state.profile}))
+            first_request_path = first["root"] / first["request"]
+            first_request = json.loads(first_request_path.read_text(encoding="utf-8"))
+            first_request["operation"] = "export"
+            first_request["payload"] = {"validateOnly": False}
+            dump_json(first_request_path, first_request)
+            seed_job_managed_resources(fake.state, first)
+            self.assertEqual("SUCCEEDED", make_exporter(first).run())
+            first_note = min(fake.state.notes)
+            fake.state.notes[first_note]["fields"]["Front"] = "wrong but still non-empty"
+
+            readback_job = prepare_semantic_readback_job(build_language_both_job(root / "semantic-drift-readback"))
+            mutate_job_config(readback_job, lambda config: config.update({"endpoint": fake.endpoint, "expected_profile": fake.state.profile}))
+            calls_before = len(fake.state.calls)
+            run = make_exporter(readback_job)
+            self.assertEqual("FAILED", run.run())
+            new_actions = [item["action"] for item in fake.state.calls[calls_before:]]
+            self.assertFalse(set(new_actions) & exporter.MUTATING_ANKI_ACTIONS)
+            result = json.loads(run.writer.result_path.read_text(encoding="utf-8"))
+            self.assertEqual("failed", result["status"])
+            self.assertEqual([], result["outputs"])
+            self.assertEqual([], result["sideEffects"])
+            self.assertEqual("READBACK_MISMATCH", result["error"]["code"])
+
+    def test_semantic_readback_rejects_bound_note_card_id_drift_without_mutation(self):
+        for field in ("noteId", "ankiCardId"):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temp, FakeAnkiServer() as fake:
+                root = Path(temp)
+                first = build_language_both_job(root / f"semantic-id-source-{field}")
+                mutate_job_config(first, lambda config: config.update({"endpoint": fake.endpoint, "expected_profile": fake.state.profile}))
+                first_request_path = first["root"] / first["request"]
+                first_request = json.loads(first_request_path.read_text(encoding="utf-8"))
+                first_request["operation"] = "export"
+                first_request["payload"] = {"validateOnly": False}
+                dump_json(first_request_path, first_request)
+                seed_job_managed_resources(fake.state, first)
+                self.assertEqual("SUCCEEDED", make_exporter(first).run())
+
+                readback_job = prepare_semantic_readback_job(build_language_both_job(root / f"semantic-id-readback-{field}"))
+                mutate_job_config(readback_job, lambda config: config.update({"endpoint": fake.endpoint, "expected_profile": fake.state.profile}))
+                request_path = readback_job["root"] / readback_job["request"]
+                request = json.loads(request_path.read_text(encoding="utf-8"))
+                request["payload"]["expectedCards"][0][field] = 999999
+                request["idempotencyKey"] = exporter.sha256_bytes(exporter.json_bytes(request["payload"]))
+                dump_json(request_path, request)
+                calls_before = len(fake.state.calls)
+                run = make_exporter(readback_job)
+                self.assertEqual("FAILED", run.run())
+                self.assertFalse(set(item["action"] for item in fake.state.calls[calls_before:]) & exporter.MUTATING_ANKI_ACTIONS)
+                result = json.loads(run.writer.result_path.read_text(encoding="utf-8"))
+                self.assertEqual("READBACK_IDENTITY_MISMATCH", result["error"]["code"])
+                self.assertEqual([], result["sideEffects"])
+
+    def test_semantic_readback_missing_note_is_known_and_never_writes(self):
+        with tempfile.TemporaryDirectory() as temp, FakeAnkiServer() as fake:
+            job = prepare_semantic_readback_job(build_language_both_job(Path(temp) / "semantic-missing"))
+            mutate_job_config(job, lambda config: config.update({"endpoint": fake.endpoint, "expected_profile": fake.state.profile}))
+            seed_job_managed_resources(fake.state, job)
+            run = make_exporter(job)
+            self.assertEqual("FAILED", run.run())
+            self.assertFalse(set(item["action"] for item in fake.state.calls) & exporter.MUTATING_ANKI_ACTIONS)
+            result = json.loads(run.writer.result_path.read_text(encoding="utf-8"))
+            self.assertEqual("failed", result["status"])
+            self.assertNotEqual("unknown_external_state", result["status"])
+            self.assertEqual("READBACK_NOTE_MISSING", result["error"]["code"])
+            self.assertFalse(result["error"]["retryable"])
+            self.assertEqual([], result["sideEffects"])
+
+    def test_malformed_readback_bodies_fail_closed(self):
+        cases = {
+            "empty-card-ids": ("empty_cards", "ANKI_RESPONSE_INVALID"),
+            "missing-front": ("missing_front", "READBACK_MISMATCH"),
+            "missing-required-tag": ("missing_required_tag", "READBACK_MISMATCH"),
+            "duplicate-cards-info": ("duplicate_cards_info", "ANKI_RESPONSE_INVALID"),
+        }
+        for name, (defect, expected_code) in cases.items():
+            with self.subTest(case=name), tempfile.TemporaryDirectory() as temp, FakeAnkiServer() as fake:
+                job = build_job(Path(temp) / name, fake.endpoint)
+                seed_job_managed_resources(fake.state, job)
+                fake.state.readback_defect = defect
+                run = make_exporter(job)
+                self.assertEqual("FAILED", run.run())
+                result = json.loads(run.writer.result_path.read_text(encoding="utf-8"))
+                self.assertEqual("failed", result["status"])
+                self.assertEqual([], result["outputs"])
+                self.assertFalse((run.writer.output_root / "readback.json").exists())
+                self.assertIn(expected_code, (run.writer.output_root / "errors.ndjson").read_text(encoding="utf-8"))
+
     def test_ordered_original_media_accepts_core_derived_capture_ancestry(self):
         with tempfile.TemporaryDirectory() as temp:
             job = promote_original_media_to_core_derived(build_original_media_job(
@@ -1239,7 +1508,7 @@ class AnkiExporterTests(unittest.TestCase):
             run = make_exporter(job)
             self.assertEqual("SUCCEEDED", run.run())
             result = json.loads(run.writer.result_path.read_text(encoding="utf-8"))
-            self.assertEqual("1.4.0", result["worker"]["version"])
+            self.assertEqual(exporter.EXPORTER_VERSION, result["worker"]["version"])
             validate_attempt_outputs(run)
 
     def test_trusted_core_adapter_derived_input_is_accepted(self):

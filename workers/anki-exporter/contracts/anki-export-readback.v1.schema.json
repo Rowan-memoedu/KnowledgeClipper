@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./anki-export-readback.v1.schema.json",
+  "title": "KnowledgeClipper Anki export semantic readback v1",
+  "description": "Module-local, secret-free normalized notesInfo/cardsInfo evidence. The common artifact and worker-result schemas remain authoritative.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "worker", "taskId", "runId", "stageId", "attemptId", "dataClass", "redaction", "api", "sourceBundle", "cardCount", "cards", "cardsSha256"],
+  "properties": {
+    "schemaVersion": {"const": "anki-export-readback.v1"},
+    "worker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workerId", "workerVersion"],
+      "properties": {
+        "workerId": {"const": "export.anki"},
+        "workerVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$"}
+      }
+    },
+    "taskId": {"$ref": "#/$defs/identifier"},
+    "runId": {"$ref": "#/$defs/identifier"},
+    "stageId": {"$ref": "#/$defs/identifier"},
+    "attemptId": {"$ref": "#/$defs/identifier"},
+    "dataClass": {"const": "personal"},
+    "redaction": {"const": "excludes-profile-endpoint-model-user-notes-and-secrets"},
+    "api": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "actions"],
+      "properties": {
+        "version": {"type": "integer", "minimum": 6},
+        "actions": {"const": ["notesInfo", "cardsInfo"]}
+      }
+    },
+    "sourceBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bundleId", "sha256"],
+      "properties": {
+        "bundleId": {"type": ["string", "null"]},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "cardCount": {"type": "integer", "minimum": 1},
+    "cards": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/cardReadback"}
+    },
+    "cardsSha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "ankiId": {"type": "integer", "minimum": 1},
+    "managedFieldName": {"enum": ["RQC_ID", "Front", "Back", "Context", "Extra", "Source", "RQC_Revision", "RQC_ContentHash"]},
+    "managedFields": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["RQC_ID", "Front", "Back", "Context", "Extra", "Source", "RQC_Revision", "RQC_ContentHash"],
+      "properties": {
+        "RQC_ID": {"type": "string"},
+        "Front": {"type": "string"},
+        "Back": {"type": "string"},
+        "Context": {"type": "string"},
+        "Extra": {"type": "string"},
+        "Source": {"type": "string"},
+        "RQC_Revision": {"type": "string"},
+        "RQC_ContentHash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "tagArray": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "pattern": "^\\S+$"}
+    },
+    "notesInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["noteId", "cardIds", "fields", "requiredFieldNames", "requiredFields", "requiredTags", "tags"],
+      "properties": {
+        "noteId": {"$ref": "#/$defs/ankiId"},
+        "cardIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/ankiId"}},
+        "fields": {"$ref": "#/$defs/managedFields"},
+        "requiredFieldNames": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/managedFieldName"}},
+        "requiredFields": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {"$ref": "#/$defs/managedFieldName"},
+          "additionalProperties": {"type": "string"}
+        },
+        "requiredTags": {"$ref": "#/$defs/tagArray"},
+        "tags": {"$ref": "#/$defs/tagArray"}
+      }
+    },
+    "cardsInfoItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cardId", "noteId", "deckName"],
+      "properties": {
+        "cardId": {"$ref": "#/$defs/ankiId"},
+        "noteId": {"$ref": "#/$defs/ankiId"},
+        "deckName": {"type": "string", "minLength": 1}
+      }
+    },
+    "cardReadback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ordinal", "sourceCardId", "outcome", "notesInfo", "cardsInfo", "semanticBodySha256"],
+      "properties": {
+        "ordinal": {"type": "integer", "minimum": 0},
+        "sourceCardId": {"type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[A-Za-z0-9._:-]+$"},
+        "outcome": {"enum": ["CREATED", "UPDATED", "ALREADY_CURRENT"]},
+        "notesInfo": {"$ref": "#/$defs/notesInfo"},
+        "cardsInfo": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/cardsInfoItem"}},
+        "semanticBodySha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

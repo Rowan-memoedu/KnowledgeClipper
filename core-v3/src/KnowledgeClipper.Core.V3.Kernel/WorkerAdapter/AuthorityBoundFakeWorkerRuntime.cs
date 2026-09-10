@@ -18,6 +18,8 @@ internal sealed class AuthorityBoundFakeWorkerRuntime : IWorkerRuntime
     private int _ankiExportAttempts;
     private int _ankiExternalWriteCount;
     private int _ankiReadbackCount;
+    private int _speechSynthesisAttempts;
+    private int _speakerCalls;
 
     private AuthorityBoundFakeWorkerRuntime(
         IReadOnlyDictionary<string, AdmittedAuthorityWorker> admitted,
@@ -63,6 +65,7 @@ internal sealed class AuthorityBoundFakeWorkerRuntime : IWorkerRuntime
         return workerId switch
         {
             "content.deepseek" => ExecuteContent(invocation),
+            "speech.edge" => ExecuteSpeech(invocation),
             "export.anki" => ExecuteAnki(invocation),
             _ => throw new InvalidDataException($"Worker '{workerId}' is outside the Phase 2 fake proxy boundary.")
         };
@@ -76,7 +79,7 @@ internal sealed class AuthorityBoundFakeWorkerRuntime : IWorkerRuntime
         Volatile.Read(ref _ankiReadbackCount),
         RemNoteCalls: 0,
         MinerUCalls: 0,
-        SpeakerCalls: 0,
+        SpeakerCalls: Volatile.Read(ref _speakerCalls),
         Mode: "authority-bound-independent-fake-proxies");
 
     public WorkerBinding GetAdmittedBinding(string workerId)
@@ -106,9 +109,43 @@ internal sealed class AuthorityBoundFakeWorkerRuntime : IWorkerRuntime
                 provider = "independent-fake-content-proxy",
                 externalWriteCount = 0
             }),
+            "review" => BuildReviewPayload(invocation),
             _ => throw new InvalidDataException($"Unsupported fake content phase '{phase}'.")
         };
         return new WorkerExecutionResult("completed", payload, Array.Empty<ArtifactReference>(), 0, true);
+    }
+
+    private WorkerExecutionResult ExecuteSpeech(WorkerInvocation invocation)
+    {
+        var phase = GetRequiredString(invocation.Request, "phase");
+        if (phase == "synthesize")
+        {
+            Interlocked.Increment(ref _speechSynthesisAttempts);
+            var original = GetRequiredString(invocation.Request, "spokenText");
+            return new WorkerExecutionResult("completed", StrictJson.CloneElement(new
+            {
+                status = "synthesized",
+                sourceSha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(original))).ToLowerInvariant(),
+                audioArtifact = new { artifactRef = "fake-audio", kind = "audio.speech", contractVersion = "1.0.0", manifestPath = "fake/audio.json", expectedSha256 = new string('a', 64) },
+                playbackState = "accepted",
+                externalWriteCount = 0
+            }), Array.Empty<ArtifactReference>(), 0, true);
+        }
+        if (phase == "playback")
+        {
+            if (!invocation.Request.TryGetProperty("synthesis", out var synthesis) || synthesis.ValueKind != JsonValueKind.Object)
+            {
+                throw new InvalidDataException("Fake playback requires the SHA-bound synthesis artifact reference.");
+            }
+            Interlocked.Increment(ref _speakerCalls);
+            return new WorkerExecutionResult("completed", StrictJson.CloneElement(new
+            {
+                status = "idle_replayable",
+                naturalCompletion = true,
+                externalWriteCount = 0
+            }), Array.Empty<ArtifactReference>(), 0, true);
+        }
+        throw new InvalidDataException($"Unsupported fake speech phase '{phase}'.");
     }
 
     private WorkerExecutionResult ExecuteAnki(WorkerInvocation invocation)
@@ -157,6 +194,9 @@ internal sealed class AuthorityBoundFakeWorkerRuntime : IWorkerRuntime
             Interlocked.Increment(ref _ankiExternalWriteCount);
         }
         Interlocked.Increment(ref _ankiReadbackCount);
+        var cards = invocation.Request.TryGetProperty("cards", out var requestedCards)
+            ? requestedCards.EnumerateArray().Select((item, index) => new { index, front = GetRequiredString(item, "front"), back = GetRequiredString(item, "back") }).ToArray()
+            : new[] { new { index = 0, front = GetRequiredString(invocation.Request.GetProperty("card"), "front"), back = GetRequiredString(invocation.Request.GetProperty("card"), "back") } };
         return new WorkerExecutionResult(
             "completed",
             StrictJson.CloneElement(new
@@ -166,11 +206,30 @@ internal sealed class AuthorityBoundFakeWorkerRuntime : IWorkerRuntime
                 provider = "independent-fake-anki-proxy",
                 writeId = "fake-anki-" + idempotencyKey[..16].ToLowerInvariant(),
                 exactReadback = true,
+                semanticReadback = new
+                {
+                    artifactPath = "fake/readback.json", sha256 = new string('b', 64), cardsSha256 = new string('c', 64),
+                    cards = cards.Select(item => new { notesInfo = new { noteId = item.index + 1, cardIds = new[] { item.index + 2 }, fields = new { Front = item.front, Back = item.back } }, cardsInfo = new[] { new { cardId = item.index + 2, noteId = item.index + 1, deckName = "零碎知识剪藏::Canary" } } }).ToArray()
+                },
                 externalWriteCount = firstWrite ? 1 : 0
             }),
             Array.Empty<ArtifactReference>(),
             firstWrite ? 1 : 0,
             true);
+    }
+
+    private static JsonElement BuildReviewPayload(WorkerInvocation invocation)
+    {
+        var original = GetRequiredString(invocation.Request, "originalText");
+        var choice = invocation.Request.TryGetProperty("languageChoice", out var selected) ? selected.GetString() : "ordinary";
+        var cards = choice switch
+        {
+            "meaning-reading" => new[] { new { cardId = "meaning-reading", template = "language_context", front = original, back = "Fake meaning and reading." } },
+            "writing" => new[] { new { cardId = "writing", template = "language_writing", front = "（reading; meaning） " + original, back = "target" } },
+            "both" => new[] { new { cardId = "meaning-reading", template = "language_context", front = original, back = "Fake meaning and reading." }, new { cardId = "writing", template = "language_writing", front = "（reading; meaning） " + original, back = "target" } },
+            _ => new[] { new { cardId = "ordinary", template = "basic_qa", front = original, back = "Fake review card generated from the immutable source." } }
+        };
+        return StrictJson.CloneElement(new { status = "cards_ready", cleanedText = original, cards, cardCount = cards.Length, provider = "independent-fake-content-proxy", externalWriteCount = 0 });
     }
 
     private static string GetRequiredString(JsonElement element, string name)

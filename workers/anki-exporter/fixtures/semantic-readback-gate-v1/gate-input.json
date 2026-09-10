@@ -1,0 +1,13 @@
+{
+  "evidence": {
+    "artifactManifest": {"path": "artifact.json", "sha256": "5ccdf6c11bafb9cc8517aaa491c0fbd8fa1f5b5a3b3dafbfbc7d277e7e4147e2"},
+    "confirmationCommand": {"path": "confirmation-command.json", "sha256": "807e413f307ea347b8031e96cc5439b602efdf257f6982e77f02f31c5310b4ce"},
+    "preview": {"path": "preview.json", "sha256": "e65693cbbf4f73a2ec39d163949059eb888a9a61d8982078028eca7044342197"},
+    "readback": {"path": "readback.json", "sha256": "399c4394501417d36f36bc7cd16613c32bf72860b0c9f27f7cdca52dda56d5f3"},
+    "workerRequest": {"path": "worker-request.json", "sha256": "0208f6cec20678159fc5ea37aeb4288c9af03acd44baeed432a09a55718112ed"},
+    "workerResult": {"path": "worker-result.json", "sha256": "6004b5bea70b911cb811f6f0f91f08eb6d46d65e6b3e05bb978b84a70b13eb96"}
+  },
+  "expectedCardCount": 2,
+  "expectedDeck": "零碎知识剪藏::Canary::SemanticGate",
+  "schemaVersion": "anki-semantic-readback-gate-input.v1"
+}

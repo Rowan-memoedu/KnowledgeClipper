@@ -1,0 +1,23 @@
+{
+  "schema": "kc.quality.desktop-runtime-admission-failure/1",
+  "candidate": "D:\\Artifacts\\KnowledgeClipper\\desktop-read-to-anki\\desktop-rta-20260903T133216Z",
+  "entrypoint": "KnowledgeClipper.exe",
+  "observed": {
+    "source": "real-user-handtest-screenshot",
+    "buttonClicked": true,
+    "runtimeAdmissionPassed": false,
+    "error": "Read-to-Anki requires configured runtime tool 'KNOWLEDGE_CLIPPER_EDGE_TTS' as an existing absolute path.",
+    "missingDependency": "KNOWLEDGE_CLIPPER_EDGE_TTS"
+  },
+  "screenshot": {
+    "path": "C:\\Users\\fy\\AppData\\Local\\Temp\\codex-clipboard-04ecfba9-685a-4756-918f-6269e9c98960.png",
+    "bytes": 24527,
+    "sha256": "C8130EBA80A6024A2393C9886E361B0BAFB1AA0B3FB2B04343CD1F12331A1374"
+  },
+  "invalidates": {
+    "path": "D:\\Artifacts\\KnowledgeClipper\\read-to-anki\\quality\\20260903T140000Z-desktop-language-final\\quality-desktop-language-final-receipt.json",
+    "sha256": "CA7C92C31866F3FD1DBFFB37FBF567EDC834FFDC674CAD34F81B8122BF88B9EE",
+    "oldStatus": "PASS-USER-HANDTEST-CANDIDATE-BOUND",
+    "newStatus": "SUPERSEDED-BY-REAL-USER-RUNTIME-ADMISSION-FAILURE"
+  }
+}

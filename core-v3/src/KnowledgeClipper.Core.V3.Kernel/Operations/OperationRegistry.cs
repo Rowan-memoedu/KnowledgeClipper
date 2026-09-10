@@ -11,7 +11,10 @@ internal sealed record OperationExecutionResult(
     JsonElement Data,
     IReadOnlyList<ArtifactReference> Artifacts,
     int ExternalWriteCount,
-    bool ExternalStateKnown);
+    bool ExternalStateKnown)
+{
+    public bool ExternalWriteCountKnown { get; init; } = true;
+}
 
 internal sealed record OperationContext(
     CapabilityDescriptor Capability,

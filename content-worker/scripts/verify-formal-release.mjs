@@ -29,7 +29,9 @@ const payloadTreeSha256 = sha(verifiedFiles.map((file) => `${file.path}\0${file.
 assert(payloadTreeSha256 === manifest.payloadTreeSha256, "RELEASE_TREE_MISMATCH");
 assert(verifiedFiles.length === manifest.payloadFileCount, "RELEASE_FILE_COUNT_MISMATCH");
 
-const canaryParent = path.join(workerRoot, "canary", "formal-release", releaseId);
+const canaryParent = process.env.KNOWLEDGE_CLIPPER_CONTENT_QUALIFICATION_ROOT
+  ? path.join(path.resolve(process.env.KNOWLEDGE_CLIPPER_CONTENT_QUALIFICATION_ROOT), releaseId)
+  : path.join(workerRoot, "canary", "formal-release", releaseId);
 await mkdir(canaryParent, { recursive: true });
 const canaryRoot = path.join(canaryParent, `${stamp()}-settings-snapshot-replay`);
 await mkdir(canaryRoot, { recursive: false });

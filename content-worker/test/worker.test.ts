@@ -857,7 +857,7 @@ test("common WorkerRequest publishes the human-resolution audit, LearningBundle 
   const staged = await stageOcrHumanResolution("user_correction");
   const requestPath = await writeOcrHumanCommonRequest(staged.jobRoot, "user_correction");
   const result = await runCommonRequest(requestPath, workerRoot);
-  assert.equal(result.status, "completed");
+  assert.equal(result.status, "completed", JSON.stringify(result));
   assert.deepEqual(result.outputs.map((entry) => [entry.kind, entry.contractVersion]), [
     ["ocr-human-resolution-bundle", "1.0.0"],
     ["learning-bundle", "3.0.0"],
@@ -866,7 +866,7 @@ test("common WorkerRequest publishes the human-resolution audit, LearningBundle 
   const resolutionRef = result.outputs[0]!;
   const manifest = JSON.parse(await readFile(path.join(staged.jobRoot, ...resolutionRef.manifestPath.split("/")), "utf8")) as CommonArtifactManifest;
   assert.ok(manifest.inputRefs.some((entry) => entry.artifactRef === "ocr-proofread-frozen-ambiguous-v1"));
-  assert.equal(manifest.producer.workerVersion, "0.9.5");
+  assert.equal(manifest.producer.workerVersion, "0.12.0");
   const learning = await readOutputBundle<LearningBundle>(staged.jobRoot, result, "learning-bundle");
   assert.equal(learning.schema_version, "learning-bundle/3.0.0");
   assert.equal(learning.ai_trace.some((trace) => trace.stage === "ocr_proofreading"), false);
@@ -1070,7 +1070,7 @@ test("question image without answer remains traceable unresolved", async () => {
 test("describe exposes the stable common worker capability", () => {
   assert.equal(WORKER_DESCRIBE.schemaVersion, "1.0.0");
   assert.equal(WORKER_DESCRIBE.workerId, "content.deepseek");
-  assert.equal(WORKER_DESCRIBE.workerVersion, "0.9.5");
+  assert.equal(WORKER_DESCRIBE.workerVersion, "0.12.0");
   assert.deepEqual(WORKER_DESCRIBE.inputKinds, ["content-input", "content-config-snapshot"]);
   assert.deepEqual(WORKER_DESCRIBE.outputKinds, ["ocr-proofread-bundle", "ocr-human-resolution-bundle", "learning-bundle", "card-bundle", "language-practice-decision", "question.answer"]);
   assert.deepEqual([...WORKER_DESCRIBE.cancellation.supportedReasons].sort(), ["superseded", "task_cancel", "timeout", "user_stop"]);
@@ -1172,7 +1172,7 @@ test("offline settings fixture matrix covers ordinary content and all three lang
 test("authoritative package and launcher identities use KnowledgeClipper", async () => {
   const packageJson = JSON.parse(await readFile(path.join(workerRoot, "package.json"), "utf8")) as { name: string; version: string };
   assert.equal(packageJson.name, "knowledge-clipper-content-worker");
-  assert.equal(packageJson.version, "0.9.5");
+  assert.equal(packageJson.version, "0.12.0");
   const authoritativeLauncher = await readFile(path.join(workerRoot, "launcher", "KnowledgeClipper.Content.Worker.csproj"), "utf8");
   assert.match(authoritativeLauncher, /<AssemblyName>KnowledgeClipper\.Content\.Worker<\/AssemblyName>/u);
   assert.match(authoritativeLauncher, /<RootNamespace>KnowledgeClipper\.Content\.Worker<\/RootNamespace>/u);
@@ -1356,6 +1356,116 @@ test("meaning-reading preserves the existing English language_context card seman
   assert.equal(cards.cards[0]?.front_blocks[0]?.text, "The committee reached a **tentative** conclusion after reviewing the evidence.");
   assert.equal(cards.cards[0]?.answer_provenance, "not_applicable");
   assert.match(cards.cards[0]?.back_blocks[0]?.text ?? "", /tentative/u);
+});
+
+test("exact selected target uses ordered sentence context and both emits context then writing", async () => {
+  const fixture = await stageCommonFixture("offline-language-selection-v6", "attempt-language-selection-v6");
+  const result = await runCommonRequest(fixture.requestPath, workerRoot);
+  assert.equal(result.status, "completed", JSON.stringify(result));
+  assert.equal(result.payload?.moduleReleaseState, "ready");
+  const learning = await readOutputBundle<LearningBundle>(fixture.jobRoot, result, "learning-bundle");
+  const cards = await readOutputBundle<CardBundle>(fixture.jobRoot, result, "card-bundle");
+  assert.equal(learning.items[0]?.units[0]?.target_term, "assumption");
+  assert.deepEqual(cards.cards.map((card) => card.template), ["language_context", "language_writing"]);
+  assert.equal(cards.cards[0]?.front_blocks[0]?.text, "The conclusion depends on one assumption.");
+  assert.equal(cards.cards[1]?.front_blocks[0]?.text, "The conclusion depends on one （/əˈsʌmpʃən/；假设）.");
+  assert.equal(cards.cards[1]?.back_blocks[0]?.text, "assumption");
+  assert.doesNotMatch(JSON.stringify(cards), /model-must-not-rewrite-target/u);
+  assert.equal(WORKER_DESCRIBE.outputKinds.some((kind) => /speech|spoken|audio/u.test(kind)), false);
+  assert.equal(learning.items[0]?.units[0]?.target_term, "assumption");
+});
+
+test("repeated selected target emits a SHA-bound resolution artifact instead of success without cards", async () => {
+  const fixture = await stageCommonFixture("offline-language-selection-repeated-v6", "attempt-language-selection-repeated-v6");
+  const result = await runCommonRequest(fixture.requestPath, workerRoot);
+  assert.equal(result.status, "completed");
+  assert.equal(result.payload?.moduleReleaseState, "unresolved");
+  assert.equal(result.outputs.some((entry) => entry.kind === "card-bundle"), false);
+  const ref = result.outputs.find((entry) => entry.kind === "language-practice-decision")!;
+  assert.equal(ref.contractVersion, "2.0.0");
+  const decision = await readOutputBundle<LanguagePracticeDecisionBundle>(fixture.jobRoot, result, "language-practice-decision");
+  assert.equal(decision.schema_version, "language-practice-decision/2.0.0");
+  assert.equal(decision.decisions[0]?.candidate_positions?.length, 2);
+  assert.match(decision.decisions[0]?.target_token ?? "", /^[a-f0-9]{64}$/u);
+  assert.deepEqual(decision.decisions[0]?.suggested_user_fields, ["action", "selected_text", "selected_text_sha256", "target_token", "candidateOccurrence", "confirmed"]);
+});
+
+test("occurrence-bound accept selects exactly one repeated target and emits two cards", async () => {
+  const fixture = await stageCommonFixture("offline-language-occurrence-v7", "attempt-language-occurrence-v7");
+  const result = await runCommonRequest(fixture.requestPath, workerRoot);
+  assert.equal(result.status, "completed", JSON.stringify(result));
+  const cards = await readOutputBundle<CardBundle>(fixture.jobRoot, result, "card-bundle");
+  assert.deepEqual(cards.cards.map((card) => card.template), ["language_context", "language_writing"]);
+  assert.equal(cards.cards[1]?.front_blocks[0]?.text, "An （/əˈsʌmpʃən/；假设） can differ from another assumption.");
+  assert.equal(cards.cards[1]?.back_blocks[0]?.text, "assumption");
+});
+
+test("occurrence-bound input rejects missing, drifting, cross-segment and stale coordinates with zero outputs", async () => {
+  const cases = [
+    ["missing", (resolution: Record<string, unknown>) => { delete resolution.candidateOccurrence; }],
+    ["coordinate", (resolution: Record<string, unknown>) => { (resolution.candidateOccurrence as Record<string, unknown>).start = 4; }],
+    ["source-sha", (resolution: Record<string, unknown>) => { (resolution.candidateOccurrence as Record<string, unknown>).sourceSha256 = "1".repeat(64); }],
+    ["cross-segment", (resolution: Record<string, unknown>) => { (resolution.candidateOccurrence as Record<string, unknown>).segmentId = "another-segment"; }],
+    ["stale-token", (resolution: Record<string, unknown>) => { resolution.target_token = "2".repeat(64); }],
+  ] as const;
+  for (const [name, mutate] of cases) {
+    const fixture = await stageCommonFixture("offline-language-occurrence-v7", `attempt-occurrence-${name}`, "personal", "replay", (input) => {
+      const item = (input.items as Array<Record<string, unknown>>)[0]!;
+      const resolution = ((item.human_overrides as Record<string, unknown>).languageTargetResolution as Record<string, unknown>);
+      mutate(resolution);
+    });
+    const result = await runCommonRequest(fixture.requestPath, workerRoot);
+    assert.equal(result.status, "failed", name);
+    assert.equal(result.outputs.length, 0, name);
+    assert.match(result.error?.message ?? "", /INPUT_(?:INVALID|STALE)/u, name);
+  }
+});
+
+test("self-contained selection needs no context and preserves 1/1/2 mode cardinality", async () => {
+  for (const [mode, count, templates] of [
+    ["meaning-reading", 1, ["language_context"]],
+    ["writing", 1, ["language_writing"]],
+    ["both", 2, ["language_context", "language_writing"]],
+  ] as const) {
+    const fixture = await stageCommonFixture("offline-language-selection-self-contained-v6", `attempt-self-contained-${mode}`, "personal", "replay", (input) => {
+      (input.human_overrides as Record<string, unknown>).languagePracticeMode = mode;
+    });
+    const result = await runCommonRequest(fixture.requestPath, workerRoot);
+    assert.equal(result.status, "completed");
+    const cards = await readOutputBundle<CardBundle>(fixture.jobRoot, result, "card-bundle");
+    assert.equal(cards.cards.length, count);
+    assert.deepEqual(cards.cards.map((card) => card.template), templates);
+  }
+});
+
+test("human target correction creates a new ready revision and a stale target token fails closed", async () => {
+  const unresolved = await stageCommonFixture("offline-language-selection-correction-v6", "attempt-target-before-correction");
+  const unresolvedResult = await runCommonRequest(unresolved.requestPath, workerRoot);
+  assert.equal(unresolvedResult.payload?.moduleReleaseState, "unresolved");
+  const decision = await readOutputBundle<LanguagePracticeDecisionBundle>(unresolved.jobRoot, unresolvedResult, "language-practice-decision");
+  const targetToken = decision.decisions[0]!.target_token!;
+
+  const corrected = await stageCommonFixture("offline-language-selection-correction-v6", "attempt-target-after-correction", "personal", "replay", (input) => {
+    const item = (input.items as Array<Record<string, unknown>>)[0]!;
+    const overrides = item.human_overrides = {};
+    (overrides as Record<string, unknown>).languageTargetResolution = {
+      schema_version: "language-target-resolution/1.0.0", decision_id: decision.decisions[0]!.decision_id,
+      target_token: targetToken, action: "user_correction", selected_text: "assumption",
+      selected_text_sha256: sha256("assumption"), confirmed: true,
+    };
+  });
+  const correctedResult = await runCommonRequest(corrected.requestPath, workerRoot);
+  const cards = await readOutputBundle<CardBundle>(corrected.jobRoot, correctedResult, "card-bundle");
+  assert.equal(correctedResult.payload?.moduleReleaseState, "ready");
+  assert.deepEqual(cards.cards.map((card) => card.template), ["language_context", "language_writing"]);
+
+  const stale = await stageCommonFixture("offline-language-selection-correction-v6", "attempt-target-stale", "personal", "replay", (input) => {
+    const item = (input.items as Array<Record<string, unknown>>)[0]!;
+    item.human_overrides = { languageTargetResolution: { schema_version: "language-target-resolution/1.0.0", decision_id: "decision-stale", target_token: "0".repeat(64), action: "user_correction", selected_text: "assumption", selected_text_sha256: sha256("assumption"), confirmed: true } };
+  });
+  const staleResult = await runCommonRequest(stale.requestPath, workerRoot);
+  assert.equal(staleResult.status, "failed");
+  assert.match(staleResult.error?.message ?? "", /INPUT_STALE languageTargetResolution target_token/u);
 });
 
 test("missing operation languagePracticeMode publishes a versioned decision artifact and no CardBundle", async () => {
@@ -1948,14 +2058,18 @@ async function stageCommonFixture(fixtureName: string, attemptId: string, dataCl
   const inputRoot = path.join(jobRoot, "inputs", "content");
   await mkdir(inputRoot, { recursive: true });
   const inputNames = await readdir(path.join(sourceRoot, "inputs"));
-  const inputFileName = inputNames.includes("standard-input.v3.json")
-    ? "standard-input.v3.json"
+  const inputFileName = inputNames.includes("standard-input.v7.json")
+    ? "standard-input.v7.json"
+    : inputNames.includes("standard-input.v3.json")
+      ? "standard-input.v3.json"
+    : inputNames.includes("standard-input.v6.json")
+      ? "standard-input.v6.json"
     : inputNames.includes("standard-input.v2.json")
       ? "standard-input.v2.json"
       : "standard-input.v1.json";
   const input = JSON.parse(await readFile(path.join(sourceRoot, "inputs", inputFileName), "utf8")) as {
     schema_version: string;
-    items: Array<{ source: { kind: string; material_path?: string; assets?: Array<{ material_path: string }> } }>;
+    items: Array<{ source: { kind: string; material_path?: string; assets?: Array<{ material_path: string }> }; language_selection?: { context_segments: Array<{ material_path: string }> } }>;
     questionWorkflow?: { phase: "answer" | "make-cards"; cardStructureRef?: string };
   };
   inputMutator?.(input as unknown as Record<string, unknown>);
@@ -1969,6 +2083,10 @@ async function stageCommonFixture(fixtureName: string, attemptId: string, dataCl
     } else if (item.source.material_path) {
       materialPaths.push(item.source.material_path);
       item.source.material_path = `inputs/content/${item.source.material_path}`;
+    }
+    for (const context of item.language_selection?.context_segments ?? []) {
+      materialPaths.push(context.material_path);
+      context.material_path = `inputs/content/${context.material_path}`;
     }
   }
   if (input.questionWorkflow?.cardStructureRef) {

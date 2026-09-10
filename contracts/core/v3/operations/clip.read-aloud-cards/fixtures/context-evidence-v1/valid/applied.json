@@ -1,0 +1,34 @@
+{
+  "contextSnapshot": {
+    "artifactId": "task-context-001",
+    "kind": "task-context-snapshot",
+    "manifestPath": "artifacts/task-context-001/artifact.json",
+    "sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  },
+  "capture": {
+    "artifactId": "capture-001",
+    "kind": "capture-text",
+    "manifestPath": "artifacts/capture-001/artifact.json",
+    "sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+  },
+  "selectedTextSha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+  "targetTextSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "spokenTextSha256": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+  "speechContextMode": "selection_plus_sentence",
+  "contextRequested": true,
+  "contextApplied": true,
+  "contextStatus": "applied",
+  "contextGranularity": "sentence",
+  "contextSegments": [
+    {
+      "order": 0,
+      "role": "prefix",
+      "artifact": {
+        "artifactId": "context-001",
+        "kind": "question-context",
+        "manifestPath": "artifacts/context-001/artifact.json",
+        "sha256": "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE"
+      }
+    }
+  ]
+}

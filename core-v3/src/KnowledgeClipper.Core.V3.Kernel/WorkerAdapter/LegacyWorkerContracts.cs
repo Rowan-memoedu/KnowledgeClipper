@@ -70,9 +70,12 @@ internal sealed record LegacyAttemptPackage(
     LegacyWorkerRequest Request);
 
 internal sealed record WorkerProcessInvocationResult(int ExitCode, bool TimedOut, bool Cancelled, string StandardErrorPath);
+internal sealed record PublicWorkerCommandPackage(string Command, string RequestPath, string StandardOutputPath, string StandardErrorPath);
 
 internal interface IWorkerProcessInvoker
 {
+    Task<WorkerProcessInvocationResult> InvokePublicAsync(AdmittedAuthorityWorker worker, PublicWorkerCommandPackage package, TimeSpan timeout, CancellationToken cancellationToken)
+        => throw new NotSupportedException("This invoker does not implement read-only public worker commands.");
     Task<WorkerProcessInvocationResult> InvokeAsync(
         AdmittedAuthorityWorker worker,
         LegacyAttemptPackage package,

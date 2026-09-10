@@ -21,9 +21,17 @@ namespace KnowledgeClipper
     internal static class DesktopLaunchOptions
     {
         internal static bool TryParse(string[] args, out DesktopLaunchView view)
+            => TryParse(args, out view, out _);
+
+        internal static bool TryParse(string[] args, out DesktopLaunchView view, out string captureFixturePath)
         {
             view = DesktopLaunchView.Default;
+            captureFixturePath = null;
             if (args == null || args.Length == 0) return true;
+            if (args.Length == 3 && args[0] == "--open-settings" && args[1] == "--candidate-capture-fixture" && Path.IsPathFullyQualified(args[2]))
+            {
+                captureFixturePath = args[2]; view = DesktopLaunchView.Settings; return true;
+            }
             if (args.Length != 1) return false;
             if (string.Equals(args[0], "--open-settings", StringComparison.Ordinal)) { view = DesktopLaunchView.Settings; return true; }
             if (string.Equals(args[0], "--open-question", StringComparison.Ordinal)) { view = DesktopLaunchView.Question; return true; }
@@ -42,9 +50,12 @@ namespace KnowledgeClipper
                 return SingleInstanceCoordinator.WriteProbe(Console.Out);
             if (args != null && args.Length == 2 && string.Equals(args[0], "--integration-startup-canary", StringComparison.Ordinal))
                 return CandidateIntegrationCanary.Run(AppDomain.CurrentDomain.BaseDirectory, args[1], Console.Out);
+            if (args != null && args.Length == 3 && string.Equals(args[0], "--candidate-read-to-anki-canary", StringComparison.Ordinal))
+                return CandidateReadToAnkiProcessCanary.Run(AppDomain.CurrentDomain.BaseDirectory, args[1], args[2], Console.Out);
 
             DesktopLaunchView launchView;
-            if (!DesktopLaunchOptions.TryParse(args, out launchView))
+            string captureFixturePath;
+            if (!DesktopLaunchOptions.TryParse(args, out launchView, out captureFixturePath))
             {
                 MessageBox.Show("不支持的启动参数。", "零碎知识剪藏", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return 2;
@@ -64,7 +75,7 @@ namespace KnowledgeClipper
                     var config = AppConfig.Load(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json"));
                     ProductionStartupPolicy.Apply(config);
                     var credentials = DesktopCredentialSettings.Load(config.WorkDirectory);
-                    var desktop = LegacyDesktopAdapter.CreateBoundClipperDependencies(config);
+                    var desktop = LegacyDesktopAdapter.CreateBoundClipperDependencies(config, captureFixturePath);
                     using (var orchestrator = CandidateOrchestratorHost.StartIfConfigured(AppDomain.CurrentDomain.BaseDirectory, null, credentials))
                     using (var form = new BoundClipperForm(desktop))
                     {

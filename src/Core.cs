@@ -118,7 +118,24 @@ namespace KnowledgeClipper
             LanguageOverride = NormalizeLanguageOverride(LanguageOverride);
             ContextGranularity = ContextGranularity == "paragraph" ? "paragraph" : "sentence";
             RatePercent = Clamp(RatePercent, -50, 100); VolumePercent = Clamp(VolumePercent, -100, 100); PitchHz = Clamp(PitchHz, -50, 50);
-            var path = PathFor(config); Directory.CreateDirectory(Path.GetDirectoryName(path)); var temp = path + ".tmp"; var json = Json.New().Serialize(this);
+            var path = PathFor(config); Directory.CreateDirectory(Path.GetDirectoryName(path)); var temp = path + ".tmp";
+            // Capture context is owned by workflow-settings.v3.json.  Do not
+            // persist the former aliases here: two writable copies caused the
+            // floating toggle and the next task snapshot to disagree.
+            var persisted = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                ["ChineseVoice"] = ChineseVoice,
+                ["EnglishVoice"] = EnglishVoice,
+                ["SpanishVoice"] = SpanishVoice,
+                ["JapaneseVoice"] = JapaneseVoice,
+                ["KoreanVoice"] = KoreanVoice,
+                ["LanguageOverride"] = LanguageOverride,
+                ["OriginalImageMode"] = OriginalImageMode,
+                ["RatePercent"] = RatePercent,
+                ["VolumePercent"] = VolumePercent,
+                ["PitchHz"] = PitchHz
+            };
+            var json = Json.New().Serialize(persisted);
             File.WriteAllText(temp, json, new UTF8Encoding(false));
             if (File.Exists(path)) File.Replace(temp, path, path + ".bak", true); else File.Move(temp, path);
         }

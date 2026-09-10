@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./anki-semantic-readback-gate-input.v1.schema.json",
+  "title": "KnowledgeClipper Anki semantic readback gate input v1",
+  "description": "Module-local SHA-bound references for independently verifying preview-to-Anki semantics. This is not a common contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "expectedCardCount", "expectedDeck", "evidence"],
+  "properties": {
+    "schemaVersion": {"const": "anki-semantic-readback-gate-input.v1"},
+    "expectedCardCount": {"type": "integer", "minimum": 1},
+    "expectedDeck": {"type": "string", "minLength": 1},
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["preview", "confirmationCommand", "workerRequest", "workerResult", "artifactManifest", "readback"],
+      "properties": {
+        "preview": {"$ref": "#/$defs/ref"},
+        "confirmationCommand": {"$ref": "#/$defs/ref"},
+        "workerRequest": {"$ref": "#/$defs/ref"},
+        "workerResult": {"$ref": "#/$defs/ref"},
+        "artifactManifest": {"$ref": "#/$defs/ref"},
+        "readback": {"$ref": "#/$defs/ref"}
+      }
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "canonicalRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)[^:]+$"
+    },
+    "ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/canonicalRelativePath"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

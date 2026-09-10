@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup><Compile Include="Program.cs"/><Compile Include="DestinationReadiness.cs"/><Compile Include="DestinationClip.cs"/></ItemGroup>
+  <ItemGroup>
+    <Reference Include="KnowledgeClipper.Core.V3.Client"><HintPath>D:\Artifacts\KnowledgeClipper\desktop-destinations\desktop-destinations-20260909-02\KnowledgeClipper.Core.V3.Client.dll</HintPath></Reference>
+    <Reference Include="KnowledgeClipper.Core.V3.Contracts"><HintPath>D:\Artifacts\KnowledgeClipper\desktop-destinations\desktop-destinations-20260909-02\KnowledgeClipper.Core.V3.Contracts.dll</HintPath></Reference>
+  </ItemGroup>
+</Project>

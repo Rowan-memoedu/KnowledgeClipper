@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "knowledge-clipper-quality.desktop-actual-runner-semantic-cases.v1",
+  "cases": [
+    {
+      "id": "no-card-resolution",
+      "initial": {"commandId": "read-1", "acceptedSequence": 10},
+      "initialTerminal": {"commandId": "read-1", "terminalSequence": 20, "pipeline": "awaiting_card_confirmation"},
+      "actions": [{"kind": "confirm", "commandId": "confirm-1", "acceptedSequence": 21, "terminalCommandId": "confirm-1", "terminalSequence": 30}],
+      "expected": {"resolutionActions": 0, "confirmActions": 1, "ankiWrites": 2, "accepted": true}
+    },
+    {
+      "id": "card-resolution-required",
+      "initial": {"commandId": "read-2", "acceptedSequence": 40},
+      "initialTerminal": {"commandId": "read-2", "terminalSequence": 50, "pipeline": "awaiting_card_resolution"},
+      "actions": [
+        {"kind": "resolve", "commandId": "resolve-1", "acceptedSequence": 51, "terminalCommandId": "resolve-1", "terminalSequence": 60},
+        {"kind": "confirm", "commandId": "confirm-2", "acceptedSequence": 61, "terminalCommandId": "confirm-2", "terminalSequence": 70}
+      ],
+      "expected": {"resolutionActions": 1, "confirmActions": 1, "ankiWrites": 2, "accepted": true}
+    },
+    {
+      "id": "delayed-completion",
+      "initial": {"commandId": "read-3", "acceptedSequence": 80},
+      "initialTerminal": {"commandId": "read-3", "terminalSequence": 90, "pipeline": "awaiting_card_confirmation"},
+      "actions": [{"kind": "confirm", "commandId": "confirm-3", "acceptedSequence": 91, "observations": ["running", "writing_anki", "completed"], "terminalCommandId": "confirm-3", "terminalSequence": 110}],
+      "expected": {"resolutionActions": 0, "confirmActions": 1, "ankiWrites": 2, "accepted": true}
+    },
+    {
+      "id": "stale-command-terminal",
+      "initial": {"commandId": "read-4", "acceptedSequence": 120},
+      "initialTerminal": {"commandId": "read-4", "terminalSequence": 130, "pipeline": "awaiting_card_confirmation"},
+      "actions": [{"kind": "confirm", "commandId": "confirm-4", "acceptedSequence": 131, "terminalCommandId": "read-4", "terminalSequence": 140}],
+      "expected": {"resolutionActions": 0, "confirmActions": 1, "ankiWrites": 0, "accepted": false, "failureCode": "typed.terminal-command-mismatch"}
+    },
+    {
+      "id": "count-correct-content-wrong",
+      "initial": {"commandId": "read-5", "acceptedSequence": 150},
+      "initialTerminal": {"commandId": "read-5", "terminalSequence": 160, "pipeline": "awaiting_card_confirmation"},
+      "actions": [{"kind": "confirm", "commandId": "confirm-5", "acceptedSequence": 161, "terminalCommandId": "confirm-5", "terminalSequence": 170}],
+      "preview": [{"ordinal": 0, "front": "front-a", "back": "back-a"}, {"ordinal": 1, "front": "front-b", "back": "back-b"}],
+      "readback": [{"ordinal": 0, "front": "front-a", "back": "wrong"}, {"ordinal": 1, "front": "front-b", "back": "back-b"}],
+      "expected": {"resolutionActions": 0, "confirmActions": 1, "ankiWrites": 2, "accepted": false, "failureCode": "anki.semantic-readback-mismatch"}
+    },
+    {
+      "id": "wrong-destination-before-confirm",
+      "initial": {"commandId": "read-6", "acceptedSequence": 180},
+      "initialTerminal": {"commandId": "read-6", "terminalSequence": 190, "pipeline": "awaiting_card_confirmation"},
+      "settingsEvidence": {
+        "targetKind": "anki",
+        "actualDeck": "wrong-deck",
+        "expectedDeck": "零碎知识剪藏::Canary::PhaseB-20260828T081109Z",
+        "taskBound": true
+      },
+      "actions": [],
+      "expected": {"resolutionActions": 0, "confirmActions": 0, "ankiWrites": 0, "accepted": false, "failureCode": "observer.settings-evidence-invalid-before-confirm"}
+    }
+  ]
+}

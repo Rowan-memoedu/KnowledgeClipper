@@ -11,23 +11,89 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using KnowledgeClipper.Desktop.Application.V3;
+using KnowledgeClipper.Desktop.Adapters.V3;
 using KnowledgeClipper.Desktop.Core;
 using KnowledgeClipper.Desktop.Tests;
 
 namespace KnowledgeClipper
 {
-    internal static class WindowsUiCanary
+    internal static partial class WindowsUiCanary
     {
         private static int assertions;
 
         [STAThread]
         private static int Main(string[] args)
         {
-            var root = Path.Combine(Path.GetTempPath(), "rqc-windows-ui-canary-" + Guid.NewGuid().ToString("N"));
+            if (args != null && args.Length == 3 && args[0] == "--destination-kernel-only") return DestinationKernelOnly(Path.GetFullPath(args[1]), args[2]);
+            if (args != null && args.Length == 2 && args[0] == "--destination-workflow-only") return DestinationWorkflowOnly(Path.GetFullPath(args[1]));
+            if (args != null && args.Length == 2 && args[0] == "--remnote-settings-only") return RemNoteSettingsOnly(Path.GetFullPath(args[1]));
+            if (args != null && args.Length == 2 && args[0] == "--destination-inputs-only") return DestinationInputsOnly(Path.GetFullPath(args[1]));
+            if (args != null && args.Length == 2 && args[0] == "--anki-probe-only") return AnkiProbeUiOnly(Path.GetFullPath(args[1]));
+            if (args != null && args.Length == 2 && args[0] == "--playback-control-only")
+                return PlaybackControlUiCanary(Path.GetFullPath(args[1]));
+            if (args != null && args.Length == 2 && args[0] == "--question-follow-up-only")
+                return QuestionFollowUpUiCanary(Path.GetFullPath(args[1]));
+            if (args != null && args.Length == 2 && args[0] == "--preview-lifecycle-only")
+                return PreviewLifecycleCanary(Path.GetFullPath(args[1]), false);
+            if (args != null && args.Length == 2 && args[0] == "--flashcard-preview-race-host")
+                return PreviewLifecycleCanary(Path.GetFullPath(args[1]), true);
+            if (args != null && args.Length == 2 && args[0] == "--native-context-only")
+                return NativeContextCanary(Path.GetFullPath(args[1]));
+            if (args != null && args.Length == 2 && args[0] == "--anki-route-settings-only")
+                return AnkiRouteSettingsOnly(Path.GetFullPath(args[1]));
+            if (args != null && args.Length == 2 && args[0] == "--capture-queue-only")
+                return CaptureQueueOnly(Path.GetFullPath(args[1]));
+            var settingsEvidenceMode = args != null && args.Length == 2 && string.Equals(args[0], "--actual-harness-settings-evidence", StringComparison.Ordinal);
+            var root = settingsEvidenceMode ? Path.GetFullPath(args[1]) : Path.Combine(Path.GetTempPath(), "rqc-windows-ui-canary-" + Guid.NewGuid().ToString("N"));
+            if (settingsEvidenceMode && Directory.Exists(root)) throw new InvalidOperationException("immutable-settings-evidence-root-exists");
             Directory.CreateDirectory(root);
             try
             {
+                if (args != null && args.Length == 2 && args[0] == "--read-capture-boundary-only")
+                {
+                    ReadCaptureBoundaryCanary(Path.GetFullPath(args[1]));
+                    Console.WriteLine("WINDOWS_READ_CAPTURE_BOUNDARY PASS assertions=" + assertions);
+                    return 0;
+                }
+                if (args != null && args.Length == 2 && args[0] == "--language-modal-uia-host")
+                {
+                    LanguageModalUiaHost(Path.GetFullPath(args[1]));
+                    return 0;
+                }
+                if (args != null && args.Length == 2 && args[0] == "--content-scale-only")
+                {
+                    WholeWindowScaleCanary(Path.GetFullPath(args[1]));
+                    Console.WriteLine("WINDOWS_CONTENT_SCALE_CANARY PASS assertions=" + assertions);
+                    return 0;
+                }
                 Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
+                if (args != null && args.Any(value => string.Equals(value, "--resize-input-trace", StringComparison.Ordinal)))
+                {
+                    ResizeInputTraceCanary(root);
+                    Console.WriteLine("WINDOWS_RESIZE_INPUT_TRACE PASS assertions=" + assertions);
+                    return 0;
+                }
+                if (settingsEvidenceMode)
+                {
+                    SettingsAndDialogAutomationCanary(root);
+                    WriteActualHarnessSettingsEvidence(root);
+                    Console.WriteLine("WINDOWS_ACTUAL_HARNESS_SETTINGS_EVIDENCE PASS assertions=" + assertions);
+                    return 0;
+                }
+                if (args != null && args.Any(value => string.Equals(value, "--flashcard-preview-only", StringComparison.Ordinal)))
+                {
+                    FlashcardPreviewUiCanary();
+                    Console.WriteLine("WINDOWS_FLASHCARD_PREVIEW_UI_CANARY PASS assertions=" + assertions);
+                    return 0;
+                }
+                if (args != null && args.Any(value => string.Equals(value, "--read-to-anki-only", StringComparison.Ordinal)))
+                {
+                    CaptureFallbackCanary(root);
+                    ReadToAnkiUiBindingCanary(root);
+                    Console.WriteLine("WINDOWS_READ_TO_ANKI_UI_CANARY PASS assertions=" + assertions);
+                    return 0;
+                }
                 if (args != null && args.Any(value => string.Equals(value, "--settings-only", StringComparison.Ordinal)))
                 {
                     StartupDiagnosticCanary(root);
@@ -35,10 +101,18 @@ namespace KnowledgeClipper
                     Console.WriteLine("WINDOWS_SETTINGS_UI_CANARY PASS assertions=" + assertions);
                     return 0;
                 }
+                if (args != null && args.Any(value => string.Equals(value, "--question-focus-only", StringComparison.Ordinal)))
+                {
+                    QuestionFocusOwnershipCanary(root);
+                    Console.WriteLine("WINDOWS_QUESTION_FOCUS_CANARY PASS assertions=" + assertions);
+                    return 0;
+                }
                 StartupDiagnosticCanary(root);
                 ProductionLaunchViewCanary(root);
                 CaptureFallbackCanary(root);
                 FloatingUiCanary(root);
+                CardResolutionUiCanary();
+                ReadToAnkiUiBindingCanary(root);
                 NamedPipeUiCanary(root);
                 NamedPipeInlineQuestionCanary(root);
                 SettingsAndDialogAutomationCanary(root);
@@ -53,7 +127,169 @@ namespace KnowledgeClipper
             }
             finally
             {
-                try { Directory.Delete(root, true); } catch { }
+                if (!settingsEvidenceMode) { try { Directory.Delete(root, true); } catch { } }
+            }
+        }
+
+        private static int CaptureQueueOnly(string root)
+        {
+            if (Directory.Exists(root)) throw new InvalidOperationException("immutable-queue-evidence-exists");
+            Directory.CreateDirectory(root);
+            var path = Path.Combine(root, "queue.json");
+            var inputs = Enumerable.Range(1, 4).Select(index => new { selectedText = "selection-" + index, prefix = "prefix " + index + " ", suffix = " suffix " + index }).ToArray();
+            var bytes = JsonSerializer.SerializeToUtf8Bytes(new { schemaVersion = "desktop-test-capture-queue.v1", inputs });
+            File.WriteAllBytes(path, bytes);
+            var mode = new ContextModeState { enabled = true, granularity = "sentence" };
+            var phases = new List<string>();
+            var queue = new CandidateCaptureFixture(path, () => mode, phases.Add);
+            using (var cancel = new CancellationTokenSource())
+            {
+                cancel.Cancel(); var rejected = false;
+                try { queue.CaptureOnceAsync(cancel.Token); } catch (OperationCanceledException) { rejected = true; }
+                Assert(rejected, "cancelled capture does not consume the next queue input");
+            }
+            var observed = new List<object>();
+            for (var index = 0; index < 4; index++)
+            {
+                mode.enabled = index != 1;
+                var result = queue.CaptureOnceAsync(CancellationToken.None).GetAwaiter().GetResult();
+                Assert(result.Text == inputs[index].selectedText && result.TargetText == result.Text, "queue consumes exact ordered input once: " + index);
+                Assert(mode.enabled ? result.OrderedContextSegments.Select(item => item.Text).SequenceEqual(new[] { inputs[index].prefix, inputs[index].suffix }) : result.OrderedContextSegments.Count == 0, "queue freezes current UI context mode, not a business decision: " + index);
+                observed.Add(new { result.Text, result.ContextRequested, segments = result.OrderedContextSegments });
+            }
+            var exhausted = false; try { queue.CaptureOnceAsync(CancellationToken.None); } catch (InvalidOperationException e) { exhausted = e.Message == "candidate-capture-fixture-queue-exhausted"; }
+            Assert(exhausted, "fifth capture fails closed without looping or replaying");
+            var changed = new CandidateCaptureFixture(path, () => mode);
+            File.WriteAllText(path, Encoding.UTF8.GetString(bytes) + " ");
+            var driftRejected = false; try { changed.CaptureOnceAsync(CancellationToken.None); } catch (InvalidOperationException e) { driftRejected = e.Message == "candidate-capture-fixture-drift"; }
+            File.WriteAllBytes(path, bytes);
+            var stillRejected = false; try { changed.CaptureOnceAsync(CancellationToken.None); } catch (InvalidOperationException e) { stillRejected = e.Message == "candidate-capture-fixture-drift"; }
+            Assert(driftRejected && stillRejected, "byte drift poisons the queue even after file restoration");
+            var missing = new CandidateCaptureFixture(path, () => mode); File.Move(path, path + ".held");
+            var missingRejected = false; try { missing.CaptureOnceAsync(CancellationToken.None); } catch (InvalidOperationException e) { missingRejected = e.Message == "candidate-capture-fixture-drift"; }
+            Assert(missingRejected, "missing queue fails closed");
+            var invalid = new[] {
+                "{\"schemaVersion\":\"desktop-test-capture-queue.v1\",\"inputs\":[]}",
+                JsonSerializer.Serialize(new { schemaVersion = "desktop-test-capture-queue.v1", inputs = Enumerable.Repeat(inputs[0], 17).ToArray() }),
+                "{\"schemaVersion\":\"desktop-test-capture-queue.v1\",\"inputs\":[{\"selectedText\":\"x\",\"prefix\":\"a\",\"suffix\":\"b\",\"choice\":\"both\"}]}",
+                "{\"schemaVersion\":\"desktop-test-capture-queue.v1\",\"inputs\":[{\"selectedText\":\"x\",\"prefix\":\"a\",\"suffix\":\"b\",\"suffix\":\"c\"}]}",
+                "{\"schemaVersion\":\"desktop-test-capture-queue.v1\",\"inputs\":[{\"selectedText\":\" \",\"prefix\":\"a\",\"suffix\":\"b\"}]}"
+            };
+            for (var index = 0; index < invalid.Length; index++)
+            {
+                var bad = Path.Combine(root, "invalid-" + index + ".json"); File.WriteAllText(bad, invalid[index]); var rejected = false;
+                try { new CandidateCaptureFixture(bad, () => mode); } catch (InvalidDataException) { rejected = true; }
+                Assert(rejected, "strict queue rejects invalid input: " + index);
+            }
+            var legacy = Path.Combine(root, "single.json"); File.WriteAllText(legacy, JsonSerializer.Serialize(new { schemaVersion = "desktop-test-capture.v1", selectedText = "legacy selection", prefix = "before ", suffix = " after" }));
+            var single = new CandidateCaptureFixture(legacy, () => mode); Assert(single.CaptureOnceAsync(CancellationToken.None).Result.Text == "legacy selection", "single fixture v1 remains compatible");
+            var singleExhausted = false; try { single.CaptureOnceAsync(CancellationToken.None); } catch (InvalidOperationException e) { singleExhausted = e.Message == "candidate-capture-fixture-already-consumed"; }
+            Assert(singleExhausted, "single fixture cannot replay");
+            File.WriteAllText(Path.Combine(root, "receipt.json"), JsonSerializer.Serialize(new { status = "PASS", assertions, observed, phases, queueSha256 = Convert.ToHexString(SHA256.HashData(bytes)), workerRuns = 0, externalCalls = 0, ankiWrites = 0, businessResultsInjected = false, physicalCaptureValidated = false }, new JsonSerializerOptions { WriteIndented = true }), new UTF8Encoding(false));
+            Console.WriteLine("CAPTURE_QUEUE PASS assertions=" + assertions); return 0;
+        }
+
+        private static int AnkiRouteSettingsOnly(string root)
+        {
+            if (Directory.Exists(root)) throw new InvalidOperationException("immutable-route-evidence-exists");
+            Directory.CreateDirectory(root);
+            Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
+            var rows = new List<object>();
+            foreach (var preset in new[] { "knowledge-clipper-default", "custom" })
+            {
+                var config = Config(Path.Combine(root, preset));
+                var requestedDeck = "零碎知识剪藏::Canary::RouteProbe-A";
+                using var form = new SettingsForm(config, UserSettings.Defaults());
+                form.Show(); Pump(30);
+                Find<ListBox>(form, SettingsAutomationCatalog.Navigation).SelectedIndex = Array.IndexOf(SettingsForm.PageKeys, "export");
+                Find<ComboBox>(form, SettingsAutomationCatalog.ExportAnkiDeckPreset).SelectedItem = preset;
+                Find<TextBox>(form, SettingsAutomationCatalog.ExportAnkiDeckRoutes).Text = JsonSerializer.Serialize(new Dictionary<string, string> { ["canary"] = requestedDeck });
+                Find<Button>(form, SettingsAutomationCatalog.Save).PerformClick();
+                Assert(form.SavedSettings != null, "route-only real settings save: " + preset);
+                var service = new DesktopWorkflowSettingsService(config.WorkDirectory, AppDomain.CurrentDomain.BaseDirectory);
+                service.LoadOrCreate(UserSettings.Load(config));
+                var store = new DesktopModuleSettingsStore(config.WorkDirectory);
+                var frozen = DesktopTaskSettingsArtifacts.BuildAnkiConfigurationJson(service, store);
+                using var parsed = JsonDocument.Parse(frozen);
+                var actual = parsed.RootElement.GetProperty("deck_routes").GetProperty("canary").GetString();
+                Assert(preset == "custom" ? actual == requestedDeck : actual != requestedDeck, "route config builder honors explicit preset, never route edit alone: " + preset);
+                rows.Add(new { preset, requestedDeck, actualDeck = actual, persistedPreset = store.Load().AnkiDeckPreset, configurationSha256 = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(frozen))) });
+            }
+            File.WriteAllText(Path.Combine(root, "receipt.json"), JsonSerializer.Serialize(new { status = "PASS", assertions, scenarios = rows, workerRuns = 0, externalCalls = 0, ankiWrites = 0, mechanism = "real SettingsForm controls/save -> production BuildAnkiConfigurationJson; no Core task" }, new JsonSerializerOptions { WriteIndented = true }), new UTF8Encoding(false));
+            Console.WriteLine("ANKI_ROUTE_SETTINGS PASS assertions=" + assertions);
+            return 0;
+        }
+
+        private static void WriteActualHarnessSettingsEvidence(string root)
+        {
+            var taskRoot = Path.Combine(root, "settings-secret-boundary-jobs");
+            var snapshot = Directory.GetFiles(taskRoot, "task-settings-snapshot.v1.json", SearchOption.AllDirectories).Single();
+            var anki = Directory.GetFiles(taskRoot, "anki-export.v1.json", SearchOption.AllDirectories).Single();
+            using var snapshotJson = JsonDocument.Parse(File.ReadAllBytes(snapshot));
+            using var ankiJson = JsonDocument.Parse(File.ReadAllBytes(anki));
+            var deck = ankiJson.RootElement.GetProperty("deck_routes").GetProperty("canary").GetString();
+            if (snapshotJson.RootElement.GetProperty("schemaVersion").GetString() != "knowledge-clipper-task-settings-snapshot.v3" || deck != "零碎知识剪藏::Canary::Desktop-V14") throw new InvalidOperationException("actual-settings-public-snapshot-binding-invalid");
+            var receipt = new
+            {
+                schemaVersion = "knowledge-clipper-actual-settings-ui-evidence.v1", status = "PASS",
+                settingsUi = "actual-SettingsForm", publisher = "DesktopTaskSettingsArtifacts/CoreDesktopTaskSettingsPublisher",
+                taskSnapshot = new { path = Path.GetRelativePath(root, snapshot).Replace('\\', '/'), sha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(snapshot))) },
+                ankiConfig = new { path = Path.GetRelativePath(root, anki).Replace('\\', '/'), sha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(anki))), deck },
+                uiRequestCanOverrideDestination = false, businessTasks = 0, externalCalls = 0, ankiWrites = 0
+            };
+            File.WriteAllText(Path.Combine(root, "actual-settings-ui-evidence.receipt.json"), JsonSerializer.Serialize(receipt, new JsonSerializerOptions { WriteIndented = true }) + Environment.NewLine, new UTF8Encoding(false));
+        }
+
+        private static void QuestionFocusOwnershipCanary(string root)
+        {
+            var actions = new List<string>();
+            var refreshRelease = new TaskCompletionSource<DesktopSemanticState>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (var form = new QuestionForm(delegate(string action, SemanticActionArguments arguments)
+            {
+                actions.Add(action);
+                var state = DesktopSemanticState.CreateDefault();
+                state.noticeCode = action == AutomationCatalog.QuestionFollowUp ? "question.follow-up-submitted" : "question.submitted";
+                state.foregroundState = "question-awaiting-answer"; state.recentTask.available = true; state.recentTask.taskId = "focus-task";
+                state.questionSession.open = true; state.questionSession.answerState = "loading";
+                return Task.FromResult(state);
+            }, new FileQuestionAnswerArtifactReader(Path.Combine(root, "focus-jobs")), delegate { return refreshRelease.Task; }))
+            {
+                form.FocusTimeline += delegate(string line) { Console.WriteLine("QUESTION_FOCUS_TIMELINE " + line + " foreground=0x" + GetForegroundWindow().ToInt64().ToString("X")); };
+                var input = Find<TextBox>(form, AutomationCatalogV11.QuestionInputAutomationId);
+                Exception failure = null;
+                using (var owner = new Form { Text = "Question focus owner", StartPosition = FormStartPosition.CenterScreen, ClientSize = new Size(260, 100), TopMost = true })
+                using (var drive = new System.Windows.Forms.Timer { Interval = 60 })
+                {
+                    drive.Tick += delegate
+                    {
+                        drive.Stop();
+                        try
+                        {
+                            ClickWithRealMouse(input);
+                            WaitUntil(delegate { return GetForegroundWindow() == form.Handle && input.Focused; }, 1200, "QuestionForm targeted modal foreground precondition");
+                            var ready = DesktopSemanticState.CreateDefault(); ready.recentTask.available = true; ready.recentTask.taskId = "focus-task"; ready.questionSession.open = true; ready.questionSession.answerState = "ready";
+                            ready.questionSession.answerArtifact = WriteQuestionAnswerFixture(Path.Combine(root, "focus-jobs"), "focus-task", "question.answer.text.focus", "可追问答案");
+                            form.Update(ready);
+                            foreach (var text in new[] { "firstfocusownershipround", "second-long-focus-round", "third_keyboard_ownership_round" })
+                            {
+                                input.Clear(); input.Focus(); Pump(20); TypeWithRealKeyboard(input, text);
+                                Assert(input.Text == text && input.Focused && GetForegroundWindow() == form.Handle, "QuestionForm keeps exclusive input focus for long real-keyboard round " + text.Substring(0, 5));
+                            }
+                            input.Clear(); input.Focus(); TypeWithRealKeyboard(input, "followup-focus-enter"); PressRealKey("{ENTER}");
+                            WaitUntil(delegate { return actions.Count == 1; }, 1200, "focused follow-up Enter");
+                            Assert(actions.Single() == AutomationCatalog.QuestionFollowUp, "focused Enter emits exactly one follow-up action");
+                            var beforeEscape = actions.Count; input.Focus(); PressRealKey("{ESC}"); Pump(40);
+                            Assert(actions.Count == beforeEscape, "QuestionForm Escape sends no additional command");
+                        }
+                        catch (Exception ex) { failure = ex; if (form.Visible) form.Close(); }
+                    };
+                    owner.Show(); ClickWithRealMouse(owner); EnsureCanaryForeground(owner.Handle);
+                    WaitUntil(delegate { return GetForegroundWindow() == owner.Handle; }, 1200, "real user-gesture owner foreground precondition");
+                    drive.Start(); form.ShowDialog(owner);
+                    Assert(!form.Visible, "QuestionForm Escape closes the modal interaction locally");
+                    owner.Close();
+                }
+                if (failure != null) throw failure;
             }
         }
 
@@ -211,7 +447,145 @@ namespace KnowledgeClipper
                 .Capture("clip", new ContextModeState { enabled = true, granularity = "paragraph" });
             Assert(contextCapture.contextAvailable && contextCapture.contextSegments != null && contextCapture.contextSegments.captureMethod == "uia-text-pattern", "context mode consumes a reliable Windows text-pattern context projection");
             Assert(contextCapture.artifacts.Count == 3 && contextCapture.contextSegments.selectionArtifactRef == contextCapture.selectedTextArtifactRef && contextCapture.contextSegments.prefixArtifactRef != null && contextCapture.contextSegments.suffixArtifactRef != null, "context prefix, selection, and suffix are staged as explicit immutable artifacts");
+
+            var typedSelection = new WindowsCurrentTextCapturePort(new ScriptedTextClipboard("旧剪贴板", "选区正文"), new SuccessfulCopySender(), 3, 1).CaptureOnceAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(typedSelection.Text == "选区正文", "typed read-to-Anki capture returns the latest external selection once without staging a legacy artifact");
+            var typedFallback = new WindowsCurrentTextCapturePort(new FixedClipboard(new ClipboardSnapshot { Text = "原剪贴板正文" }), new FailedCopySender(), 0, 1).CaptureOnceAsync(CancellationToken.None).GetAwaiter().GetResult();
+            Assert(typedFallback.Text == "原剪贴板正文", "typed read-to-Anki capture preserves the explicit no-selection clipboard fallback");
+            var typedEmptyFailed = false;
+            try { new WindowsCurrentTextCapturePort(new FixedClipboard(new ClipboardSnapshot()), new FailedCopySender(), 0, 1).CaptureOnceAsync(CancellationToken.None).GetAwaiter().GetResult(); }
+            catch (InvalidOperationException exception) { typedEmptyFailed = exception.Message.StartsWith("read-to-anki-copy-shortcut-failed:", StringComparison.Ordinal); }
+            Assert(typedEmptyFailed, "typed read-to-Anki capture fails closed with an actionable code when neither selection nor clipboard text exists");
         }
+
+        private static void WholeWindowScaleCanary(string evidenceRoot)
+        {
+            if (Directory.Exists(evidenceRoot)) throw new InvalidOperationException("immutable-scale-evidence-exists");
+            Directory.CreateDirectory(evidenceRoot);
+            var controller = new DesktopController(new FakeCaptureProvider(new[] { TextCapture("clip") }), new FakeScreenshotProvider(new[] { ImageFrame("question") }), new FakeDesktopOrchestratorPort(), new FakeClock(DateTime.UtcNow), new FakeIdProvider());
+            using (var form = new BoundClipperForm(Config(Path.Combine(evidenceRoot, "data")), controller, false))
+            {
+                form.Show(); Pump(60);
+                form.RestoreDefaultSize(); Pump(20);
+                var controls = new Control[] {
+                    Find<Label>(form, AutomationCatalogV11.WindowTitleAutomationId),
+                    Find<Button>(form, AutomationCatalogV11.AutomationIds[AutomationCatalog.ClipCapture]),
+                    Find<Button>(form, AutomationCatalogV11.AutomationIds[AutomationCatalog.ReadCapture]),
+                    Find<Button>(form, AutomationCatalogV11.AutomationIds[AutomationCatalog.ScreenshotStart]),
+                    Find<Button>(form, AutomationCatalogV11.AutomationIds[AutomationCatalog.ContextSet]),
+                    Find<Button>(form, AutomationCatalogV11.AutomationIds[AutomationCatalog.OriginalImageSet]),
+                    Find<TextBox>(form, AutomationCatalogV12.InlineQuestionInputAutomationId),
+                    Find<Button>(form, AutomationCatalogV11.StatusAutomationId),
+                    Find<Button>(form, AutomationCatalogV11.WindowMinimizeAutomationId),
+                    Find<Button>(form, AutomationCatalogV11.WindowCloseAutomationId)
+                };
+                var fonts = controls.Select(control => control.Font.Size).ToArray();
+                // Exercise the native resize seam, not just assigning proportional ClientSize.
+                // Single-edge drags previously left the other axis (and every font) unchanged.
+                for (var edge = 1; edge <= 8; edge++)
+                {
+                    form.RestoreDefaultSize(); Pump(10);
+                    var before = form.Bounds;
+                    var proposed = new RECT { Left = before.Left, Top = before.Top, Right = before.Right, Bottom = before.Bottom };
+                    if (edge == 1 || edge == 4 || edge == 7) proposed.Left -= 172;
+                    if (edge == 2 || edge == 5 || edge == 8) proposed.Right += 172;
+                    if (edge == 3 || edge == 4 || edge == 5) proposed.Top -= 105;
+                    if (edge == 6 || edge == 7 || edge == 8) proposed.Bottom += 105;
+                    var memory = Marshal.AllocHGlobal(Marshal.SizeOf<RECT>());
+                    try
+                    {
+                        Marshal.StructureToPtr(proposed, memory, false);
+                        SendMessage(form.Handle, 0x0214, new IntPtr(edge), memory);
+                        var adjusted = Marshal.PtrToStructure<RECT>(memory);
+                        form.Bounds = Rectangle.FromLTRB(adjusted.Left, adjusted.Top, adjusted.Right, adjusted.Bottom); Pump(20);
+                        Console.WriteLine("RESIZE_EDGE edge=" + edge + ";size=" + form.ClientSize + ";fontRatio=" + controls[1].Font.Size / fonts[1]);
+                        Assert(Math.Abs(form.ClientSize.Width / 344F - form.ClientSize.Height / 210F) < 0.01F,
+                            "single-edge/corner native drag preserves whole-window aspect, edge " + edge);
+                        Assert(controls.All(control => control.Font.Size / fonts[Array.IndexOf(controls, control)] > 1.45F),
+                            "native drag enlarges all text, not only the frame, edge " + edge);
+                        Assert((edge == 1 || edge == 4 || edge == 7 ? adjusted.Right == before.Right : adjusted.Left == before.Left)
+                            && (edge == 3 || edge == 4 || edge == 5 ? adjusted.Bottom == before.Bottom : adjusted.Top == before.Top),
+                            "native drag keeps opposite anchor fixed, edge " + edge);
+                        // Reverse the gesture, using just one axis even for corners.
+                        var shrinking = adjusted;
+                        if (edge == 3) shrinking.Top += 52;
+                        else if (edge == 6) shrinking.Bottom -= 52;
+                        else if (edge == 1 || edge == 4 || edge == 7) shrinking.Left += 86;
+                        else shrinking.Right -= 86;
+                        Marshal.StructureToPtr(shrinking, memory, false);
+                        SendMessage(form.Handle, 0x0214, new IntPtr(edge), memory);
+                        adjusted = Marshal.PtrToStructure<RECT>(memory);
+                        form.Bounds = Rectangle.FromLTRB(adjusted.Left, adjusted.Top, adjusted.Right, adjusted.Bottom); Pump(20);
+                        Assert(Math.Abs(form.ClientSize.Width / 344F - form.ClientSize.Height / 210F) < 0.01F,
+                            "reverse/one-axis corner drag scales both dimensions, edge " + edge);
+                        Assert(controls.Select((control, i) => control.Font.Size / fonts[i]).All(ratio => ratio > 1.2F && ratio < 1.3F),
+                            "reverse gesture shrinks all content together, edge " + edge);
+                    }
+                    finally { Marshal.FreeHGlobal(memory); }
+                }
+                var sizes = new[] { new Size(344, 210), new Size(516, 315), new Size(688, 420), new Size(430, 263), new Size(344, 210) };
+                for (var index = 0; index < sizes.Length; index++)
+                {
+                    form.ClientSize = sizes[index]; Pump(25);
+                    var scale = Math.Min(sizes[index].Width / 344F, sizes[index].Height / 210F);
+                    Assert(controls.Select((control, i) => Math.Abs(control.Font.Size / fonts[i] - scale) < 0.02F).All(value => value), "all text scales uniformly without drift, sample " + index);
+                    Assert(controls.All(control => control.Visible && control.Width > 0 && control.Height >= control.Font.Height), "text and controls remain visible and tall enough, sample " + index);
+                    Assert(controls.Where(control => !(control is TextBox)).All(control => TextRenderer.MeasureText(control.Text, control.Font).Width <= control.Width), "buttons and title fit without horizontal clipping, sample " + index);
+                    using (var bitmap = new Bitmap(form.Width, form.Height)) { form.DrawToBitmap(bitmap, form.ClientRectangle); bitmap.Save(Path.Combine(evidenceRoot, "scale-" + index + ".png")); }
+                    Console.WriteLine("SCALE_SAMPLE size=" + form.ClientSize + ";fonts=" + string.Join(",", controls.Select(control => control.Font.Size)));
+                }
+                Assert((GetWindowLong(form.Handle, -20) & 0x08000000) != 0, "whole-window scaling does not activate the floating window");
+                // Accessibility resize, saved dimensions and OS window positioning do not
+                // send WM_SIZING. They must use the same whole-window zoom invariant.
+                foreach (var requested in new[] { new Size(688, 210), new Size(344, 420) })
+                {
+                    form.RestoreDefaultSize(); Pump(20);
+                    var originalBounds = controls.Select(control => control.Bounds).ToArray();
+                    form.ClientSize = requested; Pump(30);
+                    Console.WriteLine("NON_MODAL_RESIZE requested=" + requested + ";actual=" + form.ClientSize + ";fontRatio=" + controls[1].Font.Size / fonts[1]);
+                    Assert(Math.Abs(form.ClientSize.Width / 344F - form.ClientSize.Height / 210F) < 0.01F,
+                        "non-modal one-axis resize preserves whole-window zoom: " + requested);
+                    Assert(controls.Select((control, i) => Math.Abs(control.Font.Size / fonts[i] - 2F) < 0.02F
+                        && Math.Abs(control.Width - originalBounds[i].Width * 2) <= 5
+                        && Math.Abs(control.Height - originalBounds[i].Height * 2) <= 5).All(value => value),
+                        "all text and control geometry double together: " + requested);
+                }
+                foreach (var requested in new[] { new Size(688, 210), new Size(344, 420) })
+                {
+                    form.RestoreDefaultSize(); Pump(20);
+                    Assert(ResizeWindowForScaleCanary(form.Handle, IntPtr.Zero, 0, 0, requested.Width, requested.Height, 0x0016),
+                        "native SetWindowPos resize accepted: " + requested);
+                    Pump(30);
+                    Assert(form.ClientSize == new Size(688, 420)
+                        && controls.Select((control, i) => Math.Abs(control.Font.Size / fonts[i] - 2F) < 0.02F).All(value => value),
+                        "native window positioning scales contents without WM_SIZING: " + requested);
+                }
+                form.Hide(); form.Show(); Pump(20);
+                Assert(form.ClientSize == new Size(688, 420), "hide/show preserves the whole-window zoom");
+                form.RestoreDefaultSize(); Pump(20);
+                Assert(form.ClientSize == new Size(344, 210)
+                    && controls.Select((control, i) => Math.Abs(control.Font.Size - fonts[i]) < 0.02F).All(value => value),
+                    "restore resets geometry and every font without accumulated zoom");
+                Assert(File.ReadAllText(Path.Combine(evidenceRoot, "data", "size.txt")) == "344,210", "restored size persists canonical dimensions");
+            }
+            // A legacy saved size can be non-proportional before the HWND exists.
+            File.WriteAllText(Path.Combine(evidenceRoot, "data", "size.txt"), "688,210");
+            using (var restored = new BoundClipperForm(Config(Path.Combine(evidenceRoot, "data")), controller, false))
+            {
+                restored.Show(); Pump(30);
+                var clip = Find<Button>(restored, AutomationCatalogV11.AutomationIds[AutomationCatalog.ClipCapture]);
+                Assert(restored.ClientSize == new Size(688, 420) && Math.Abs(clip.Font.Size - 21F) < 0.02F,
+                    "non-proportional persisted size restores whole-window geometry and font");
+                Assert((GetWindowLong(restored.Handle, -20) & 0x08000000) != 0, "restored zoom retains no-activate");
+            }
+            File.WriteAllText(Path.Combine(evidenceRoot, "receipt.json"), JsonSerializer.Serialize(new {
+                    status = "PASS", assertions, externalCalls = 0, physicalInput = 0,
+                    scenarios = "eight native sizing edges; managed and native one-axis resize; ten control fonts and geometry; hide/show; restore; persisted legacy dimensions"
+                }, new JsonSerializerOptions { WriteIndented = true }));
+        }
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowPos", SetLastError = true)]
+        private static extern bool ResizeWindowForScaleCanary(IntPtr window, IntPtr after, int x, int y, int width, int height, uint flags);
 
         private static void FloatingUiCanary(string root)
         {
@@ -247,8 +621,26 @@ namespace KnowledgeClipper
                 Assert(dragFrame != null && dragFrame.Cursor == Cursors.SizeAll, "outer frame exposes a dedicated all-edge drag affordance");
                 Assert(form.MinimumSize.Width == 344 && form.MinimumSize.Height == 210 && restoreSizeMenu != null, "floating window has a hard minimum size and an explicit tray-accessible size recovery action");
                 Assert(form.ResizeHitTest(new Point(1, 1)) == 13 && form.ResizeHitTest(new Point(form.ClientSize.Width - 2, 1)) == 14 && form.ResizeHitTest(new Point(1, form.ClientSize.Height - 2)) == 16 && form.ResizeHitTest(new Point(form.ClientSize.Width - 2, form.ClientSize.Height - 2)) == 17 && form.ResizeHitTest(new Point(form.ClientSize.Width / 2, form.ClientSize.Height / 2)) == 1, "all four borderless corners expose native resize hit targets while the interior remains draggable");
-                form.ClientSize = new Size(520, 320); restoreSizeMenu.PerformClick(); Pump(30);
+                var defaultTitleHeight = titleBar.Height; var defaultActionHeight = clip.Height; var defaultStatusHeight = status.Height; var defaultInputHeight = inlineInput.Height; var defaultWindowButtonWidth = close.Width;
+                var scalableTextControls = new Control[] { title, clip, read, screenshot, contextMode, originalMode, status, inlineInput, minimize, close };
+                var defaultFonts = scalableTextControls.Select(control => control.Font.Size).ToArray();
+                form.ClientSize = new Size(520, 320); Pump(30);
+                Console.WriteLine("CONTENT_SCALE before=" + defaultTitleHeight + "," + defaultActionHeight + "," + defaultStatusHeight + "," + defaultInputHeight + "," + defaultWindowButtonWidth + ";after=" + titleBar.Height + "," + clip.Height + "," + status.Height + "," + inlineInput.Height + "," + close.Width);
+                Assert(titleBar.Height > defaultTitleHeight && clip.Height > defaultActionHeight && status.Height > defaultStatusHeight && inlineInput.Height > defaultInputHeight && close.Width > defaultWindowButtonWidth,
+                    "resizing scales every floating-window content band and title control instead of enlarging only the outer frame");
+                var contentRatio = Math.Min(520F / 344, 320F / 210);
+                Assert(scalableTextControls.Select((control, index) => Math.Abs(control.Font.Size / defaultFonts[index] - contentRatio) < 0.02F).All(value => value), "whole-window resize scales all ten text controls, including modes and input, by the same factor");
+                Assert(dragFrame.Padding.Left > 6 && title.Padding.Left > 8 && ((ModeFramePanel)contextSection).FrameThickness > 2, "whole-window resize scales spacing and partition strokes with content");
+                Console.WriteLine("WHOLE_WINDOW_SCALE fontsBefore=" + string.Join(",", defaultFonts) + ";fontsAfter=" + string.Join(",", scalableTextControls.Select(control => control.Font.Size)));
+                foreach (var resized in new[] { new Size(688, 420), new Size(430, 263), new Size(520, 320) })
+                {
+                    form.ClientSize = resized; Pump(20);
+                    var ratio = Math.Min(resized.Width / 344F, resized.Height / 210F);
+                    Assert(scalableTextControls.Select((control, index) => Math.Abs(control.Font.Size / defaultFonts[index] - ratio) < 0.02F).All(value => value), "repeated resize uses design metrics without cumulative font drift at " + resized);
+                }
+                restoreSizeMenu.PerformClick(); Pump(30);
                 Assert(form.ClientSize.Width == 344 && form.ClientSize.Height == 210, "restore-size action recovers the default floating-window dimensions after a user resize");
+                Assert(scalableTextControls.Select((control, index) => Math.Abs(control.Font.Size - defaultFonts[index]) < 0.01F).All(value => value) && dragFrame.Padding.Left == 6, "restore-size restores typography and spacing as well as the frame");
                 var inner = dragFrame.Controls.Count == 0 ? null : dragFrame.Controls[0];
                 Assert(inner != null && inner.Left >= 6 && inner.Top >= 6 && inner.Right <= dragFrame.ClientSize.Width - 6 && inner.Bottom <= dragFrame.ClientSize.Height - 6, "outer drag frame visibly surrounds the complete floating-window content");
                 var contextGrid = contextSection.Controls.OfType<TableLayoutPanel>().FirstOrDefault();
@@ -256,7 +648,7 @@ namespace KnowledgeClipper
                 var bottomEdge = Find<Panel>(contextSection, "knowledge-clipper.desktop.frame-edge.bottom");
                 var visibleContextBottom = contextSection.Parent.DisplayRectangle.Bottom - contextSection.Top;
                 Assert(contextSection.Margin.All >= 1 && originalSection.Margin.All >= 1 && contextGrid != null && originalGrid != null && bottomEdge != null && contextGrid.Left > 0 && contextGrid.Top > 0 && contextGrid.Right < contextSection.ClientSize.Width && contextGrid.Bottom < visibleContextBottom && bottomEdge.Bottom <= visibleContextBottom && originalGrid.Left > 0 && originalGrid.Top > 0 && originalGrid.Right < originalSection.ClientSize.Width && originalGrid.Bottom < originalSection.ClientSize.Height, "context and original-image partitions render closed four-sided frames inside the visible layout bounds");
-                Assert(contextMode.Text == "上下文模式" && (originalMode.Text == "原图模式" || originalMode.Text == "原图 · Anki") && !contextMode.Text.Contains("开") && !originalMode.Text.Contains("关"), "mode controls use compact one-key labels and original mode visibly identifies its Anki-only destination when active");
+                Assert((contextMode.Text == "上下文 · 开" || contextMode.Text == "上下文 · 关") && (originalMode.Text == "原图模式" || originalMode.Text == "原图 · Anki"), "mode controls show the authoritative context on/off state and original mode visibly identifies its Anki-only destination when active");
                 Assert(contextMode.Top < clip.Top && contextMode.Width > clip.Width && originalMode.Top < screenshot.Top, "context mode sits above clip and read while original-image mode sits above screenshot");
                 Assert(clip.Top == read.Top && read.Top == screenshot.Top && status.PointToScreen(Point.Empty).Y > clip.PointToScreen(Point.Empty).Y, "clip read screenshot remain one horizontal row above the independent status strip");
                 Assert(inlineInput.PlaceholderText == "输入问题，按 Enter 提问" && inlineInput.AccessibleDescription == "输入问题，按 Enter 提问" && !inlineInput.Multiline, "inline question is a real single-line TextBox with the locked hint");
@@ -270,15 +662,21 @@ namespace KnowledgeClipper
                 settingsMenu.PerformClick(); Pump(80);
                 var modelessSettings = Application.OpenForms.OfType<SettingsForm>().SingleOrDefault();
                 Assert(modelessSettings != null && modelessSettings.Visible && form.Enabled, "settings opens modelessly and never disables floating-window dragging or actions");
-                var beforeResize = form.ClientSize;
-                var resizeGesturesBeforeDrag = form.ResizeGestureCount;
-                DragResizeWithRealMouse(form, new Point(form.ClientSize.Width - 2, form.ClientSize.Height - 2), new Point(72, 46));
-                Console.WriteLine("RESIZE_GESTURE_OBSERVED count=" + form.ResizeGestureCount + " hit=" + form.LastResizeGestureHit + " before=" + beforeResize + " after=" + form.ClientSize);
-                Assert(form.ResizeGestureCount > resizeGesturesBeforeDrag && form.LastResizeGestureHit == 17, "real mouse-down on the visible bottom-right frame reaches the native resize gesture handler");
-                WaitUntil(delegate { return form.ClientSize.Width >= beforeResize.Width + 10 && form.ClientSize.Height >= beforeResize.Height + 10; }, 1800, "real bottom-right resize while settings remains open");
-                Assert(modelessSettings.Visible && form.ClientSize.Width > beforeResize.Width && form.ClientSize.Height > beforeResize.Height, "a real corner drag resizes the floating client area even while the modeless settings window is open");
-                form.RestoreDefaultSize(); Pump(40);
-                Assert(form.ClientSize.Width == form.MinimumSize.Width && form.ClientSize.Height == form.MinimumSize.Height, "default-size recovery remains available after a physical corner resize");
+                form.BringToFront(); Pump(40);
+                ResizeTargetResolverFixtureCanary();
+                for (var resizeRound = 0; resizeRound < 3; resizeRound++)
+                {
+                    var beforeResize = form.ClientSize;
+                    var resizeGesturesBeforeDrag = form.ResizeGestureCount;
+                    var target = ResolveResizeTarget(form);
+                    Console.WriteLine("RESIZE_TARGET round=" + resizeRound + " edge=" + target.Name + " screen=" + target.Point + " hit=" + target.HitTest + " diagnostics=" + target.Diagnostics);
+                    DragResizeWithRealMouse(target.Point, target.Delta);
+                    Assert(form.ResizeGestureCount > resizeGesturesBeforeDrag && form.LastResizeGestureHit == target.HitTest, "resolved physical resize target reaches its matching native hit-test in round " + resizeRound);
+                    WaitUntil(delegate { return form.ClientSize != beforeResize; }, 1800, "resolved physical resize changes the floating window in round " + resizeRound);
+                    Assert(modelessSettings.Visible, "modeless settings remains visible during resolved resize round " + resizeRound);
+                    form.RestoreDefaultSize(); Pump(40);
+                    Assert(form.ClientSize.Width == form.MinimumSize.Width && form.ClientSize.Height == form.MinimumSize.Height, "default-size recovery succeeds after resolved resize round " + resizeRound);
+                }
                 settingsMenu.PerformClick(); Pump(30);
                 Assert(Application.OpenForms.OfType<SettingsForm>().Count() == 1, "reopening settings activates the existing modeless window instead of creating duplicates");
                 modelessSettings.Close(); Pump(30);
@@ -404,15 +802,22 @@ namespace KnowledgeClipper
 
                 var inactiveFrame = ((ModeFramePanel)contextSection).FrameColor;
                 contextMode.PerformClick(); WaitUntil(delegate { return controller.Snapshot().contextMode.enabled; }, 1000, "direct context-mode toggle");
-                Assert(((ModeFramePanel)contextSection).FrameColor != inactiveFrame && ((ModeFramePanel)contextSection).FrameColor.B > ((ModeFramePanel)contextSection).FrameColor.R && contextMode.AccessibleDescription == "已启用", "enabled context partition uses a shallow-blue frame");
+                Assert(((ModeFramePanel)contextSection).FrameColor != inactiveFrame && ((ModeFramePanel)contextSection).FrameColor.B > ((ModeFramePanel)contextSection).FrameColor.R && contextMode.Text == "上下文 · 开" && contextMode.AccessibleDescription.StartsWith("已启用；下一操作生效；revision=", StringComparison.Ordinal), "enabled context partition uses a shallow-blue frame and exposes its workflow revision");
                 WaitUntil(delegate { return status.Text == ""; }, 1500, "context toggle status settles"); Pump(80);
                 originalMode.PerformClick(); WaitUntil(delegate { return controller.Snapshot().originalImageMode; }, 1000, "direct original-image toggle");
                 Assert(((ModeFramePanel)originalSection).FrameColor.B > ((ModeFramePanel)originalSection).FrameColor.R && originalMode.Text == "原图 · Anki" && originalMode.AccessibleDescription.Contains("目的端仅 Anki") && originalMode.AccessibleDescription.Contains("不检查 RemNote 原图"), "enabled original-image partition uses a shallow-blue frame and visibly enforces its Anki-only destination");
-                var persisted = UserSettings.Load(config);
-                Assert(persisted.ContextModeEnabled && persisted.OriginalImageMode, "direct mode toggles persist both settings");
+                var workflowSettings = new DesktopWorkflowSettingsService(config.WorkDirectory, AppDomain.CurrentDomain.BaseDirectory).LoadOrCreate(UserSettings.Defaults());
+                var persistedCapture = workflowSettings.Profiles[workflowSettings.ActiveProfileId].Capture;
+                Assert(persistedCapture.ContextEnabled == true && persistedCapture.ImageHandling == "original", "direct mode toggles persist in the active authoritative workflow profile");
+                var compatibilitySettings = UserSettings.Defaults();
+                compatibilitySettings.ContextModeEnabled = true;
+                compatibilitySettings.ContextGranularity = "paragraph";
+                compatibilitySettings.Save(config);
+                var compatibilitySettingsJson = File.ReadAllText(UserSettings.PathFor(config));
+                Assert(!compatibilitySettingsJson.Contains("ContextModeEnabled", StringComparison.Ordinal) && !compatibilitySettingsJson.Contains("ContextGranularity", StringComparison.Ordinal), "legacy settings.json no longer persists a second writable context truth source");
                 WaitUntil(delegate { return status.Text == ""; }, 1500, "original-image toggle status settles"); Pump(80);
                 contextMode.PerformClick(); WaitUntil(delegate { return !controller.Snapshot().contextMode.enabled; }, 1000, "direct context-mode toggle off");
-                Assert(((ModeFramePanel)contextSection).FrameColor == inactiveFrame && contextMode.AccessibleDescription == "未启用", "disabled context partition restores its neutral frame");
+                Assert(((ModeFramePanel)contextSection).FrameColor == inactiveFrame && contextMode.Text == "上下文 · 关" && contextMode.AccessibleDescription.StartsWith("未启用；下一操作生效；revision=", StringComparison.Ordinal), "disabled context partition restores its neutral frame and exposes the applied revision");
                 WaitUntil(delegate { return status.Text == ""; }, 1500, "context toggle-off status settles"); Pump(80);
 
                 clip.PerformClick(); WaitUntil(delegate { return port.SubmittedBundles.Count >= 1; }, 1500, "clip semantic action"); WaitUntil(delegate { return status.Text == ""; }, 1800, "clip success settles to blank idle status"); Pump(100);
@@ -447,10 +852,66 @@ namespace KnowledgeClipper
             }
         }
 
+        private sealed class ResizeMessageTrace : NativeWindow, IDisposable
+        {
+            private readonly List<string> messages;
+            internal ResizeMessageTrace(IntPtr handle, List<string> messages) { this.messages = messages; AssignHandle(handle); }
+            protected override void WndProc(ref Message m)
+            {
+                if (m.Msg == 0x21 || m.Msg == 0x20 || m.Msg == 0x84 || m.Msg == 0xA1 || m.Msg == 0x201 || m.Msg == 0x112 || m.Msg == 0x231 || m.Msg == 0x232)
+                    messages.Add("msg=0x" + m.Msg.ToString("X") + ";w=0x" + m.WParam.ToInt64().ToString("X") + ";l=0x" + m.LParam.ToInt64().ToString("X"));
+                base.WndProc(ref m);
+            }
+            public void Dispose() { ReleaseHandle(); }
+        }
+
+        private static void ResizeInputTraceCanary(string root)
+        {
+            var config = Config(root); var port = new FakeDesktopOrchestratorPort();
+            var controller = new DesktopController(new FakeCaptureProvider(new[] { TextCapture("trace") }), new FakeScreenshotProvider(new[] { ImageFrame("trace") }), port, new FakeClock(DateTime.UtcNow), new FakeIdProvider());
+            using (var form = new BoundClipperForm(config, controller, false))
+            {
+                form.Location = new Point(500, 200); form.Show(); Pump(100); var messages = new List<string>();
+                using (var trace = new ResizeMessageTrace(form.Handle, messages))
+                {
+                    var start = form.PointToScreen(new Point(form.ClientSize.Width - 2, form.ClientSize.Height - 2)); var finish = new Point(start.X + 60, start.Y + 40);
+                    var before = form.ClientSize; var beforeGestures = form.ResizeGestureCount;
+                    TraceMouseState("before", form, start);
+                    SendAbsoluteMouse(start, 0x0001 | 0x8000 | 0x4000); Pump(30); TraceMouseState("positioned", form, start);
+                    SendAbsoluteMouse(start, 0x0002); Pump(80); TraceMouseState("down", form, start);
+                    SendAbsoluteMouse(finish, 0x0001 | 0x8000 | 0x4000); Pump(120); TraceMouseState("moved", form, finish);
+                    SendAbsoluteMouse(finish, 0x0004); Pump(100); TraceMouseState("up", form, finish);
+                    RECT rect; GetWindowRect(form.Handle, out rect);
+                    Console.WriteLine("RESIZE_TRACE_RESULT before=" + before + ";after=" + form.ClientSize + ";gestureBefore=" + beforeGestures + ";gestureAfter=" + form.ResizeGestureCount + ";lastHit=" + form.LastResizeGestureHit + ";rect=" + rect.Left + "," + rect.Top + "," + rect.Right + "," + rect.Bottom);
+                    foreach (var item in messages) Console.WriteLine("RESIZE_TRACE_MESSAGE " + item);
+                    Assert(form.ResizeGestureCount > beforeGestures && form.LastResizeGestureHit == 17, "one checked SendInput bottom-right gesture reaches the production native resize handler");
+                }
+            }
+        }
+
+        private static void SendAbsoluteMouse(Point point, uint flags)
+        {
+            var virtualScreen = SystemInformation.VirtualScreen; var x = (int)Math.Round((point.X - virtualScreen.Left) * 65535d / Math.Max(1, virtualScreen.Width - 1)); var y = (int)Math.Round((point.Y - virtualScreen.Top) * 65535d / Math.Max(1, virtualScreen.Height - 1));
+            var input = new INPUT { type = 0, value = new InputUnion { mouse = new MOUSEINPUT { dx = x, dy = y, flags = flags } } };
+            var sent = SendInput(1, new[] { input }, Marshal.SizeOf(typeof(INPUT))); var error = Marshal.GetLastWin32Error();
+            Console.WriteLine("RESIZE_TRACE_SEND flags=0x" + flags.ToString("X") + ";point=" + point + ";sent=" + sent + ";win32Error=" + error);
+            if (sent != 1) throw new InvalidOperationException("resize-sendinput-failed:" + error);
+        }
+
+        private static void TraceMouseState(string phase, Form form, Point expected)
+        {
+            Point cursor; GetCursorPos(out cursor); var at = WindowFromPoint(cursor); var root = at == IntPtr.Zero ? IntPtr.Zero : GetAncestor(at, 2); var hit = unchecked((int)SendMessage(form.Handle, 0x84, IntPtr.Zero, new IntPtr((cursor.Y << 16) | (cursor.X & 0xffff))).ToInt64());
+            RECT rect; GetWindowRect(form.Handle, out rect);
+            Console.WriteLine("RESIZE_TRACE_STATE phase=" + phase + ";expected=" + expected + ";cursor=" + cursor + ";window=" + DescribeWindow(at) + ";root=0x" + root.ToInt64().ToString("X") + ";hit=" + hit + ";lbutton=" + GetAsyncKeyState(1) + ";capture=0x" + GetCapture().ToInt64().ToString("X") + ";foreground=0x" + GetForegroundWindow().ToInt64().ToString("X") + ";rect=" + rect.Left + "," + rect.Top + "," + rect.Right + "," + rect.Bottom + ";client=" + form.ClientSize);
+        }
+
         private static void SettingsAndDialogAutomationCanary(string root)
         {
             AuthorityBindingProjectionCanary(root);
             var config = Config(root); var settings = UserSettings.Defaults(); settings.LanguageOverride = "en-US"; settings.ContextModeEnabled = true; settings.OriginalImageMode = true;
+            var remnoteEvidenceDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "authority", "win-x64", "evidence", "modules");
+            Directory.CreateDirectory(remnoteEvidenceDirectory);
+            File.WriteAllText(Path.Combine(remnoteEvidenceDirectory, "remnote-v2-offline-receipt.json"), "{\"worker\":{\"workerId\":\"export.remnote\",\"workerVersion\":\"2.0.0\"}}", new UTF8Encoding(false));
             var contentJobs = Path.Combine(root, "content-settings-public-v5-jobs"); Directory.CreateDirectory(contentJobs);
             var contentPipe = "KnowledgeClipper.ContentSettingsV5." + Guid.NewGuid().ToString("N");
             var contentServer = new FakeNamedPipeOrchestratorServer(contentPipe, contentJobs, 3); contentServer.Start();
@@ -559,6 +1020,8 @@ namespace KnowledgeClipper
                 Find<ComboBox>(form, SettingsAutomationCatalog.OcrLanguage).SelectedIndex = 1; Find<NumericUpDown>(form, SettingsAutomationCatalog.OcrTimeout).Value = 321;
                 Find<CheckBox>(form, SettingsAutomationCatalog.ExportRemNote).Checked = true; Find<TextBox>(form, SettingsAutomationCatalog.ExportRemNoteRootId).Text = "canary-root-rem-id";
                 Find<CheckBox>(form, SettingsAutomationCatalog.ExportAnki).Checked = true; Find<TextBox>(form, SettingsAutomationCatalog.ExportAnkiProfile).Text = "Canary Profile";
+                Find<ComboBox>(form, SettingsAutomationCatalog.ExportAnkiDeckPreset).SelectedItem = "custom";
+                Find<TextBox>(form, SettingsAutomationCatalog.ExportAnkiDeckRoutes).Text = "{\"canary\":\"零碎知识剪藏::Canary::Desktop-V14\"}";
                 var deepSeekValue = "canary-deepseek-local-only"; var mineruValue = "canary-mineru-local-only";
                 deepSeekSecret.Text = deepSeekValue; mineruSecret.Text = mineruValue;
                 Console.WriteLine("SETTINGS_SPEECH_INPUT voices=" + string.Join("|", new[] { "zh", "en", "es", "ja", "ko" }.Select(code => Convert.ToString(Find<ComboBox>(form, SettingsAutomationCatalog.SpeechVoicePrefix + code).SelectedItem))) + " rate=" + Find<NumericUpDown>(form, SettingsAutomationCatalog.SpeechRate).Value + " volume=" + Find<NumericUpDown>(form, SettingsAutomationCatalog.SpeechVolume).Value + " pitch=" + Find<NumericUpDown>(form, SettingsAutomationCatalog.SpeechPitch).Value);
@@ -567,6 +1030,25 @@ namespace KnowledgeClipper
                 Assert(form.DialogResult == DialogResult.OK && form.SavedSettings != null && !form.SavedSettings.ContextModeEnabled && form.SavedSettings.RatePercent == 17, "settings save collects only supported fields and closes with an explicit result");
                 var persisted = UserSettings.Load(config);
                 Assert(!persisted.ContextModeEnabled && persisted.RatePercent == 17, "settings save persists supported values for the next desktop operation");
+                var persistedModules = new DesktopModuleSettingsStore(config.WorkDirectory).Load();
+                Assert(persistedModules.AnkiDeckPreset == "custom" && persistedModules.AnkiDeckRoutes["canary"] == "零碎知识剪藏::Canary::Desktop-V14", "Anki custom deck route saves and reloads through the descriptor-owned next-task settings fields");
+                var invalidRoutesRejected = false;
+                try { contentStore.Save(new DesktopModuleSettingsDocument { AnkiDeckPreset = "custom", AnkiDeckRoutes = new Dictionary<string, string>(), AnkiExpectedProfile = "Canary Profile", AnkiEndpoint = "http://127.0.0.1:8765" }); } catch (InvalidDataException) { invalidRoutesRejected = true; }
+                var remoteEndpointRejected = false;
+                try { contentStore.Save(new DesktopModuleSettingsDocument { AnkiDeckPreset = "knowledge-clipper-default", AnkiExpectedProfile = "Canary Profile", AnkiEndpoint = "https://example.com:8765" }); } catch (InvalidDataException) { remoteEndpointRejected = true; }
+                Assert(invalidRoutesRejected && remoteEndpointRejected, "Anki settings reject empty custom deck routes and non-loopback endpoints before save");
+
+                var freezeRoot = Path.Combine(root, "anki-deck-next-task-freeze");
+                var freezeStore = new DesktopModuleSettingsStore(freezeRoot);
+                var freezeSettings = new DesktopWorkflowSettingsService(freezeRoot, AppDomain.CurrentDomain.BaseDirectory);
+                freezeSettings.LoadOrCreate(UserSettings.Defaults());
+                var defaultDeck = freezeStore.Load(); freezeStore.Save(defaultDeck);
+                var taskAConfig = DesktopTaskSettingsArtifacts.BuildAnkiConfigurationJson(freezeSettings, freezeStore);
+                defaultDeck.AnkiDeckPreset = "custom"; defaultDeck.AnkiDeckRoutes = new Dictionary<string, string> { ["canary"] = "零碎知识剪藏::Canary::Desktop-V14" }; freezeStore.Save(defaultDeck);
+                var taskBConfig = DesktopTaskSettingsArtifacts.BuildAnkiConfigurationJson(freezeSettings, freezeStore);
+                File.WriteAllText(freezeStore.PathValue, "{broken", new UTF8Encoding(false));
+                var recoveredDeck = freezeStore.Load();
+                Assert(!taskAConfig.Contains("Desktop-V14") && taskBConfig.Contains("Desktop-V14") && recoveredDeck.AnkiDeckRoutes["canary"] == "零碎知识剪藏::Canary::Desktop-V14", "task A keeps the old deck while task B freezes the next-task custom deck and corrupt-primary recovery restores the verified backup");
                 var persistedCredentials = DesktopCredentialSettings.Load(config.WorkDirectory);
                 Assert(persistedCredentials.DeepSeekApiKey == deepSeekValue && persistedCredentials.MineruApiToken == mineruValue && persistedCredentials.StorageStatus == "protected-current-user", "DPAPI CurrentUser storage decrypts the exact credentials for the same Windows user");
                 var credentialPath = DesktopCredentialSettings.PathFor(config.WorkDirectory); var credentialBackupPath = credentialPath + ".bak";
@@ -591,6 +1073,9 @@ namespace KnowledgeClipper
                 var contentSnapshotPath = Directory.GetFiles(settingsTaskRoot, "content-config-snapshot.v1.1.json", SearchOption.AllDirectories).Single();
                 var contentSnapshotText = File.ReadAllText(contentSnapshotPath);
                 Assert(contentSnapshotText.Contains("content-config-snapshot/1.1.0") && contentSnapshotText.Contains("\"languagePracticeDefault\": \"both\"") && contentSnapshotText.Contains("\"model\": \"deepseek-reasoner\"") && contentSnapshotText.Contains("\"maxRetries\": 5") && Directory.GetFiles(settingsTaskRoot, "anki-export.v1.json", SearchOption.AllDirectories).Length == 1, "Desktop publishes one immutable Content 1.1 runtime policy artifact and one Anki config artifact");
+                var ankiConfigurationText = File.ReadAllText(Directory.GetFiles(settingsTaskRoot, "anki-export.v1.json", SearchOption.AllDirectories).Single());
+                using var ankiConfiguration = JsonDocument.Parse(ankiConfigurationText);
+                Assert(ankiConfiguration.RootElement.GetProperty("deck_routes").GetProperty("canary").GetString() == "零碎知识剪藏::Canary::Desktop-V14" && !taskText.Contains(deepSeekValue) && !taskText.Contains(mineruValue), "new task freezes the validated custom Anki deck route in its SHA-bound config artifact with zero secrets");
 
                 var questionTaskRoot = Path.Combine(root, "settings-question-stage-jobs");
                 new FileDesktopCommonCommandSource(questionTaskRoot, new FakeClock(new DateTime(2026, 8, 30, 8, 1, 0, DateTimeKind.Utc)), new UiCommonIdProvider(), new CoreDesktopTaskSettingsPublisher(workflowService)).PrepareQuestion("候选初问", false, null, null, null);
@@ -959,6 +1444,38 @@ namespace KnowledgeClipper
             }
         }
 
+        private static void CardResolutionUiCanary()
+        {
+            var occurrence = new CardResolutionOccurrence("segment-2", 1, 12, 18, "目标词", new string('a', 64));
+            var prompt = new CardResolutionPrompt(new string('b', 64), "revision-7", "decision-7", "card-resolution.ambiguous", new[] { "accept_candidate", "user_correction", "cancel" }, new[] { occurrence });
+
+            using (var form = new CardResolutionForm("operation-accept", prompt))
+            {
+                form.Show(); Pump(40);
+                var list = Find<ListBox>(form, "knowledge-clipper.desktop.card-resolution.occurrences");
+                var accept = Find<Button>(form, "knowledge-clipper.desktop.card-resolution.accept");
+                Assert(form.AutoScaleMode == AutoScaleMode.Dpi && list != null && accept != null && form.Controls.Find("knowledge-clipper.desktop.card-resolution.correction", true).Length == 1, "card-resolution dialog exposes its stable DPI-aware occurrence, correction and action controls");
+                list.SelectedIndex = 0; accept.PerformClick(); Pump(20);
+                Assert(form.Selection != null && form.Selection.Action == "accept_candidate" && form.Selection.SelectedText == "目标词" && ReferenceEquals(form.Selection.CandidateOccurrence, occurrence), "card-resolution accept returns the exact selected typed occurrence");
+            }
+
+            using (var form = new CardResolutionForm("operation-correct", prompt))
+            {
+                form.Show(); Pump(40);
+                var correction = Find<TextBox>(form, "knowledge-clipper.desktop.card-resolution.correction");
+                correction.Text = "修正目标";
+                Find<Button>(form, "knowledge-clipper.desktop.card-resolution.correct").PerformClick(); Pump(20);
+                Assert(form.Selection != null && form.Selection.Action == "user_correction" && form.Selection.SelectedText == "修正目标" && form.Selection.CandidateOccurrence == null, "card-resolution correction returns only the explicit user text");
+            }
+
+            using (var form = new CardResolutionForm("operation-cancel", prompt))
+            {
+                form.Show(); Pump(40);
+                Find<Button>(form, "knowledge-clipper.desktop.card-resolution.cancel").PerformClick(); Pump(20);
+                Assert(form.Selection != null && form.Selection.Action == "cancel" && form.Selection.SelectedText == null && form.Selection.CandidateOccurrence == null, "card-resolution cancel emits the public cancel selection without accepting or correcting content");
+            }
+        }
+
         private static void AuthorityBindingProjectionCanary(string root)
         {
             var fixtureRoot = Path.Combine(root, "authority-binding-v1237");
@@ -1032,6 +1549,306 @@ namespace KnowledgeClipper
                 form.Close(); Pump(30);
             }
         }
+
+        private static string ReadSharedDiagnosticLog(string path)
+        {
+            // The observer must not take a share-read-only handle that denies the
+            // asynchronously completing UI handler permission to append evidence.
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+
+        private static void ReadCaptureBoundaryCanary(string root)
+        {
+            if (Directory.Exists(root)) throw new InvalidOperationException("immutable-read-boundary-root-exists");
+            Directory.CreateDirectory(root);
+            var config = Config(root);
+            var support = new ReadToAnkiUiPorts();
+            DesktopLaunchView rejectedView; string rejectedPath;
+            Assert(!DesktopLaunchOptions.TryParse(new[] { "--open-settings", "--candidate-capture-fixture", "relative.json" }, out rejectedView, out rejectedPath), "candidate capture CLI rejects relative fixture paths");
+            var invalidFixtures = new[] {
+                "{\"schemaVersion\":\"desktop-test-capture.v1\",\"selectedText\":\" \" ,\"prefix\":\"a\",\"suffix\":\"b\"}",
+                "{\"schemaVersion\":\"desktop-test-capture.v1\",\"selectedText\":\"text\",\"prefix\":\"a\",\"suffix\":\"b\",\"cardBundle\":{}}",
+                "{\"schemaVersion\":\"desktop-test-capture.v1\",\"selectedText\":\"text\",\"prefix\":\"a\",\"suffix\":\"b\",\"suffix\":\"c\"}"
+            };
+            for (var i = 0; i < invalidFixtures.Length; i++)
+            {
+                var path = Path.Combine(root, "invalid-" + i + ".json"); File.WriteAllText(path, invalidFixtures[i]);
+                var rejected = false; try { new CandidateCaptureFixture(path, () => new ContextModeState()); } catch (InvalidDataException) { rejected = true; }
+                Assert(rejected, "empty text, business fields and duplicate fields fail closed before any command, negative " + i);
+            }
+            var sdk = new ReadCaptureSdkFixture();
+            var purposeGuard = new ReadCaptureSdkFixture();
+            var wrongContext = purposeGuard.PublishTextAsync(SdkArtifactPurpose.CaptureText, "independent context", CancellationToken.None).GetAwaiter().GetResult();
+            var sourceArtifact = purposeGuard.PublishTextAsync(SdkArtifactPurpose.CaptureText, "target", CancellationToken.None).GetAwaiter().GetResult();
+            var configurationArtifact = purposeGuard.PublishTextAsync(SdkArtifactPurpose.AnkiConfiguration, "{}", CancellationToken.None).GetAwaiter().GetResult();
+            var wrongPurposeRejected = false;
+            try { purposeGuard.ReadToAnkiAsync(sourceArtifact, new[] { wrongContext }, new[] { new SdkContextSegment(wrongContext, "prefix", 0) }, "target", true, "sentence", null, configurationArtifact, null, true, CancellationToken.None).GetAwaiter().GetResult(); }
+            catch (InvalidOperationException ex) { wrongPurposeRejected = ex.Message == "fixture-context-artifact-kind-invalid"; }
+            Assert(wrongPurposeRejected && purposeGuard.SubmitCount == 0, "regression: capture-text cannot serve as question-context even when its text is valid");
+            var gateway = new NamedPipeCoreGateway(sdk, () => "{}", () => new SdkLanguageCardSettings("fixture", "both"));
+            var input = new ReadCaptureGate();
+            var application = new DesktopCompositionRoot(gateway, gateway, gateway, gateway, gateway, support, support, support, null, input, gateway, gateway);
+            var controller = new DesktopController(new FakeCaptureProvider(null), new FakeScreenshotProvider(null), new FakeDesktopOrchestratorPort(), new FakeClock(DateTime.UtcNow), new FakeIdProvider());
+            using (var form = new BoundClipperForm(LegacyDesktopAdapter.CreateBoundClipperDependencies(config, controller, false, application)))
+            {
+                form.Show(); Pump(30);
+                var read = Find<Button>(form, AutomationCatalogV11.AutomationIds[AutomationCatalog.ReadCapture]);
+                var status = Find<Button>(form, AutomationCatalogV11.StatusAutomationId);
+                var logPath = Path.Combine(config.WorkDirectory, "logs", "desktop-ui.log");
+                foreach (var selection in new[] { "deliberate", "迁移" })
+                {
+                    input.Next = new TaskCompletionSource<CapturedPlainText>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    var before = sdk.SubmitCount;
+                    read.PerformClick(); read.PerformClick(); Pump(15);
+                    Assert(sdk.SubmitCount == before && ReadSharedDiagnosticLog(logPath).Contains("phase=rejected reason=ui-busy"), "real Read handler enters and records the busy rejection before capture completion");
+                    input.Next.SetResult(new CapturedPlainText(selection) { TargetText = selection, ContextRequested = true, ContextGranularity = "sentence", OrderedContextSegments = new[] { new CapturedTextSegment("prefix for " + selection, 0, "prefix"), new CapturedTextSegment("suffix for " + selection, 1, "suffix") } });
+                    WaitUntil(() => sdk.SubmitCount == before + 1 && status.Text.Contains("read-to-anki.rejected"), 1800, "capture reaches typed Core facade once and ends at the offline rejection boundary");
+                    Assert(sdk.LastTarget == selection && sdk.LastCapture == selection && sdk.LastRoles.SequenceEqual(new[] { "prefix", "suffix" }) && sdk.LastContext.SequenceEqual(new[] { "prefix for " + selection, "suffix for " + selection }), "real Read event carries exact selected text and ordered context through Application and NamedPipeCoreGateway");
+                    WaitUntil(() => ReadSharedDiagnosticLog(logPath).Contains("phase=dispatch-returned") && ReadSharedDiagnosticLog(logPath).Contains("phase=finished"), 1200, "Read lifecycle diagnostic flushes");
+                    Assert(ReadSharedDiagnosticLog(logPath).Contains("phase=finished"), "Read completion releases busy and records its lifecycle");
+                }
+                foreach (var selection in new[] { "consideration", "上下文" })
+                {
+                    var fixture = Path.Combine(root, "capture-" + sdk.SubmitCount + ".json");
+                    File.WriteAllText(fixture, JsonSerializer.Serialize(new { schemaVersion = "desktop-test-capture.v1", selectedText = selection, prefix = "before " + selection, suffix = "after " + selection }));
+                    DesktopLaunchView parsedView; string parsedFixture;
+                    Assert(DesktopLaunchOptions.TryParse(new[] { "--open-settings", "--candidate-capture-fixture", fixture }, out parsedView, out parsedFixture) && parsedView == DesktopLaunchView.Settings && parsedFixture == fixture, "explicit fixture launch retains the real settings and floating window route");
+                    input.Source = new CandidateCaptureFixture(fixture, () => new ContextModeState { enabled = true, granularity = "sentence" });
+                    var before = sdk.SubmitCount;
+                    read.PerformClick();
+                    WaitUntil(() => sdk.SubmitCount == before + 1 && status.Text.Contains("read-to-anki.rejected"), 1800, "file-backed capture fixture passes through the real Read event and typed gateway");
+                    Assert(sdk.LastTarget == selection && sdk.LastCapture == selection && sdk.LastContext.SequenceEqual(new[] { "before " + selection, "after " + selection }), "candidate capture fixture preserves all three input parts without business-result injection");
+                    var secondReadRejected = false;
+                    try { input.Source.CaptureOnceAsync(CancellationToken.None).GetAwaiter().GetResult(); } catch (InvalidOperationException ex) { secondReadRejected = ex.Message == "candidate-capture-fixture-already-consumed"; }
+                    Assert(secondReadRejected, "candidate fixture cannot accidentally submit a second capture");
+                    var contextOff = new CandidateCaptureFixture(fixture, () => new ContextModeState { enabled = false, granularity = "paragraph" }).CaptureOnceAsync(CancellationToken.None).GetAwaiter().GetResult();
+                    Assert(!contextOff.ContextRequested && contextOff.OrderedContextSegments.Count == 0 && contextOff.ContextGranularity == "paragraph", "fixture uses the current UI mode snapshot instead of forcing context on");
+                }
+                input.Source = null;
+                var submitted = sdk.SubmitCount;
+                input.Next = new TaskCompletionSource<CapturedPlainText>(TaskCreationOptions.RunContinuationsAsynchronously);
+                read.PerformClick(); input.Next.SetException(new InvalidOperationException("context.unavailable"));
+                WaitUntil(() => status.Text.Contains("context.unavailable") && ReadSharedDiagnosticLog(logPath).Contains("notice=context.unavailable"), 1800, "missing context remains an exact visible and logged failure instead of a generic exception type");
+                Assert(sdk.SubmitCount == submitted && ReadSharedDiagnosticLog(logPath).Contains("notice=context.unavailable"), "capture failure submits zero commands and leaves a value-free persistent diagnostic");
+                input.Next = new TaskCompletionSource<CapturedPlainText>(TaskCreationOptions.RunContinuationsAsynchronously);
+                var captures = input.Count; read.PerformClick();
+                Assert(input.Count == captures + 1, "busy is released after a capture exception and the next real Read event can enter");
+                input.Next.SetException(new InvalidOperationException("PRIVATE_TEST_SECRET_DO_NOT_LOG"));
+                WaitUntil(() => status.Text.Contains("read-to-anki-submit-InvalidOperationException"), 1800, "unknown exception text is reduced to a safe failure code");
+                Assert(!ReadSharedDiagnosticLog(logPath).Contains("PRIVATE_TEST_SECRET") && !ReadSharedDiagnosticLog(logPath).Contains("prefix for") && !ReadSharedDiagnosticLog(logPath).Contains("迁移"), "lifecycle diagnostics contain neither captured text nor arbitrary exception secrets");
+            }
+            ReadChoiceIdentityCanary(Path.Combine(root, "choice-identity"));
+            ReadChoiceIdentityCanary(Path.Combine(root, "confirm-lifecycle"), true);
+            File.WriteAllText(Path.Combine(root, "receipt.json"), JsonSerializer.Serialize(new {
+                schemaVersion = "desktop-read-capture-boundary.v1", status = "PASS", assertions,
+                actualUiEvent = "readButton.PerformClick", path = new[] { "BoundClipperForm", "DesktopViewBinding", "ReadToAnkiUseCases", "NamedPipeCoreGateway", "ISdkDomainFacade offline fixture" },
+                captureBoundarySdkSubmissions = sdk.SubmitCount, captureBoundaryInputs = 4, externalCalls = 0, cardBundlesInjected = 0,
+                offlineModalScenarios = 2, offlineDraftFixtures = 1, offlineConfirmCalls = 1, liveConfirmCalls = 0,
+                sourcePurpose = "CaptureText", contextPurpose = "QuestionContext", wrongContextPurposeRejected = wrongPurposeRejected,
+                boundary = "typed facade interception, not a real Named Pipe or backend completion",
+                assemblySha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(typeof(WindowsUiCanary).Assembly.Location))),
+                lifecycleLogSha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(Path.Combine(config.WorkDirectory, "logs", "desktop-ui.log"))))
+            }, new JsonSerializerOptions { WriteIndented = true }));
+            Console.WriteLine("READ_BOUNDARY captureBoundarySdkSubmissions=" + sdk.SubmitCount + ";externalCalls=0;captureBoundaryInputs=4;offlineModalScenarios=2;offlineConfirmCalls=1;liveConfirmCalls=0");
+        }
+
+        private static void LanguageModalUiaHost(string root)
+        {
+            if (Directory.Exists(root)) throw new InvalidOperationException("immutable-modal-host-root-exists");
+            Directory.CreateDirectory(root);
+            var config = Config(root);
+            var controller = new DesktopController(new FakeCaptureProvider(null), new FakeScreenshotProvider(null), new FakeDesktopOrchestratorPort(), new FakeClock(DateTime.UtcNow), new FakeIdProvider());
+            using var owner = new BoundClipperForm(LegacyDesktopAdapter.CreateBoundClipperDependencies(config, controller, false));
+            using var dialog = new LanguagePracticeForm();
+            using var limit = new System.Windows.Forms.Timer { Interval = 180000 };
+            limit.Tick += delegate { limit.Stop(); dialog.Close(); owner.Close(); };
+            dialog.Shown += delegate
+            {
+                var both = Find<Button>(dialog, AutomationCatalogV11.LanguagePracticeBothAutomationId);
+                File.WriteAllText(Path.Combine(root, "host-ready.json"), JsonSerializer.Serialize(new {
+                    schemaVersion = "desktop-language-modal-offline-host.v1", processId = Environment.ProcessId,
+                    ownerHwnd = owner.Handle.ToInt64(), dialogHwnd = dialog.Handle.ToInt64(), buttonHwnd = both.Handle.ToInt64(),
+                    automationId = both.Name, externalCalls = 0, commands = 0, boundedLifetimeSeconds = 180
+                }));
+                Console.WriteLine("LANGUAGE_MODAL_HOST_READY pid=" + Environment.ProcessId);
+            };
+            owner.Shown += delegate { owner.BeginInvoke((MethodInvoker)delegate { limit.Start(); dialog.ShowDialog(owner); owner.Close(); }); };
+            System.Windows.Forms.Application.Run(owner);
+            File.WriteAllText(Path.Combine(root, "host-exit.json"), JsonSerializer.Serialize(new { status = "closed", externalCalls = 0, commands = 0, selection = dialog.Selection }));
+        }
+
+        private static void ReadChoiceIdentityCanary(string root, bool withConfirm = false)
+        {
+            var config = Config(root);
+            var support = new ReadToAnkiUiPorts();
+            var sdk = new ReadCaptureSdkFixture { AcceptedWithChoice = true, PreviewAfterChoice = withConfirm };
+            var gateway = new NamedPipeCoreGateway(sdk, () => "{}");
+            var capture = new ReadCaptureGate { Next = new TaskCompletionSource<CapturedPlainText>(TaskCreationOptions.RunContinuationsAsynchronously) };
+            var application = new DesktopCompositionRoot(gateway, gateway, gateway, gateway, gateway, support, support, support, null, capture, gateway, gateway, null, gateway);
+            var controller = new DesktopController(new FakeCaptureProvider(null), new FakeScreenshotProvider(null), new FakeDesktopOrchestratorPort(), new FakeClock(DateTime.UtcNow), new FakeIdProvider());
+            using var form = new BoundClipperForm(LegacyDesktopAdapter.CreateBoundClipperDependencies(config, controller, false, application));
+            form.Show(); Pump(20);
+            var seen = false;
+            using var timer = new System.Windows.Forms.Timer { Interval = 20 };
+            timer.Tick += delegate
+            {
+                var dialog = System.Windows.Forms.Application.OpenForms.OfType<LanguagePracticeForm>().FirstOrDefault();
+                if (dialog == null) return;
+                seen = true; timer.Stop();
+                Find<Button>(dialog, AutomationCatalogV11.LanguagePracticeBothAutomationId).PerformClick();
+            };
+            timer.Start();
+            Find<Button>(form, AutomationCatalogV11.AutomationIds[AutomationCatalog.ReadCapture]).PerformClick();
+            capture.Next.SetResult(new CapturedPlainText("independent selection") { TargetText = "independent selection", ContextRequested = true, ContextGranularity = "sentence" });
+            WaitUntil(() => sdk.ChoiceCount == 1 && application.State.Snapshot().ReadToAnki.Pipeline == (withConfirm ? ReadToAnkiPipelineStatus.AwaitingCardConfirmation : ReadToAnkiPipelineStatus.Failed), 3000, "matching command projection renders real modal both choice and accepts exactly its visible button action");
+            Assert(seen && sdk.LastChoice == LanguagePracticeChoice.Both && sdk.ChoiceCount == 1 && sdk.SubmitCount == 1, "nonempty accepted command identity reaches visible language modal and Both sends one typed choice without recapture");
+            if (withConfirm)
+            {
+                WaitUntil(() => System.Windows.Forms.Application.OpenForms.OfType<FlashcardPreviewForm>().Any(), 1200, "real preview is visible");
+                var preview = System.Windows.Forms.Application.OpenForms.OfType<FlashcardPreviewForm>().Single();
+                var confirm = Find<Button>(preview, FlashcardPreviewAutomation.Confirm);
+                confirm.PerformClick(); confirm.PerformClick();
+                var status = Find<Button>(form, AutomationCatalogV11.StatusAutomationId);
+                WaitUntil(() => application.State.Snapshot().ReadToAnki.Pipeline == ReadToAnkiPipelineStatus.Completed && status.Text.Contains("已写入 Anki"), 2000, "typed confirm terminal returns to the actual floating status strip");
+                Assert(sdk.ConfirmCount == 1 && application.FlashcardDraftUseCases.Current.Status == FlashcardDraftStatus.Completed && !confirm.Enabled,
+                    "one real confirm click completes both preview and floating state without resurrecting retained draft confirmation");
+                Assert(ReadSharedDiagnosticLog(Path.Combine(config.WorkDirectory, "logs", "desktop-ui.log")).Contains("phase=rendered-terminal pipeline=Completed playback=IdleReplayable busy=False operationId=identity-op"),
+                    "terminal UI log is recorded after rendering completion with busy released");
+            }
+            capture.Next = new TaskCompletionSource<CapturedPlainText>(TaskCreationOptions.RunContinuationsAsynchronously);
+            Find<Button>(form, AutomationCatalogV11.AutomationIds[AutomationCatalog.ClipCapture]).PerformClick();
+            capture.Next.SetResult(new CapturedPlainText("new independent clip") { ContextRequested = true, ContextGranularity = "sentence" });
+            WaitUntil(() => sdk.SubmitCount == 2 && application.State.Snapshot().ReadToAnki.Pipeline == (withConfirm ? ReadToAnkiPipelineStatus.Completed : ReadToAnkiPipelineStatus.Failed), 2000, "fresh Clip enters after the previous typed domain terminal");
+            Assert(sdk.SubmitCount == 2 && sdk.ChoiceCount == 1 && !sdk.LastIncludeSpeech, "terminal releases the visible UI and next Clip uses a fresh capture rather than resuming the previous command");
+        }
+
+        private static void ReadToAnkiUiBindingCanary(string root)
+        {
+            var config = Config(Path.Combine(root, "read-to-anki-ui"));
+            var controller = new DesktopController(new FakeCaptureProvider(null), new FakeScreenshotProvider(null), new FakeDesktopOrchestratorPort(), new FakeClock(new DateTime(2026, 9, 3, 10, 0, 0, DateTimeKind.Utc)), new FakeIdProvider());
+            var ports = new ReadToAnkiUiPorts();
+            var application = new DesktopCompositionRoot(
+                ports, ports, ports, ports, ports, ports, ports, ports,
+                new QuestionObservationPolicy(1, TimeSpan.Zero, TimeSpan.Zero),
+                ports, ports, ports,
+                new ReadToAnkiObservationPolicy(6, TimeSpan.Zero, TimeSpan.Zero));
+            var dependencies = LegacyDesktopAdapter.CreateBoundClipperDependencies(config, controller, false, application);
+            using (var form = new BoundClipperForm(dependencies))
+            {
+                form.Show(); Pump(50);
+                var read = Find<Button>(form, AutomationCatalogV11.AutomationIds[AutomationCatalog.ReadCapture]);
+                var status = Find<Button>(form, AutomationCatalogV11.StatusAutomationId);
+                read.PerformClick();
+                WaitUntil(delegate { return ports.CaptureCount == 1 && ports.PublishCount == 1 && ports.SubmitCount == 1 && status.Text.Contains("已受理"); }, 1200, "typed read-to-Anki click is accepted without blocking the floating UI");
+                Assert(status.Text.Contains("已受理"), "typed read-to-Anki click gives immediate visible accepted feedback");
+                Assert(ports.LastPublishedText == "真实选区文本" && controller.Snapshot().lastAction == null, "read button captures and publishes one immutable plain-text input without invoking the legacy read controller path");
+
+                ports.CompleteNext(new ReadToAnkiProjection("read-ui-operation", ReadToAnkiPlaybackStatus.Playing, ReadToAnkiPipelineStatus.Reviewing, false, "read-to-anki.reviewing"));
+                WaitUntil(delegate { return status.Text.Contains("朗读中") && status.Text.Contains("正在清洗"); }, 1200, "typed concurrent projection renders natural playback and background review independently");
+                Assert(status.Text.Contains("朗读中") && status.Text.Contains("正在清洗"), "visible status keeps playback and background review as independent concurrent dimensions");
+                ports.CompleteNext(new ReadToAnkiProjection("read-ui-operation", ReadToAnkiPlaybackStatus.IdleReplayable, ReadToAnkiPipelineStatus.WritingAnki, false, "read-to-anki.writing-anki"));
+                WaitUntil(delegate { return status.Text.Contains("重播") && status.Text.Contains("正在写入 Anki"); }, 1200, "natural playback completion becomes replayable while Anki write remains in progress");
+                Assert(status.Text.Contains("重播") && status.Text.Contains("正在写入 Anki"), "natural playback completion does not hide the still-running Anki write");
+                ports.CompleteNext(new ReadToAnkiProjection("read-ui-operation", ReadToAnkiPlaybackStatus.IdleReplayable, ReadToAnkiPipelineStatus.Completed, false, "read-to-anki.completed"));
+                WaitUntil(delegate { return status.Text.Contains("已写入 Anki") && status.Text.Contains("重播"); }, 1200, "typed terminal projection renders verified Anki completion and replay affordance");
+                Assert(status.Text.Contains("已写入 Anki") && status.Text.Contains("重播"), "verified terminal state exposes both Anki completion and playback-only replay");
+                Assert(ports.CaptureCount == 1 && ports.PublishCount == 1 && ports.SubmitCount == 1, "projection observation never recaptures, republishes, or resubmits the source text");
+                status.PerformClick();
+                WaitUntil(delegate { return ports.ReplayCount == 1; }, 1200, "typed replay command is accepted from the status strip");
+                ports.CompleteNext(new ReadToAnkiProjection("read-ui-operation", ReadToAnkiPlaybackStatus.Playing, ReadToAnkiPipelineStatus.Completed, false, "read-to-anki.replay-playing"));
+                WaitUntil(delegate { return status.Text.Contains("朗读中") && status.Text.Contains("已写入 Anki"); }, 1200, "replay preserves completed pipeline evidence while playback runs");
+                ports.CompleteNext(new ReadToAnkiProjection("read-ui-operation", ReadToAnkiPlaybackStatus.IdleReplayable, ReadToAnkiPipelineStatus.Completed, false, "read-to-anki.completed"));
+                WaitUntil(delegate { return status.Text.Contains("已写入 Anki") && status.Text.Contains("重播"); }, 1200, "replay returns to idle replayable without rerunning the pipeline");
+                Assert(ports.ReplayCount == 1 && ports.CaptureCount == 1 && ports.PublishCount == 1 && ports.SubmitCount == 1, "status replay invokes playback only and never restarts capture review cards or Anki write");
+                var clip = Find<Button>(form, AutomationCatalogV11.AutomationIds[AutomationCatalog.ClipCapture]);
+                clip.PerformClick();
+                WaitUntil(delegate { return ports.SubmitCount == 2 && ports.IncludeSpeechValues.Count == 2; }, 1200, "typed clip enters shared operation coordinator");
+                ports.CompleteNext(new ReadToAnkiProjection("clip-ui-operation", ReadToAnkiPlaybackStatus.NotRequested, ReadToAnkiPipelineStatus.Completed, false, "clip.completed"));
+                WaitUntil(delegate { return status.Text.Contains("已写入 Anki"); }, 1200, "typed clip completion");
+                Assert(ports.IncludeSpeechValues.SequenceEqual(new[] { true, false }) && controller.Snapshot().lastAction == null, "clip and read share the typed card coordinator and differ only by the Speech branch flag");
+                ((IDesktopApplicationView)form).Render(new DesktopViewProjection(
+                    99,
+                    new QuestionViewProjection(OperationStatus.Idle, null, 0, false, null, null, false, false),
+                    new AnkiReadinessViewProjection(OperationStatus.Idle, false, false, null, Array.Empty<string>(), null),
+                    new ReadToAnkiViewProjection("task-real-failure", ReadToAnkiPlaybackStatus.Playing, ReadToAnkiPipelineStatus.Failed, false, false, false, false, "content.gate-failed / card.same-sides")));
+                Pump(30);
+                Assert(status.Text.Contains("朗读中") && status.Text.Contains("制卡失败") && status.Text.Contains("card.same-sides"), "typed content failure ends card spinner while preserving independent speech state and exact actionable reason");
+                Assert(read.Enabled && Application.OpenForms.Cast<Form>().All(open => open.Name != FlashcardPreviewAutomation.Window), "content failure keeps retry entry enabled and opens no preview or confirm surface");
+                form.Close(); Pump(30);
+            }
+        }
+
+        private static void FlashcardPreviewUiCanary()
+        {
+            var port = new PreviewUiPort();
+            var useCases = new FlashcardDraftPreviewUseCases(port);
+            // Presentation-only fixture. Production session eligibility is covered by
+            // QuestionFollowUpUiCanary through the real Application composition.
+            useCases.FollowUpEligibility = _ => null;
+            FlashcardPreviewForm form = null;
+            var followUps = 0;
+            form = new FlashcardPreviewForm(
+                async delegate { await useCases.ConfirmAsync(CancellationToken.None); },
+                async delegate { await useCases.CancelAsync(CancellationToken.None); },
+                delegate(string text)
+                {
+                    followUps++;
+                    useCases.Project(PreviewProjection(2, "new-token", "Follow-up Front", "Follow-up Back"));
+                    return Task.CompletedTask;
+                });
+            useCases.Changed += form.Render;
+            using (form)
+            {
+                form.Show(); Pump(40);
+                useCases.Project(PreviewProjection(1, "old-token", "Front A", "Back A")); Pump(30);
+                var cards = Find<ListBox>(form, FlashcardPreviewAutomation.Cards);
+                var front = Find<TextBox>(form, FlashcardPreviewAutomation.Front);
+                var back = Find<TextBox>(form, FlashcardPreviewAutomation.Back);
+                var confirm = Find<Button>(form, FlashcardPreviewAutomation.Confirm);
+                var cancel = Find<Button>(form, FlashcardPreviewAutomation.Cancel);
+                var followInput = Find<TextBox>(form, FlashcardPreviewAutomation.FollowUpInput);
+                var follow = Find<Button>(form, FlashcardPreviewAutomation.FollowUp);
+                Assert(cards.Items.Count == 2 && front.Text == "Front A" && back.Text == "Back A", "shared flashcard preview renders ordered literal Front and Back without UI card construction");
+                cards.SelectedIndex = 1; Pump(15);
+                Assert(front.Text == "Front B" && back.Text == "Back B", "multi-card preview exposes every card through one stable list component");
+                Assert(confirm.Enabled && port.Confirmations.Count == 0, "preview confirm is visible while destination calls remain zero before the explicit gesture");
+
+                followInput.Text = "请调整第二张"; Pump(10); follow.PerformClick(); Pump(20);
+                cards.SelectedIndex = 0; Pump(10);
+                Assert(followUps == 1 && cards.Items.Count == 2 && front.Text == "Follow-up Front" && back.Text == "Follow-up Back", "follow-up updates the same preview form to the new draft revision in place");
+                confirm.PerformClick(); Pump(30);
+                Assert(port.Confirmations.Count == 1 && port.Confirmations[0].DraftToken == "new-token" && port.Confirmations[0].Revision == "2", "explicit confirm submits the newest typed draft token revision and digest exactly once");
+                confirm.PerformClick(); Pump(20);
+                Assert(port.Confirmations.Count == 1, "disabled double confirm cannot issue a second destination command");
+                Assert(cancel.Name == FlashcardPreviewAutomation.Cancel, "shared preview exposes a stable neutral cancel automationId");
+                form.Close(); Pump(20);
+            }
+
+            var cancelPort = new PreviewUiPort();
+            var cancelUseCases = new FlashcardDraftPreviewUseCases(cancelPort);
+            FlashcardPreviewForm cancelForm = null;
+            cancelForm = new FlashcardPreviewForm(
+                async delegate { await cancelUseCases.ConfirmAsync(CancellationToken.None); },
+                async delegate { await cancelUseCases.CancelAsync(CancellationToken.None); },
+                delegate(string text) { return Task.CompletedTask; });
+            cancelUseCases.Changed += cancelForm.Render;
+            using (cancelForm)
+            {
+                cancelForm.Show(); cancelUseCases.Project(PreviewProjection(1, "cancel-token", "Cancel Front", "Cancel Back")); Pump(25);
+                Find<Button>(cancelForm, FlashcardPreviewAutomation.Cancel).PerformClick(); Pump(20);
+                Assert(cancelPort.Confirmations.Count == 0 && cancelUseCases.Current.Status == FlashcardDraftStatus.Cancelled, "cancel closes the shared preview with zero destination commands");
+            }
+        }
+
+        private static FlashcardDraftProjection PreviewProjection(long revision, string token, string firstFront, string firstBack) => new(
+            FlashcardDraftStatus.AwaitingConfirmation,
+            new FlashcardDraftRevision(
+                "preview-operation", token, revision.ToString(), new string(revision == 1 ? 'a' : 'b', 64), FlashcardDraftSource.Question,
+                new[] { new FlashcardDraftCard("card-1", "1", new string('c', 64), firstFront, firstBack), new FlashcardDraftCard("card-2", "1", new string('d', 64), "Front B", "Back B") },
+                new[] { "Anki" }),
+            revision, "flashcard-draft.ready", true);
 
         private static void NamedPipeInlineQuestionCanary(string root)
         {
@@ -1209,30 +2026,101 @@ namespace KnowledgeClipper
             finally { SetCursorPos(previous.X, previous.Y); }
         }
 
-        private static void DragResizeWithRealMouse(Form form, Point clientStart, Point delta)
+        private sealed class ResizeTarget
+        {
+            internal string Name; internal Point Point; internal int HitTest; internal Point Delta; internal string Diagnostics;
+        }
+
+        private static IEnumerable<ResizeTarget> ResizeCandidates(Rectangle window, Rectangle work)
+        {
+            var midX = window.Left + window.Width / 2; var midY = window.Top + window.Height / 2;
+            var values = new[]
+            {
+                new ResizeTarget{Name="bottom-right",Point=new Point(window.Right-2,window.Bottom-2),HitTest=17,Delta=new Point(72,46)},
+                new ResizeTarget{Name="bottom-left",Point=new Point(window.Left+2,window.Bottom-2),HitTest=16,Delta=new Point(-72,46)},
+                new ResizeTarget{Name="top-right",Point=new Point(window.Right-2,window.Top+2),HitTest=14,Delta=new Point(72,-46)},
+                new ResizeTarget{Name="top-left",Point=new Point(window.Left+2,window.Top+2),HitTest=13,Delta=new Point(-72,-46)},
+                new ResizeTarget{Name="right",Point=new Point(window.Right-2,midY),HitTest=11,Delta=new Point(72,0)},
+                new ResizeTarget{Name="bottom",Point=new Point(midX,window.Bottom-2),HitTest=15,Delta=new Point(0,46)},
+                new ResizeTarget{Name="left",Point=new Point(window.Left+2,midY),HitTest=10,Delta=new Point(-72,0)},
+                new ResizeTarget{Name="top",Point=new Point(midX,window.Top+2),HitTest=12,Delta=new Point(0,-46)}
+            };
+            return values.Where(value => work.Contains(value.Point) && work.Contains(new Point(value.Point.X + value.Delta.X, value.Point.Y + value.Delta.Y)));
+        }
+
+        private static ResizeTarget SelectResizeTarget(Rectangle window, Rectangle work, IntPtr targetRoot, Func<Point, IntPtr> windowAt, Func<IntPtr, IntPtr> rootOf, Func<Point, int> hitAt, Func<IntPtr, string> describe)
+        {
+            var diagnostics = new List<string>();
+            foreach (var candidate in ResizeCandidates(window, work))
+            {
+                var hitWindow = windowAt(candidate.Point); var hitRoot = hitWindow == IntPtr.Zero ? IntPtr.Zero : rootOf(hitWindow); var hit = hitAt(candidate.Point);
+                if (hitRoot == targetRoot && hit == candidate.HitTest) { candidate.Diagnostics = string.Join(";", diagnostics); return candidate; }
+                diagnostics.Add(candidate.Name + ":window=" + describe(hitWindow) + ",root=0x" + hitRoot.ToInt64().ToString("X") + ",hit=" + hit);
+            }
+            throw new InvalidOperationException("resize-target-unavailable " + string.Join(";", diagnostics));
+        }
+
+        private static ResizeTarget ResolveResizeTarget(Form form)
+        {
+            RECT rect; if (!GetWindowRect(form.Handle, out rect)) throw new InvalidOperationException("resize-window-rect-unavailable");
+            var monitor = MonitorFromWindow(form.Handle, 2); var info = new MONITORINFO { cbSize = Marshal.SizeOf(typeof(MONITORINFO)) };
+            if (monitor == IntPtr.Zero || !GetMonitorInfo(monitor, ref info)) throw new InvalidOperationException("resize-monitor-workarea-unavailable");
+            var window = Rectangle.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom); var work = Rectangle.FromLTRB(info.Work.Left, info.Work.Top, info.Work.Right, info.Work.Bottom);
+            return SelectResizeTarget(window, work, form.Handle, WindowFromPoint, value => GetAncestor(value, 2), point => unchecked((int)SendMessage(form.Handle, 0x0084, IntPtr.Zero, new IntPtr((point.Y << 16) | (point.X & 0xffff))).ToInt64()), DescribeWindow);
+        }
+
+        private static string DescribeWindow(IntPtr window)
+        {
+            if (window == IntPtr.Zero) return "none"; var builder = new StringBuilder(128); GetClassName(window, builder, builder.Capacity); uint processId; GetWindowThreadProcessId(window, out processId);
+            string process; try { process = Process.GetProcessById((int)processId).ProcessName; } catch { process = "unknown"; }
+            return "0x" + window.ToInt64().ToString("X") + "/" + process + "/" + builder;
+        }
+
+        private static void ResizeTargetResolverFixtureCanary()
+        {
+            var target = new IntPtr(1); var child = new IntPtr(2); var blocker = new IntPtr(3); var window = new Rectangle(-1200, 80, 420, 260); var work = new Rectangle(-1280, 0, 1280, 1000);
+            var cornerPoints = new HashSet<Point>(ResizeCandidates(window, work).Take(4).Select(value => value.Point));
+            var edge = SelectResizeTarget(window, work, target, point => cornerPoints.Contains(point) ? blocker : child, value => value == child ? target : value, point => ResizeCandidates(window, work).Single(value => value.Point == point).HitTest, value => value.ToString());
+            Assert(edge.Name == "right" && work.Contains(edge.Point), "resize resolver skips four occluded corners and selects a visible edge inside mixed-origin monitor workarea");
+            var childCorner = SelectResizeTarget(window, work, target, point => child, value => value == child ? target : value, point => ResizeCandidates(window, work).Single(value => value.Point == point).HitTest, value => value.ToString());
+            Assert(childCorner.Name == "bottom-right", "resize resolver normalizes a child HWND to the target root window");
+            var rightEdgeWindow = new Rectangle(work.Right - 420, 80, 420, 260);
+            var inward = ResizeCandidates(rightEdgeWindow, work).ToList();
+            Assert(inward.All(value => work.Contains(new Point(value.Point.X + value.Delta.X, value.Point.Y + value.Delta.Y))) && inward.All(value => value.Name != "bottom-right" && value.Name != "top-right" && value.Name != "right"), "resize resolver excludes candidates whose physical drag endpoint is clipped by the monitor workarea");
+            var rejected = false; try { SelectResizeTarget(window, work, target, point => blocker, value => value, point => 1, value => "fixture-overlay"); } catch (InvalidOperationException error) { rejected = error.Message.Contains("resize-target-unavailable") && error.Message.Contains("fixture-overlay"); }
+            Assert(rejected, "resize resolver fails closed with occlusion diagnostics when every corner and edge is blocked");
+        }
+
+        private static void DragResizeWithRealMouse(Point start, Point delta)
         {
             var previous = Cursor.Position;
-            var start = form.PointToScreen(clientStart);
             var finish = new Point(start.X + delta.X, start.Y + delta.Y);
+            SendAbsoluteMouse(start, 0x0001 | 0x8000 | 0x4000); Pump(40);
             var release = Task.Run(delegate
             {
-                Thread.Sleep(180);
-                SetCursorPos(finish.X, finish.Y);
-                mouse_event(0x0001, unchecked((uint)delta.X), unchecked((uint)delta.Y), 0, UIntPtr.Zero);
-                Thread.Sleep(120);
-                mouse_event(0x0004, 0, 0, 0, UIntPtr.Zero);
+                // Do not start the drag/release clock before Windows has received down.
+                // Also avoid moving twice (SetCursorPos plus a relative mouse_event).
+                var pressed = Stopwatch.StartNew();
+                while ((GetAsyncKeyState(1) & 0x8000) == 0 && pressed.ElapsedMilliseconds < 1000) Thread.Sleep(5);
+                if ((GetAsyncKeyState(1) & 0x8000) == 0) throw new InvalidOperationException("resize-mouse-down-not-observed");
+                try
+                {
+                    Thread.Sleep(180);
+                    SendAbsoluteMouse(finish, 0x0001 | 0x8000 | 0x4000);
+                    Thread.Sleep(120);
+                }
+                finally { SendAbsoluteMouse(finish, 0x0004); }
             });
             try
             {
-                SetCursorPos(start.X, start.Y); Pump(40);
-                mouse_event(0x0002, 0, 0, 0, UIntPtr.Zero);
+                SendAbsoluteMouse(start, 0x0002);
                 var deadline = Environment.TickCount + 1400;
                 while (!release.IsCompleted && Environment.TickCount < deadline) { Application.DoEvents(); Thread.Sleep(10); }
                 release.GetAwaiter().GetResult(); Pump(120);
             }
             finally
             {
-                mouse_event(0x0004, 0, 0, 0, UIntPtr.Zero);
+                SendAbsoluteMouse(finish, 0x0004);
                 SetCursorPos(previous.X, previous.Y);
             }
         }
@@ -1253,6 +2141,16 @@ namespace KnowledgeClipper
                     throw new InvalidOperationException("Inline keyboard focus became unstable after character " + expected.Length);
                 Console.WriteLine("INLINE_KEY_PREFIX length=" + expected.Length + " foreground=stable noActivate=false focused=true");
             }
+        }
+
+        private static void EnsureCanaryForeground(IntPtr handle)
+        {
+            var foreground = GetForegroundWindow();
+            var foregroundThread = GetWindowThreadProcessId(foreground, IntPtr.Zero);
+            var currentThread = GetCurrentThreadId();
+            var attached = foregroundThread != 0 && foregroundThread != currentThread && AttachThreadInput(currentThread, foregroundThread, true);
+            try { SetForegroundWindow(handle); }
+            finally { if (attached) AttachThreadInput(currentThread, foregroundThread, false); }
         }
 
         private static void WaitForInlineEditing(Form form, TextBox input, string name)
@@ -1310,8 +2208,23 @@ namespace KnowledgeClipper
 
         [DllImport("user32.dll")] private static extern int GetWindowLong(IntPtr window, int index);
         [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr window);
+        [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr window, IntPtr processId);
+        [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
+        [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
+        [DllImport("user32.dll")] private static extern bool AttachThreadInput(uint attach, uint attachTo, bool value);
+        [DllImport("user32.dll")] private static extern IntPtr WindowFromPoint(Point point);
+        [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr window, uint flags);
+        [DllImport("user32.dll")] private static extern IntPtr SendMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
+        [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr window, out RECT rect);
+        [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr window, uint flags);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool GetMonitorInfo(IntPtr monitor, ref MONITORINFO info);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(IntPtr window, StringBuilder name, int maxCount);
         [DllImport("user32.dll")] private static extern bool IsWindow(IntPtr window);
         [DllImport("user32.dll")] private static extern bool SetCursorPos(int x, int y);
+        [DllImport("user32.dll")] private static extern bool GetCursorPos(out Point point);
+        [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int virtualKey);
+        [DllImport("user32.dll")] private static extern IntPtr GetCapture();
         [DllImport("user32.dll")] private static extern void mouse_event(uint flags, uint dx, uint dy, uint data, UIntPtr extraInfo);
         [DllImport("user32.dll", SetLastError = true)] private static extern uint SendInput(uint inputCount, INPUT[] inputs, int inputSize);
 
@@ -1334,6 +2247,12 @@ namespace KnowledgeClipper
 
         [StructLayout(LayoutKind.Sequential)]
         private struct HARDWAREINPUT { internal uint message; internal ushort parameterLow, parameterHigh; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT { internal int Left, Top, Right, Bottom; }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct MONITORINFO { internal int cbSize; internal RECT Monitor; internal RECT Work; internal uint flags; }
 
         private sealed class FixedClipboard : IWindowsClipboard
         {
@@ -1395,6 +2314,132 @@ namespace KnowledgeClipper
         {
             private int next;
             public string NewId(string prefix) { next++; return prefix + "-ui-" + next.ToString("D4"); }
+        }
+
+        private sealed class ReadCaptureGate : ICurrentTextCapturePort
+        {
+            internal TaskCompletionSource<CapturedPlainText> Next;
+            internal ICurrentTextCapturePort Source;
+            internal int Count;
+            public Task<CapturedPlainText> CaptureOnceAsync(CancellationToken cancellationToken) { Count++; return Source != null ? Source.CaptureOnceAsync(cancellationToken) : Next.Task; }
+        }
+
+        private sealed class ReadCaptureSdkFixture : ISdkDomainFacade
+        {
+            private readonly Dictionary<string, string> texts = new Dictionary<string, string>();
+            private readonly Dictionary<string, SdkArtifactPurpose> purposes = new Dictionary<string, SdkArtifactPurpose>();
+            internal int SubmitCount;
+            internal string LastTarget, LastCapture;
+            internal string[] LastRoles, LastContext;
+            internal bool AcceptedWithChoice, LastIncludeSpeech;
+            internal bool PreviewAfterChoice;
+            internal int ConfirmCount;
+            internal int ChoiceCount;
+            internal LanguagePracticeChoice? LastChoice;
+            private string currentCommand;
+            public Task<SdkArtifact> PublishTextAsync(SdkArtifactPurpose purpose, string text, CancellationToken token) { var id = "fixture-" + texts.Count; texts.Add(id, text); purposes.Add(id, purpose); return Task.FromResult(new SdkArtifact(id, null)); }
+            public Task<SdkReadToAnkiSubmission> ReadToAnkiAsync(SdkArtifact capture, IReadOnlyList<SdkArtifact> orderedContext, IReadOnlyList<SdkContextSegment> roleBoundContext, string targetText, bool contextRequested, string contextGranularity, string sourceWindow, SdkArtifact configuration, SdkLanguageCardSettings languageCards, bool includeSpeech, CancellationToken token)
+            {
+                if (purposes[capture.Token] != SdkArtifactPurpose.CaptureText) throw new InvalidOperationException("fixture-source-artifact-kind-invalid");
+                if (orderedContext.Any(item => purposes[item.Token] != SdkArtifactPurpose.QuestionContext)) throw new InvalidOperationException("fixture-context-artifact-kind-invalid");
+                if (purposes[configuration.Token] != SdkArtifactPurpose.AnkiConfiguration) throw new InvalidOperationException("fixture-config-artifact-kind-invalid");
+                SubmitCount++; LastTarget = targetText; LastCapture = texts[capture.Token]; LastRoles = roleBoundContext.Select(item => item.Role).ToArray(); LastContext = orderedContext.Select(item => texts[item.Token]).ToArray();
+                if (!contextRequested || contextGranularity != "sentence" || (!includeSpeech && !AcceptedWithChoice)) throw new InvalidOperationException("fixture-mode-mismatch");
+                LastIncludeSpeech = includeSpeech;
+                if (AcceptedWithChoice) { currentCommand = "read-command-" + SubmitCount; return Task.FromResult(new SdkReadToAnkiSubmission("identity-op", true, currentCommand, 1)); }
+                return Task.FromResult(new SdkReadToAnkiSubmission(null, false)); // Offline boundary, never fabricate a completed business result.
+            }
+            public Task<byte[]> ReadArtifactAsync(SdkArtifact artifact, CancellationToken token) => throw new NotSupportedException();
+            public Task<SdkSubmission> AnkiProbeAsync(SdkArtifact artifact, CancellationToken token) => throw new NotSupportedException();
+            public Task<SdkAnkiReadiness> ObserveAnkiReadinessAsync(string id, CancellationToken token) => throw new NotSupportedException();
+            public Task<SdkSubmission> QuestionInitialAsync(SdkArtifact artifact, IReadOnlyList<SdkArtifact> context, CancellationToken token) => throw new NotSupportedException();
+            public Task<SdkSubmission> QuestionFollowUpAsync(string id, SdkArtifact artifact, CancellationToken token) => throw new NotSupportedException();
+            public Task<SdkSubmission> QuestionMakeCardsAsync(string id, SdkArtifact artifact, CancellationToken token) => throw new NotSupportedException();
+            public Task<SdkQuestionProjection> GetQuestionAsync(string id, CancellationToken token) => throw new NotSupportedException();
+            public Task<SdkProjection> GetTaskAsync(string id, CancellationToken token) => throw new NotSupportedException();
+            public Task<SdkReadToAnkiSubmission> ChooseLanguageCardAsync(string id, LanguagePracticeChoice choice, CancellationToken token)
+            {
+                if (!AcceptedWithChoice) throw new NotSupportedException();
+                LastChoice = choice; ChoiceCount++; currentCommand = "choice-command-" + ChoiceCount;
+                return Task.FromResult(new SdkReadToAnkiSubmission(id, true, currentCommand, 8));
+            }
+            public Task<SdkReadToAnkiSubmission> ResolveCardAsync(CardResolutionSubmission submission, CancellationToken token) => throw new NotSupportedException();
+            public Task<SdkReadToAnkiProjection> GetReadToAnkiProjectionAsync(string id, CancellationToken token)
+            {
+                if (!AcceptedWithChoice) throw new NotSupportedException();
+                if (PreviewAfterChoice && ChoiceCount > 0)
+                {
+                    var draft = new SdkFlashcardDraft("offline-draft", "revision", new string('a', 64), new[] { new SdkFlashcardDraftCard("offline-card", "revision", new string('b', 64), "independent front", "independent back") });
+                    return Task.FromResult(new SdkReadToAnkiProjection(SdkReadToAnkiPlayback.IdleReplayable, ConfirmCount == 0 ? SdkReadToAnkiPipeline.AwaitingCardConfirmation : SdkReadToAnkiPipeline.Completed, ConfirmCount == 0, null, ConfirmCount == 0 ? 20 : 30, draft)
+                    { ActionState = "completed", TerminalCommandId = currentCommand, TerminalSequence = 30 });
+                }
+                return Task.FromResult(new SdkReadToAnkiProjection(SdkReadToAnkiPlayback.NotRequested,
+                    ChoiceCount == 0 ? SdkReadToAnkiPipeline.WaitingUserChoice : SdkReadToAnkiPipeline.Failed, ChoiceCount == 0, "offline-choice-boundary")
+                    { ActionState = "completed", TerminalCommandId = currentCommand, TerminalSequence = 20 });
+            }
+            public Task<SdkReadToAnkiSubmission> ReplayReadToAnkiAsync(string id, CancellationToken token) => throw new NotSupportedException();
+            public Task<SdkDraftCommand> ConfirmDraftAsync(FlashcardDraftConfirmation confirmation, CancellationToken token)
+            {
+                if (!PreviewAfterChoice) throw new NotSupportedException();
+                ConfirmCount++; currentCommand = "confirm-command";
+                return Task.FromResult(new SdkDraftCommand(true, FlashcardDraftStatus.Exporting, "offline-confirm", currentCommand, 21));
+            }
+            public Task<SdkDraftCommand> CancelDraftAsync(FlashcardDraftConfirmation confirmation, CancellationToken token) => throw new NotSupportedException();
+        }
+
+        private sealed class ReadToAnkiUiPorts : ITaskCommandPort, ITaskQueryPort, IModuleActionPort, IStageControlPort, IArtifactGateway, ISettingsRepository, ICredentialStore, IWindowActivationPort, ICurrentTextCapturePort, IReadToAnkiInputArtifactPort, IReadToAnkiPort
+        {
+            private readonly Queue<TaskCompletionSource<ReadToAnkiProjection>> projections = new Queue<TaskCompletionSource<ReadToAnkiProjection>>();
+            internal int CaptureCount, PublishCount, SubmitCount, ReplayCount;
+            internal readonly List<bool> IncludeSpeechValues = new List<bool>();
+            internal string LastPublishedText;
+
+            public Task<CapturedPlainText> CaptureOnceAsync(CancellationToken cancellationToken) { CaptureCount++; return Task.FromResult(new CapturedPlainText("真实选区文本")); }
+            public Task<ArtifactHandle> PublishCaptureTextAsync(ImmutablePlainText value, CancellationToken cancellationToken) { PublishCount++; LastPublishedText = value.Text; return Task.FromResult(new ArtifactHandle("typed-capture-artifact", "capture-text")); }
+            public Task<ReadToAnkiSubmissionResult> SubmitAsync(ReadToAnkiSubmission submission, CancellationToken cancellationToken) { SubmitCount++; IncludeSpeechValues.Add(submission.IncludeSpeech); return Task.FromResult(new ReadToAnkiSubmissionResult(true, SubmitCount == 1 ? "read-ui-operation" : "clip-ui-operation", "read-to-anki.accepted")); }
+            public Task<ReadToAnkiProjection> GetProjectionAsync(string operationId, CancellationToken cancellationToken)
+            {
+                var source = new TaskCompletionSource<ReadToAnkiProjection>(TaskCreationOptions.RunContinuationsAsynchronously);
+                lock (projections) projections.Enqueue(source);
+                return source.Task;
+            }
+            internal void CompleteNext(ReadToAnkiProjection projection)
+            {
+                TaskCompletionSource<ReadToAnkiProjection> source = null;
+                WaitUntil(delegate { lock (projections) { if (projections.Count == 0) return false; source = projections.Dequeue(); return true; } }, 1200, "read-to-Anki projection poll is pending");
+                source.SetResult(projection);
+            }
+            public Task<ReadToAnkiSubmissionResult> ResumeLanguageChoiceAsync(ReadToAnkiChoiceSubmission submission, CancellationToken cancellationToken) => Task.FromResult(new ReadToAnkiSubmissionResult(true, submission.OperationId, "read-to-anki.choice-accepted"));
+            public Task<ReadToAnkiSubmissionResult> ResolveCardAsync(CardResolutionSubmission submission, CancellationToken cancellationToken) => Task.FromResult(new ReadToAnkiSubmissionResult(true, submission.OperationId, "read-to-anki.resolution-accepted") { CommandId = "resolution-command", AcceptedSequence = 2 });
+            public Task<ReadToAnkiPlaybackCommandResult> ReplayAsync(string operationId, CancellationToken cancellationToken) { ReplayCount++; return Task.FromResult(new ReadToAnkiPlaybackCommandResult(true, "read-to-anki.replay-accepted")); }
+            public Task<TaskCommandResult> SubmitQuestionAsync(QuestionSubmission submission, CancellationToken cancellationToken) => Task.FromResult(new TaskCommandResult(false, null, "not-used"));
+            public Task<TaskCommandResult> MakeCardsAsync(MakeCardsSubmission submission, CancellationToken cancellationToken) => Task.FromResult(new TaskCommandResult(false, null, "not-used"));
+            public Task<TaskProjection> GetRecentAsync(CancellationToken cancellationToken) => Task.FromResult(new TaskProjection(null, OperationStatus.Idle, null, null));
+            public Task<QuestionProjection> GetQuestionAsync(string taskId, CancellationToken cancellationToken) => Task.FromResult(new QuestionProjection(taskId, OperationStatus.Idle, 0, false, null, null));
+            public Task<ModuleActionResult> ExecuteAsync(ModuleActionRequest request, CancellationToken cancellationToken) => Task.FromResult(new ModuleActionResult(false, OperationStatus.Failed, "not-used", new Dictionary<string, object>(), null, false, false));
+            public Task<StageControlResult> RequestPlaybackStopAsync(string taskId, CancellationToken cancellationToken) => Task.FromResult(new StageControlResult(false, "failed", "not-used"));
+            public Task<T> ReadAsync<T>(ArtifactHandle artifact, CancellationToken cancellationToken) => Task.FromResult(default(T));
+            public Task<ArtifactHandle> PublishAsync<T>(string kind, T value, CancellationToken cancellationToken) => Task.FromResult(new ArtifactHandle("unused", kind));
+            public Task<SettingsSnapshot> LoadAsync(CancellationToken cancellationToken) => Task.FromResult(new SettingsSnapshot("default", "1", new Dictionary<string, object>()));
+            public Task<SettingsSnapshot> SaveAsync(SettingsSnapshot settings, CancellationToken cancellationToken) => Task.FromResult(settings);
+            public Task<CredentialMetadata> DescribeAsync(string credentialId, CancellationToken cancellationToken) => Task.FromResult(new CredentialMetadata(credentialId, false, false, "CurrentUser"));
+            public Task StoreAsync(string credentialId, string secret, CancellationToken cancellationToken) => Task.CompletedTask;
+            public Task<WindowActivationSnapshot> CaptureAsync(CancellationToken cancellationToken) => Task.FromResult(new WindowActivationSnapshot(0, null, null, 0));
+            public Task<bool> RestoreAsync(long nativeWindowId, CancellationToken cancellationToken) => Task.FromResult(true);
+        }
+
+        private sealed class PreviewUiPort : IFlashcardDraftPort
+        {
+            internal readonly List<FlashcardDraftConfirmation> Confirmations = new List<FlashcardDraftConfirmation>();
+            public Task<FlashcardDraftCommandResult> ConfirmAsync(FlashcardDraftConfirmation confirmation, CancellationToken cancellationToken)
+            {
+                Confirmations.Add(confirmation);
+                return Task.FromResult(new FlashcardDraftCommandResult(true, FlashcardDraftStatus.Exporting, "flashcard-draft.confirm-accepted"));
+            }
+            public Task<FlashcardDraftCommandResult> CancelAsync(FlashcardDraftConfirmation confirmation, CancellationToken cancellationToken) =>
+                Task.FromResult(new FlashcardDraftCommandResult(true, FlashcardDraftStatus.Cancelled, "flashcard-draft.cancel-accepted"));
+            public Task<FlashcardDraftProjection> GetAsync(string operationId, CancellationToken cancellationToken) =>
+                Task.FromResult(new FlashcardDraftProjection(FlashcardDraftStatus.Completed, null, 99, "flashcard-draft.completed", false));
         }
     }
 }

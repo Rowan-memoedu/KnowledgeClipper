@@ -1,0 +1,24 @@
+{
+  "settingsSnapshot": {
+    "artifactId": "task-settings-001",
+    "kind": "task-settings-snapshot",
+    "manifestPath": "C:/secret/task-settings-001/artifact.json",
+    "sha256": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  },
+  "ankiConfiguration": {
+    "artifactId": "anki-config-001",
+    "kind": "anki-configuration",
+    "manifestPath": "artifacts/anki-config-001/artifact.json",
+    "sha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+  },
+  "destination": {
+    "routeKey": "canary",
+    "deckIdentity": "零碎知识剪藏::Canary::SDK",
+    "deckSha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+  },
+  "packageProvenance": {
+    "producer": "core-v3.phase2",
+    "inputArtifactId": "anki-config-001",
+    "inputManifestSha256": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.read-aloud-cards-discovery-checkpoint/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["correlationMarker", "checkpointToken"],
+  "properties": {
+    "correlationMarker": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "checkpointToken": { "type": "string", "pattern": "^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$" }
+  }
+}

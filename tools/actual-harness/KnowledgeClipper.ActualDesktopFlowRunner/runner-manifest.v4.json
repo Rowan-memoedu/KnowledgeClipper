@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "knowledge-clipper-actual-runner-package.v4",
+  "files": [
+    {"path":"Program.cs","bytes":32989,"sha256":"4A2D71751ECB045BF568A02D6A18975CDAD3ECA2A8DB72512C0342E667EAC0C7"},
+    {"path":"KnowledgeClipper.ActualDesktopFlowRunner.csproj","bytes":1322,"sha256":"C1EC5E0C5DC89B677F8C1850F9E0F5DC72781EF7A93AD75061EA64C8FE0EEFF4"},
+    {"path":"bin/Release/net8.0-windows/KnowledgeClipper.ActualDesktopFlowRunner.exe","bytes":152064,"sha256":"6928FF6164CD0B31F5308E1C2C0301FABA57267404B8F837BEFADC53A1D724BD"},
+    {"path":"bin/Release/net8.0-windows/KnowledgeClipper.ActualDesktopFlowRunner.dll","bytes":80896,"sha256":"3DFF8CE26E31FF54A0B94122842E7269A6662B56A16AAD0C8F5B757FE8DFFB1D"},
+    {"path":"../Invoke-ActualDesktopFlowRunnerV4.ps1","bytes":5665,"sha256":"DE795A709D774572363ECDB0C84EB6B3D01485E5086471AFE773F4946BE5A854"}
+  ],
+  "desktopAutomationReceipt": {"path":"contracts/desktop-automation/v1.6/contract-receipt.json","sha256":"6D729FB84E4C9DC4344FDF01AB9C387CF0C7998A2470280DF778429A61F2D923"},
+  "assertions": {
+    "rootLocator": "EnumWindows exact owner visible UIA PID contract AutomationId Window native handle unique",
+    "childLocator": "strict validated candidate-process top-level Window subtrees exact PID AutomationId unique",
+    "forbiddenChildLocator": "AutomationElement.RootElement full-desktop lookup",
+    "heartbeats": "strictly monotonic schema allowlist sequence stage atUtc only before and after lookup action typed wait",
+    "watchdog": "heartbeat-loss timeout plus finite whole-run deadline",
+    "fixtures": {"exactTwoMatrix":16,"acceptedCases":1,"rootLocator":8,"childLocator":4,"heartbeatContent":1,"watchdog":7}
+  },
+  "sideEffects": {"externalConnections":0,"businessTasks":0,"candidatePackaging":0},
+  "implementationIds": []
+}

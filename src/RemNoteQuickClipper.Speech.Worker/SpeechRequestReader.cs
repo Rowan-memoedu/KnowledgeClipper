@@ -106,10 +106,10 @@ namespace KnowledgeClipper.Speech.Worker
                 ResolveJobRelativePath(jobRoot, reference.manifestPath);
             }
             var attempt = ResolveJobRelativePath(jobRoot, envelope.attemptPath);
-            var actualAttempt = LongPathFileSystem.GetFullPath(Path.GetDirectoryName(requestPath)).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var actualAttempt = LongPathFileSystem.GetFullPath(LongPathFileSystem.GetDirectoryName(requestPath)).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             if (!attempt.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).Equals(actualAttempt, StringComparison.OrdinalIgnoreCase))
                 throw new SpeechContractException("attempt_path_mismatch", "attemptPath 与 request.json 位置不一致");
-            if (new DirectoryInfo(actualAttempt).Name != envelope.attemptId) throw new SpeechContractException("attempt_id_mismatch", "attemptId 与目录名不一致");
+            if (LongPathFileSystem.GetFileName(actualAttempt) != envelope.attemptId) throw new SpeechContractException("attempt_id_mismatch", "attemptId 与目录名不一致");
             RequireExactPath(jobRoot, envelope.outputPath, Path.Combine(actualAttempt, "outputs"), "outputPath");
             RequireExactPath(jobRoot, envelope.progressPath, Path.Combine(actualAttempt, "progress.ndjson"), "progressPath");
             RequireExactPath(jobRoot, envelope.resultPath, Path.Combine(actualAttempt, "result.json"), "resultPath");

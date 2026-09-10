@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.read-aloud-cards-action-discovery-result/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["correlationMarker", "status", "operationId", "commandId", "acceptedSequence"],
+  "properties": {
+    "correlationMarker": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "status": { "enum": ["pending", "accepted"] },
+    "operationId": { "type": ["string", "null"] },
+    "commandId": { "type": ["string", "null"] },
+    "acceptedSequence": { "type": ["integer", "null"], "minimum": 1 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "pending" } }, "required": ["status"] },
+      "then": { "properties": { "operationId": { "const": null }, "commandId": { "const": null }, "acceptedSequence": { "const": null } } }
+    },
+    {
+      "if": { "properties": { "status": { "const": "accepted" } }, "required": ["status"] },
+      "then": { "properties": {
+        "operationId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$" },
+        "commandId": { "type": "string", "minLength": 1 },
+        "acceptedSequence": { "type": "integer", "minimum": 1 }
+      } }
+    }
+  ]
+}

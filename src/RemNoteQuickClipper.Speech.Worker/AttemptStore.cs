@@ -22,7 +22,7 @@ namespace KnowledgeClipper.Speech.Worker
         }
 
         public string RequestPath { get { return Path.Combine(attemptDirectory, "request.json"); } }
-        public string AttemptId { get { return new DirectoryInfo(attemptDirectory).Name; } }
+        public string AttemptId { get { return LongPathFileSystem.GetFileName(attemptDirectory); } }
         public string AttemptDirectory { get { return attemptDirectory; } }
         public string JobRoot { get { return jobRoot; } }
 

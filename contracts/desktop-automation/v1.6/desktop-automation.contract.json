@@ -1,0 +1,20 @@
+{
+  "contractId": "knowledge-clipper.desktop-automation",
+  "contractVersion": "1.6.0",
+  "schemaVersion": "desktop-automation.v1.6",
+  "authorityPath": "contracts/desktop-automation/v1.6/",
+  "changeType": "additive-flashcard-preview-observation-bindings",
+  "extends": {
+    "contract": "../v1.5/desktop-automation.contract.json",
+    "receipt": "../v1.5/contract-receipt.json",
+    "receiptSha256": "f8bb7d7a6796e0ceed9c462f017c6f50546d9b1a7034856199c851872ce28a39",
+    "treeSha256": "7510cd0660ed222a5677eb6c3f4bdcdfa5994603a41fdbeb1ecd958cc0d569eb"
+  },
+  "semanticActions": ["flashcard-preview.cards.observe", "flashcard-preview.front.observe", "flashcard-preview.back.observe"],
+  "automationIds": [
+    {"automationId":"knowledge-clipper.desktop.flashcard-preview.cards","semanticAction":"flashcard-preview.cards.observe","controlType":"List","interaction":"SelectionItemPattern+read-only-count","effect":"none"},
+    {"automationId":"knowledge-clipper.desktop.flashcard-preview.front","semanticAction":"flashcard-preview.front.observe","controlType":"Edit","interaction":"ValuePattern.Read","effect":"none"},
+    {"automationId":"knowledge-clipper.desktop.flashcard-preview.back","semanticAction":"flashcard-preview.back.observe","controlType":"Edit","interaction":"ValuePattern.Read","effect":"none"}
+  ],
+  "observationBoundary": "The observer selects each projected preview list item and reads the visible non-editable front and back values. It records ordinal and SHA-256 only; it neither supplies expected text nor confirms export."
+}

@@ -2,5 +2,12 @@
   <PropertyGroup>
     <BaseIntermediateOutputPath>obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
     <BaseOutputPath>bin\$(MSBuildProjectName)\</BaseOutputPath>
+    <!--
+      Each desktop project has its own output subtree under desktop/bin.  The
+      SDK's computed default excludes only cover the active project's output
+      path, so assemblies left by a sibling can otherwise be treated as
+      CandidateAssemblyFiles and win over an explicit frozen-SDK HintPath.
+    -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildThisFileDirectory)bin\**;$(MSBuildThisFileDirectory)obj\**</DefaultItemExcludes>
   </PropertyGroup>
 </Project>

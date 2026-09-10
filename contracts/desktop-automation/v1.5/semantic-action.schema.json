@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/knowledge-clipper/desktop-automation/v1.5/semantic-action.schema.json",
+  "title": "KnowledgeClipper additive write-path control actions v1.5",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "requestId", "action", "arguments"],
+  "properties": {
+    "schemaVersion": { "const": "desktop-automation.v1.5" },
+    "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "action": { "enum": ["settings.export.anki.deck-routes.edit", "settings.save", "flashcard-preview.confirm"] },
+    "arguments": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "action": { "const": "settings.export.anki.deck-routes.edit" } } },
+      "then": {
+        "properties": {
+          "arguments": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["routesJson"],
+            "properties": { "routesJson": { "type": "string", "minLength": 2, "maxLength": 8192 } }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "action": { "enum": ["settings.save", "flashcard-preview.confirm"] } } },
+      "then": { "properties": { "arguments": { "type": "object", "additionalProperties": false, "maxProperties": 0 } } }
+    }
+  ]
+}

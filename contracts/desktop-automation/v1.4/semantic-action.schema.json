@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/knowledge-clipper/desktop-automation/v1.4/semantic-action.schema.json",
+  "title": "KnowledgeClipper additive card-resolution semantic actions v1.4",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "requestId", "action", "arguments"],
+  "properties": {
+    "schemaVersion": { "const": "desktop-automation.v1.4" },
+    "requestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "action": { "enum": ["card-resolution.accept-candidate", "card-resolution.submit-correction", "card-resolution.cancel"] },
+    "arguments": {
+      "type": "object", "additionalProperties": false,
+      "required": ["operationId"],
+      "properties": {
+        "operationId": { "type": "string", "minLength": 1 },
+        "selectedText": { "type": "string", "minLength": 1 },
+        "candidateOccurrence": {
+          "type": "object", "additionalProperties": false,
+          "required": ["segmentId", "order", "start", "end", "exactText", "sourceSha256"],
+          "properties": { "segmentId": {"type":"string","minLength":1}, "order":{"type":"integer","minimum":0}, "start":{"type":"integer","minimum":0}, "end":{"type":"integer","minimum":1}, "exactText":{"type":"string","minLength":1}, "sourceSha256":{"type":"string","pattern":"^[a-f0-9]{64}$"} }
+        }
+      }
+    }
+  },
+  "allOf": [
+    { "if": {"properties":{"action":{"const":"card-resolution.accept-candidate"}}}, "then": {"properties":{"arguments":{"required":["operationId","selectedText","candidateOccurrence"]}}} },
+    { "if": {"properties":{"action":{"const":"card-resolution.submit-correction"}}}, "then": {"properties":{"arguments":{"required":["operationId","selectedText"],"not":{"required":["candidateOccurrence"]}}}} },
+    { "if": {"properties":{"action":{"const":"card-resolution.cancel"}}}, "then": {"properties":{"arguments":{"not":{"anyOf":[{"required":["selectedText"]},{"required":["candidateOccurrence"]}]}}}} }
+  ]
+}

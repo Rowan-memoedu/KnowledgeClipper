@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "knowledge-clipper-actual-runner-package.v2",
+  "files": [
+    {"path":"Program.cs","bytes":24693,"sha256":"E42478160DE35BDA0E700E5B902F4DC6378C142C78BBDD1384DDE4BC6A4FBFD0"},
+    {"path":"KnowledgeClipper.ActualDesktopFlowRunner.csproj","bytes":1322,"sha256":"C1EC5E0C5DC89B677F8C1850F9E0F5DC72781EF7A93AD75061EA64C8FE0EEFF4"},
+    {"path":"bin/Release/net8.0-windows/KnowledgeClipper.ActualDesktopFlowRunner.dll","bytes":66560,"sha256":"1D87C580E7C987EC91F83D1BC03A9054B0701A2822F8614E28203A731FB3CFBC"}
+  ],
+  "desktopAutomationReceipt": {"path":"contracts/desktop-automation/v1.6/contract-receipt.json","sha256":"6D729FB84E4C9DC4344FDF01AB9C387CF0C7998A2470280DF778429A61F2D923"},
+  "assertions": {
+    "preview": "exactly-two-nonempty-front-back-with-ordinal-and-sha256",
+    "ankiDelta": "exactly-two-notes-and-two-cards-with-ids",
+    "matrix": {"previewCounts":[0,1,2,3],"ankiDeltas":[0,1,2,3],"acceptedCases":1}
+  },
+  "implementationIds": []
+}

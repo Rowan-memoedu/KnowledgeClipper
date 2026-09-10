@@ -149,6 +149,41 @@ export interface QuestionWorkflowInput {
 
 export type LanguagePracticeMode = "meaning-reading" | "writing" | "both";
 
+export interface LanguageContextSegmentInput {
+  segment_id: string;
+  order: number;
+  material_path: string;
+  sha256: string;
+}
+
+export interface LanguageSelectionInput {
+  schema_version: "language-selection/1.0.0";
+  selected_text: string;
+  selected_text_sha256: string;
+  target_text: string;
+  target_text_sha256: string;
+  context_enabled: boolean;
+  context_segments: LanguageContextSegmentInput[];
+}
+
+export interface LanguageTargetResolutionInput {
+  schema_version: "language-target-resolution/1.0.0" | "language-target-resolution/2.0.0";
+  decision_id: string;
+  target_token: string;
+  action: "accept_candidate" | "user_correction";
+  selected_text: string;
+  selected_text_sha256: string;
+  confirmed: true;
+  candidateOccurrence?: {
+    segmentId: string;
+    order: number;
+    start: number;
+    end: number;
+    exactText: string;
+    sourceSha256: string;
+  };
+}
+
 export interface InputHints {
   category_id?: string;
   subtype?: string;
@@ -169,6 +204,7 @@ export interface LanguageWritingHumanOverride {
 export type HumanOverrides = JsonObject & {
   languagePracticeMode?: LanguagePracticeMode;
   languageWriting?: { units?: Record<string, LanguageWritingHumanOverride> };
+  languageTargetResolution?: LanguageTargetResolutionInput;
 };
 
 export interface StandardInputItem {
@@ -177,10 +213,17 @@ export interface StandardInputItem {
   hints?: InputHints;
   human_overrides?: HumanOverrides;
   ocr_human_resolution?: OcrHumanResolutionInput;
+  language_selection?: LanguageSelectionInput;
 }
 
 export interface StandardInput {
-  schema_version: "standard-input/1.0.0" | "standard-input/2.0.0" | "standard-input/3.0.0" | "standard-input/4.0.0" | "standard-input/5.0.0";
+  schema_version: "standard-input/1.0.0" | "standard-input/2.0.0" | "standard-input/3.0.0" | "standard-input/4.0.0" | "standard-input/5.0.0" | "standard-input/6.0.0" | "standard-input/7.0.0" | "standard-input/8.0.0";
+  language_practice_resume?: {
+    schema_version: "language-practice-resume/1.0.0";
+    decision_ref: ArtifactReference & { payload_path: string; payload_sha256: string };
+    learning_ref: ArtifactReference & { payload_path: string; payload_sha256: string };
+    input_ref: ArtifactReference & { payload_path: string; payload_sha256: string };
+  };
   package_id: string;
   task_id: string;
   input_version: string;
@@ -532,10 +575,16 @@ export interface LanguagePracticeDecisionRecord {
   current_mode?: LanguagePracticeMode;
   pronunciation_state?: "missing" | "unreliable";
   meaning_state?: "missing" | "unreliable";
+  target_token?: string;
+  selected_text_sha256?: string;
+  target_text_sha256?: string;
+  context_segment_sha256s?: string[];
+  candidate_positions?: Array<{ segment_id: string; order: number; start: number; end: number; exact_text: string; source_sha256: string }>;
+  suggested_user_fields?: string[];
 }
 
 export interface LanguagePracticeDecisionBundle {
-  schema_version: "language-practice-decision/1.0.0";
+  schema_version: "language-practice-decision/1.0.0" | "language-practice-decision/2.0.0";
   decision_bundle_id: string;
   package_id: string;
   task_id: string;

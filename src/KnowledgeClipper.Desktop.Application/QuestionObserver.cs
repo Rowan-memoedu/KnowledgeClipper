@@ -21,38 +21,46 @@ namespace KnowledgeClipper.Desktop.Application.V3
         private readonly IArtifactGateway artifacts;
         private readonly DesktopStateStore state;
         private readonly QuestionObservationPolicy policy;
+        private readonly Action<FlashcardDraftProjection> projectFlashcardDraft;
 
-        internal QuestionObserver(ITaskQueryPort queries, IArtifactGateway artifacts, DesktopStateStore state, QuestionObservationPolicy policy)
+        internal QuestionObserver(ITaskQueryPort queries, IArtifactGateway artifacts, DesktopStateStore state, QuestionObservationPolicy policy, Action<FlashcardDraftProjection> projectFlashcardDraft = null)
         {
             this.queries = queries ?? throw new ArgumentNullException(nameof(queries));
             this.artifacts = artifacts ?? throw new ArgumentNullException(nameof(artifacts));
             this.state = state ?? throw new ArgumentNullException(nameof(state));
             this.policy = policy ?? QuestionObservationPolicy.Default;
+            this.projectFlashcardDraft = projectFlashcardDraft;
             this.policy.Validate();
         }
 
         internal async Task<QuestionProjection> ObserveUntilSettledAsync(string taskId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(taskId)) throw new ArgumentException("question-task-required", nameof(taskId));
+            var binding = state.Snapshot().Question;
+            bool SameBinding(DesktopApplicationState value) => value.Question.TaskId == taskId && !string.IsNullOrWhiteSpace(binding.SessionId) && value.Question.SessionId == binding.SessionId && value.Question.BindingGeneration == binding.BindingGeneration;
+            bool Current() => SameBinding(state.Snapshot());
+            void Unresolved(string notice) => state.TryReduce(SameBinding, value => QuestionReducers.Unresolved(value, notice));
             var delay = policy.InitialDelay;
             for (var attempt = 0; attempt < policy.MaxAttempts; attempt++)
             {
+                if (!Current()) return null;
                 if (attempt > 0 && delay > TimeSpan.Zero)
                 {
                     try { await Task.Delay(delay, cancellationToken).ConfigureAwait(false); }
-                    catch (OperationCanceledException) { state.Reduce(value => QuestionReducers.Cancelled(value, "question-observation-cancelled")); return null; }
+                    catch (OperationCanceledException) { Unresolved("question-observation-interrupted-not-core-cancelled"); return null; }
                     var nextTicks = Math.Min(policy.MaximumDelay.Ticks, Math.Max(delay.Ticks + 1, delay.Ticks * 2));
                     delay = TimeSpan.FromTicks(nextTicks);
                 }
 
                 QuestionProjection projection;
                 try { projection = await queries.GetQuestionAsync(taskId, cancellationToken).ConfigureAwait(false); }
-                catch (OperationCanceledException) { state.Reduce(value => QuestionReducers.Cancelled(value, "question-observation-cancelled")); return null; }
-                catch (Exception exception) { state.Reduce(value => QuestionReducers.Failed(value, "question-observation-" + exception.GetType().Name)); return null; }
+                catch (OperationCanceledException) { Unresolved("question-observation-interrupted-not-core-cancelled"); return null; }
+                catch (Exception exception) { Unresolved("question-observation-" + exception.GetType().Name); return null; }
+                if (!Current()) return null;
 
                 if (projection == null || !string.Equals(projection.TaskId, taskId, StringComparison.Ordinal))
                 {
-                    state.Reduce(value => QuestionReducers.Failed(value, "question-observation-invalid-projection"));
+                    Unresolved("question-observation-invalid-projection");
                     return projection;
                 }
 
@@ -61,27 +69,30 @@ namespace KnowledgeClipper.Desktop.Application.V3
                 {
                     if (projection.Answer == null)
                     {
-                        state.Reduce(value => QuestionReducers.Failed(value, "question-answer-artifact-required"));
+                        Unresolved("question-answer-artifact-required");
                         return projection;
                     }
                     try { answer = await artifacts.ReadAsync<QuestionAnswerContent>(projection.Answer, cancellationToken).ConfigureAwait(false); }
-                    catch (OperationCanceledException) { state.Reduce(value => QuestionReducers.Cancelled(value, "question-observation-cancelled")); return null; }
-                    catch (Exception exception) { state.Reduce(value => QuestionReducers.Failed(value, "question-answer-" + exception.GetType().Name)); return projection; }
+                    catch (OperationCanceledException) { Unresolved("question-observation-interrupted-not-core-cancelled"); return null; }
+                    catch (Exception exception) { Unresolved("question-answer-" + exception.GetType().Name); return projection; }
                     if (answer == null || string.IsNullOrWhiteSpace(answer.Text))
                     {
-                        state.Reduce(value => QuestionReducers.Failed(value, "question-answer-content-required"));
+                        Unresolved("question-answer-content-required");
                         return projection;
                     }
                 }
 
-                state.Reduce(value => QuestionReducers.Projected(value, projection, answer));
+                if (!Current()) return null;
+                state.TryReduce(SameBinding, value => QuestionReducers.Projected(value, projection, answer));
+                if (!Current()) return null;
+                if (projection.FlashcardDraft != null) projectFlashcardDraft?.Invoke(projection.FlashcardDraft);
                 if (projection.Status == OperationStatus.WaitingInput || projection.Status == OperationStatus.Succeeded ||
                     projection.Status == OperationStatus.Failed || projection.Status == OperationStatus.Cancelled ||
                     projection.Status == OperationStatus.Unknown)
                     return projection;
             }
 
-            state.Reduce(value => QuestionReducers.Failed(value, "question-observation-timeout"));
+            Unresolved("question-observation-timeout-not-core-failed");
             return null;
         }
     }

@@ -92,6 +92,8 @@ namespace KnowledgeClipper.Desktop.Core
         internal const string ExportAnkiConfig = "knowledge-clipper.desktop.settings.export.anki.config-artifact";
         internal const string ExportAnkiProfile = "knowledge-clipper.desktop.settings.export.anki.profile";
         internal const string ExportAnkiEndpoint = "knowledge-clipper.desktop.settings.export.anki.endpoint";
+        internal const string ExportAnkiDeckPreset = "knowledge-clipper.desktop.settings.export.anki.deck-preset";
+        internal const string ExportAnkiDeckRoutes = "knowledge-clipper.desktop.settings.export.anki.deck-routes";
         internal const string ExportAnkiProbe = "knowledge-clipper.desktop.settings.export.anki.probe-readonly";
         internal const string ExportAnkiProbeStatus = "knowledge-clipper.desktop.settings.export.anki.probe-status";
         internal const string ExportAnkiInitialize = "knowledge-clipper.desktop.settings.export.anki.initialize-managed";

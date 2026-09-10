@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "standard-input/8.0.0",
+  "title": "Choose language practice using frozen recognition ancestry",
+  "type": "object",
+  "required": ["schema_version", "package_id", "task_id", "input_version", "mode", "items", "human_overrides", "language_practice_resume"],
+  "properties": {
+    "schema_version": { "const": "standard-input/8.0.0" },
+    "package_id": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "input_version": { "type": "string", "minLength": 1 },
+    "mode": { "const": "card" },
+    "languagePracticeMode": { "enum": ["meaning-reading", "writing", "both"] },
+    "human_overrides": { "type": "object", "required": ["languagePracticeMode"], "properties": { "languagePracticeMode": { "enum": ["meaning-reading", "writing", "both"] } }, "additionalProperties": false },
+    "items": { "type": "array", "minItems": 1, "items": {
+      "type": "object", "required": ["item_id", "source", "language_selection"],
+      "properties": {
+        "item_id": { "type": "string", "minLength": 1 },
+        "source": { "$ref": "content-input.v6.schema.json#/$defs/item/properties/source" },
+        "hints": { "type": "object" },
+        "human_overrides": { "type": ["object", "null"] },
+        "language_selection": { "$ref": "content-input.v6.schema.json#/$defs/item/properties/language_selection" }
+      }, "additionalProperties": false
+    } },
+    "language_practice_resume": { "$ref": "language-practice-resume.v1.schema.json" }
+  },
+  "additionalProperties": false
+}

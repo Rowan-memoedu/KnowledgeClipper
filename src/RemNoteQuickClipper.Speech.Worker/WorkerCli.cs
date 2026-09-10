@@ -9,7 +9,7 @@ namespace KnowledgeClipper.Speech.Worker
     internal static class WorkerCli
     {
         internal const string WorkerId = "speech.edge";
-        internal const string WorkerVersion = "1.2.5";
+        internal const string WorkerVersion = "1.2.6";
         internal const string ContractVersion = "1.0.0";
 
         public static object Describe()
@@ -40,7 +40,7 @@ namespace KnowledgeClipper.Speech.Worker
             if (string.IsNullOrWhiteSpace(requestArgument) || !Path.IsPathRooted(requestArgument))
                 throw new SpeechContractException("request_path_not_absolute", "--request 必须是绝对 request.json 路径");
             var requestPath = LongPathFileSystem.GetFullPath(requestArgument);
-            if (!Path.GetFileName(requestPath).Equals("request.json", StringComparison.OrdinalIgnoreCase))
+            if (!LongPathFileSystem.GetFileName(requestPath).Equals("request.json", StringComparison.OrdinalIgnoreCase))
                 throw new SpeechContractException("invalid_request_filename", "--request 必须指向 request.json");
             if (!LongPathFileSystem.FileExists(requestPath)) throw new SpeechContractException("missing_request", "request.json 不存在");
 
@@ -56,15 +56,15 @@ namespace KnowledgeClipper.Speech.Worker
                 !EqualsPart(parts[4], "attempts") || !EqualsPart(parts[5], envelope.attemptId))
                 throw new SpeechContractException("invalid_attempt_layout", "attemptPath 必须为 runs/<runId>/stages/<stageId>/attempts/<attemptId>");
 
-            var attemptDirectory = Path.GetDirectoryName(requestPath);
+            var attemptDirectory = LongPathFileSystem.GetDirectoryName(requestPath);
             var jobRoot = attemptDirectory;
-            for (var i = 0; i < parts.Length; i++) jobRoot = Path.GetDirectoryName(jobRoot);
+            for (var i = 0; i < parts.Length; i++) jobRoot = LongPathFileSystem.GetDirectoryName(jobRoot);
             if (string.IsNullOrWhiteSpace(jobRoot)) throw new SpeechContractException("invalid_job_boundary", "无法从 request/attemptPath 推导 job 根");
             jobRoot = LongPathFileSystem.GetFullPath(jobRoot);
-            if (!new DirectoryInfo(jobRoot).Name.Equals(envelope.taskId, StringComparison.Ordinal))
+            if (!LongPathFileSystem.GetFileName(jobRoot).Equals(envelope.taskId, StringComparison.Ordinal))
                 throw new SpeechContractException("task_path_mismatch", "job 根目录名与 taskId 不一致");
-            var jobsDirectory = Directory.GetParent(jobRoot);
-            if (jobsDirectory == null || !jobsDirectory.Name.Equals("jobs", StringComparison.OrdinalIgnoreCase))
+            var jobsDirectory = LongPathFileSystem.GetDirectoryName(jobRoot);
+            if (jobsDirectory == null || !LongPathFileSystem.GetFileName(jobsDirectory).Equals("jobs", StringComparison.OrdinalIgnoreCase))
                 throw new SpeechContractException("invalid_job_layout", "job 根必须位于 jobs/<taskId>");
             var derivedAttempt = SpeechRequestReader.ResolveJobRelativePath(jobRoot, envelope.attemptPath);
             if (!derivedAttempt.TrimEnd(Path.DirectorySeparatorChar).Equals(attemptDirectory.TrimEnd(Path.DirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))

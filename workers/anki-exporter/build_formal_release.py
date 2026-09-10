@@ -30,6 +30,9 @@ CONTRACT_FILES = (
     "anki-destination-settings-descriptor.v1.3.json",
     "anki-destination-settings-descriptor.v1.3.schema.json",
     "anki-managed-initialization-status.v1.schema.json",
+    "anki-export-readback.v1.schema.json",
+    "anki-semantic-readback-gate-input.v1.schema.json",
+    "anki-semantic-readback-gate.v1.schema.json",
     "anki-export-config.v2.schema.json",
     "CORE-ORIGINAL-MEDIA-PROJECTION.md",
 )
@@ -38,7 +41,14 @@ CONFIG_FILES = ("anki-export.v1.example.json", "anki-export.v2.example.json")
 
 
 def project_relative(path: Path) -> str:
-    return path.resolve().relative_to(PROJECT_ROOT.resolve()).as_posix()
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(PROJECT_ROOT.resolve()).as_posix()
+    except ValueError:
+        # Delivery roots are governed outside the source repository. Preserve
+        # their exact absolute identity instead of fabricating a repo-relative
+        # version directory.
+        return str(resolved)
 
 
 def tree(root: Path, *, exclude: set[str] | None = None) -> dict[str, Any]:
@@ -108,6 +118,9 @@ def main() -> int:
     config_target.mkdir()
     for name in CONFIG_FILES:
         shutil.copy2(WORKER_ROOT / "config" / name, config_target / name)
+    tools_target = target / "tools"
+    tools_target.mkdir()
+    shutil.copy2(WORKER_ROOT / "semantic_readback_gate.py", tools_target / "semantic_readback_gate.py")
 
     described = run_checked([str(exe), "describe", "--json"], cwd=release_root)
     if described.stderr:
@@ -119,6 +132,8 @@ def main() -> int:
         raise RuntimeError("Release EXE descriptor omitted the read-only probe output kind")
     if "anki-managed-initialization-status" not in descriptor.get("outputKinds", []):
         raise RuntimeError("Release EXE descriptor omitted the explicit managed initialization output kind")
+    if "anki-semantic-readback" not in descriptor.get("outputKinds", []):
+        raise RuntimeError("Release EXE descriptor omitted the semantic postflight readback output kind")
     describe_path = target / "export.anki.describe.json"
     exporter.write_json_atomic_once(describe_path, descriptor)
 
@@ -174,6 +189,25 @@ def main() -> int:
             "createsOnlyMissingResources": True,
             "automaticRetryAfterUnknownState": False,
             "realAnkiCanary": "not-run-awaiting-user-ui-action",
+        },
+        "exportEvidence": {
+            "outputKind": "anki-export-evidence",
+            "readbackSchema": "anki-export-readback.v1",
+            "readbackPath": "readback.json",
+            "binding": "artifact-metadata-and-receipt-sha256",
+            "semanticBodies": ["notesInfo", "cardsInfo"],
+            "redaction": "excludes-profile-endpoint-model-user-notes-and-secrets",
+        },
+        "semanticReadback": {
+            "operation": "semantic-readback",
+            "outputKind": "anki-semantic-readback",
+            "effectClass": "provider-read-only",
+            "networkScope": "loopback-only",
+            "externalMutation": False,
+            "requiresExactExpectedCards": True,
+            "supportsBoundNoteAndCardIds": True,
+            "offlineGate": "workers/anki/tools/semantic_readback_gate.py",
+            "doesNotInferPriorScenarioWrites": True,
         },
         "build": {
             "tool": "PyInstaller",

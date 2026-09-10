@@ -1,0 +1,54 @@
+{
+  "api": {"actions": ["notesInfo", "cardsInfo"], "version": 6},
+  "attemptId": "attempt-offline-semantic-gate",
+  "cardCount": 2,
+  "cards": [
+    {
+      "cardsInfo": [{"cardId": 21001, "deckName": "零碎知识剪藏::Canary::SemanticGate", "noteId": 11001}],
+      "notesInfo": {
+        "cardIds": [21001],
+        "fields": {
+          "Back": "resilient /rɪˈzɪliənt/ 有韧性的", "Context": "", "Extra": "", "Front": "The material remains resilient under change.",
+          "RQC_ContentHash": "77cb26420a06e958a58feed34aaac69b14ef55a70b896830aa0af03531cb0bd2", "RQC_ID": "stable-language-context", "RQC_Revision": "1", "Source": "offline semantic gate fixture"
+        },
+        "noteId": 11001,
+        "requiredFieldNames": ["Front", "Back"],
+        "requiredFields": {"Back": "resilient /rɪˈzɪliənt/ 有韧性的", "Front": "The material remains resilient under change."},
+        "requiredTags": ["quality_canary", "rqc_managed"],
+        "tags": ["quality_canary", "rqc_managed"]
+      },
+      "ordinal": 0,
+      "outcome": "ALREADY_CURRENT",
+      "semanticBodySha256": "07cdeddcdee5cfea9e943e242f5d0e7018a126fa2aa27c8fb8e25665015035aa",
+      "sourceCardId": "stable-language-context"
+    },
+    {
+      "cardsInfo": [{"cardId": 21002, "deckName": "零碎知识剪藏::Canary::SemanticGate", "noteId": 11002}],
+      "notesInfo": {
+        "cardIds": [21002],
+        "fields": {
+          "Back": "resilient", "Context": "", "Extra": "", "Front": "The material remains （/rɪˈzɪliənt/；有韧性的） under change.",
+          "RQC_ContentHash": "fba76ea8a8e24fe8650c8d57ffdc7e3ef5f4fdeaff95157eb12e8488c0cf3af1", "RQC_ID": "stable-language-writing", "RQC_Revision": "1", "Source": "offline semantic gate fixture"
+        },
+        "noteId": 11002,
+        "requiredFieldNames": ["Front", "Back"],
+        "requiredFields": {"Back": "resilient", "Front": "The material remains （/rɪˈzɪliənt/；有韧性的） under change."},
+        "requiredTags": ["quality_canary", "rqc_managed"],
+        "tags": ["quality_canary", "rqc_managed"]
+      },
+      "ordinal": 1,
+      "outcome": "ALREADY_CURRENT",
+      "semanticBodySha256": "7b3037885b7253e251eb5e587f5b0629d706df5b2f2abfdafaf9ae14b82fa5b2",
+      "sourceCardId": "stable-language-writing"
+    }
+  ],
+  "cardsSha256": "51aa45445538044c99b5677cc19303de9557fe3677923fb5b2af776a9d72c28a",
+  "dataClass": "personal",
+  "redaction": "excludes-profile-endpoint-model-user-notes-and-secrets",
+  "runId": "run-offline-semantic-gate",
+  "schemaVersion": "anki-export-readback.v1",
+  "sourceBundle": {"bundleId": "bundle-offline-semantic-gate", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
+  "stageId": "anki-export",
+  "taskId": "task-offline-semantic-gate",
+  "worker": {"workerId": "export.anki", "workerVersion": "1.5.0"}
+}

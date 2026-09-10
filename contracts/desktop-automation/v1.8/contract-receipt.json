@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "desktop-automation-contract-receipt.v1",
+  "contractVersion": "1.8.0",
+  "status": "PASS",
+  "treeSha256": "adeaacbaeee85b4c2dce9139ae8ec7a44ef40944954112897b27e72b0d0b7a07",
+  "files": [
+    {
+      "path": "desktop-automation.contract.json",
+      "bytes": 1428,
+      "sha256": "5c2169bdd5ea3b0fa737dafe1b2e260201661ce75732aa7520e3520f35916138"
+    }
+  ]
+}

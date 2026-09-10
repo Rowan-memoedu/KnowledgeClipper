@@ -1,0 +1,18 @@
+{
+  "schema": "kc.quality.content-context-resolution-requirements/1",
+  "status": "CONTENT-MODULE-READY-INTEGRATION-PENDING",
+  "required": [
+    "content.deepseek 0.10.2 exact immutable release",
+    "standard-input/6.0.0 selected and target exact identity with ordered hash-bound context",
+    "Speech text equals selectedText only",
+    "meaning-reading/writing/both cardinality 1/1/2 and both order context then writing",
+    "unresolved is completed transport plus unresolved module state plus decision contract 2.0.0 and zero CardBundle",
+    "human resolution creates a new attempt and stale target token fails INPUT_STALE",
+    "DeepSeek live and exporter writes remain zero"
+  ],
+  "conditional": [
+    "Core waiting_input/resume integration",
+    "Desktop human decision UI and command integration",
+    "ordered context artifact to Content production adapter"
+  ]
+}

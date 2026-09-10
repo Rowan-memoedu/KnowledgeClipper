@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "knowledge-clipper-actual-runner-package.v3",
+  "files": [
+    {"path":"Program.cs","bytes":27906,"sha256":"93D34EDCDA5FC139D4516114F9717522F3139D3354043A07B08A9059F041AC6D"},
+    {"path":"KnowledgeClipper.ActualDesktopFlowRunner.csproj","bytes":1322,"sha256":"C1EC5E0C5DC89B677F8C1850F9E0F5DC72781EF7A93AD75061EA64C8FE0EEFF4"},
+    {"path":"bin/Release/net8.0-windows/KnowledgeClipper.ActualDesktopFlowRunner.dll","bytes":72704,"sha256":"DADD98E56F35562ACBAF729F328981C2FCC6332BCA94853197F58584278A74DD"}
+  ],
+  "desktopAutomationReceipt": {"path":"contracts/desktop-automation/v1.6/contract-receipt.json","sha256":"6D729FB84E4C9DC4344FDF01AB9C387CF0C7998A2470280DF778429A61F2D923"},
+  "assertions": {
+    "rootLocator": "EnumWindows then exact owner PID and visible then AutomationElement.FromHandle then exact UIA PID automationId ControlType.Window NativeWindowHandle and unique",
+    "rootLocatorFixtures": ["zero-match","one-match","multiple-match","wrong-owner-pid","wrong-uia-pid","wrong-automation-id","wrong-control-type","wrong-native-window-handle"],
+    "forbiddenFallbacks": ["title-match","arbitrary-same-process-window","relaxed-automation-id","desktop-root-descendant-root-locator"],
+    "preview": "exactly-two-nonempty-front-back-with-ordinal-and-sha256",
+    "ankiDelta": "exactly-two-notes-and-two-cards-with-ids",
+    "matrix": {"previewCounts":[0,1,2,3],"ankiDeltas":[0,1,2,3],"acceptedCases":1}
+  },
+  "sideEffects": {"externalConnections":0,"businessTasks":0,"candidatePackaging":0},
+  "implementationIds": []
+}

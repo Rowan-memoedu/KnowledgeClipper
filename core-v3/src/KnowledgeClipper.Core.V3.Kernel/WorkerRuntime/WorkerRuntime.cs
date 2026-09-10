@@ -28,6 +28,7 @@ internal sealed class WorkerExternalStateUnknownException : Exception
 
 internal interface IWorkerRuntime
 {
+    WorkerAdapter.PlaybackAttemptControl? PlaybackControl => null;
     bool RequiresLegacyQuestionWorkflow => false;
 
     Task<WorkerExecutionResult> ExecuteAsync(WorkerInvocation invocation, CancellationToken cancellationToken);

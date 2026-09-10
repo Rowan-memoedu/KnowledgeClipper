@@ -42,6 +42,10 @@ planned 权威发布入口固定为 `workers/anki/KnowledgeClipper.AnkiExporter.
 
 1.4.0 将 managed model/deck 初始化收口为独立 `initialize-managed` operation 与同名 CLI。请求只消费一个 SHA 绑定 `anki-export-config`，要求 `provision_managed=true`、`requestedOutputs=[anki-managed-initialization-status]`，并携带精确绑定 task/config 的 `sideEffectAuthorization`（`mode=explicit-user-action`、`scope=managed-models-and-decks`）。worker 先只读核验 permission/API/profile、全部现存 model 的 fields/template/CSS 与 deck 集合；有冲突时在任何写入前失败，只对缺失资源调用 `createModel`/`createDeck`，随后逐项精确 readback。它绝不调用 note、tag、changeDeck 或 media 写操作，也不修改既有 model/deck。响应丢失或写后读回不确定时返回 `unknown_external_state`、`retryable=false`，只允许用户再次显式触发新任务包，重放时先查询并仅创建仍缺失项。普通 `export` 不再因 `provision_managed=true` 隐式建资源；缺失时提示先执行显式初始化。
 
+1.4.1 为 `anki-export-evidence` 追加 `readback.json`（`anki-export-readback.v1`）。每个成功/已存在卡片按 CardBundle 顺序保存脱敏后的 `notesInfo`/`cardsInfo` 语义正文，包括 note/card ID、全部受管字段（明确排除 `UserNotes`）、必需字段、实际/必需标签和 deck；逐卡 canonical body SHA-256、整个卡片数组 SHA-256、receipt 引用 SHA-256 与 Artifact manifest 文件 SHA-256 共同绑定证据。profile、endpoint、modelName、UserNotes 和秘密不进入该证据。空 card IDs、重复 note/card ID、缺失/错配 fields/tags/deck 均失败关闭；写入、幂等与 `unknown_external_state` 语义不变。
+
+1.5.0 新增独立 `semantic-readback` provider-read-only postflight。它消费与导出相同的 SHA 绑定 CardBundle/config，但只调用 `requestPermission`、`version`、`getActiveProfile`、`apiReflect`、`findNotes`、`notesInfo`、`cardsInfo` 和必要的 `retrieveMediaFile`；不调用任何 create/store/add/update/tag/changeDeck。请求必须逐 ordinal 携带最终预览的 stable `cardId`、`front`、`back`、唯一目标 deck，并可携带该次导出返回的 `noteId`/`ankiCardId` 做精确身份绑定。缺卡、内容/顺序/deck/归属漂移均确定性失败且 `sideEffects=[]`，绝不自行 reconcile 或再次 export；只有原导出写后状态未知时，编排器才应先调用该 readback，再由新的显式导出任务决定是否幂等收敛。`semantic_readback_gate.py` 进一步在离线环境把 preview、完整确认命令、WorkerRequest/Result、Artifact manifest 与 readback 的 SHA 串联起来，拒绝“数量相同但内容或顺序错误”。该 gate 的 `externalMutation=false` 只描述本次验证，不宣称此前场景没有发生写入。
+
 原图模式的唯一目的端固定为 Anki，正式投影为 `ordered-original-images.v1`；RemNote 不接收该目的端分支。Core 仍必须通过正式 typed input contract 证明 CaptureBundle 的 `questionImages[]`/`answerImages[]`、源 Artifact hash 与 ancestry，并生成符合 `contracts/CORE-ORIGINAL-MEDIA-PROJECTION.md` 的派生 Artifact。若某一输入尚不满足 typed contract，resolver 应把 Anki 该目的端标为 `conditional/unsupported`，不能把整项任务误报成功；这不再表示产品路线延期。真实 Anki 写入仍只允许既定隔离 deck，并须另行显式授权。
 
 候选绑定离线验收使用 `python tests/run_formal_release_settings_probe_canary.py --release-root <absolute-win-x64>`。该脚本通过 PowerShell 7 加载已构建的真实 Core 程序集，调用 `TaskSettingsAdapter` 冻结 settings snapshot，再由 `OrchestratorEngine` 生成 WorkerRequest 并从指定 release-root 启动 worker；validate-only 不构造 AnkiClient，probe 仅连接随机端口的 Fake Anki。任务包、失败包和最终 receipt 均只追加，不覆盖；禁止用该命令连接真实 `127.0.0.1:8765`。
@@ -60,12 +64,13 @@ planned 权威发布入口固定为 `workers/anki/KnowledgeClipper.AnkiExporter.
 
 ## 运行
 
-公共 CLI 严格遵循 `contracts/v1/worker/worker-cli.v1.json`：`describe` 只向 stdout 输出一个 worker descriptor；`run` 只接受绝对 `request.json` 路径，stdout 只输出 progress NDJSON，并原子发布一次 `result.json`。操作由公共 Worker Request 的 `operation` 决定：`validate` 不接触 Anki，`probe` 只做显式只读连接/状态检查，`export` 执行真实导出，`initialize-managed` 只在显式 side-effect authorization 下创建缺失 managed resources。额外同名 CLI 只是对标准 request 的安全别名，不绕过 task/config/authorization 校验。
+公共 CLI 严格遵循 `contracts/v1/worker/worker-cli.v1.json`：`describe` 只向 stdout 输出一个 worker descriptor；`run` 只接受绝对 `request.json` 路径，stdout 只输出 progress NDJSON，并原子发布一次 `result.json`。操作由公共 Worker Request 的 `operation` 决定：`validate` 不接触 Anki，`probe` 只做显式只读连接/状态检查，`semantic-readback` 按最终预览与可选 note/card IDs 做只读 postflight，`export` 执行真实导出，`initialize-managed` 只在显式 side-effect authorization 下创建缺失 managed resources。额外同名 CLI 只是对标准 request 的安全别名，不绕过 task/config/authorization 校验。
 
 ```powershell
 python .\anki_exporter.py describe --json
 python .\anki_exporter.py run --request <absolute-path-to-request.json>
 python .\anki_exporter.py initialize-managed --request <absolute-initialize-request.json>
+python .\semantic_readback_gate.py --manifest <absolute-gate-input.json> --output <new-append-only-receipt.json>
 ```
 
 项目级设置 adapter 使用独立模块契约，不改 common descriptor，也不修改既有 task manifest：

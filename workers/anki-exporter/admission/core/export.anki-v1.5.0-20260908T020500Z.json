@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "export.anki.core-admission.v1",
+  "status": "passed-module-ready-for-actual",
+  "worker": {"workerId": "export.anki", "workerVersion": "1.5.0"},
+  "scope": {
+    "implemented": "Exact semantic postflight readback and offline preview-to-provider evidence gate",
+    "notClaimed": "Desktop/Quality final Actual scenario completion",
+    "realAnkiContentReadbackPerformed": false,
+    "realAnkiWritesPerformedThisBatch": 0
+  },
+  "mainlineCompatibility": {
+    "authorityUpgradeRequired": false,
+    "existingAuthorityReadback": "export.anki@1.4.1 anki-export-readback.v1 already contains ordinal, sourceCardId, Front, Back, deck, noteId, cardId and semantic hashes",
+    "qualityCanUseOfflineGateWith141": true,
+    "onlyAdditive150Capability": "A separate provider-read-only semantic-readback operation that re-queries current Anki state after export without re-exporting",
+    "actualPolicy": "Use existing matched authority for the confirmed export; use its emitted readback plus the independent offline gate. Promote 1.5.0 only if the runner explicitly requires a later provider re-query."
+  },
+  "release": {
+    "root": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\export.anki-v1.5.0-20260908T015827Z\\win-x64",
+    "treeSha256": "3AAA91C663FC1E6E0D89B617122223F5FE9E7D830F9FEBBCC45ED99B55551CBE",
+    "manifest": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\export.anki-v1.5.0-20260908T015827Z\\win-x64\\workers\\anki\\release-manifest.v1.json",
+    "manifestSha256": "832819163E3B9B94FF5529FCBE673381920D5747B82386211A2D3AADD6CF1CDB",
+    "exe": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\export.anki-v1.5.0-20260908T015827Z\\win-x64\\workers\\anki\\KnowledgeClipper.AnkiExporter.Worker.exe",
+    "exeSha256": "FF4205D5B338C6B884160112D2F0714EFC9F14AEA607E9552348737DAA2755B5",
+    "describe": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\export.anki-v1.5.0-20260908T015827Z\\win-x64\\workers\\anki\\export.anki.describe.json",
+    "describeSha256": "AB98656A1CB66A6E2B6FAAA069757F3B29B855B449744B19AE03AD1946922636"
+  },
+  "entrypoints": {
+    "postflight": "workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe run --request <absolute-semantic-readback-request.json>",
+    "postflightOperation": "semantic-readback",
+    "postflightOutputKind": "anki-semantic-readback",
+    "offlineGate": "workers/anki/tools/semantic_readback_gate.py --manifest <absolute-gate-input.json> --output <new-receipt.json>"
+  },
+  "postflightRequest": {
+    "sameInputsAsExport": ["card-bundle", "anki-export-config"],
+    "requestedOutputs": ["anki-semantic-readback"],
+    "requiredPayload": ["expectedCardCount", "expectedCards", "expectedDeck"],
+    "perCardRequired": ["cardId", "front", "back"],
+    "perCardKnownOutcomeBinding": ["noteId", "ankiCardId"],
+    "unknownExternalStateBinding": "When IDs were lost, omit noteId/ankiCardId and resolve by stable global RQC_ID; never retry export automatically",
+    "providerActionsAllowed": ["requestPermission", "version", "getActiveProfile", "apiReflect", "findNotes", "notesInfo", "cardsInfo", "retrieveMediaFile"],
+    "providerActionsForbidden": ["createModel", "createDeck", "storeMediaFile", "addNote", "updateNoteFields", "addTags", "changeDeck"]
+  },
+  "semanticAssertions": [
+    "exact card count",
+    "exact stable card identity",
+    "exact input order",
+    "exact Front and Back",
+    "exact destination deck",
+    "exact note/card ownership",
+    "exact bound noteId and ankiCardId when supplied",
+    "SHA-bound preview, confirmation command, worker request/result, artifact and readback"
+  ],
+  "failureSemantics": {
+    "missingOrDriftedProviderState": "failed with sideEffects=[]; no reconcile and no second export",
+    "missingBootstrapTaskManifest": "failed/FILE_MISSING with sideEffects=[] before AnkiClient construction",
+    "originalExportUnknownExternalState": "run semantic-readback first; only a new explicit reconcile export may converge",
+    "metricsStatement": "postflight externalMutation=false and mutatingActionsObserved=[] apply only to the postflight; priorScenarioWritesInferred=false"
+  },
+  "verification": {
+    "unitTests": {"command": "python -m unittest discover -s workers/anki-exporter/tests -v", "passed": 80, "failed": 0},
+    "offlineGate": {
+      "receipt": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\canary\\offline-semantic-gate-v1.5.0-20260908T020251Z\\receipt.json",
+      "receiptSha256": "D2B7DB894A73F52ECD3C3C94E75CBB8A06BA338F78A457C358C921115D2B3F76"
+    },
+    "formalFakePostflight": {
+      "receipt": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\canary\\formal-semantic-readback-v1.5.0-20260908T020228Z\\receipt.json",
+      "receiptSha256": "0D5E5774F211F4E926F82DBE716EE63664ECC9140FD5DD65171112762A43C421",
+      "workerResultSha256": "7D3545898170BEE6A4144D312C687EA8C4265601EDD8D67624AB64E0114EE111",
+      "readbackSha256": "C438B4F9E59A99635B511F27701E93C70B1548103FD6ED1ECC4C7F2F14E6B2AE",
+      "measuredMutatingActions": []
+    },
+    "liveRuntimeReadiness": {
+      "receipt": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\canary\\live-read-only-runtime-probe-v1.5.0-20260908T020346Z\\receipt.json",
+      "receiptSha256": "FC2538751DD1907B08DE34F534FD664DDD2F15F75429F89C18BDA1459BA8B718",
+      "endpoint": "http://127.0.0.1:8765",
+      "apiVersion": 6,
+      "permission": "granted",
+      "mutatingActions": []
+    },
+    "preservedFailedFixture": {
+      "root": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\canary\\formal-semantic-readback-v1.5.0-20260908T020149Z",
+      "error": "SEMANTIC_EXPECTATION_MISMATCH",
+      "sideEffects": [],
+      "cause": "Runner froze expectedDeck before applying the isolated deck route",
+      "fix": "Apply destination config before freezing semantic expectations"
+    }
+  },
+  "actualOwner": "Desktop/Quality runner",
+  "actualRule": "Execute the confirmed export once, then one semantic-readback using returned IDs; on any mismatch publish the failure and perform no additional export"
+}

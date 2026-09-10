@@ -1,0 +1,146 @@
+{
+  "schemaVersion": "export.anki.core-admission-packet.v1",
+  "status": "ready_for_core_admission",
+  "worker": {
+    "workerId": "export.anki",
+    "workerVersion": "1.4.1",
+    "entrypoint": "workers/anki/KnowledgeClipper.AnkiExporter.Worker.exe",
+    "outputKinds": [
+      "anki-export-evidence",
+      "anki-connection-status",
+      "anki-managed-initialization-status"
+    ]
+  },
+  "release": {
+    "root": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\export.anki-v1.4.1-20260903T120000Z\\win-x64",
+    "treeSha256": "A7BD3E271A9E0CCFE2FE41CAC5975CC0C55CEB98BF3CC24F17C57DB1B082FA3A",
+    "releaseManifest": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\export.anki-v1.4.1-20260903T120000Z\\win-x64\\workers\\anki\\release-manifest.v1.json",
+    "releaseManifestSha256": "F39E65BD5D5032828F1E7C79E3571F96BD5D8899FF2F1FD972418E5D971553F1",
+    "exe": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\export.anki-v1.4.1-20260903T120000Z\\win-x64\\workers\\anki\\KnowledgeClipper.AnkiExporter.Worker.exe",
+    "exeSha256": "102C105615DA449FEE48190452474431927E7E72493230647F409AA65378F8D0",
+    "describe": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\export.anki-v1.4.1-20260903T120000Z\\win-x64\\workers\\anki\\export.anki.describe.json",
+    "describeSha256": "A704C0BFAA900DC7EECF4AD2B0CE34FCAF685F644B54E5E91544F5793F8D9F74"
+  },
+  "semanticReadbackContract": {
+    "path": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\export.anki-v1.4.1-20260903T120000Z\\win-x64\\workers\\anki\\contracts\\anki-export-readback.v1.schema.json",
+    "sha256": "6AB6E851529A07B226298E2481B20EBEEBE559ECF9B3C4DC13A3C539E998F5AB",
+    "schemaVersion": "anki-export-readback.v1",
+    "artifactKind": "anki-export-evidence",
+    "artifactContractVersion": "1.0.0",
+    "artifactEntrypoint": "receipt.json",
+    "artifactMetadata": {
+      "readback": {
+        "path": "<attempt-output>/readback.json",
+        "sha256": "<sha256-of-readback-json>",
+        "schemaVersion": "anki-export-readback.v1"
+      }
+    },
+    "receiptBinding": "readback_evidence.path+sha256+schema_version+card_count",
+    "semanticBodies": {
+      "notesInfo": [
+        "noteId",
+        "cardIds",
+        "fields.Front",
+        "fields.Back",
+        "fields.Context",
+        "fields.Extra",
+        "fields.Source",
+        "fields.RQC_ID",
+        "fields.RQC_Revision",
+        "fields.RQC_ContentHash",
+        "requiredFieldNames",
+        "requiredFields",
+        "requiredTags",
+        "tags"
+      ],
+      "cardsInfo": [
+        "cardId",
+        "noteId",
+        "deckName"
+      ]
+    },
+    "hashes": [
+      "cards[].semanticBodySha256 over canonical {notesInfo,cardsInfo}",
+      "cardsSha256 over canonical cards array",
+      "readback file SHA-256 in receipt and artifact metadata",
+      "readback file SHA-256 in common artifact files[]"
+    ],
+    "order": "cards preserve CardBundle order with zero-based ordinal",
+    "failClosed": [
+      "empty cardIds",
+      "duplicate noteId across source cards",
+      "duplicate cardId",
+      "missing managed or required field",
+      "missing required tag",
+      "notesInfo/cardsInfo identity mismatch",
+      "deck mismatch",
+      "non-reproducible hash"
+    ],
+    "redaction": {
+      "excluded": [
+        "profile",
+        "endpoint",
+        "modelName",
+        "UserNotes",
+        "credentials",
+        "secrets"
+      ],
+      "dataClass": "personal"
+    }
+  },
+  "compatibility": {
+    "cardProjection": "unchanged",
+    "mediaProjection": "unchanged",
+    "idempotency": "unchanged",
+    "unknownExternalState": "unchanged-no-output-no-auto-retry",
+    "validateOnly": "completed-without-provider-call-and-without-fabricated-readback",
+    "probe": "unchanged-provider-read-only",
+    "managedInitialization": "unchanged-explicit-only"
+  },
+  "qualification": {
+    "unitTests": {
+      "command": "python -m unittest discover -s workers/anki-exporter/tests -v",
+      "passed": 70,
+      "failed": 0
+    },
+    "formalFake": {
+      "receipt": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\canary\\semantic-readback-v1.4.1-20260903T120100Z\\receipt.json",
+      "receiptSha256": "5A8EE3D4D02B864F73F9E19A48F1B947BC93809BE551A9A177344F20BBA697CC",
+      "firstOutcome": "CREATED",
+      "replayOutcome": "ALREADY_CURRENT",
+      "replayMutatingActions": 0,
+      "malformedDuplicateCardsInfo": "failed-closed",
+      "realAnkiConnectCalls": 0
+    },
+    "realIsolatedCanary": {
+      "receipt": "D:\\Artifacts\\KnowledgeClipper\\anki-exporter\\canary\\real-semantic-readback-v1.4.1-20260903T120500Z\\receipt.json",
+      "receiptSha256": "E2FFD1BAAE868CE31CCC3B9280A086C584260C81CAF325CBD02582B0F22519E6",
+      "deck": "零碎知识剪藏::Canary",
+      "syntheticCardId": "kc-readback-evidence-v141-20260903t120500z",
+      "firstOutcome": "CREATED",
+      "replayOutcome": "ALREADY_CURRENT",
+      "notesCreated": 1,
+      "cardsCreated": 1,
+      "deckCreated": false,
+      "deckDeleted": false,
+      "replayMutatingActions": 0,
+      "noteId": 1788435935572,
+      "cardIds": [
+        1788435935572
+      ],
+      "firstReadbackSha256": "C231336A5E2BF4DA6F78CA28A03AFAEE3ED482664B3F6A69AA876AE46A1D9D7B",
+      "replayReadbackSha256": "A942E722050D97127D45C98DA312F33051F905DDD96E1927DB2364F019452962"
+    }
+  },
+  "promotion": {
+    "promotedToAuthority": false,
+    "requiresNewAppendOnlyAuthority": true,
+    "workspaceStagingNotForPromotion": "releases/knowledge-clipper-anki-exporter-v1.4.1-20260903T114000Z/win-x64",
+    "workspaceStagingDisposition": "retain-until-safe-cleanup-review-do-not-add-binary-to-git"
+  },
+  "sourceBinding": {
+    "ankiExporterSha256": "266FAF620AC7A85E606E48F89DFDB64D177FF99153752A896070966A96951ECB",
+    "buildFormalReleaseSha256": "EC49417BE8D4CDB6165C3ADA64159A1275012157CCA2563B9DE53DF15B360B02"
+  },
+  "createdAt": "2026-09-03T12:10:00Z"
+}

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>KnowledgeClipper.ActualDesktopFlowRunner</AssemblyName>
+    <RootNamespace>KnowledgeClipper.ActualDesktopFlowRunner</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <CoreV3SdkRoot Condition="'$(CoreV3SdkRoot)' == ''">D:\Artifacts\KnowledgeClipper\read-to-anki-sdk\actual-desktop-flow-observation-sdk-20260908T020355Z</CoreV3SdkRoot>
+    <DefineConstants Condition="'$(EnablePlaybackRegression)' == 'true'">$(DefineConstants);PLAYBACK_REGRESSION</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="UIAutomationClient"><HintPath>C:\Windows\Microsoft.NET\Framework64\v4.0.30319\WPF\UIAutomationClient.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UIAutomationTypes"><HintPath>C:\Windows\Microsoft.NET\Framework64\v4.0.30319\WPF\UIAutomationTypes.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="KnowledgeClipper.Core.V3.Client"><HintPath>$(CoreV3SdkRoot)\KnowledgeClipper.Core.V3.Client.dll</HintPath><Private>true</Private></Reference>
+    <Reference Include="KnowledgeClipper.Core.V3.Contracts"><HintPath>$(CoreV3SdkRoot)\KnowledgeClipper.Core.V3.Contracts.dll</HintPath><Private>true</Private></Reference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(EnablePlaybackRegression)' != 'true'"><Compile Remove="PlaybackRegression.cs;PlaybackLedger.cs;PlaybackMenuSelector.cs;PlaybackStatusReader.cs" /></ItemGroup>
+</Project>

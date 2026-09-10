@@ -1,0 +1,6 @@
+[
+  { "id": "actual-source-en", "source": "A deterministic external sentence with deliberate context.", "selected": "deliberate", "category": "language_en", "pronunciation": "/dɪˈlɪbərət/", "meaning": "刻意的" },
+  { "id": "independent-zh", "source": "面对挫折，他依然坚韧。", "selected": "坚韧", "category": "language_zh", "pronunciation": "jiān rèn", "meaning": "坚定而有韧性" },
+  { "id": "ordinary-default-both", "source": "A triangle has three sides.", "selected": "A triangle has three sides.", "category": "general_learning" },
+  { "id": "ambiguous-en", "source": "They record a record.", "selected": "record", "category": "language_en", "pronunciation": "", "meaning": "", "unresolved": ["ambiguous_selected_sense"] }
+]

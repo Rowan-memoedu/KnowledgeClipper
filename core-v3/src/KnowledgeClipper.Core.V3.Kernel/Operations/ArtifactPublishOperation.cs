@@ -35,11 +35,13 @@ internal sealed class ArtifactPublishOperation : IOperationHandler
 
         var (kind, contract, contractSchema) = purpose switch
         {
+            "capture-text" => ("capture-text", "1.0.0", "kc.capture-text/1"),
             "question" => ("question-text", "3.0.0", "kc.question-text/1"),
             "question-context" => ("question-context", "3.0.0", "kc.question-context/1"),
             "question-follow-up" => ("question-follow-up", "3.0.0", "kc.question-follow-up/1"),
             "question-answer" => ("question-answer", "3.0.0", "kc.question-answer/1"),
             "anki-configuration" => ("anki-export-config", "1.0.0", "kc.anki-export-config/1"),
+            "remnote-settings" => ("remnote-settings", "1.0.0", "remnote-destination-settings.v1"),
             _ => throw new InvalidDataException($"Unsupported artifact publish purpose '{purpose}'.")
         };
         var dataClass = command.Body.Data.TryGetProperty("dataClass", out var dataClassElement) && dataClassElement.ValueKind == JsonValueKind.String

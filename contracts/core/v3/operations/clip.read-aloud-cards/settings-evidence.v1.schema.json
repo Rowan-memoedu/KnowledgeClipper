@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kc.read-to-anki-settings-evidence/1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["settingsSnapshot", "ankiConfiguration", "destination", "packageProvenance"],
+  "$defs": {
+    "artifactEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "kind", "manifestPath", "sha256"],
+      "properties": {
+        "artifactId": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "minLength": 1 },
+        "manifestPath": { "type": "string", "pattern": "^artifacts/[A-Za-z0-9._-]+/artifact\\.json$" },
+        "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }
+      }
+    }
+  },
+  "properties": {
+    "settingsSnapshot": { "$ref": "#/$defs/artifactEvidence" },
+    "ankiConfiguration": { "$ref": "#/$defs/artifactEvidence" },
+    "destination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["routeKey", "deckIdentity", "deckSha256"],
+      "properties": {
+        "routeKey": { "const": "canary" },
+        "deckIdentity": { "type": "string", "pattern": "^零碎知识剪藏::Canary(?:::.+)?$" },
+        "deckSha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }
+      }
+    },
+    "packageProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["producer", "inputArtifactId", "inputManifestSha256"],
+      "properties": {
+        "producer": { "const": "core-v3.phase2" },
+        "inputArtifactId": { "type": "string", "minLength": 1 },
+        "inputManifestSha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }
+      }
+    }
+  }
+}

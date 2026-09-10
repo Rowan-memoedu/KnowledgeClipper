@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "language-practice-resume/1.0.0",
+  "type": "object",
+  "required": ["schema_version", "decision_ref", "learning_ref", "input_ref"],
+  "properties": {
+    "schema_version": { "const": "language-practice-resume/1.0.0" },
+    "decision_ref": { "allOf": [{ "$ref": "#/$defs/ref" }, { "properties": { "kind": { "const": "language-practice-decision" }, "contractVersion": { "const": "2.0.0" } } }] },
+    "learning_ref": { "allOf": [{ "$ref": "#/$defs/ref" }, { "properties": { "kind": { "const": "learning-bundle" }, "contractVersion": { "const": "1.0.0" } } }] },
+    "input_ref": { "allOf": [{ "$ref": "#/$defs/ref" }, { "properties": { "kind": { "const": "content-input" }, "contractVersion": { "const": "1.0.0" } } }] }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ref": {
+      "type": "object",
+      "required": ["artifactRef", "kind", "contractVersion", "manifestPath", "expectedSha256", "payload_path", "payload_sha256"],
+      "properties": {
+        "artifactRef": { "type": "string", "minLength": 1 }, "kind": { "type": "string" }, "contractVersion": { "type": "string" },
+        "manifestPath": { "type": "string", "minLength": 1 }, "payload_path": { "type": "string", "minLength": 1 },
+        "expectedSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "payload_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }, "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "schema_version": "provider-replay/1.0.0",
+  "responses": {
+    "cleaning:item-selected-word": { "cleaned_text": "An assumption can differ from another assumption.\n", "removed_fragments": [], "format_anomalies": [] },
+    "classification:item-selected-word": { "units": [{ "unit_id": "unit-selected", "source_segment_indexes": [0], "category_id": "language_en", "subtype": "contextual_vocabulary", "answer_state": "not_applicable", "context_state": "provided", "risk_state": "ordinary", "target_term": "assumption", "unresolved_reasons": [] }] },
+    "card_generation:item-selected-word:unit-selected": { "generated_content": [{ "kind": "explanation", "text": "assumption /əˈsʌmpʃən/：假设。" }], "cards": [{ "template": "language_context", "front_blocks": [{ "type": "text", "text": "An assumption can differ from another assumption.", "provenance": "source" }], "back_blocks": [{ "type": "text", "text": "assumption /əˈsʌmpʃən/：假设。", "provenance": "generated" }], "answer_provenance": "not_applicable" }], "unresolved_reasons": [] }
+  }
+}

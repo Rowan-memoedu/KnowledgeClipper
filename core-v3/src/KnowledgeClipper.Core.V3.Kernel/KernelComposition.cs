@@ -35,6 +35,9 @@ internal static class KernelComposition
             new ContentSettingsDescribeOperation(),
             new ArtifactPublishOperation(),
             new AnkiProbeOperation(),
+            new RemNoteSettingsOperation("remnote.discover-target"),
+            new RemNoteSettingsOperation("remnote.probe"),
+            new ReadAloudCardsOperation(),
             new QuestionWorkflowOperation("question.initial"),
             new QuestionWorkflowOperation("question.follow-up"),
             new QuestionWorkflowOperation("question.make-cards")

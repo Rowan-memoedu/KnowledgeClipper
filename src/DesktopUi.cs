@@ -1,11 +1,15 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using KnowledgeClipper.Desktop.Application.V3;
 using KnowledgeClipper.Desktop.Core;
 
 namespace KnowledgeClipper
@@ -15,6 +19,7 @@ namespace KnowledgeClipper
         private Color frameColor = Color.FromArgb(184, 196, 207);
         private readonly Panel topBorder, bottomBorder, leftBorder, rightBorder;
         private Control content;
+        internal int FrameThickness { get; set; } = 2;
 
         internal ModeFramePanel()
         {
@@ -42,11 +47,12 @@ namespace KnowledgeClipper
                 visibleWidth = Math.Min(visibleWidth, Math.Max(0, Parent.DisplayRectangle.Right - Left));
                 visibleHeight = Math.Min(visibleHeight, Math.Max(0, Parent.DisplayRectangle.Bottom - Top));
             }
-            if (content != null) content.Bounds = new Rectangle(2, 2, Math.Max(0, visibleWidth - 4), Math.Max(0, visibleHeight - 4));
-            topBorder.Bounds = new Rectangle(0, 0, visibleWidth, 2);
-            bottomBorder.Bounds = new Rectangle(0, Math.Max(0, visibleHeight - 2), visibleWidth, 2);
-            leftBorder.Bounds = new Rectangle(0, 2, 2, Math.Max(0, visibleHeight - 4));
-            rightBorder.Bounds = new Rectangle(Math.Max(0, visibleWidth - 2), 2, 2, Math.Max(0, visibleHeight - 4));
+            var edge = FrameThickness;
+            if (content != null) content.Bounds = new Rectangle(edge, edge, Math.Max(0, visibleWidth - edge * 2), Math.Max(0, visibleHeight - edge * 2));
+            topBorder.Bounds = new Rectangle(0, 0, visibleWidth, edge);
+            bottomBorder.Bounds = new Rectangle(0, Math.Max(0, visibleHeight - edge), visibleWidth, edge);
+            leftBorder.Bounds = new Rectangle(0, edge, edge, Math.Max(0, visibleHeight - edge * 2));
+            rightBorder.Bounds = new Rectangle(Math.Max(0, visibleWidth - edge), edge, edge, Math.Max(0, visibleHeight - edge * 2));
             topBorder.BringToFront(); bottomBorder.BringToFront(); leftBorder.BringToFront(); rightBorder.BringToFront();
         }
 
@@ -57,7 +63,7 @@ namespace KnowledgeClipper
         }
     }
 
-    internal sealed class BoundClipperForm : Form
+    internal sealed class BoundClipperForm : Form, IDesktopApplicationView
     {
         private static readonly Size DefaultClientSize = new Size(344, 210);
         private const int ResizeFrameThickness = 7;
@@ -68,6 +74,7 @@ namespace KnowledgeClipper
         private readonly Func<UserSettings, SettingsForm> settingsFormFactory;
         private readonly IQuestionAnswerArtifactReader questionAnswers;
         private readonly IOcrHumanResolutionArtifactReader ocrHumanResolution;
+        private readonly DesktopWorkflowSettingsService workflowSettingsService;
         private readonly Button contextButton, originalButton, clipButton, readButton, screenshotButton, statusButton, minimizeButton, closeButton;
         private readonly TextBox inlineQuestionInput;
         private readonly Panel dragFrame, contextSection, originalSection;
@@ -81,10 +88,41 @@ namespace KnowledgeClipper
         private int statusVersion;
         private ScreenshotSessionForm screenshotSession;
         private SettingsForm settingsForm;
+        private FlashcardPreviewForm flashcardPreviewForm;
+        private FlashcardDraftPreviewUseCases flashcardDraftUseCases;
+        private DesktopViewBinding applicationBinding;
+        private QuestionUseCases questionUseCases;
+        private ReadToAnkiViewProjection readToAnkiView;
+        private string readToAnkiChoiceOperationId;
+        private string readToAnkiResolutionOperationId;
+        private long readToAnkiTerminalRevision;
+        private string workflowSettingsRevision;
+        private readonly List<FloatingControlMetrics> floatingMetrics = new List<FloatingControlMetrics>();
+        private bool applyingContentScale;
+
+        private sealed class FloatingControlMetrics
+        {
+            internal Control Control;
+            internal Padding Margin, Padding;
+            internal Font BaseFont, OwnedFont;
+        }
         internal int ResizeGestureCount { get; private set; }
         internal int LastResizeGestureHit { get; private set; }
         internal IntPtr LastQuestionRestoreForeground { get; private set; }
         internal bool LastQuestionRestoreSucceeded { get; private set; }
+        internal FlashcardDraftPreviewState CandidateCanaryFlashcardState => flashcardDraftUseCases?.Current;
+        internal ReadToAnkiViewProjection CandidateCanaryReadToAnkiState => readToAnkiView;
+
+        internal bool InvokeCandidateCanaryAction(string automationId)
+        {
+            if (string.Equals(automationId, AutomationCatalogV11.AutomationIds[AutomationCatalog.ReadCapture], StringComparison.Ordinal)) { readButton.PerformClick(); return true; }
+            if (flashcardPreviewForm != null && !flashcardPreviewForm.IsDisposed)
+            {
+                var control = flashcardPreviewForm.Controls.Find(automationId, true).OfType<Button>().SingleOrDefault();
+                if (control != null) { control.PerformClick(); return true; }
+            }
+            return false;
+        }
 
         internal BoundClipperForm(AppConfig config) : this(LegacyDesktopAdapter.CreateBoundClipperDependencies(config)) { }
 
@@ -97,16 +135,26 @@ namespace KnowledgeClipper
             config = dependencies.Config;
             controller = dependencies.Controller;
             settings = dependencies.InitialSettings.Copy();
+            workflowSettingsService = new DesktopWorkflowSettingsService(config.WorkDirectory, AppDomain.CurrentDomain.BaseDirectory);
+            ReloadAuthoritativeCaptureModes();
+            MigrateLegacyCaptureModeAliases();
             settingsFormFactory = dependencies.SettingsFormFactory;
             questionAnswers = dependencies.QuestionAnswers;
             ocrHumanResolution = dependencies.OcrHumanResolution;
+            Name = "knowledge-clipper.desktop.floating-window"; AccessibleName = Name;
             FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; TopMost = true; StartPosition = FormStartPosition.Manual;
             MinimumSize = DefaultClientSize; ResizeRedraw = true; ClientSize = LoadSize(); Location = LoadPosition(); BackColor = Color.FromArgb(246, 248, 250); AutoScaleMode = AutoScaleMode.Dpi;
 
             var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 4, Margin = Padding.Empty, Padding = new Padding(2), BackColor = Color.FromArgb(222, 229, 236) };
-            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); root.RowStyles.Add(new RowStyle(SizeType.Absolute, 28)); root.RowStyles.Add(new RowStyle(SizeType.Absolute, 98)); root.RowStyles.Add(new RowStyle(SizeType.Absolute, 30)); root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            // Every functional band participates in resize.  Absolute row heights made
+            // a larger window look like an enlarged frame with unchanged contents.
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 13.333F));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 46.667F));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 14.286F));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 25.714F));
             var titleBar = new TableLayoutPanel { Name = AutomationCatalogV11.WindowTitleBarAutomationId, AccessibleName = AutomationCatalogV11.WindowTitleBarAutomationId, Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 1, Margin = new Padding(2), Padding = Padding.Empty, BackColor = Color.FromArgb(246, 248, 250), Cursor = Cursors.SizeAll };
-            titleBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); titleBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 34)); titleBar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 34));
+            titleBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 80)); titleBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10)); titleBar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 10));
             var titleLabel = new Label { Text = "零碎知识剪藏", Name = AutomationCatalogV11.WindowTitleAutomationId, AccessibleName = "零碎知识剪藏", AccessibleDescription = "桌面知识采集悬浮窗", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(8, 0, 0, 0), BackColor = Color.FromArgb(246, 248, 250), ForeColor = Color.FromArgb(79, 94, 108), Font = new Font("微软雅黑", 8.5F), Cursor = Cursors.SizeAll };
             minimizeButton = WindowButton("—", AutomationCatalogV11.WindowMinimizeAutomationId, false); minimizeButton.AccessibleDescription = "最小化到系统托盘";
             closeButton = WindowButton("×", AutomationCatalogV11.WindowCloseAutomationId, true); closeButton.AccessibleDescription = "关闭悬浮窗并退出";
@@ -134,6 +182,7 @@ namespace KnowledgeClipper
                 BackColor = Color.White,
                 ForeColor = Color.FromArgb(43, 57, 70),
                 Multiline = false,
+                AutoSize = false,
                 TabStop = true,
                 ShortcutsEnabled = true
             };
@@ -141,26 +190,53 @@ namespace KnowledgeClipper
             root.Controls.Add(titleBar, 0, 0); root.Controls.Add(sections, 0, 1); root.Controls.Add(statusButton, 0, 2); root.Controls.Add(inlineQuestionInput, 0, 3);
             dragFrame = new Panel { Name = AutomationCatalogV11.DragFrameAutomationId, AccessibleName = AutomationCatalogV11.DragFrameAutomationId, Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = new Padding(6), BackColor = Color.FromArgb(156, 170, 183), Cursor = Cursors.SizeAll };
             dragFrame.Controls.Add(root); Controls.Add(dragFrame);
+            CaptureFloatingMetrics(dragFrame);
+            ClientSizeChanged += delegate { ApplyFloatingContentScale(); };
+            Shown += delegate { ApplyFloatingContentScale(); };
+            DpiChanged += delegate { BeginInvoke((MethodInvoker)ApplyFloatingContentScale); };
+            Disposed += delegate { foreach (var metric in floatingMetrics) { metric.OwnedFont?.Dispose(); metric.BaseFont?.Dispose(); } };
+            ApplyFloatingContentScale();
 
-            clipButton.Click += async delegate { await ExecuteAsync(AutomationCatalog.ClipCapture, null); };
-            readButton.Click += async delegate { await ExecuteAsync(AutomationCatalog.ReadCapture, null); };
+            clipButton.Click += async delegate
+            {
+                if (applicationBinding != null) await ExecuteReadToAnkiAsync(ApplicationCommandKind.ClipToAnki);
+                else await ExecuteAsync(AutomationCatalog.ClipCapture, null);
+            };
+            readButton.Click += async delegate
+            {
+                if (applicationBinding != null) await ExecuteReadToAnkiAsync(ApplicationCommandKind.ReadToAnki);
+                else await ExecuteAsync(AutomationCatalog.ReadCapture, null);
+            };
             screenshotButton.Click += async delegate { await ExecuteScreenshotAsync(AutomationCatalog.ScreenshotStart); };
             contextButton.Click += async delegate { await SetContextModeAsync(!settings.ContextModeEnabled); };
             originalButton.Click += async delegate { await SetOriginalImageModeAsync(!settings.OriginalImageMode); };
             statusButton.Click += async delegate
             {
-                if (statusButton.Text == "▶ 重播") await ExecuteAsync(AutomationCatalog.PlaybackReplay, null);
-                else if (statusButton.Text == "查看答案") await OpenQuestionAsync();
+                if (statusButton.Text == "查看答案") await OpenQuestionAsync();
+                else if (applicationBinding != null && readToAnkiView != null && readToAnkiView.CanReplay && statusButton.Text.Contains("重播")) await ExecuteReadToAnkiAsync(ApplicationCommandKind.ReadToAnkiReplay);
+                else if (statusButton.Text == "▶ 重播") await ExecuteAsync(AutomationCatalog.PlaybackReplay, null);
             };
             inlineQuestionInput.MouseDown += delegate(object sender, MouseEventArgs e)
             {
                 if (e.Button != MouseButtons.Left || inlineInputActive) return;
                 inlineActivationPending = true;
+                // WM_MOUSEACTIVATE has already chosen MA_NOACTIVATE for this click. Queue the
+                // real activation after the current mouse-down message instead of depending on
+                // a MouseUp/Click that Windows may route to the previously foreground window.
+                BeginInvoke((MethodInvoker)delegate
+                {
+                    if (inlineActivationPending && !inlineInputActive) BeginInlineQuestionInput();
+                });
             };
             inlineQuestionInput.MouseUp += delegate(object sender, MouseEventArgs e)
             {
                 if (e.Button != MouseButtons.Left || !inlineActivationPending) return;
-                BeginInvoke((MethodInvoker)delegate { inlineActivationPending = false; BeginInlineQuestionInput(); });
+                BeginInvoke((MethodInvoker)delegate { BeginInlineQuestionInput(); });
+            };
+            inlineQuestionInput.Click += delegate
+            {
+                if (!inlineActivationPending) return;
+                BeginInvoke((MethodInvoker)delegate { BeginInlineQuestionInput(); });
             };
             inlineQuestionInput.Leave += delegate { if (!inlineSubmitInProgress) RestoreNoActivate(); };
             inlineQuestionInput.KeyDown += async delegate(object sender, KeyEventArgs e)
@@ -190,7 +266,23 @@ namespace KnowledgeClipper
             contextItem.Click += async delegate { await SetContextModeAsync(contextItem.Checked); };
             originalItem.Click += async delegate { await SetOriginalImageModeAsync(originalItem.Checked); };
             menu.Items.Add(contextItem); menu.Items.Add(originalItem); menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add("停止朗读", null, async delegate { await ExecuteAsync(AutomationCatalog.PlaybackStop, null); }).Name = AutomationCatalogV11.AutomationIds[AutomationCatalog.PlaybackStop];
+            var stopRead = menu.Items.Add("停止朗读", null, async delegate
+            {
+                var capturedTarget = readToAnkiView?.PlaybackTarget;
+                if (applicationBinding != null && readToAnkiView?.CanStop == true && capturedTarget != null)
+                    await applicationBinding.InvokeAsync(InvocationSource.Pointer,
+                        new ApplicationCommand(ApplicationCommandKind.ReadToAnkiStop) { PlaybackTarget = capturedTarget }, CancellationToken.None);
+            });
+            stopRead.Name = "knowledge-clipper.desktop.playback.stop";
+            stopRead.AccessibleName = stopRead.Name;
+            stopRead.Enabled = false;
+            menu.Opening += async delegate
+            {
+                stopRead.Enabled = false;
+                if (dependencies.Application?.ReadToAnkiUseCases == null) return;
+                await dependencies.Application.ReadToAnkiUseCases.RefreshPlaybackControlAsync(CancellationToken.None);
+                if (!IsDisposed) stopRead.Enabled = readToAnkiView?.CanStop == true;
+            };
             menu.Items.Add("查询最近任务", null, async delegate { await ExecuteAsync(AutomationCatalog.TaskStatusQueryRecent, null); }).Name = AutomationCatalogV11.AutomationIds[AutomationCatalog.TaskStatusQueryRecent];
             menu.Items.Add("设置…", null, delegate { OpenSettings(); }).Name = "knowledge-clipper.desktop.menu.settings";
             menu.Items.Add("恢复默认大小", null, delegate { RestoreDefaultSize(); }).Name = "knowledge-clipper.desktop.menu.window.restore-size";
@@ -199,9 +291,16 @@ namespace KnowledgeClipper
             ContextMenuStrip = menu;
             tray = new NotifyIcon { Visible = true, Text = "零碎知识剪藏", Icon = SystemIcons.Application, ContextMenuStrip = menu };
             tray.DoubleClick += delegate { RestoreFromTray(); };
-            Deactivate += delegate { if (!inlineSubmitInProgress) RestoreNoActivate(); };
+            Deactivate += delegate { if (!inlineSubmitInProgress && !inlineActivationPending) RestoreNoActivate(); };
             ResizeEnd += delegate { SaveWindowBounds(); };
-            FormClosed += delegate { if (settingsForm != null && !settingsForm.IsDisposed) settingsForm.Close(); if (screenshotSession != null) screenshotSession.CloseFromOwner(); toolTips.Dispose(); tray.Visible = false; tray.Dispose(); };
+            FormClosed += delegate { applicationBinding?.Dispose(); applicationBinding = null; if (flashcardDraftUseCases != null) flashcardDraftUseCases.Changed -= RenderFlashcardDraft; if (flashcardPreviewForm != null && !flashcardPreviewForm.IsDisposed) flashcardPreviewForm.Close(); if (settingsForm != null && !settingsForm.IsDisposed) settingsForm.Close(); if (screenshotSession != null) screenshotSession.CloseFromOwner(); toolTips.Dispose(); tray.Visible = false; tray.Dispose(); };
+            if (dependencies.Application != null)
+            {
+                applicationBinding = new DesktopViewBinding(dependencies.Application, this);
+                questionUseCases = dependencies.Application.QuestionUseCases;
+                flashcardDraftUseCases = dependencies.Application.FlashcardDraftUseCases;
+                if (flashcardDraftUseCases != null) flashcardDraftUseCases.Changed += RenderFlashcardDraft;
+            }
             ApplyModeVisuals();
 
             if (dependencies.InitializeModes)
@@ -212,9 +311,160 @@ namespace KnowledgeClipper
         }
 
         protected override bool ShowWithoutActivation { get { return true; } }
+
+        private void CaptureFloatingMetrics(Control control)
+        {
+            floatingMetrics.Add(new FloatingControlMetrics
+            {
+                Control = control, Margin = control.Margin, Padding = control.Padding,
+                BaseFont = control is Button || control is Label || control is TextBox ? (Font)control.Font.Clone() : null
+            });
+            foreach (Control child in control.Controls) CaptureFloatingMetrics(child);
+        }
+
+        private void ApplyFloatingContentScale()
+        {
+            if (applyingContentScale || IsDisposed || floatingMetrics.Count == 0 || WindowState == FormWindowState.Minimized) return;
+            applyingContentScale = true;
+            // Always derive from immutable design metrics, never the previous resize.
+            // Pixel dimensions include monitor DPI; point fonts must not apply DPI twice.
+            var pixelScale = Math.Min((float)ClientSize.Width / DefaultClientSize.Width, (float)ClientSize.Height / DefaultClientSize.Height);
+            var fontScale = pixelScale / (DeviceDpi / 96F);
+            foreach (var metric in floatingMetrics) metric.Control.SuspendLayout();
+            try
+            {
+                foreach (var metric in floatingMetrics)
+                {
+                    metric.Control.Margin = ScaleSpacing(metric.Margin, pixelScale);
+                    metric.Control.Padding = ScaleSpacing(metric.Padding, pixelScale);
+                    if (metric.Control is ModeFramePanel frame) frame.FrameThickness = Math.Max(1, (int)Math.Round(2 * pixelScale));
+                    if (metric.BaseFont == null) continue;
+                    var size = Math.Max(1F, metric.BaseFont.Size * fontScale);
+                    if (Math.Abs(metric.Control.Font.Size - size) < 0.01F) continue;
+                    var previous = metric.OwnedFont;
+                    metric.OwnedFont = new Font(metric.BaseFont.FontFamily, size, metric.BaseFont.Style, metric.BaseFont.Unit);
+                    metric.Control.Font = metric.OwnedFont;
+                    previous?.Dispose();
+                }
+            }
+            finally
+            {
+                for (var index = floatingMetrics.Count - 1; index >= 0; index--) floatingMetrics[index].Control.ResumeLayout(true);
+                applyingContentScale = false;
+            }
+        }
+
+        private static Padding ScaleSpacing(Padding value, float scale)
+        {
+            return new Padding((int)Math.Round(value.Left * scale), (int)Math.Round(value.Top * scale), (int)Math.Round(value.Right * scale), (int)Math.Round(value.Bottom * scale));
+        }
         protected override CreateParams CreateParams { get { var value = base.CreateParams; if (!inlineInputActive) value.ExStyle |= WS_EX_NOACTIVATE; return value; } }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct SizingRectangle { internal int Left, Top, Right, Bottom; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct FloatingWindowPosition
+        {
+            internal IntPtr Window, InsertAfter;
+            internal int X, Y, Width, Height;
+            internal uint Flags;
+        }
+
+        private Size NormalizeFloatingSize(int width, int height)
+        {
+            var chromeWidth = Width - ClientSize.Width;
+            var chromeHeight = Height - ClientSize.Height;
+            var clientWidth = width - chromeWidth;
+            var clientHeight = height - chromeHeight;
+            // Round only once from the design size. Do not let accessibility resize,
+            // restored bounds or SetWindowPos bypass the WM_SIZING zoom constraint.
+            var proportional = Math.Abs(clientHeight - clientWidth * (double)DefaultClientSize.Height / DefaultClientSize.Width) <= 1;
+            var widthDriven = proportional || Math.Abs(clientWidth - ClientSize.Width) / (double)DefaultClientSize.Width
+                >= Math.Abs(clientHeight - ClientSize.Height) / (double)DefaultClientSize.Height;
+            var scale = widthDriven ? clientWidth / (double)DefaultClientSize.Width : clientHeight / (double)DefaultClientSize.Height;
+            scale = Math.Max(scale, Math.Max((MinimumSize.Width - chromeWidth) / (double)DefaultClientSize.Width,
+                (MinimumSize.Height - chromeHeight) / (double)DefaultClientSize.Height));
+            return new Size((int)Math.Round(DefaultClientSize.Width * scale) + chromeWidth,
+                (int)Math.Round(DefaultClientSize.Height * scale) + chromeHeight);
+        }
+
+        protected override void SetBoundsCore(int x, int y, int width, int height, BoundsSpecified specified)
+        {
+            if (floatingMetrics != null && floatingMetrics.Count > 0 && WindowState == FormWindowState.Normal
+                && (specified & BoundsSpecified.Size) != 0)
+            {
+                var size = NormalizeFloatingSize(width, height);
+                width = size.Width; height = size.Height;
+            }
+            base.SetBoundsCore(x, y, width, height, specified);
+        }
+
+        protected override void SetClientSizeCore(int width, int height)
+        {
+            if (floatingMetrics != null && floatingMetrics.Count > 0 && WindowState == FormWindowState.Normal)
+            {
+                var chromeWidth = Width - ClientSize.Width;
+                var chromeHeight = Height - ClientSize.Height;
+                var size = NormalizeFloatingSize(width + chromeWidth, height + chromeHeight);
+                width = size.Width - chromeWidth; height = size.Height - chromeHeight;
+            }
+            // WinForms writes its cached client size after SetBoundsCore returns.
+            // Normalize here too so that cache cannot restore the unscaled axis.
+            base.SetClientSizeCore(width, height);
+        }
+
+        private void KeepWholeWindowScale(int edge, IntPtr rectangle)
+        {
+            var bounds = Marshal.PtrToStructure<SizingRectangle>(rectangle);
+            var chromeWidth = Width - ClientSize.Width;
+            var chromeHeight = Height - ClientSize.Height;
+            var width = bounds.Right - bounds.Left - chromeWidth;
+            var height = bounds.Bottom - bounds.Top - chromeHeight;
+            // A resize is a zoom of the entire floating UI, not extra space around it.
+            // For corner gestures follow the dominant axis; keep the opposite corner fixed.
+            var widthDriven = edge == 1 || edge == 2 || (edge != 3 && edge != 6
+                && Math.Abs(width - ClientSize.Width) / (double)DefaultClientSize.Width
+                    >= Math.Abs(height - ClientSize.Height) / (double)DefaultClientSize.Height);
+            var scale = widthDriven ? width / (double)DefaultClientSize.Width : height / (double)DefaultClientSize.Height;
+            var minimumScale = Math.Max((MinimumSize.Width - chromeWidth) / (double)DefaultClientSize.Width,
+                (MinimumSize.Height - chromeHeight) / (double)DefaultClientSize.Height);
+            scale = Math.Max(minimumScale, scale);
+            width = (int)Math.Round(DefaultClientSize.Width * scale) + chromeWidth;
+            height = (int)Math.Round(DefaultClientSize.Height * scale) + chromeHeight;
+            if (edge == 1 || edge == 4 || edge == 7) bounds.Left = bounds.Right - width;
+            else bounds.Right = bounds.Left + width;
+            if (edge == 3 || edge == 4 || edge == 5) bounds.Top = bounds.Bottom - height;
+            else bounds.Bottom = bounds.Top + height;
+            Marshal.StructureToPtr(bounds, rectangle, false);
+        }
+
         protected override void WndProc(ref Message m)
         {
+            if (m.Msg == 0x0046 && m.LParam != IntPtr.Zero && floatingMetrics.Count > 0
+                && WindowState == FormWindowState.Normal) // WM_WINDOWPOSCHANGING, including native/UIA resize
+            {
+                var position = Marshal.PtrToStructure<FloatingWindowPosition>(m.LParam);
+                if ((position.Flags & SWP_NOSIZE) == 0 && position.Width > 0 && position.Height > 0)
+                {
+                    var size = NormalizeFloatingSize(position.Width, position.Height);
+                    position.Width = size.Width; position.Height = size.Height;
+                    Marshal.StructureToPtr(position, m.LParam, false);
+                }
+            }
+            if (m.Msg == 0x0214 && m.LParam != IntPtr.Zero && m.WParam.ToInt32() >= 1 && m.WParam.ToInt32() <= 8) // WM_SIZING
+            {
+                KeepWholeWindowScale(m.WParam.ToInt32(), m.LParam);
+                m.Result = new IntPtr(1); return;
+            }
+            if (m.Msg == WM_NCLBUTTONDOWN)
+            {
+                var hit = m.WParam.ToInt32();
+                if (hit >= HTLEFT && hit <= HTBOTTOMRIGHT)
+                {
+                    ResizeGestureCount++;
+                    LastResizeGestureHit = hit;
+                }
+            }
             if (m.Msg == WM_MOUSEACTIVATE && !inlineInputActive)
             {
                 var foregroundBeforeActivation = GetForegroundWindow();
@@ -260,7 +510,7 @@ namespace KnowledgeClipper
             var panel = new ModeFramePanel { Name = name, AccessibleName = name, Dock = DockStyle.Fill, Margin = new Padding(3), Padding = Padding.Empty, FrameColor = Color.FromArgb(184, 196, 207) };
             var grid = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = columns, RowCount = 2, Margin = Padding.Empty, Padding = Padding.Empty, BackColor = Color.FromArgb(250, 251, 253) };
             for (var column = 0; column < columns; column++) grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F / columns));
-            grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 34)); grid.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            grid.RowStyles.Add(new RowStyle(SizeType.Percent, 35)); grid.RowStyles.Add(new RowStyle(SizeType.Percent, 65));
             grid.Controls.Add(buttons[0], 0, 0); grid.SetColumnSpan(buttons[0], columns);
             for (var index = 1; index < buttons.Length; index++) grid.Controls.Add(buttons[index], index - 1, 1);
             panel.SetContent(grid); return panel;
@@ -268,14 +518,53 @@ namespace KnowledgeClipper
 
         private async Task SetContextModeAsync(bool enabled)
         {
-            settings.ContextModeEnabled = enabled; settings.Save(config); ApplyModeVisuals();
+            SaveAuthoritativeCaptureModes(enabled, settings.ContextGranularity, settings.OriginalImageMode);
+            ApplyModeVisuals();
             await ExecuteAsync(AutomationCatalog.ContextSet, new SemanticActionArguments { enabled = enabled, granularity = settings.ContextGranularity });
         }
 
         private async Task SetOriginalImageModeAsync(bool enabled)
         {
-            settings.OriginalImageMode = enabled; settings.Save(config); ApplyModeVisuals();
+            SaveAuthoritativeCaptureModes(settings.ContextModeEnabled, settings.ContextGranularity, enabled);
+            ApplyModeVisuals();
             await ExecuteAsync(AutomationCatalog.OriginalImageSet, new SemanticActionArguments { enabled = enabled });
+        }
+
+        private void ReloadAuthoritativeCaptureModes()
+        {
+            var document = workflowSettingsService.LoadOrCreate(settings);
+            var profile = document.Profiles[document.ActiveProfileId];
+            var capture = profile.Capture ?? new CaptureSettings(false, "sentence", "ocr");
+            settings.ContextModeEnabled = capture.ContextEnabled == true;
+            settings.ContextGranularity = capture.ContextGranularity == "paragraph" ? "paragraph" : "sentence";
+            settings.OriginalImageMode = capture.ImageHandling == "original";
+            workflowSettingsRevision = workflowSettingsService.CurrentRevision;
+        }
+
+        private void MigrateLegacyCaptureModeAliases()
+        {
+            try
+            {
+                var path = UserSettings.PathFor(config);
+                if (!File.Exists(path)) return;
+                var text = File.ReadAllText(path, Encoding.UTF8);
+                if (!text.Contains("ContextModeEnabled", StringComparison.Ordinal) && !text.Contains("ContextGranularity", StringComparison.Ordinal)) return;
+                settings.Save(config);
+            }
+            catch (Exception exception) { Log("legacy-context-settings-migration-failed " + exception.GetType().Name); }
+        }
+
+        private void SaveAuthoritativeCaptureModes(bool contextEnabled, string granularity, bool originalImage)
+        {
+            var document = workflowSettingsService.LoadOrCreate(settings);
+            var profiles = new Dictionary<string, WorkflowSettingsProfile>(document.Profiles, StringComparer.Ordinal);
+            var profile = profiles[document.ActiveProfileId];
+            profiles[document.ActiveProfileId] = profile with
+            {
+                Capture = new CaptureSettings(contextEnabled, granularity == "paragraph" ? "paragraph" : "sentence", originalImage ? "original" : "ocr")
+            };
+            workflowSettingsService.Save(new WorkflowSettingsDocument(document.SchemaVersion, document.ActiveProfileId, profiles));
+            ReloadAuthoritativeCaptureModes();
         }
 
         private void ApplyModeVisuals()
@@ -283,7 +572,8 @@ namespace KnowledgeClipper
             var active = Color.FromArgb(112, 177, 220); var inactive = Color.FromArgb(184, 196, 207);
             ((ModeFramePanel)contextSection).FrameColor = settings.ContextModeEnabled ? active : inactive;
             ((ModeFramePanel)originalSection).FrameColor = settings.OriginalImageMode ? active : inactive;
-            contextButton.AccessibleDescription = settings.ContextModeEnabled ? "已启用" : "未启用";
+            contextButton.Text = settings.ContextModeEnabled ? "上下文 · 开" : "上下文 · 关";
+            contextButton.AccessibleDescription = (settings.ContextModeEnabled ? "已启用" : "未启用") + "；下一操作生效；revision=" + workflowSettingsRevision;
             originalButton.Text = settings.OriginalImageMode ? "原图 · Anki" : "原图模式";
             originalButton.AccessibleDescription = settings.OriginalImageMode ? "已启用；目的端仅 Anki；不检查 RemNote 原图" : "未启用";
             if (contextItem != null) contextItem.Checked = settings.ContextModeEnabled;
@@ -312,6 +602,206 @@ namespace KnowledgeClipper
             finally { busy = false; }
             if (failure != null) { await PresentErrorAsync(failure.Message); return; }
             if (state != null) await PresentStateAsync(action, state);
+        }
+
+        private async Task ExecuteReadToAnkiAsync(ApplicationCommandKind kind, LanguagePracticeChoice? choice = null)
+        {
+            Log("READ command=" + kind + " phase=entered binding=" + (applicationBinding != null) + " busy=" + busy);
+            if (applicationBinding == null || busy) { Log("READ command=" + kind + " phase=rejected reason=" + (applicationBinding == null ? "binding-unavailable" : "ui-busy")); return; }
+            busy = true;
+            try
+            {
+                Log("READ command=" + kind + " phase=dispatch");
+                await applicationBinding.InvokeAsync(
+                    InvocationSource.Pointer,
+                    new ApplicationCommand(kind, LanguageChoice: choice),
+                    CancellationToken.None);
+                Log("READ command=" + kind + " phase=dispatch-returned");
+            }
+            catch (Exception exception)
+            {
+                await PresentErrorAsync("read-to-anki-ui-" + exception.GetType().Name);
+            }
+            finally { busy = false; Log("READ command=" + kind + " phase=finished"); }
+        }
+
+        private void RenderFlashcardDraft(FlashcardDraftPreviewState state)
+        {
+            if (IsDisposed) return;
+            if (InvokeRequired) { BeginInvoke((MethodInvoker)delegate { RenderFlashcardDraft(state); }); return; }
+            if (flashcardPreviewForm == null || flashcardPreviewForm.IsDisposed)
+            {
+                flashcardPreviewForm = new FlashcardPreviewForm(
+                    async () => { await flashcardDraftUseCases.ConfirmAsync(CancellationToken.None); },
+                    async () => { await flashcardDraftUseCases.CancelAsync(CancellationToken.None); },
+                    async text =>
+                    {
+                        var draft = flashcardPreviewForm?.RenderedDraft;
+                        var binding = FlashcardDraftConfirmation.From(draft);
+                        var result = await questionUseCases.SubmitPreviewFollowUpAsync(text, binding, CancellationToken.None);
+                        if (!result.Accepted) throw new InvalidOperationException(result.NoticeCode ?? "question.follow-up-not-accepted");
+                    });
+                flashcardPreviewForm.FormClosed += delegate { flashcardPreviewForm = null; };
+            }
+            flashcardPreviewForm.Render(state);
+            if (!flashcardPreviewForm.Visible) flashcardPreviewForm.Show(this);
+            flashcardPreviewForm.BringToFront();
+        }
+
+        void IDesktopApplicationView.Render(DesktopViewProjection projection)
+        {
+            if (IsDisposed) return;
+            if (InvokeRequired)
+            {
+                BeginInvoke((MethodInvoker)delegate { RenderApplicationProjection(projection); });
+                return;
+            }
+            RenderApplicationProjection(projection);
+        }
+
+        private void RenderApplicationProjection(DesktopViewProjection projection)
+        {
+            if (projection == null || IsDisposed) return;
+            readToAnkiView = projection.ReadToAnki;
+            if (readToAnkiView == null || (readToAnkiView.Playback == ReadToAnkiPlaybackStatus.Idle && readToAnkiView.Pipeline == ReadToAnkiPipelineStatus.Idle)) return;
+            var diagnosticNotice = readToAnkiView.NoticeCode ?? "none";
+            if (!System.Text.RegularExpressions.Regex.IsMatch(diagnosticNotice, @"^[a-zA-Z0-9._:-]{1,160}$")) diagnosticNotice = "redacted-noncode";
+            Log("READ phase=projection pipeline=" + readToAnkiView.Pipeline + " playback=" + readToAnkiView.Playback + " notice=" + diagnosticNotice);
+
+            toolTips.SetToolTip(statusButton, readToAnkiView.NoticeCode ?? "");
+            statusButton.AccessibleDescription = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                readToAnkiView.OperationId, Playback = readToAnkiView.Playback.ToString(), Pipeline = readToAnkiView.Pipeline.ToString(),
+                readToAnkiView.CanStop, readToAnkiView.CanReplay,
+                ActionCommandId = readToAnkiView.PlaybackTarget?.ActionCommandId, AttemptId = readToAnkiView.PlaybackTarget?.AttemptId
+            });
+            if (readToAnkiView.Playback == ReadToAnkiPlaybackStatus.StopRequested)
+            {
+                SetStatus("已请求停止 · 制卡流程继续", Color.FromArgb(38, 116, 242), Color.FromArgb(238, 245, 255));
+                return;
+            }
+            if (readToAnkiView.Playback == ReadToAnkiPlaybackStatus.Unknown && readToAnkiView.Pipeline != ReadToAnkiPipelineStatus.UnknownExternalState)
+            {
+                SetStatus("播放状态未知 · 请勿重复操作", Color.FromArgb(166, 69, 79), Color.FromArgb(255, 244, 245));
+                return;
+            }
+            if (readToAnkiView.Pipeline == ReadToAnkiPipelineStatus.AwaitingCardConfirmation)
+            {
+                SetStatus(readToAnkiView.CanReplay ? "草稿待确认 · ▶ 重播" : "草稿待确认", Color.FromArgb(38, 116, 242), Color.FromArgb(238, 245, 255));
+                return;
+            }
+            if (readToAnkiView.NeedsLanguageChoice)
+            {
+                SetStatus("等待练习方式…", Color.FromArgb(180, 115, 25), Color.FromArgb(255, 249, 235));
+                if (!string.Equals(readToAnkiChoiceOperationId, readToAnkiView.OperationId, StringComparison.Ordinal))
+                {
+                    readToAnkiChoiceOperationId = readToAnkiView.OperationId;
+                    BeginInvoke((MethodInvoker)async delegate { await PresentReadToAnkiLanguageChoiceAsync(); });
+                }
+                return;
+            }
+            readToAnkiChoiceOperationId = null;
+
+            if (readToAnkiView.Pipeline == ReadToAnkiPipelineStatus.UnknownExternalState)
+            {
+                var interrupted = readToAnkiView.NoticeCode?.StartsWith("read-to-anki-observation-", StringComparison.Ordinal) == true;
+                SetStatus(interrupted ? "状态查询中断，任务结果未知" : "写入状态未知，请检查 Anki", Color.FromArgb(166, 69, 79), Color.FromArgb(255, 244, 245));
+                NotifyReadToAnkiTerminal(projection.Revision, interrupted ? "任务状态暂不可确认；请先核查，不要重复导出" : "写入状态未知", readToAnkiView.NoticeCode);
+                return;
+            }
+            if (readToAnkiView.Pipeline == ReadToAnkiPipelineStatus.AwaitingCardResolution)
+            {
+                SetStatus("需要人工处理：" + ShortStatus(readToAnkiView.NoticeCode), Color.FromArgb(180, 115, 25), Color.FromArgb(255, 249, 235));
+                if (readToAnkiView.CardResolution != null && !string.Equals(readToAnkiResolutionOperationId, readToAnkiView.OperationId, StringComparison.Ordinal))
+                {
+                    readToAnkiResolutionOperationId = readToAnkiView.OperationId;
+                    BeginInvoke((MethodInvoker)async delegate
+                    {
+                        using var dialog = new CardResolutionForm(readToAnkiView.OperationId, readToAnkiView.CardResolution);
+                        dialog.ShowDialog(this);
+                        if (dialog.Selection != null)
+                        {
+                            SetStatus("正在处理选择…", Color.FromArgb(38, 116, 242), Color.FromArgb(238, 245, 255));
+                            await applicationBinding.InvokeAsync(InvocationSource.Pointer, new ApplicationCommand(ApplicationCommandKind.ReadToAnkiResolve) { CardResolution = dialog.Selection }, CancellationToken.None);
+                        }
+                    });
+                }
+                return;
+            }
+            readToAnkiResolutionOperationId = null;
+            if (readToAnkiView.Pipeline == ReadToAnkiPipelineStatus.PartiallyFailed)
+            {
+                var speech = readToAnkiView.Playback == ReadToAnkiPlaybackStatus.Playing ? "朗读中 · " : readToAnkiView.Playback == ReadToAnkiPlaybackStatus.IdleReplayable ? "朗读完成 · " : "";
+                SetStatus(speech + "制卡失败：" + (readToAnkiView.NoticeCode ?? "unknown"), Color.FromArgb(166, 69, 79), Color.FromArgb(255, 244, 245));
+                NotifyReadToAnkiTerminal(projection.Revision, "制卡失败，可重新选择文本重试", readToAnkiView.NoticeCode);
+                return;
+            }
+            if (readToAnkiView.Pipeline == ReadToAnkiPipelineStatus.Failed)
+            {
+                var speech = readToAnkiView.Playback == ReadToAnkiPlaybackStatus.Playing ? "朗读中 · " : readToAnkiView.Playback == ReadToAnkiPlaybackStatus.IdleReplayable ? "朗读完成 · " : "";
+                SetStatus(speech + "制卡失败：" + (readToAnkiView.NoticeCode ?? "unknown"), Color.FromArgb(166, 69, 79), Color.FromArgb(255, 244, 245));
+                NotifyReadToAnkiTerminal(projection.Revision, "制卡失败，可重新选择文本重试", readToAnkiView.NoticeCode);
+                return;
+            }
+            if (readToAnkiView.Playback == ReadToAnkiPlaybackStatus.Failed)
+            {
+                SetStatus("朗读失败 · 制卡状态：" + ShortStatus(readToAnkiView.NoticeCode), Color.FromArgb(166, 69, 79), Color.FromArgb(255, 244, 245));
+                NotifyReadToAnkiTerminal(projection.Revision, "朗读失败", readToAnkiView.NoticeCode);
+                return;
+            }
+            if (readToAnkiView.Pipeline == ReadToAnkiPipelineStatus.Completed)
+            {
+                if (readToAnkiView.Playback is ReadToAnkiPlaybackStatus.Accepted or ReadToAnkiPlaybackStatus.Playing) SetStatus("朗读中 · ✓ 已写入 Anki", Color.FromArgb(38, 116, 242), Color.FromArgb(238, 245, 255));
+                else if (readToAnkiView.CanReplay) SetStatus("✓ 已写入 Anki · ▶ 重播", Color.FromArgb(35, 137, 81), Color.FromArgb(239, 250, 244));
+                else if (readToAnkiView.Playback == ReadToAnkiPlaybackStatus.Stopped) SetStatus("朗读已停止 · ✓ 已写入 Anki", Color.FromArgb(35, 137, 81), Color.FromArgb(239, 250, 244));
+                else SetStatus("✓ 已写入 Anki", Color.FromArgb(35, 137, 81), Color.FromArgb(239, 250, 244));
+                Log("READ phase=rendered-terminal pipeline=Completed playback=" + readToAnkiView.Playback + " busy=" + busy + " operationId=" + readToAnkiView.OperationId);
+                return;
+            }
+
+            var stage = readToAnkiView.Pipeline switch
+            {
+                ReadToAnkiPipelineStatus.Reviewing => "正在清洗",
+                ReadToAnkiPipelineStatus.CreatingCards => "正在制卡",
+                ReadToAnkiPipelineStatus.WritingAnki => "正在写入 Anki",
+                _ => "已受理"
+            };
+            var playback = readToAnkiView.Playback switch
+            {
+                ReadToAnkiPlaybackStatus.Playing => "朗读中",
+                ReadToAnkiPlaybackStatus.IdleReplayable => "▶ 重播",
+                ReadToAnkiPlaybackStatus.Stopped => "朗读已停止",
+                _ => null
+            };
+            SetStatus(playback == null ? stage + "…" : playback + " · " + stage, Color.FromArgb(38, 116, 242), Color.FromArgb(238, 245, 255));
+        }
+
+        private async Task PresentReadToAnkiLanguageChoiceAsync()
+        {
+            if (readToAnkiView == null || !readToAnkiView.NeedsLanguageChoice) return;
+            using (var form = new LanguagePracticeForm())
+            {
+                if (form.ShowDialog(this) != DialogResult.OK)
+                {
+                    SetStatus("等待练习方式…", Color.FromArgb(180, 115, 25), Color.FromArgb(255, 249, 235));
+                    return;
+                }
+                var choice = form.Selection switch
+                {
+                    "meaning-reading" => LanguagePracticeChoice.MeaningReading,
+                    "writing" => LanguagePracticeChoice.Writing,
+                    "both" => LanguagePracticeChoice.Both,
+                    _ => throw new InvalidOperationException("read-to-anki-language-choice-invalid")
+                };
+                await ExecuteReadToAnkiAsync(ApplicationCommandKind.ReadToAnkiResumeChoice, choice);
+            }
+        }
+
+        private void NotifyReadToAnkiTerminal(long revision, string title, string notice)
+        {
+            if (readToAnkiTerminalRevision == revision) return;
+            readToAnkiTerminalRevision = revision;
+            tray.ShowBalloonTip(3500, title, string.IsNullOrWhiteSpace(notice) ? "请打开状态记录查看详情" : notice, ToolTipIcon.Warning);
         }
 
         private async Task ExecuteScreenshotAsync(string action)
@@ -387,7 +877,7 @@ namespace KnowledgeClipper
 
         private int SetStatus(string text, Color foreground, Color background)
         {
-            statusVersion++; statusButton.Text = text ?? ""; statusButton.ForeColor = foreground; statusButton.BackColor = background; statusButton.Cursor = text == "▶ 重播" ? Cursors.Hand : Cursors.Default; return statusVersion;
+            statusVersion++; statusButton.Text = text ?? ""; statusButton.ForeColor = foreground; statusButton.BackColor = background; statusButton.Cursor = (text ?? "").Contains("重播") ? Cursors.Hand : Cursors.Default; return statusVersion;
         }
 
         private async Task TemporaryStatusAsync(string text, Color foreground, Color background, int milliseconds, bool replayAfter)
@@ -415,7 +905,9 @@ namespace KnowledgeClipper
             {
                 if (ReferenceEquals(settingsForm, dialog)) settingsForm = null;
                 if (dialog.DialogResult != DialogResult.OK || dialog.SavedSettings == null) { dialog.Dispose(); return; }
-                settings = dialog.SavedSettings; contextItem.Checked = settings.ContextModeEnabled; originalItem.Checked = settings.OriginalImageMode;
+                settings = dialog.SavedSettings;
+                ReloadAuthoritativeCaptureModes();
+                contextItem.Checked = settings.ContextModeEnabled; originalItem.Checked = settings.OriginalImageMode;
                 ApplyModeVisuals();
                 controller.Execute(Action(AutomationCatalog.ContextSet, new SemanticActionArguments { enabled = settings.ContextModeEnabled, granularity = settings.ContextGranularity }));
                 controller.Execute(Action(AutomationCatalog.OriginalImageSet, new SemanticActionArguments { enabled = settings.OriginalImageMode }));
@@ -476,16 +968,32 @@ namespace KnowledgeClipper
 
         private void BeginInlineQuestionInput()
         {
-            if (IsDisposed || inlineInputActive) return;
+            if (IsDisposed) return;
+            if (inlineInputActive)
+            {
+                inlineActivationPending = false;
+                EnsureInlineQuestionFocus(0);
+                return;
+            }
             var foregroundBeforeActivation = GetForegroundWindow();
             if (previousForegroundWindow == IntPtr.Zero && foregroundBeforeActivation != IntPtr.Zero && foregroundBeforeActivation != Handle) previousForegroundWindow = foregroundBeforeActivation;
             inlineInputActive = true;
             SetNoActivateStyle(false);
-            SetForegroundWindow(Handle);
-            Activate();
-            inlineQuestionInput.Focus();
-            inlineQuestionInput.SelectionStart = inlineQuestionInput.TextLength;
-            inlineQuestionInput.SelectionLength = 0;
+            EnsureInlineQuestionFocus(0);
+        }
+
+        private void EnsureInlineQuestionFocus(int attempt)
+        {
+            if (IsDisposed || !inlineInputActive) { inlineActivationPending = false; return; }
+            SetForegroundWindow(Handle); Activate(); inlineQuestionInput.Select(); inlineQuestionInput.Focus();
+            inlineQuestionInput.SelectionStart = inlineQuestionInput.TextLength; inlineQuestionInput.SelectionLength = 0;
+            if (GetForegroundWindow() == Handle && inlineQuestionInput.Focused)
+            {
+                inlineActivationPending = false;
+                return;
+            }
+            if (attempt >= 3) { inlineActivationPending = false; RestoreNoActivate(); return; }
+            BeginInvoke((MethodInvoker)delegate { EnsureInlineQuestionFocus(attempt + 1); });
         }
 
         private void RestoreNoActivate()
@@ -518,6 +1026,35 @@ namespace KnowledgeClipper
             inlineSubmitInProgress = true;
             inlineQuestionInput.Enabled = false;
             SetStatus("正在提交问题…", Color.FromArgb(38, 116, 242), Color.White);
+            if (questionUseCases != null)
+            {
+                try
+                {
+                    var result = await questionUseCases.SubmitInitialAsync(original, CancellationToken.None);
+                    if (result.Accepted)
+                    {
+                        inlineQuestionInput.Clear();
+                        SetStatus("答案与卡片草稿已就绪，请预览确认", Color.SeaGreen, Color.White);
+                    }
+                    else
+                    {
+                        inlineQuestionInput.Text = original;
+                        SetStatus("问题未完成 · " + result.NoticeCode, Color.Firebrick, Color.White);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    inlineQuestionInput.Text = original;
+                    SetStatus("问题未完成 · " + exception.GetType().Name, Color.Firebrick, Color.White);
+                }
+                finally
+                {
+                    inlineQuestionInput.Enabled = true;
+                    inlineSubmitInProgress = false;
+                    RestoreNoActivate();
+                }
+                return;
+            }
             DesktopSemanticState submitted = null;
             try
             {
@@ -646,7 +1183,7 @@ namespace KnowledgeClipper
         private Point dragStart, formStart; private bool dragging;
         private void DragMouseDown(object sender, MouseEventArgs e)
         {
-            if (e.Button != MouseButtons.Left || (ReferenceEquals(sender, statusButton) && (statusButton.Text == "▶ 重播" || statusButton.Text == "查看答案"))) return;
+            if (e.Button != MouseButtons.Left || (ReferenceEquals(sender, statusButton) && (statusButton.Text.Contains("重播") || statusButton.Text == "查看答案"))) return;
             var resizeHit = ResizeHitTest(PointToClient(Cursor.Position));
             if (resizeHit != HTCLIENT)
             {
@@ -685,7 +1222,18 @@ namespace KnowledgeClipper
         private void RestoreFromTray() { if (IsDisposed) return; WindowState = FormWindowState.Normal; EnsureWindowSize(); Show(); TopMost = true; BringToFront(); }
         private Size LoadSize() { try { var path = Path.Combine(config.WorkDirectory, "size.txt"); if (File.Exists(path)) { var p = File.ReadAllText(path).Split(','); int width, height; if (p.Length == 2 && int.TryParse(p[0], out width) && int.TryParse(p[1], out height)) return ClampSize(new Size(width, height)); } } catch { } return DefaultClientSize; }
         private Point LoadPosition() { try { var path = Path.Combine(config.WorkDirectory, "position.txt"); if (File.Exists(path)) { var p = File.ReadAllText(path).Split(','); int x, y; if (p.Length == 2 && int.TryParse(p[0], out x) && int.TryParse(p[1], out y)) return EnsureVisible(new Point(x, y)); } } catch { } var area = Screen.PrimaryScreen.WorkingArea; return new Point(area.Right - Width - 20, area.Top + area.Height / 3); }
-        private static Size ClampSize(Size value) { var bounds = SystemInformation.VirtualScreen; return new Size(Math.Max(DefaultClientSize.Width, Math.Min(value.Width, Math.Max(DefaultClientSize.Width, bounds.Width))), Math.Max(DefaultClientSize.Height, Math.Min(value.Height, Math.Max(DefaultClientSize.Height, bounds.Height)))); }
+        private static Size ClampSize(Size value)
+        {
+            var bounds = SystemInformation.VirtualScreen;
+            // Legacy size.txt may contain only a widened/tall frame. Convert it to
+            // one zoom before controls or the HWND exist; do not clamp axes apart.
+            var scale = Math.Max(1, Math.Max(value.Width / (double)DefaultClientSize.Width,
+                value.Height / (double)DefaultClientSize.Height));
+            var maximum = Math.Max(1, Math.Min(bounds.Width / (double)DefaultClientSize.Width,
+                bounds.Height / (double)DefaultClientSize.Height));
+            scale = Math.Min(scale, maximum);
+            return new Size((int)Math.Round(DefaultClientSize.Width * scale), (int)Math.Round(DefaultClientSize.Height * scale));
+        }
         private void EnsureWindowSize() { var safe = ClampSize(ClientSize); if (ClientSize != safe) ClientSize = safe; }
         internal void RestoreDefaultSize() { ClientSize = DefaultClientSize; SaveWindowBounds(); SetStatus("已恢复默认大小", Color.FromArgb(38, 116, 242), Color.White); }
         private Point EnsureVisible(Point point) { foreach (var screen in Screen.AllScreens) if (screen.WorkingArea.Contains(point)) return point; return Screen.PrimaryScreen.WorkingArea.Location; }
@@ -758,6 +1306,9 @@ namespace KnowledgeClipper
         private bool submissionInProgress;
         private bool refreshBusy;
         private int refreshAttempts;
+        private int refreshEpoch;
+        private bool userEditing;
+        internal event Action<string> FocusTimeline;
         internal QuestionForm(Func<string, SemanticActionArguments, Task<DesktopSemanticState>> execute, IQuestionAnswerArtifactReader answerReader = null, Func<Task<DesktopSemanticState>> refreshActiveQuestion = null)
         {
             if (execute == null) throw new ArgumentNullException("execute");
@@ -784,31 +1335,50 @@ namespace KnowledgeClipper
             submit = Make("提问", AutomationCatalog.QuestionSubmit); followUp = Make("追问", AutomationCatalog.QuestionFollowUp); cards = Make("制卡", AutomationCatalog.QuestionMakeCards);
             refresh = new Button { Text = "刷新", Name = "knowledge-clipper.desktop.question.active-session.refresh", AccessibleName = "knowledge-clipper.desktop.question.active-session.refresh", Width = 88, Height = 32 };
             cancel = new Button { Text = "取消", Name = AutomationCatalogV11.QuestionCancelAutomationId, AccessibleName = AutomationCatalogV11.QuestionCancelAutomationId, Width = 82, Height = 32, DialogResult = DialogResult.Cancel };
+            cancel.Click += delegate { DialogResult = DialogResult.Cancel; Close(); };
             submit.Enabled = false; followUp.Enabled = false; cards.Enabled = false;
             submit.Click += async delegate { await SubmitTextAsync(execute, answerAvailable); };
             followUp.Click += async delegate { await SubmitTextAsync(execute, true); };
             refresh.Click += async delegate { Update(await this.refreshActiveQuestion()); };
             cards.Click += async delegate { var state = await execute(AutomationCatalog.QuestionMakeCards, new SemanticActionArguments { cardStructureRef = cardRef.Text }); Update(state); if (state != null && !state.questionSession.open) { DialogResult = DialogResult.OK; Close(); } };
-            input.TextChanged += delegate { RefreshButtons(); };
+            input.Enter += delegate { userEditing = true; refreshEpoch++; TraceFocus("input.enter"); };
+            input.Leave += delegate { userEditing = false; TraceFocus("input.leave"); };
+            input.KeyDown += delegate(object sender, KeyEventArgs e)
+            {
+                if (e.KeyCode != Keys.Escape) return;
+                e.Handled = true; e.SuppressKeyPress = true; DialogResult = DialogResult.Cancel; Close();
+            };
+            input.TextChanged += delegate { if (input.Focused) userEditing = true; RefreshButtons(); };
             cardRef.TextChanged += delegate { cards.Enabled = answerAvailable; };
             row.Controls.Add(submit); row.Controls.Add(followUp); row.Controls.Add(refresh); row.Controls.Add(cards); row.Controls.Add(cancel);
             layout.Controls.Add(inputLabel, 0, 0); layout.Controls.Add(input, 0, 1); layout.Controls.Add(validation, 0, 2); layout.Controls.Add(answerStatus, 0, 3); layout.Controls.Add(answer, 0, 4); layout.Controls.Add(cardLabel, 0, 5); layout.Controls.Add(cardRef, 0, 6); layout.Controls.Add(row, 0, 7); Controls.Add(layout);
             refreshTimer = new System.Windows.Forms.Timer { Interval = 700 };
             refreshTimer.Tick += async delegate
             {
-                if (refreshBusy || refreshAttempts >= 240) { if (refreshAttempts >= 240) refreshTimer.Stop(); return; }
+                if (userEditing || refreshBusy || refreshAttempts >= 240) { if (refreshAttempts >= 240) StopAutoRefresh(); return; }
+                var epoch = refreshEpoch;
                 refreshBusy = true; refreshAttempts++;
-                try { Update(await this.refreshActiveQuestion()); }
-                catch (Exception ex) { refreshTimer.Stop(); SetAnswerStatus("failed", "刷新答案失败：" + ex.Message, Color.FromArgb(166, 69, 79)); RefreshButtons(); }
+                TraceFocus("refresh.begin." + epoch);
+                try
+                {
+                    var state = await this.refreshActiveQuestion();
+                    if (!IsDisposed && epoch == refreshEpoch && !userEditing) Update(state);
+                    else TraceFocus("refresh.discard." + epoch);
+                }
+                catch (Exception ex) { StopAutoRefresh(); SetAnswerStatus("failed", "刷新答案失败：" + ex.Message, Color.FromArgb(166, 69, 79)); RefreshButtons(); }
                 finally { refreshBusy = false; }
             };
-            RefreshButtons(); CancelButton = cancel; Shown += delegate { input.Focus(); };
+            RefreshButtons(); CancelButton = cancel;
+            Activated += delegate { TraceFocus("form.activated"); };
+            Deactivate += delegate { TraceFocus("form.deactivated"); };
+            Shown += delegate { BeginInvoke((MethodInvoker)delegate { Activate(); input.Select(); input.Focus(); TraceFocus("form.shown.focused"); }); };
             FormClosed += delegate { refreshTimer.Stop(); refreshTimer.Dispose(); };
         }
         private async Task SubmitTextAsync(Func<string, SemanticActionArguments, Task<DesktopSemanticState>> execute, bool followUpAction)
         {
             if (string.IsNullOrWhiteSpace(input.Text)) { validation.Text = "问题不能为空"; RefreshButtons(); return; }
             if (submissionInProgress) { validation.Text = "当前问题仍在处理中"; RefreshButtons(); return; }
+            userEditing = false; refreshEpoch++;
             submissionInProgress = true; answerAvailable = false; answer.Clear(); SetAnswerStatus("loading", "正在生成答案…", Color.FromArgb(38, 116, 242)); RefreshButtons();
             var state = await execute(followUpAction ? AutomationCatalog.QuestionFollowUp : AutomationCatalog.QuestionSubmit, new SemanticActionArguments { text = input.Text });
             Update(state);
@@ -828,18 +1398,23 @@ namespace KnowledgeClipper
                 if (result != null && result.ready)
                 {
                     answer.Text = result.text ?? ""; answerAvailable = true; submissionInProgress = false;
-                    refreshTimer.Stop(); SetAnswerStatus("ready", "答案已更新（已校验）", Color.FromArgb(35, 137, 81)); RefreshButtons(); return;
+                    StopAutoRefresh(); SetAnswerStatus("ready", "答案已更新（已校验）", Color.FromArgb(35, 137, 81)); RefreshButtons(); return;
                 }
-                submissionInProgress = false; refreshTimer.Stop(); SetAnswerStatus("failed", "答案读取失败：" + (result == null ? "question.answer.reader-unavailable" : result.noticeCode), Color.FromArgb(166, 69, 79)); RefreshButtons(); return;
+                submissionInProgress = false; StopAutoRefresh(); SetAnswerStatus("failed", "答案读取失败：" + (result == null ? "question.answer.reader-unavailable" : result.noticeCode), Color.FromArgb(166, 69, 79)); RefreshButtons(); return;
             }
             var answerState = state.questionSession.answerState;
             if (answerState == "loading" || state.foregroundState == "question-awaiting-answer") { submissionInProgress = true; SetAnswerStatus("loading", "正在生成答案…", Color.FromArgb(38, 116, 242)); StartAutoRefresh(); }
-            else if (answerState == "failed" || (state.recentTask != null && state.recentTask.displayState == "failed")) { submissionInProgress = false; refreshTimer.Stop(); SetAnswerStatus("failed", "回答失败，请检查任务状态后重试", Color.FromArgb(166, 69, 79)); }
+            else if (answerState == "failed" || (state.recentTask != null && state.recentTask.displayState == "failed")) { submissionInProgress = false; StopAutoRefresh(); SetAnswerStatus("failed", "回答失败，请检查任务状态后重试", Color.FromArgb(166, 69, 79)); }
             else if (state.questionSession.answerAvailable) { submissionInProgress = false; SetAnswerStatus("waiting_input", "答案已生成，等待可验证的答案引用", Color.FromArgb(137, 96, 18)); StartAutoRefresh(); }
-            else { submissionInProgress = false; refreshTimer.Stop(); SetAnswerStatus("waiting_input", "等待提交问题", Color.FromArgb(65, 76, 92)); }
+            else { submissionInProgress = false; StopAutoRefresh(); SetAnswerStatus("waiting_input", "等待提交问题", Color.FromArgb(65, 76, 92)); }
             RefreshButtons();
         }
         private void StartAutoRefresh() { if (!refreshTimer.Enabled) { refreshAttempts = 0; refreshTimer.Start(); } }
+        private void StopAutoRefresh() { refreshEpoch++; refreshTimer.Stop(); }
+        private void TraceFocus(string transition)
+        {
+            FocusTimeline?.Invoke(transition + " utc=" + DateTimeOffset.UtcNow.ToString("O") + " form=0x" + Handle.ToInt64().ToString("X") + " input=0x" + input.Handle.ToInt64().ToString("X") + " focused=" + input.Focused + " containsFocus=" + ContainsFocus + " instance=" + GetHashCode().ToString("X"));
+        }
         private void SetAnswerStatus(string state, string text, Color color) { answerStatus.AccessibleDescription = state; answerStatus.Text = text; answerStatus.ForeColor = color; }
         private void RefreshButtons()
         {

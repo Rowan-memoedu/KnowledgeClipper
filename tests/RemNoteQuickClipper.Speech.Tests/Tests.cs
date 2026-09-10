@@ -62,6 +62,7 @@ namespace KnowledgeClipper.Speech.Tests
             Run("runtime configuration prefers neutral environment names", TestRuntimeEnvironmentCompatibility);
             Run("describe CLI rejects missing json flag", TestDescribeCliRejectsInvalidShape);
             Run("run CLI synthesizes from absolute request only", TestRunSynthesisCli);
+            Run("long request CLI synthesis playback and boundaries beyond MAX_PATH", delegate { LongRequestPathTests.Run(runRoot); });
             Run("run CLI publishes dependency failure for missing Edge runtime", TestRunSynthesisMissingRuntime);
             Run("run CLI starts playback stage", TestRunPlaybackCli);
             Run("run CLI publishes dependency failure for missing playback runtime", TestRunPlaybackMissingRuntime);

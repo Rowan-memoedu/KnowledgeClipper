@@ -46,7 +46,9 @@ internal static class FrozenAuthorityWorkerAdmission
             RequireHash(registryBytes, authority.RegistrySha256, $"registry for '{workerId}'");
             using var registryDocument = StrictJson.Parse(registryBytes, registryPath);
             var registry = registryDocument.RootElement;
-            Require(GetRequiredString(registry, "registryVersion") == "1.2.41", "Worker authority registryVersion must be 1.2.41.");
+            var expectedRegistryVersion = catalog.Document.AuthorityAnchor.AuthorityVersion;
+            Require(GetRequiredString(registry, "registryVersion") == expectedRegistryVersion,
+                $"Worker authority registryVersion must match capability authorityAnchor '{expectedRegistryVersion}'.");
             var matches = registry.GetProperty("workers").EnumerateArray()
                 .Where(item => GetRequiredString(item, "workerId") == workerId)
                 .Select(item => item.Clone())
@@ -72,8 +74,10 @@ internal static class FrozenAuthorityWorkerAdmission
             var requiredStage = workerId switch
             {
                 "content.deepseek" => "content.understand-and-card",
+                "speech.edge" => "speech.synthesize",
                 "export.anki" when capability.OperationId == "anki.probe" => "anki-probe",
                 "export.anki" => "anki-export",
+                "export.remnote" => "export-remnote",
                 _ => throw new InvalidDataException($"Worker '{workerId}' is outside the Phase 2 slice.")
             };
             Require(stages.Contains(requiredStage, StringComparer.Ordinal), $"Worker '{workerId}' does not describe required stage '{requiredStage}'.");
@@ -89,8 +93,15 @@ internal static class FrozenAuthorityWorkerAdmission
                 GetRequiredString(describe, "idempotencyLevel")));
         }
 
-        Require(admitted.ContainsKey("content.deepseek"), "Phase 2 requires admitted content.deepseek.");
-        Require(admitted.ContainsKey("export.anki"), "Phase 2 requires admitted export.anki.");
+        if (catalog.Document.Operations.Any(item => item.Available && (item.OperationId.StartsWith("question.", StringComparison.Ordinal) || item.OperationId == "clip.read-aloud-cards")))
+        {
+            Require(admitted.ContainsKey("content.deepseek"), "Card workflows require admitted content.deepseek.");
+            Require(admitted.ContainsKey("export.anki"), "The existing card workflow catalog requires admitted export.anki.");
+        }
+        if (catalog.Document.Operations.Any(item => item.Available && item.WorkerBinding.WorkerId == "speech.edge"))
+        {
+            Require(admitted.ContainsKey("speech.edge"), "Read-to-Anki requires admitted speech.edge.");
+        }
         return admitted;
     }
 

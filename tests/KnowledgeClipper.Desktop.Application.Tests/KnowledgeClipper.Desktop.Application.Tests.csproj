@@ -11,5 +11,8 @@
   <ItemGroup>
     <Compile Include="..\..\src\KnowledgeClipper.Desktop.Application\*.cs" Link="Application\%(Filename)%(Extension)" />
     <Compile Include="Program.cs" />
+    <Compile Include="ReplayIdentityTests.cs" />
+    <Compile Include="PlaybackFlowFixture.cs" />
+    <Compile Include="PlaybackStopTests.cs" />
   </ItemGroup>
 </Project>
