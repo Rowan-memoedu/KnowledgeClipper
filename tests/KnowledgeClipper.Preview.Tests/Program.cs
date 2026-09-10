@@ -26,6 +26,7 @@ internal static class Program
         try
         {
             var root = args[0]; var artifacts = args[1];
+            if (args.Contains("--deck-routing")) { await DeckPreviewChecks.RunAsync(root, artifacts); return; }
             var store = new DraftStore(Path.Combine(artifacts, "preview-state"));
             var configuration = ModeConfigurationLoader.Load(Path.Combine(root, "modes"));
             ClipDraft Create() => new() {

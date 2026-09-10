@@ -9,7 +9,8 @@
       "schemaFile": "language.schema.json",
       "outputKind": "language",
       "followUpDefault": false,
-      "requiresContext": true
+      "requiresContext": true,
+      "ankiDeckPath": "语言学习::{语种}::{格式}"
     },
     {
       "id": "translation",
@@ -20,7 +21,8 @@
       "schemaFile": "translation.schema.json",
       "outputKind": "translation",
       "followUpDefault": false,
-      "requiresContext": false
+      "requiresContext": false,
+      "ankiDeckPath": "翻译::中译英"
     },
     {
       "id": "question",
@@ -31,7 +33,8 @@
       "schemaFile": "question.schema.json",
       "outputKind": "question",
       "followUpDefault": true,
-      "requiresContext": false
+      "requiresContext": false,
+      "ankiDeckPath": "问答"
     }
   ]
 }

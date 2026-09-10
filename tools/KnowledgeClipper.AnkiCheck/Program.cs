@@ -53,7 +53,8 @@ try
     store.Save(draft);
     evidence["draftPath"] = Path.Combine(dataRoot, "language-drafts", draft.Id + ".json");
     evidence["draftId"] = draft.Id;
-    evidence["deck"] = settings.AnkiDeck;
+    evidence["deck"] = draft.ConfirmedNote.Deck;
+    evidence["cardDecks"] = draft.ConfirmedNote.CardDecks;
     evidence["model"] = draft.ConfirmedNote.Model;
     evidence["practice"] = draft.ConfirmedNote.IsBasic ? "Basic" : practice.ToString();
     evidence["confirmedNote"] = draft.ConfirmedNote;
@@ -109,7 +110,7 @@ try
     }
     foreach (var card in cards.EnumerateArray())
     {
-        Check(card.GetProperty("note").GetInt64() == draft.NoteId && card.GetProperty("deckName").GetString() == settings.AnkiDeck, "actual card belongs to selected note and deck");
+        Check(card.GetProperty("note").GetInt64() == draft.NoteId && card.GetProperty("deckName").GetString() == draft.ConfirmedNote.DeckFor(card.GetProperty("ord").GetInt32()), "actual card belongs to selected note and its confirmed deck");
         Check(card.GetProperty("queue").GetInt32() >= 0, "actual card is neither suspended nor buried");
         var question = Plain(card.GetProperty("question").GetString()!);
         var answer = Plain(card.GetProperty("answer").GetString()!);
@@ -204,7 +205,8 @@ static async Task<int> VerifyExistingAsync(string draftPath, string output)
             report["modelNamesIncludesTarget"] = (await anki.ModelsAsync()).Contains(model);
             report["modelFields"] = await anki.CallAsync("modelFieldNames", new { modelName = model });
             report["templates"] = await anki.CallAsync("modelTemplates", new { modelName = model });
-            report["deckNamesIncludesTarget"] = (await anki.DecksAsync()).Contains(draft.Settings.AnkiDeck);
+            var decks = await anki.DecksAsync();
+            report["deckNamesIncludesTarget"] = draft.ConfirmedNote!.Ordinals.All(ordinal => decks.Contains(draft.ConfirmedNote.DeckFor(ordinal)));
             report["status"] = "not-found-no-write";
             Console.WriteLine("No note for this draft; metadata responds; no write attempted.");
         }

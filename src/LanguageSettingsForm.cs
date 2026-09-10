@@ -46,7 +46,7 @@ internal sealed class LanguageSettingsForm : Form
         var volume = Number(value.VolumePercent, -100, 100); Add("音量变化 %", volume);
         var pitch = Number(value.PitchHz, -50, 50); Add("音调变化 Hz", pitch);
         var endpoint = TextField(value.AnkiEndpoint, "knowledge-clipper.language.anki-endpoint"); Add("AnkiConnect", endpoint);
-        var deck = new ComboBox { Text = value.AnkiDeck, Name = "knowledge-clipper.language.deck", AccessibleName = "knowledge-clipper.language.deck" }; Add("Anki 牌组", deck);
+        var deck = new ComboBox { Text = value.AnkiRootDeck ?? value.AnkiDeck, Name = "knowledge-clipper.language.deck", AccessibleName = "knowledge-clipper.language.deck" }; Add("Anki 根牌组", deck);
         var model = new ComboBox { Text = value.AnkiModel, Name = "knowledge-clipper.language.note-type", AccessibleName = "knowledge-clipper.language.note-type" }; Add("语言笔记类型", model);
         var readAnki = new Button { Text = "读取 Anki 牌组与类型", AutoSize = true }; Add("", readAnki);
         var api = TextField(value.ApiBaseUrl, "knowledge-clipper.language.api-url"); Add("内容 API", api);
@@ -55,10 +55,12 @@ internal sealed class LanguageSettingsForm : Form
         var config = ModeConfigurationLoader.Load(flow.ModeDefaults, flow.ModeOverrides);
         var definitions = ModeConfigurationLoader.LoadDefinitions(flow.ModeDefaults, flow.ModeOverrides);
         var modeEdits = config.Modes.ToDictionary(m => m.Definition.Id, m => new ModeEdit(m), StringComparer.Ordinal);
-        var promptPage = new TabPage("现有模式与提示词"); tabs.TabPages.Add(promptPage);
-        var prompts = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 8, Padding = new Padding(10) };
+        var promptPage = new TabPage("现有模式与提示词") { AutoScroll = true }; tabs.TabPages.Add(promptPage);
+        var prompts = new TableLayoutPanel { Dock = DockStyle.Top, Height = 760, ColumnCount = 1, RowCount = 11, Padding = new Padding(10) };
+        prompts.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         prompts.RowStyles.Add(new RowStyle(SizeType.AutoSize)); prompts.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         prompts.RowStyles.Add(new RowStyle(SizeType.Absolute, 72)); prompts.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        prompts.RowStyles.Add(new RowStyle(SizeType.AutoSize)); prompts.RowStyles.Add(new RowStyle(SizeType.AutoSize)); prompts.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         prompts.RowStyles.Add(new RowStyle(SizeType.AutoSize)); prompts.RowStyles.Add(new RowStyle(SizeType.Percent, 30));
         prompts.RowStyles.Add(new RowStyle(SizeType.AutoSize)); prompts.RowStyles.Add(new RowStyle(SizeType.Percent, 70));
         TextBox Prompt(string text) => new() { Text = text, Multiline = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, AcceptsReturn = true, WordWrap = true };
@@ -73,13 +75,16 @@ internal sealed class LanguageSettingsForm : Form
         processing.Name = processing.AccessibleName = "knowledge-clipper.language.processing-prompt";
         var followUp = new CheckBox { Text = "本模式默认展开追问", AutoSize = true,
             Name = "knowledge-clipper.language.follow-up-default", AccessibleName = "knowledge-clipper.language.follow-up-default" };
+        var deckPath = TextField("", "knowledge-clipper.language.mode-deck-path"); deckPath.Dock = DockStyle.Top;
+        var deckHelp = new Label { AutoSize = true, ForeColor = Color.DimGray,
+            Text = "根牌组 + 子路径组成完整牌组，用 :: 分层。语言模式可用 {语种}、{格式}，例如 语言学习::{语种}::{格式}；其他模式可填 问答 或 翻译::中译英。" };
         string selectedModeId = null;
         string PromptPath(ModeDefinition definition) => Path.GetFullPath(Path.Combine(flow.ModeOverrides, definition.PromptFile));
         void RememberMode()
         {
             if (selectedModeId == null) return;
             var edit = modeEdits[selectedModeId];
-            edit.Description = description.Text; edit.FollowUpDefault = followUp.Checked;
+            edit.Description = description.Text; edit.FollowUpDefault = followUp.Checked; edit.DeckPath = deckPath.Text.Trim();
             // If existing definitions deliberately share a prompt file, their editors share its value too.
             var path = PromptPath(edit.Original.Definition);
             foreach (var shared in modeEdits.Values.Where(m => StringComparer.OrdinalIgnoreCase.Equals(PromptPath(m.Original.Definition), path)))
@@ -91,13 +96,15 @@ internal sealed class LanguageSettingsForm : Form
             if (mode.SelectedItem is not ModeDefinition selected) return;
             selectedModeId = selected.Id;
             var edit = modeEdits[selected.Id];
-            description.Text = edit.Description; processing.Text = edit.Prompt; followUp.Checked = edit.FollowUpDefault;
+            description.Text = edit.Description; processing.Text = edit.Prompt; followUp.Checked = edit.FollowUpDefault; deckPath.Text = edit.DeckPath;
         };
         prompts.Controls.Add(modeBar, 0, 0);
         prompts.Controls.Add(new Label { Text = "模式识别说明", AutoSize = true }, 0, 1); prompts.Controls.Add(description, 0, 2);
         prompts.Controls.Add(followUp, 0, 3);
-        prompts.Controls.Add(new Label { Text = "公共分类提示词（所有模式共用）", AutoSize = true }, 0, 4); prompts.Controls.Add(classification, 0, 5);
-        prompts.Controls.Add(new Label { Text = "本模式处理提示词", AutoSize = true }, 0, 6); prompts.Controls.Add(processing, 0, 7);
+        prompts.Controls.Add(new Label { Text = "Anki 子牌组路径", AutoSize = true }, 0, 4); prompts.Controls.Add(deckPath, 0, 5); prompts.Controls.Add(deckHelp, 0, 6);
+        prompts.Controls.Add(new Label { Text = "公共分类提示词（所有模式共用）", AutoSize = true }, 0, 7); prompts.Controls.Add(classification, 0, 8);
+        prompts.Controls.Add(new Label { Text = "本模式处理提示词", AutoSize = true }, 0, 9); prompts.Controls.Add(processing, 0, 10);
+        promptPage.SizeChanged += (_, _) => { prompts.Height = Math.Max(760, promptPage.ClientSize.Height); deckHelp.MaximumSize = new Size(Math.Max(250, promptPage.ClientSize.Width - 44), 0); };
         promptPage.Controls.Add(prompts); mode.SelectedIndex = 0;
         var notice = new Label { AutoSize = true, MaximumSize = new Size(750, 0), Text = "全局选词开关保存后立即生效，其余设置用于下一次操作。专用语言类型在首次确认导入时创建；已有模板不会被覆盖。" }; root.Controls.Add(notice, 0, 1);
         readAnki.Click += async (_, _) =>
@@ -110,7 +117,7 @@ internal sealed class LanguageSettingsForm : Form
                 var decks = await anki.DecksAsync(); var models = await anki.ModelsAsync();
                 var oldDeck = deck.Text; var oldModel = model.Text; deck.Items.Clear(); model.Items.Clear();
                 deck.Items.AddRange(decks); model.Items.AddRange(models); deck.Text = oldDeck; model.Text = oldModel;
-                notice.Text = "已读取 Anki；请选择兼容语言共享字段的类型，或保留专用类型名称。";
+                notice.Text = "已读取 Anki，可选择已有牌组作为根牌组；各模式的子路径在模式页设置。";
             }
             catch (Exception ex) { notice.Text = "读取未完成：" + ex.Message; }
             finally { readAnki.Enabled = true; }
@@ -126,11 +133,12 @@ internal sealed class LanguageSettingsForm : Form
                     ContextEnabled = context.Checked, ContextGranularity = granularity.SelectedIndex == 1 ? "paragraph" : "sentence",
                     Practice = (PracticeChoice)practice.SelectedIndex, AutoVoice = autoVoice.Checked, Voice = voice.Text.Trim(), EnglishVoice = englishVoice.Text.Trim(),
                     RatePercent = (int)rate.Value, VolumePercent = (int)volume.Value, PitchHz = (int)pitch.Value,
-                    AnkiEndpoint = endpoint.Text.Trim(), AnkiDeck = deck.Text.Trim(), AnkiModel = model.Text.Trim(), ApiBaseUrl = api.Text.Trim(), Model = apiModel.Text.Trim() };
+                    AnkiEndpoint = endpoint.Text.Trim(), AnkiRootDeck = deck.Text.Trim(), AnkiDeck = deck.Text.Trim(), AnkiModel = model.Text.Trim(), ApiBaseUrl = api.Text.Trim(), Model = apiModel.Text.Trim() };
                 changed.Validate();
                 RememberMode();
                 if (string.IsNullOrWhiteSpace(classification.Text) || modeEdits.Values.Any(m => string.IsNullOrWhiteSpace(m.Description) || string.IsNullOrWhiteSpace(m.Prompt)))
                     throw new InvalidOperationException("模式说明和提示词不能为空。");
+                foreach (var edit in modeEdits.Values) DeckRouting.ValidatePattern(edit.DeckPath, edit.Original.Definition.OutputKind);
                 var promptWrites = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 if (classification.Text != config.ClassificationPrompt) promptWrites.Add(Path.GetFullPath(Path.Combine(flow.ModeOverrides, "classification.md")), classification.Text);
                 foreach (var edit in modeEdits.Values.Where(m => m.Prompt != m.Original.Prompt))
@@ -142,10 +150,10 @@ internal sealed class LanguageSettingsForm : Form
                 }
                 if (!string.IsNullOrWhiteSpace(apiKey.Text)) { var credentials = DesktopCredentialSettings.Load(dataRoot); credentials.DeepSeekApiKey = apiKey.Text.Trim(); credentials.Save(dataRoot); }
                 Directory.CreateDirectory(flow.ModeOverrides);
-                if (modeEdits.Values.Any(m => m.Description != m.Original.Definition.Description || m.FollowUpDefault != m.Original.Definition.FollowUpDefault))
+                if (modeEdits.Values.Any(m => m.Description != m.Original.Definition.Description || m.FollowUpDefault != m.Original.Definition.FollowUpDefault || m.DeckPath != DeckRouting.PathFor(m.Original.Definition)))
                 {
                     var effective = modeEdits.Values.ToDictionary(m => m.Original.Definition.Id,
-                        m => m.Original.Definition with { Description = m.Description, FollowUpDefault = m.FollowUpDefault }, StringComparer.Ordinal);
+                        m => m.Original.Definition with { Description = m.Description, FollowUpDefault = m.FollowUpDefault, AnkiDeckPath = m.DeckPath }, StringComparer.Ordinal);
                     WorkflowJson.Save(Path.Combine(flow.ModeOverrides, "modes.json"), new ModeFile(definitions.Modes
                         .Select(m => effective.TryGetValue(m.Id, out var updated) ? updated : m).ToArray()));
                 }
@@ -168,5 +176,6 @@ internal sealed class LanguageSettingsForm : Form
         internal string Description { get; set; } = original.Definition.Description;
         internal string Prompt { get; set; } = original.Prompt;
         internal bool FollowUpDefault { get; set; } = original.Definition.FollowUpDefault;
+        internal string DeckPath { get; set; } = DeckRouting.PathFor(original.Definition);
     }
 }

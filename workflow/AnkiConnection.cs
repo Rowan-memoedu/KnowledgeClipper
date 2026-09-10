@@ -6,12 +6,16 @@ using System.Text.RegularExpressions;
 
 namespace KnowledgeClipper.Workflow;
 
-public sealed record AnkiNoteDraft(string Deck, string Model, Dictionary<string, string> Fields, string[] Tags, int[] Ordinals)
+public sealed record AnkiNoteDraft(string Deck, string Model, Dictionary<string, string> Fields, string[] Tags, int[] Ordinals,
+    Dictionary<int, string>? CardDecks = null)
 {
     public const string BasicModelName = "零碎知识剪藏 · 问答与翻译";
     public const string QuestionModelName = "零碎知识剪藏 · 多轮问答";
     [JsonIgnore] public bool IsBasic => Fields.ContainsKey("Front") && Fields.ContainsKey("Back");
     [JsonIgnore] public bool HasQuestionContext => IsBasic && Fields.ContainsKey("Context");
+    public string DeckFor(int ordinal) => CardDecks == null ? Deck :
+        CardDecks.TryGetValue(ordinal, out var deck) && !string.IsNullOrWhiteSpace(deck) ? deck :
+        throw new InvalidDataException("已确认卡片缺少对应模板的目标牌组。");
     public static string Html(string value) => WebUtility.HtmlEncode(value).Replace("\r\n", "\n").Replace("\n", "<br>");
     public static AnkiNoteDraft From(ClipDraft draft)
     {
@@ -30,8 +34,9 @@ public sealed record AnkiNoteDraft(string Deck, string Model, Dictionary<string,
                 ["Source"] = Html(material.SourceTitle)
             };
             if (basic.Context != null) basicFields["Context"] = Html(basic.Context);
-            return new(draft.Settings.AnkiDeck, basic.Context != null ? QuestionModelName : BasicModelName,
-                basicFields, ["KnowledgeClipper", "kc_" + draft.Id], [0]);
+            var assignment = DeckRouting.Resolve(draft, [0]);
+            return new(assignment.Deck, basic.Context != null ? QuestionModelName : BasicModelName,
+                basicFields, ["KnowledgeClipper", "kc_" + draft.Id], [0], assignment.CardDecks);
         }
         var fields = draft.Content?.Fields ?? throw new InvalidOperationException("内容尚未完成。");
         ContentModule.ValidateFields(material, fields);
@@ -39,7 +44,9 @@ public sealed record AnkiNoteDraft(string Deck, string Model, Dictionary<string,
         var start = material.TargetStart ?? fields.GeneratedTargetStart!.Value;
         var reading = draft.Practice != PracticeChoice.Writing;
         var writing = draft.Practice != PracticeChoice.Reading;
-        return new(draft.Settings.AnkiDeck, draft.Settings.AnkiModel, new()
+        int[] ordinals = reading && writing ? [0, 1] : reading ? [0] : [1];
+        var languageAssignment = DeckRouting.Resolve(draft, ordinals);
+        return new(languageAssignment.Deck, draft.Settings.AnkiModel, new()
         {
             ["ClipId"] = draft.Id,
             ["Target"] = Html(material.SelectedText),
@@ -51,7 +58,7 @@ public sealed record AnkiNoteDraft(string Deck, string Model, Dictionary<string,
             ["Origin"] = material.ContextText == null ? "AI 生成例句" : material.ContextOrigin == "user" ? "用户提供原文" : "来源原文",
             ["ReadingEnabled"] = reading ? "1" : "",
             ["WritingEnabled"] = writing ? "1" : ""
-        }, ["KnowledgeClipper", "kc_" + draft.Id], reading && writing ? [0, 1] : reading ? [0] : [1]);
+        }, ["KnowledgeClipper", "kc_" + draft.Id], ordinals, languageAssignment.CardDecks);
     }
 }
 
@@ -114,7 +121,9 @@ public sealed class AnkiConnection(HttpClient http, string endpoint)
         var templates = await CallAsync("modelTemplates", new { modelName = note.Model }, ct);
         if (!templates.EnumerateObject().Select(p => p.Name).SequenceEqual(templateNames))
             throw new InvalidDataException("所选类型的卡片模板不兼容，请选择对应专用类型。");
-        if (!(await DecksAsync(ct)).Contains(note.Deck, StringComparer.Ordinal)) await CallAsync("createDeck", new { deck = note.Deck }, ct);
+        var decks = (await DecksAsync(ct)).ToHashSet(StringComparer.Ordinal);
+        foreach (var deck in note.Ordinals.Select(note.DeckFor).Prepend(note.Deck).Distinct(StringComparer.Ordinal))
+            if (decks.Add(deck)) await CallAsync("createDeck", new { deck }, ct);
     }
 
     private async Task<long[]> FindAsync(ClipDraft draft, CancellationToken ct) =>
@@ -128,13 +137,15 @@ public sealed class AnkiConnection(HttpClient http, string endpoint)
             if (draft.ImportState == ImportState.Verified) return;
             draft.ImportError = null;
             var note = draft.ConfirmedNote ?? throw new InvalidOperationException("请先确认预览。");
+            foreach (var ordinal in note.Ordinals) _ = note.DeckFor(ordinal);
             var unresolved = draft.ImportState is ImportState.Unknown or ImportState.Writing;
             var matches = await FindAsync(draft, ct);
             if (matches.Length > 1) throw new InvalidDataException("发现多个对应结果，需要人工核对；不会再次添加。");
             if (matches.Length == 1)
             {
                 draft.NoteId = matches[0];
-                await VerifyAsync(draft, ct);
+                store.Save(draft);
+                await ReconcileAsync(draft, store, ct);
             }
             else if (unresolved || draft.NoteId != null)
                 throw new InvalidDataException("上次写入结果仍未确认。未查询到对应笔记，请在 Anki 中核对；不会自动再次添加。");
@@ -147,7 +158,7 @@ public sealed class AnkiConnection(HttpClient http, string endpoint)
                     fields = note.Fields, tags = note.Tags, options = new { allowDuplicate = false } } }, ct);
                 draft.NoteId = result.GetInt64();
                 store.Save(draft);
-                await VerifyAsync(draft, ct);
+                await ReconcileAsync(draft, store, ct);
             }
             draft.ImportState = ImportState.Verified;
             draft.ImportError = null;
@@ -163,6 +174,26 @@ public sealed class AnkiConnection(HttpClient http, string endpoint)
     }
 
     public async Task VerifyAsync(ClipDraft draft, CancellationToken ct = default)
+    {
+        await ReadCardsAsync(draft, allowInitialDeck: false, ct);
+    }
+
+    private async Task ReconcileAsync(ClipDraft draft, DraftStore store, CancellationToken ct)
+    {
+        var expected = draft.ConfirmedNote!;
+        // Read every card's identity and contents before allowing any move from this note's initial deck.
+        var cards = await ReadCardsAsync(draft, allowInitialDeck: expected.CardDecks != null, ct);
+        var moves = cards.Where(card => card.Deck != expected.DeckFor(card.Ordinal))
+            .GroupBy(card => expected.DeckFor(card.Ordinal), StringComparer.Ordinal).ToArray();
+        if (moves.Length == 0) return;
+        draft.ImportState = ImportState.Writing;
+        store.Save(draft);
+        foreach (var group in moves)
+            await CallAsync("changeDeck", new { cards = group.Select(card => card.Id).ToArray(), deck = group.Key }, ct);
+        await ReadCardsAsync(draft, allowInitialDeck: false, ct);
+    }
+
+    private async Task<CardReadback[]> ReadCardsAsync(ClipDraft draft, bool allowInitialDeck, CancellationToken ct)
     {
         var expected = draft.ConfirmedNote!;
         var notes = await CallAsync("notesInfo", new { notes = new[] { draft.NoteId!.Value } }, ct);
@@ -180,12 +211,18 @@ public sealed class AnkiConnection(HttpClient http, string endpoint)
         var cards = await CallAsync("cardsInfo", new { cards = ids }, ct);
         if (cards.GetArrayLength() != ids.Length) throw new InvalidDataException("未读回所有实际卡片。");
         var seen = new HashSet<int>();
+        var seenIds = new HashSet<long>();
+        var readback = new List<CardReadback>();
         foreach (var card in cards.EnumerateArray())
         {
             var ordinal = card.GetProperty("ord").GetInt32();
-            if (!ids.Contains(card.GetProperty("cardId").GetInt64()) || !expected.Ordinals.Contains(ordinal) || !seen.Add(ordinal) ||
-                card.GetProperty("deckName").GetString() != expected.Deck || card.GetProperty("note").GetInt64() != draft.NoteId)
-                throw new InvalidDataException("实际卡片的牌组、笔记或模板不符。");
+            var id = card.GetProperty("cardId").GetInt64();
+            var deck = card.GetProperty("deckName").GetString()!;
+            if (!ids.Contains(id) || !seenIds.Add(id) || !expected.Ordinals.Contains(ordinal) || !seen.Add(ordinal) ||
+                card.GetProperty("note").GetInt64() != draft.NoteId)
+                throw new InvalidDataException("实际卡片的笔记或模板不符。");
+            if (deck != expected.DeckFor(ordinal) && !(allowInitialDeck && deck == expected.Deck))
+                throw new InvalidDataException("实际卡片已不在已确认的目标或初始牌组，请核对 Anki 中的位置；不会自动改回。");
             if (card.GetProperty("queue").GetInt32() < 0)
                 throw new InvalidDataException("实际卡片已暂停或暂时埋藏，当前不可复习。");
             var question = card.GetProperty("question").GetString() ?? "";
@@ -195,12 +232,15 @@ public sealed class AnkiConnection(HttpClient http, string endpoint)
             if (!neededQuestion.All(f => Plain(question).Contains(Plain(expected.Fields[f]), StringComparison.Ordinal)) ||
                 !neededAnswer.All(f => Plain(answer).Contains(Plain(expected.Fields[f]), StringComparison.Ordinal)))
                 throw new InvalidDataException("Anki 实际卡面缺少本次练习内容。");
+            readback.Add(new(id, ordinal, deck));
         }
         var suspended = await CallAsync("areSuspended", new { cards = ids }, ct);
         if (suspended.GetArrayLength() != ids.Length || suspended.EnumerateArray().Any(x => x.ValueKind != JsonValueKind.False))
             throw new InvalidDataException("实际卡片处于暂停状态。");
-        draft.CardIds = ids;
+        draft.CardIds = readback.OrderBy(card => card.Ordinal).Select(card => card.Id).ToArray();
+        return readback.ToArray();
     }
 
+    private sealed record CardReadback(long Id, int Ordinal, string Deck);
     private static string Plain(string html) => WebUtility.HtmlDecode(Regex.Replace(html, "<[^>]*>", ""));
 }

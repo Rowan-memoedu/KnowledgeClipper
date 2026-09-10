@@ -32,6 +32,7 @@ internal static class Program
 
     private static async Task RunAsync(string[] args)
     {
+        if (args.Length == 3 && args[2] == "--deck-settings") { await DeckSettingsChecks.RunAsync(args[0], args[1]); return; }
         if (args.Length != 2) throw new ArgumentException("SelectionUi.Tests <project-root> <receipt-path>");
         var assembly = Assembly.Load("KnowledgeClipper");
         var snapshotType = assembly.GetType("KnowledgeClipper.SelectionSnapshot", true)!;

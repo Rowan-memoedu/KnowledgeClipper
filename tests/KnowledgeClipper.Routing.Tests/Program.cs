@@ -4,6 +4,7 @@ using KnowledgeClipper.Workflow;
 
 var root = args[0];
 var config = ModeConfigurationLoader.Load(Path.Combine(root, "modes"));
+DeckRoutingChecks.Run(config);
 var checks = 0;
 void Check(bool value, string name) { if (!value) throw new Exception(name); Console.WriteLine("PASS " + name); checks++; }
 async Task Fail(Func<Task> action, string name) { try { await action(); } catch (InvalidDataException) { Check(true, name); return; } throw new Exception("Expected failure: " + name); }

@@ -63,7 +63,7 @@ public sealed record ModeRoute(string ModeId, string OutputKind, bool FollowUpDe
 public sealed record ContentResult(string ModeId, LanguageFields? Fields = null, BasicFields? Basic = null, QuestionAnswer? Answer = null);
 public sealed record ContentPreview(string SelectedText, ContentResult? Content, IReadOnlyList<ConversationTurn>? Conversation = null);
 public sealed record ModeDefinition(string Id, string Name, bool Enabled, string Description, string PromptFile, string SchemaFile,
-    string OutputKind = "language", bool FollowUpDefault = false, bool RequiresContext = true);
+    string OutputKind = "language", bool FollowUpDefault = false, bool RequiresContext = true, string? AnkiDeckPath = null);
 public sealed record ModeFile(ModeDefinition[] Modes);
 public sealed record ModeSnapshot(ModeDefinition Definition, string Prompt, string Schema);
 public sealed record ContentConfiguration(string ClassificationPrompt, ModeSnapshot[] Modes);
@@ -74,6 +74,8 @@ public sealed record LanguageSettings
     public string Model { get; init; } = "deepseek-chat";
     public string AnkiEndpoint { get; init; } = "http://127.0.0.1:8765";
     public string AnkiDeck { get; init; } = "零碎知识剪藏::语言学习";
+    // Null preserves the exact destination in drafts saved before hierarchical routing.
+    public string? AnkiRootDeck { get; init; }
     public string AnkiModel { get; init; } = "零碎知识剪藏 · 语言共享字段";
     public PracticeChoice Practice { get; init; } = PracticeChoice.Both;
     public bool GlobalSelection { get; init; }
@@ -98,6 +100,7 @@ public sealed record LanguageSettings
             throw new InvalidDataException("AnkiConnect 地址必须是本机地址。");
         if (string.IsNullOrWhiteSpace(Model) || string.IsNullOrWhiteSpace(AnkiDeck) || string.IsNullOrWhiteSpace(AnkiModel))
             throw new InvalidDataException("请填写模型、Anki 牌组和笔记类型。");
+        if (AnkiRootDeck != null) DeckRouting.ValidateRoot(AnkiRootDeck);
         if (RatePercent is < -50 or > 100 || VolumePercent is < -100 or > 100 || PitchHz is < -50 or > 50)
             throw new InvalidDataException("朗读速度、音量或音调超出范围。");
     }

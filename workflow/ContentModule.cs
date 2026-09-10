@@ -20,6 +20,7 @@ public static class ModeConfigurationLoader
         var file = LoadDefinitions(defaults, overrides);
         var modes = file.Modes.Where(m => m.Enabled).ToArray();
         if (modes.Length == 0 || modes.Select(m => m.Id).Distinct(StringComparer.Ordinal).Count() != modes.Length) throw new InvalidDataException("请启用至少一个模式，且模式标识不得重复。");
+        foreach (var mode in modes) DeckRouting.ValidatePattern(DeckRouting.PathFor(mode), mode.OutputKind);
         return new ContentConfiguration(Read("classification.md"), modes.Select(m => new ModeSnapshot(m, Read(m.PromptFile), Read(m.SchemaFile))).ToArray());
     }
 
@@ -32,7 +33,8 @@ public static class ModeConfigurationLoader
         // An old personal override must not hide new built-in modes after an upgrade.
         if (userFile.Modes.Select(m => m.Id).Distinct(StringComparer.Ordinal).Count() != userFile.Modes.Length)
             throw new InvalidDataException("个人模式标识重复。");
-        return new ModeFile(defaultsFile.Modes.Select(m => userFile.Modes.FirstOrDefault(u => u.Id == m.Id) ?? m)
+        return new ModeFile(defaultsFile.Modes.Select(m => userFile.Modes.FirstOrDefault(u => u.Id == m.Id) is { } user
+                ? user with { AnkiDeckPath = user.AnkiDeckPath ?? m.AnkiDeckPath } : m)
             .Concat(userFile.Modes.Where(u => !defaultsFile.Modes.Any(m => m.Id == u.Id))).ToArray());
     }
 

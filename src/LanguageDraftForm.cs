@@ -49,8 +49,8 @@ internal sealed class LanguageDraftForm : Form
             MinimumSize = new Size(0, 680), Padding = new Padding(16), ColumnCount = 1, RowCount = 8 };
         for (var i = 0; i < 8; i++) layout.RowStyles.Add(new RowStyle(i == 5 ? SizeType.Percent : SizeType.AutoSize, i == 5 ? 100 : 0));
         status = new Label { AutoSize = true, MaximumSize = new Size(760, 0), Text = "正在处理内容…", Name = "knowledge-clipper.language.status", AccessibleName = "knowledge-clipper.language.status" };
-        source = new Label { AutoSize = true, MaximumSize = new Size(760, 0), ForeColor = Color.DimGray,
-            Text = "目标：" + draft.Material.SelectedText.TakeText(120) + "\n来源：" + draft.Material.SourceTitle.TakeText(80) + "\n导入：" + draft.Settings.AnkiDeck + " · " + draft.Settings.AnkiModel };
+        source = new Label { Name = "knowledge-clipper.language.source", AccessibleName = "knowledge-clipper.language.source", AutoSize = true, MaximumSize = new Size(760, 0), ForeColor = Color.DimGray,
+            Text = "目标：" + draft.Material.SelectedText.TakeText(120) + "\n来源：" + draft.Material.SourceTitle.TakeText(80) + "\n导入：" + DeckRouting.Describe(draft) + " · " + draft.Settings.AnkiModel };
         layout.Controls.Add(status, 0, 0); layout.Controls.Add(source, 0, 1);
         decision = new Panel { Dock = DockStyle.Top, AutoSize = true }; layout.Controls.Add(decision, 0, 2);
         var fields = languageFields = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 2 };
@@ -132,7 +132,7 @@ internal sealed class LanguageDraftForm : Form
             basicBack.Text = UnresolvedAnswer ? Draft.Content.Answer.DisplayText :
                 Draft.EditedBasic?.Back ?? Draft.Content.Basic?.Back ?? Draft.Content.Answer?.DisplayText ?? "";
             loadingFields = false;
-            source.Text = "来源：" + Draft.Material.SourceTitle.TakeText(80) + "\n导入：" + Draft.Settings.AnkiDeck + " · 单张卡片";
+            source.Text = "来源：" + Draft.Material.SourceTitle.TakeText(80) + "\n导入：" + DeckRouting.Describe(Draft) + " · 单张卡片";
             RefreshConversation(); RefreshStatus(); return;
         }
         var fields = Draft.EditedFields ?? Draft.Content.Fields;
@@ -143,7 +143,7 @@ internal sealed class LanguageDraftForm : Form
         loadingFields = false;
         example.ReadOnly = Draft.Material.ContextText != null;
         source.Text = "目标：" + Draft.Material.SelectedText.TakeText(120) + "\n来源：" + Draft.Material.SourceTitle.TakeText(80) + " · " +
-            (Draft.Material.ContextText == null ? "AI 生成例句" : Draft.Material.ContextOrigin == "user" ? "用户提供原文" : "来源原文") + "\n导入：" + Draft.Settings.AnkiDeck + " · " + Draft.Settings.AnkiModel;
+            (Draft.Material.ContextText == null ? "AI 生成例句" : Draft.Material.ContextOrigin == "user" ? "用户提供原文" : "来源原文") + "\n导入：" + DeckRouting.Describe(Draft) + " · " + Draft.Settings.AnkiModel;
         RenderFaces(); RefreshStatus();
     }
 
@@ -159,10 +159,10 @@ internal sealed class LanguageDraftForm : Form
         var basic = IsBasic;
         languageFields.Visible = practice.Visible = tabs.Visible = !basic && !QuestionView;
         basicFields.Visible = basic && !UnresolvedAnswer && !QuestionView;
-        source.Text = QuestionView ? "来源：" + Draft.Material.SourceTitle.TakeText(80) + "\n导入：" + Draft.Settings.AnkiDeck + " · 每轮一张问答卡" :
-            basic ? "来源：" + Draft.Material.SourceTitle.TakeText(80) + "\n导入：" + Draft.Settings.AnkiDeck + " · 单张卡片" :
+        source.Text = QuestionView ? "来源：" + Draft.Material.SourceTitle.TakeText(80) + "\n导入：" + DeckRouting.Describe(Draft, true) + " · 每轮一张问答卡" :
+            basic ? "来源：" + Draft.Material.SourceTitle.TakeText(80) + "\n导入：" + DeckRouting.Describe(Draft) + " · 单张卡片" :
             "目标：" + Draft.Material.SelectedText.TakeText(120) + "\n来源：" + Draft.Material.SourceTitle.TakeText(80) + " · " +
-            (Draft.Material.ContextText == null ? "AI 生成例句" : Draft.Material.ContextOrigin == "user" ? "用户提供原文" : "来源原文") + "\n导入：" + Draft.Settings.AnkiDeck + " · " + Draft.Settings.AnkiModel;
+            (Draft.Material.ContextText == null ? "AI 生成例句" : Draft.Material.ContextOrigin == "user" ? "用户提供原文" : "来源原文") + "\n导入：" + DeckRouting.Describe(Draft) + " · " + Draft.Settings.AnkiModel;
         Text = (QuestionView ? "问答卡片 · " : basic ? "卡片预览 · " : "语言卡片预览 · ") + Draft.Original.SelectedText.TakeText(24);
     }
 
@@ -211,7 +211,7 @@ internal sealed class LanguageDraftForm : Form
             store.Save(Draft); RefreshStatus(); return;
         }
         Draft.EditedFields = EditedFields(); Draft.Practice = (PracticeChoice)practice.SelectedIndex;
-        store.Save(Draft); RenderFaces();
+        store.Save(Draft); RenderFaces(); RefreshStatus();
     }
 
     internal void RefreshStatus()

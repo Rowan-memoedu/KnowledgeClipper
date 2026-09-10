@@ -38,6 +38,7 @@ internal sealed class LanguageDesktopFlow : IDisposable
         baseRoot = AppContext.BaseDirectory;
         Settings = File.Exists(SettingsPath) ? WorkflowJson.Read<LanguageSettings>(SettingsPath) : new LanguageSettings
         {
+            AnkiRootDeck = DeckRouting.DefaultRoot, AnkiDeck = DeckRouting.DefaultRoot,
             Voice = initial.ChineseVoice, EnglishVoice = initial.EnglishVoice,
             AutoVoice = initial.LanguageOverride == "auto", RatePercent = initial.RatePercent,
             VolumePercent = initial.VolumePercent, PitchHz = initial.PitchHz,
