@@ -6,7 +6,9 @@ const once = process.argv.includes('--once');
 const check = process.argv.includes('--check');
 hook.on('error', () => emit('error', '取词组件出错'));
 // The host owns clipboard fallback so every format and concurrent copy can be guarded.
-if (!hook.start({ enableClipboard: false, selectionPassiveMode: once || check, enableMouseMoveEvent: false })) {
+// The .NET observer owns input epochs. Native automatic retrieval suppresses input
+// events while UIA is busy, so it cannot be the authority for snapshot validity.
+if (!hook.start({ enableClipboard: false, selectionPassiveMode: true, enableMouseMoveEvent: false })) {
   emit('error', '无法启动取词组件'); process.exitCode = 1;
 } else if (check) {
   // Read-only dependency probe: start the real native add-on without collecting
@@ -16,15 +18,6 @@ if (!hook.start({ enableClipboard: false, selectionPassiveMode: once || check, e
 } else if (once) {
   emit('selection', hook.getCurrentSelection()); hook.cleanup();
 } else {
-  hook.on('text-selection', data => emit('selection', data));
-  hook.on('mouse-down', data => emit('selection-changing', data));
-  hook.on('mouse-wheel', data => emit('selection-changing', data));
-  hook.on('key-up', data => {
-    if (['Shift', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(data.uniKey)) {
-      emit('selection', hook.getCurrentSelection());
-    } else if (['Escape', 'Enter', 'Backspace', 'Delete'].includes(data.uniKey)) emit('selection-changing', data);
-  });
-  emit('ready', null);
-  process.stdin.resume();
-  process.stdin.on('end', () => { hook.cleanup(); process.exit(0); });
+  emit('error', '请通过 --once 按需取词，或通过 --check 检查组件。');
+  hook.cleanup(); process.exitCode = 1;
 }

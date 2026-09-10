@@ -4,11 +4,13 @@ Windows 悬浮式知识采集工具。活动源码位于 `D:\Projects\RemNote Qu
 
 ## 当前状态（2026-09-10）
 
-**M1 主流程已接通；首声、窗口、重播记录与继续制卡均已通过用户复测，实际卡片已回读。内容质量仍待最后回归，M2 尚未开始。**
+**M1、M2 的工程流程均已通过用户验收，实际 Anki 卡片已回读。提示词与产出效果优化后置。**
 
 现有朗读/摘录入口已直接连接 .NET 语言流程：取得一次材料，独立启动 TTS 和内容处理，显示可编辑预览，一次确认后通过 AnkiConnect 写入并核对实际卡片。新路径不启动旧 Core / Host / Worker 调度。
 
-用户已通过现有朗读入口完成真实取词，来源上下文、预览和声音均出现。初次手测捕获后约 5.2 秒才有声音，且首次 UI Automation 初始化导致浮窗物理尺寸减半。现已提前启动独立语音、预热一个不含文本的助手并调整播放器缓冲；启动时固定 DPI、保存逻辑尺寸并保持浮窗完整位于屏幕内。13:10 的用户复测确认两项正常：点击至声音约 3.00 秒、捕获后约 2.58 秒，实际窗口仍为 696×424。内容质量的最后回归仍由独立提示词 Thread 完成；M1 通过后才接入全局选词悬浮点和设置开关。
+用户已通过现有朗读入口完成真实取词，来源上下文、预览和声音均出现。初次手测捕获后约 5.2 秒才有声音，且首次 UI Automation 初始化导致浮窗物理尺寸减半。现已提前启动独立语音、预热一个不含文本的助手并调整播放器缓冲；启动时固定 DPI、保存逻辑尺寸并保持浮窗完整位于屏幕内。13:10 的用户复测确认两项正常：点击至声音约 3.00 秒、捕获后约 2.58 秒，实际窗口仍为 696×424。当前按工程流程可运行验收；提示词保持开放可编辑，由用户后续在独立提示词 Thread 继续处理，不作为 M2 的前置门槛。
+
+M2 只增加选区入口：选中文字后显示浮点，点击后把当次文字和来源交给普通摘录/朗读共用的流程。内容、TTS、预览和 Anki 导入均复用既有实现；浮点显示时不创建草稿或发起内容请求。后续如接入查词等工具，也应进入共用内容流程，不能只作用于某个入口。用户已在 Chrome、记事本、资源管理器、Obsidian 通过选词与启停验收；Chrome 和 Obsidian 各有一条浮点制卡草稿写入并回读，共 4 张可复习卡片。
 
 ## 构建与使用
 
@@ -28,6 +30,7 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 4. 点击固定在预览底部的“确认制卡并导入 Anki”，等待 Anki 实际回读。Anki 不可用时草稿保留；不确定的写入先查询，不盲目再添加。
 5. 点击悬浮窗“重播”，或右键“重播上一条 / 最近朗读”，立即播放上一条并打开最近 20 条朗读记录。每条可点击文字或“播放”重听，点击“继续制卡”打开该条预览。完整音频直接复用；关闭记录面板不停止播放。
 6. 右键“设置…”调整语音、内容 API、Anki 目标和已有提示词；“最近草稿 / 朗读”也包含仅摘录的草稿。停止朗读不取消制卡。
+7. 在“设置…”开启“全局语言学习”并保存，可在普通应用拖选、双击或用 Shift＋方向键、Ctrl+A 选词；点击蓝色“读”点进入同一流程。关闭开关立即停止监视，原入口继续可用。浮点不抢焦点，选区变化、取消、切换来源或约 12 秒未使用会收起。
 
 当前本机配置仍指向隔离牌组 `KnowledgeClipper Canary::Architecture 20260910`，用于完成 M1 验收。专用笔记类型是一份共享字段配两个原生模板；已有用户模板不会被覆盖。
 
@@ -47,7 +50,7 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 
 | 检查 | 当前证据 |
 |---|---|
-| 中文、英文、混合内容 | 共用内容 CLI 已有真实 API 输出；最新提示词的拼音、提示泄露及生成例句回归仍在进行 |
+| 中文、英文、混合内容 | 共用内容 CLI 已有真实 API 输出；语义效果优化留待用户后续处理，不作为当前工程验收门槛 |
 | 语音 | 最新预热后的首次调用至实际输出约 3.94 秒，首块约 2.80 秒；同轮后续播放约 2.48 秒，重播约 0.33 秒。首次首块后的约 1.14 秒等待仍是体验限制 |
 | 语音设置与状态 | 速度、音量、音色实际生效；新预热实现的停止约 78 毫秒，停止和退出能回收本次播放器与空助手 |
 | Anki | 隔离牌组真实双卡与单卡；字段、卡面、模板、来源及非暂停/非埋藏状态回读；真实写后丢响应查询恢复且未再次添加 |
@@ -56,13 +59,15 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 | 捕获局部 | 多格式剪贴板保护、并发复制、辅助进程故障、超过 200k 字符后的真实 UIA 邻接范围 |
 | 真实朗读入口 | 修复后用户复测通过；点击至实际输出 3.00 秒、预览 3.54 秒，预览早于播放结束；真实来源材料和两条分支均保留在本次草稿中 |
 | 浮窗与 DPI | 当前实际 192 DPI 下首次 UIA、状态、预览开关尺寸稳定；手动缩放、逻辑尺寸保存恢复、启动后完全可见均已检查 |
-| 仍未通过 | 最新内容质量，以及全部 M2 选词悬浮点行为 |
+| M2 自动选词 | 35 项取词局部检查与 18 项界面检查通过；四个指定应用由用户实测正常，两个浮点草稿共 4 张卡片已只读核验 |
 
 证据集中在 [validation](D:/Artifacts/KnowledgeClipper/validation)：[语音](D:/Artifacts/KnowledgeClipper/validation/speech.json)、[最终播放状态](D:/Artifacts/KnowledgeClipper/validation/speech-state.json)、[Anki 真实丢响应恢复](D:/Artifacts/KnowledgeClipper/validation/anki-mixed-writing-lost-response.json)、[预览确认](D:/Artifacts/KnowledgeClipper/validation/m1-preview-confirmation.json)、[窗口缩小复现](D:/Artifacts/KnowledgeClipper/validation/window-size-before.json)。首次取词自动检查未取得前台、静音、Anki 模板大小写及 HTTP chunked 兼容失败均保留；它们不覆盖后续真实结果。
 
 本次修复的相关结果：[首次语音](D:/Artifacts/KnowledgeClipper/validation/speech-prepared-first.json)、[预热与生命周期](D:/Artifacts/KnowledgeClipper/validation/speech-latency.json)、[窗口尺寸及可见范围](D:/Artifacts/KnowledgeClipper/validation/window-size-visible-check.txt)、[预览固定按钮](D:/Artifacts/KnowledgeClipper/validation/preview-fixed-footer.txt)、[重播记录](D:/Artifacts/KnowledgeClipper/validation/history-ui-check.json)。普通接口回归 37 项、预览局部 20 项、重播界面 9 项通过；固定响应检查仅证明结构与状态。
 
-用户复测对应草稿为 `b0ccda88c648434b921be4632bd80796`，运行数据留在本机应用目录。重播与继续制卡复测后，笔记 `1789018923487` 的 2 张实际卡片已只读回查：确认字段一致、卡面有内容、未暂停或埋藏，见[用户重播与制卡复测](D:/Artifacts/KnowledgeClipper/validation/history-user-retest.json)。人工验证由工程先准备测试条件并确认悬浮窗可见，再通过默认提问框通知和收集结果，不额外询问是否准备好。独立内容线程目前停在原生消息工具的批准项，最后语义回归尚未完成；不能据此宣布 M1 全部通过。
+用户复测对应草稿为 `b0ccda88c648434b921be4632bd80796`，运行数据留在本机应用目录。重播与继续制卡复测后，笔记 `1789018923487` 的 2 张实际卡片已只读回查：确认字段一致、卡面有内容、未暂停或埋藏，见[用户重播与制卡复测](D:/Artifacts/KnowledgeClipper/validation/history-user-retest.json)。人工验证由工程先准备测试条件并确认悬浮窗可见，再通过默认提问框通知和收集结果，不额外询问是否准备好。提示词 Thread 已按用户要求结束本轮优化，现有修改与评估保留，后续由用户继续。
+
+M2 证据：[局部取词](D:/Artifacts/KnowledgeClipper/m2-local/selection-checks.txt)、[界面连接](D:/Artifacts/KnowledgeClipper/validation/selection-ui-check.json)、[用户验收与实际卡片](D:/Artifacts/KnowledgeClipper/validation/m2-user-retest.json)。浮点携带的选区时间、来源和原文位置已在实际草稿中核对；未新增查词或独立内容流程。当前检查环境为实际 192 DPI；无可用文本范围时点使用鼠标位置或来源窗口位置，未收到输入事件的程序内部自动改选由过期机制收起。
 
 常规接口检查使用 [Workflow.Tests](tests/KnowledgeClipper.Workflow.Tests/KnowledgeClipper.Workflow.Tests.csproj)；内容、语音、Anki 和捕获各有薄 CLI，均调用生产实现。真实写入和播放检查只针对明确的隔离输入与目标，不作为每次构建的自动步骤。没有新变化或未解决问题时，不重跑整批外部检查。
 

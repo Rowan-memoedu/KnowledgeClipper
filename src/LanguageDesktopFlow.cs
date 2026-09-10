@@ -71,6 +71,7 @@ internal sealed class LanguageDesktopFlow : IDisposable
             var draft = new ClipDraft { Original = material, Material = material, Settings = settings,
                 Configuration = configuration, Practice = settings.Practice };
             draft.Times["requested"] = requestedAt;
+            if (frozen != null) draft.Times["selectionObserved"] = frozen.CapturedAt;
             draft.Times["captureStarted"] = captureStartedAt;
             draft.Times["captured"] = DateTimeOffset.UtcNow;
             latest = draft;

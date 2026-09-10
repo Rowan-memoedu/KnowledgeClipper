@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -14,11 +15,41 @@ using KnowledgeClipper.Workflow;
 
 namespace KnowledgeClipper;
 
-internal sealed record SelectionSnapshot(string Text, long Window, string Source, int X, int Y, DateTimeOffset CapturedAt);
+internal sealed record SelectionSnapshot(string Text, long Window, string Source, int X, int Y, DateTimeOffset CapturedAt,
+    long Epoch = 0, long Session = 0, uint ProcessId = 0)
+{
+    internal SelectionCaptureLease Lease { get; init; }
+}
+
+internal sealed class SelectionCaptureLease
+{
+    private int invalidated;
+    internal bool IsValid => Volatile.Read(ref invalidated) == 0;
+    internal void Invalidate() => Interlocked.Exchange(ref invalidated, 1);
+}
+
+internal sealed record DesktopInput(bool Keyboard, int Message, int Key, int X, int Y, long Window, uint ProcessId, long Timestamp);
+internal sealed class SelectionUnavailableException(string message) : InvalidOperationException(message);
 
 internal sealed class LanguageDesktopCapture(string helper)
 {
+    private static readonly SemaphoreSlim captureGate = new(1, 1);
+
     public async Task<CaptureMaterial> CaptureAsync(LanguageSettings settings, SelectionSnapshot frozen = null)
+    {
+        var source = frozen?.Window ?? Foreground;
+        var inputTime = LastInputTime();
+        await captureGate.WaitAsync();
+        try
+        {
+            if (source != Foreground || inputTime != LastInputTime())
+                throw new InvalidOperationException("等待取词期间选区已变化，请重新选择。");
+            return await CaptureCoreAsync(settings, frozen);
+        }
+        finally { captureGate.Release(); }
+    }
+
+    private async Task<CaptureMaterial> CaptureCoreAsync(LanguageSettings settings, SelectionSnapshot frozen)
     {
         var inputTime = LastInputTime();
         var before = frozen?.Window ?? GetForegroundWindow().ToInt64();
@@ -27,6 +58,7 @@ internal sealed class LanguageDesktopCapture(string helper)
         if (inputTime != LastInputTime()) throw new InvalidOperationException("取词期间检测到新的输入，请重新选择。");
         void CheckSource()
         {
+            if (frozen?.Lease is { IsValid: false }) throw new InvalidOperationException("选区已变化，请重新选择文字。");
             if (input.UserInput) throw new InvalidOperationException("取词期间检测到新的输入，请重新选择。");
             if (GetForegroundWindow().ToInt64() != before) throw new InvalidOperationException("来源窗口已变化，请重新选择文字。");
         }
@@ -34,23 +66,7 @@ internal sealed class LanguageDesktopCapture(string helper)
         string text = frozen?.Text;
         if (frozen == null)
         {
-            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            var info = new ProcessStartInfo(settings.NodePath) { UseShellExecute = false, CreateNoWindow = true,
-                RedirectStandardOutput = true, RedirectStandardError = true, StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8 };
-            info.ArgumentList.Add(helper); info.ArgumentList.Add("--once");
-            using var process = Process.Start(info) ?? throw new InvalidOperationException("无法启动取词组件。");
-            using var kill = timeout.Token.Register(() => { try { if (!process.HasExited) process.Kill(true); } catch { } });
-            var output = process.StandardOutput.ReadToEndAsync();
-            var error = process.StandardError.ReadToEndAsync();
-            try { await process.WaitForExitAsync(timeout.Token); }
-            catch (OperationCanceledException ex) { throw new InvalidOperationException("取词组件响应超时，请重试取词。", ex); }
-            if (process.ExitCode != 0) throw new InvalidOperationException("取词组件启动失败，请检查 selection-hook 运行依赖。");
-            foreach (var line in (await output).Split('\n', StringSplitOptions.RemoveEmptyEntries))
-            {
-                using var result = JsonDocument.Parse(line);
-                if (result.RootElement.GetProperty("event").GetString() == "selection" && result.RootElement.GetProperty("data").ValueKind == JsonValueKind.Object)
-                    text = result.RootElement.GetProperty("data").GetProperty("text").GetString();
-            }
+            text = (await ReadNativeSelectionAsync(settings, CancellationToken.None))?.Text;
             CheckSource();
             if (string.IsNullOrWhiteSpace(text)) text = await OnStaAsync(token => CopySelection(before, input, token));
         }
@@ -76,15 +92,95 @@ internal sealed class LanguageDesktopCapture(string helper)
         return material;
     }
 
-    private static async Task<T> OnStaAsync<T>(Func<CancellationToken, T> action)
+    // No context, speech, content request or draft is created while merely selecting.
+    internal async Task<SelectionSnapshot> ReadSelectionAsync(LanguageSettings settings, long window, Point anchor,
+        CancellationToken cancellation)
     {
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(6));
+        await captureGate.WaitAsync(cancellation);
+        try
+        {
+            using var input = await CaptureInputMonitor.StartAsync();
+            void Check()
+            {
+                cancellation.ThrowIfCancellationRequested();
+                if (input.UserInput || Foreground != window || IsOwnWindow(new IntPtr(window)))
+                    throw new OperationCanceledException("选区已变化。", cancellation);
+            }
+            Check();
+            var sourcePid = WindowProcessId(window);
+            var mouseWindow = WindowAt(anchor);
+            var native = await ReadNativeSelectionAsync(settings, cancellation);
+            Check();
+            string text = native?.Text;
+            // getCurrentSelection() targets the mouse window, whereas its UIA path
+            // reads global focus. If those sources differ, obtain source-owned text
+            // through the guarded copy path; programName cannot prove an HWND.
+            var pointerMatchesSource = mouseWindow == window && WindowAt(CursorPosition) == window;
+            if (string.IsNullOrWhiteSpace(text) || !pointerMatchesSource)
+                text = await OnStaAsync(token => CopySelection(window, input, token), cancellation);
+            Check();
+            if (string.IsNullOrWhiteSpace(text)) return null;
+            var point = native != null && native.Text == text && native.PositionLevel >= 3 && native.PositionValid
+                ? native.End : anchor;
+            if (GetWindowRect(new IntPtr(window), out var bounds) && !Rectangle.FromLTRB(bounds.Left, bounds.Top, bounds.Right, bounds.Bottom).Contains(point))
+                point = new Point(bounds.Left + Math.Min(40, Math.Max(0, bounds.Right - bounds.Left - 1)), bounds.Top + Math.Min(60, Math.Max(0, bounds.Bottom - bounds.Top - 1)));
+            return new SelectionSnapshot(text, window, WindowTitle(new IntPtr(window)), point.X, point.Y, DateTimeOffset.UtcNow,
+                ProcessId: sourcePid);
+        }
+        finally { captureGate.Release(); }
+    }
+
+    private sealed record NativeSelection(string Text, int PositionLevel, Point End, bool PositionValid);
+
+    private async Task<NativeSelection> ReadNativeSelectionAsync(LanguageSettings settings, CancellationToken cancellation)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+        timeout.CancelAfter(TimeSpan.FromSeconds(5));
+        var info = new ProcessStartInfo(settings.NodePath) { UseShellExecute = false, CreateNoWindow = true,
+            RedirectStandardOutput = true, RedirectStandardError = true, StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8 };
+        info.ArgumentList.Add(helper); info.ArgumentList.Add("--once");
+        using var process = Process.Start(info) ?? throw new InvalidOperationException("无法启动取词组件。");
+        using var kill = timeout.Token.Register(() => { try { if (!process.HasExited) process.Kill(true); } catch { } });
+        var output = process.StandardOutput.ReadToEndAsync(timeout.Token);
+        var error = process.StandardError.ReadToEndAsync(timeout.Token);
+        try
+        {
+            await Task.WhenAll(process.WaitForExitAsync(timeout.Token), output, error);
+        }
+        catch (OperationCanceledException ex)
+        {
+            cancellation.ThrowIfCancellationRequested();
+            throw new InvalidOperationException("取词组件响应超时，请重试取词。", ex);
+        }
+        if (process.ExitCode != 0) throw new InvalidOperationException("取词组件启动失败，请检查 selection-hook 运行依赖。");
+        NativeSelection selection = null;
+        foreach (var line in (await output).Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            using var result = JsonDocument.Parse(line);
+            if (result.RootElement.GetProperty("event").GetString() != "selection" ||
+                result.RootElement.GetProperty("data").ValueKind != JsonValueKind.Object) continue;
+            var data = result.RootElement.GetProperty("data");
+            var text = data.GetProperty("text").GetString();
+            var level = data.TryGetProperty("posLevel", out var position) ? position.GetInt32() : 0;
+            var valid = data.TryGetProperty("endBottom", out var end) && end.TryGetProperty("x", out var x) &&
+                end.TryGetProperty("y", out var y) && x.TryGetInt32(out _) && y.TryGetInt32(out _);
+            var point = valid ? new Point(end.GetProperty("x").GetInt32(), end.GetProperty("y").GetInt32()) : Point.Empty;
+            valid &= Math.Abs((long)point.X) < 100_000 && Math.Abs((long)point.Y) < 100_000 && point.X != -99999 && point.Y != -99999;
+            selection = new NativeSelection(text, level, point, valid);
+        }
+        return selection;
+    }
+
+    private static async Task<T> OnStaAsync<T>(Func<CancellationToken, T> action, CancellationToken cancellation = default)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+        timeout.CancelAfter(TimeSpan.FromSeconds(6));
         var token = timeout.Token;
         var result = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new Thread(() => { try { result.TrySetResult(action(token)); } catch (Exception ex) { result.TrySetException(ex); } }) { IsBackground = true };
         thread.SetApartmentState(ApartmentState.STA); thread.Start();
         try { return await result.Task.WaitAsync(token); }
-        catch (OperationCanceledException ex) { throw new InvalidOperationException("取词或上下文读取超时，请重试。", ex); }
+        catch (OperationCanceledException ex) { cancellation.ThrowIfCancellationRequested(); throw new InvalidOperationException("取词或上下文读取超时，请重试。", ex); }
     }
 
     private static string CopySelection(long sourceWindow, CaptureInputMonitor input, CancellationToken token)
@@ -115,7 +211,7 @@ internal sealed class LanguageDesktopCapture(string helper)
                 if (!string.IsNullOrWhiteSpace(text)) return text;
                 break;
             }
-            throw new InvalidOperationException("未取得新的选中文字；不会使用旧剪贴板内容。");
+            throw new SelectionUnavailableException("未取得新的选中文字；不会使用旧剪贴板内容。");
         }
         finally
         {
@@ -125,14 +221,14 @@ internal sealed class LanguageDesktopCapture(string helper)
 
     // No caller thread is held in a UIA/native wait. The independent message pump
     // keeps low-level input hooks live while Node or a UIA provider is working.
-    private sealed class CaptureInputMonitor : IDisposable
+    internal sealed class CaptureInputMonitor : IDisposable
     {
         private readonly TaskCompletionSource<bool> ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private ConcurrentInputGuard guard;
         private uint threadId;
         private int disposed;
         public bool UserInput => guard?.UserInput == true;
-        public static async Task<CaptureInputMonitor> StartAsync()
+        public static async Task<CaptureInputMonitor> StartAsync(Action<DesktopInput> observer = null)
         {
             var monitor = new CaptureInputMonitor();
             var thread = new Thread(() =>
@@ -142,7 +238,7 @@ internal sealed class LanguageDesktopCapture(string helper)
                     using var dispatcher = new Control();
                     _ = dispatcher.Handle;
                     monitor.threadId = GetCurrentThreadId();
-                    using var guard = new ConcurrentInputGuard();
+                    using var guard = new ConcurrentInputGuard(observer);
                     monitor.guard = guard;
                     monitor.ready.TrySetResult(true);
                     if (Volatile.Read(ref monitor.disposed) != 0) return;
@@ -279,10 +375,18 @@ internal sealed class LanguageDesktopCapture(string helper)
         private readonly IntPtr keyboardHandle, mouseHandle;
         private int userInput;
         public bool UserInput => Volatile.Read(ref userInput) != 0;
-        public ConcurrentInputGuard()
+        public ConcurrentInputGuard(Action<DesktopInput> observer = null)
         {
-            keyboard = (code, message, data) => { if (code >= 0 && (Marshal.ReadInt32(data, 8) & 0x10) == 0) Volatile.Write(ref userInput, 1); return CallNextHookEx(IntPtr.Zero, code, message, data); };
-            mouse = (code, message, data) => { if (code >= 0 && message.ToInt64() != 0x200 && (Marshal.ReadInt32(data, 12) & 1) == 0) Volatile.Write(ref userInput, 1); return CallNextHookEx(IntPtr.Zero, code, message, data); };
+            void Notify(bool isKeyboard, IntPtr message, IntPtr data)
+            {
+                if (observer == null) return;
+                var window = Foreground;
+                try { observer(new DesktopInput(isKeyboard, (int)message, isKeyboard ? Marshal.ReadInt32(data) : 0,
+                    isKeyboard ? 0 : Marshal.ReadInt32(data), isKeyboard ? 0 : Marshal.ReadInt32(data, 4),
+                    window, WindowProcessId(window), Environment.TickCount64)); } catch { }
+            }
+            keyboard = (code, message, data) => { if (code >= 0 && (Marshal.ReadInt32(data, 8) & 0x10) == 0) { Volatile.Write(ref userInput, 1); Notify(true, message, data); } return CallNextHookEx(IntPtr.Zero, code, message, data); };
+            mouse = (code, message, data) => { if (code >= 0 && message.ToInt64() != 0x200 && (Marshal.ReadInt32(data, 12) & 1) == 0) { Volatile.Write(ref userInput, 1); Notify(false, message, data); } return CallNextHookEx(IntPtr.Zero, code, message, data); };
             keyboardHandle = SetWindowsHookEx(13, keyboard, GetModuleHandle(null), 0);
             mouseHandle = SetWindowsHookEx(14, mouse, GetModuleHandle(null), 0);
             if (keyboardHandle == IntPtr.Zero || mouseHandle == IntPtr.Zero) { Dispose(); throw new InvalidOperationException("无法保护并发剪贴板操作，已停止取词兜底。"); }
@@ -293,10 +397,18 @@ internal sealed class LanguageDesktopCapture(string helper)
     public static string WindowTitle(IntPtr handle) { var value = new StringBuilder(1024); GetWindowText(handle, value, value.Capacity); return value.ToString(); }
     internal static bool IsOwnWindow(IntPtr window) { GetWindowThreadProcessId(window, out var pid); return pid == Environment.ProcessId; }
     internal static long Foreground => GetForegroundWindow().ToInt64();
+    internal static uint WindowProcessId(long window) { GetWindowThreadProcessId(new IntPtr(window), out var pid); return pid; }
+    internal static long WindowAt(Point point) { var window = WindowFromPoint(point); return window == IntPtr.Zero ? 0 : GetAncestor(window, 2).ToInt64(); }
+    internal static Point CursorPosition => GetPhysicalCursorPos(out var point) ? point : Point.Empty;
     private static uint LastInputTime() { var info = new LastInputInfo { Size = (uint)Marshal.SizeOf<LastInputInfo>() }; return GetLastInputInfo(ref info) ? info.Time : 0; }
     [StructLayout(LayoutKind.Sequential)] private struct LastInputInfo { public uint Size, Time; }
+    [StructLayout(LayoutKind.Sequential)] private struct NativeRect { public int Left, Top, Right, Bottom; }
     private delegate IntPtr Hook(int code, IntPtr message, IntPtr data);
     [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] private static extern bool GetPhysicalCursorPos(out Point point);
+    [DllImport("user32.dll")] private static extern IntPtr WindowFromPoint(Point point);
+    [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr window, uint flags);
+    [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr window, out NativeRect rect);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr window, StringBuilder text, int count);
     [DllImport("user32.dll")] private static extern uint GetClipboardSequenceNumber();
     [DllImport("user32.dll")] private static extern bool GetLastInputInfo(ref LastInputInfo value);

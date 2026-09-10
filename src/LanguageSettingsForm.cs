@@ -24,6 +24,9 @@ internal sealed class LanguageSettingsForm : Form
         int row = 0;
         void Add(string label, Control control) { control.Dock = DockStyle.Top; control.Margin = new Padding(6); table.Controls.Add(new Label { Text = label, AutoSize = true, Margin = new Padding(6, 10, 6, 6) }, 0, row); table.Controls.Add(control, 1, row++); }
         TextBox TextField(string text, string id) => new() { Text = text, Name = id, AccessibleName = id };
+        var globalSelection = new CheckBox { Text = "选中文字后显示朗读悬浮点", Checked = value.GlobalSelection, AutoSize = true,
+            Name = "knowledge-clipper.language.global-selection", AccessibleName = "knowledge-clipper.language.global-selection" };
+        Add("全局语言学习", globalSelection);
         var context = new CheckBox { Text = "使用来源上下文", Checked = value.ContextEnabled, AutoSize = true };
         var granularity = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList }; granularity.Items.AddRange(new[] { "一句", "一段" }); granularity.SelectedIndex = value.ContextGranularity == "paragraph" ? 1 : 0;
         Add("上下文", context); Add("上下文范围", granularity);
@@ -56,7 +59,7 @@ internal sealed class LanguageSettingsForm : Form
         prompts.Controls.Add(new Label { Text = "模式识别说明（" + active.Definition.Name + "）", AutoSize = true }, 0, 0); prompts.Controls.Add(description, 0, 1);
         prompts.Controls.Add(new Label { Text = "公共分类提示词", AutoSize = true }, 0, 2); prompts.Controls.Add(classification, 0, 3);
         prompts.Controls.Add(new Label { Text = "语言处理提示词", AutoSize = true }, 0, 4); prompts.Controls.Add(processing, 0, 5); promptPage.Controls.Add(prompts);
-        var notice = new Label { AutoSize = true, MaximumSize = new Size(750, 0), Text = "保存后对下一次操作生效。专用语言类型在首次确认导入时创建；已有模板不会被覆盖。" }; root.Controls.Add(notice, 0, 1);
+        var notice = new Label { AutoSize = true, MaximumSize = new Size(750, 0), Text = "全局选词开关保存后立即生效，其余设置用于下一次操作。专用语言类型在首次确认导入时创建；已有模板不会被覆盖。" }; root.Controls.Add(notice, 0, 1);
         readAnki.Click += async (_, _) =>
         {
             readAnki.Enabled = false;
@@ -78,7 +81,7 @@ internal sealed class LanguageSettingsForm : Form
         {
             try
             {
-                var changed = value with { ContextEnabled = context.Checked, ContextGranularity = granularity.SelectedIndex == 1 ? "paragraph" : "sentence",
+                var changed = value with { GlobalSelection = globalSelection.Checked, ContextEnabled = context.Checked, ContextGranularity = granularity.SelectedIndex == 1 ? "paragraph" : "sentence",
                     Practice = (PracticeChoice)practice.SelectedIndex, AutoVoice = autoVoice.Checked, Voice = voice.Text.Trim(), EnglishVoice = englishVoice.Text.Trim(),
                     RatePercent = (int)rate.Value, VolumePercent = (int)volume.Value, PitchHz = (int)pitch.Value,
                     AnkiEndpoint = endpoint.Text.Trim(), AnkiDeck = deck.Text.Trim(), AnkiModel = model.Text.Trim(), ApiBaseUrl = api.Text.Trim(), Model = apiModel.Text.Trim() };
