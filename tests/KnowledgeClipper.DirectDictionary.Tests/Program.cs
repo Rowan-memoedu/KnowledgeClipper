@@ -58,6 +58,9 @@ Check(fallback?.Sentence == "The motion was slow." && fallback?.Source.StartsWit
 
 var mode = new ModeDefinition("language-en", "English reading", true, "", "", "", Language: "en",
     Practice: PracticeChoice.Reading, ContentFormat: PublishedLanguage.Format);
+var alteredSentence = "{\"status\":\"ready\",\"generatedSentence\":null,\"normalizedSentence\":\"That kinetic motion looked good.\",\"explanationEn\":\"Moving.\",\"sentenceTranslationZh\":\"那个动态效果不错。\",\"lemma\":\"kinetic\",\"pronunciation\":\"/kɪˈnɛtɪk/\",\"generatedTargetStart\":null,\"unresolvedReasons\":[]}";
+try { PublishedLanguage.Parse(alteredSentence, mode, sourced); throw new Exception("Corpus rewrite accepted"); }
+catch (InvalidDataException) { Check(true, "model cannot replace an attributed corpus example"); }
 var material = new CaptureMaterial("take off", "They take off their shoes.", "source", 5, "fixture", 0, DateTimeOffset.UtcNow);
 var fields = new LanguageFields("/teɪk ɔːf/", null, null, null) { Format = PublishedLanguage.Format, Status = "ready",
     ExplanationEn = "To remove clothing.", SentenceTranslationZh = "他们脱下鞋子。" };

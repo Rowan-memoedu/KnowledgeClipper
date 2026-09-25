@@ -6,7 +6,7 @@
 
 本次隔离构建位于 [language-quality-20260925/release](D:/Artifacts/KnowledgeClipper/language-quality-20260925/release/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)。四模式字段契约、词典夹具和真实接口、`kinetic` 真实模型译文及设置页已验收。正式提示词尚未发布；仓库 `modes` 文件是现有工程配置。下文按日期保留历史版本证据，不代表当前源码行为。
 
-桌面快捷方式已指向本次构建，2026-09-25 11:43（北京时间）运行进程 PID 44324 回读为该可执行文件。此前已确认的错误 `kinetic` 卡片保留原身份与内容，未静默改写；后续新卡使用修正流程。
+桌面快捷方式已指向本次构建，2026-09-25 运行进程回读为该可执行文件。此前已确认的错误 `kinetic` 卡片保留原身份与内容，未静默改写；后续新卡使用修正流程。
 
 ## 原文摘录目标快速切换（2026-09-24）
 
