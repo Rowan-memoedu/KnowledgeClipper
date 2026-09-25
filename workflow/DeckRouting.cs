@@ -34,16 +34,17 @@ public static class DeckRouting
 
     public static DeckAssignment Resolve(ClipDraft draft, int[] ordinals) => Resolve(draft, ordinals, false);
 
-    private static DeckAssignment Resolve(ClipDraft draft, int[] ordinals, bool questionView)
+    private static DeckAssignment Resolve(ClipDraft draft, int[] ordinals, bool questionView, ModeDefinition? selectedDefinition = null)
     {
         if (ordinals.Length == 0 || ordinals.Distinct().Count() != ordinals.Length)
             throw new InvalidDataException("卡片模板序号无效。");
-        if (draft.Settings.AnkiRootDeck is not { } root) return new(draft.Settings.AnkiDeck, null);
+        if (draft.Settings.AnkiRootDeck == null && draft.Excerpt == null) return new(draft.Settings.AnkiDeck, null);
+        var root = draft.Settings.AnkiRootDeck ?? DefaultRoot;
         ValidateRoot(root);
-        var definition = DefinitionFor(draft, questionView);
+        var definition = selectedDefinition ?? DefinitionFor(draft, questionView);
         var pattern = PathFor(definition);
         ValidatePattern(pattern, definition.OutputKind);
-        var language = LanguageFor(draft.Original.SelectedText);
+        var language = definition.Language switch { "zh" => "汉语", "en" => "英语", _ => LanguageFor(draft.Original.SelectedText) };
         var decks = ordinals.ToDictionary(ordinal => ordinal, ordinal =>
         {
             var format = definition.OutputKind switch
@@ -90,6 +91,17 @@ public static class DeckRouting
         if (!questionView && draft.ConfirmedNote is { } frozen)
             return string.Join("；", frozen.Ordinals.Select(frozen.DeckFor).Distinct());
         var kind = DefinitionFor(draft, questionView).OutputKind;
+        if (!questionView && kind == "language" && draft.ModeParentId == null &&
+            (draft.Content == null || draft.ModeCards.Count > 0) && LanguageModes.HasConcrete(draft.Configuration))
+        {
+            try
+            {
+                var modes = LanguageModes.Select(draft.Configuration, draft.Material, draft.Practice, draft.ModeId);
+                return string.Join("；", modes.Select(mode => Resolve(draft,
+                    [mode.Practice == PracticeChoice.Writing ? 1 : 0], false, mode).Deck).Distinct());
+            }
+            catch (ModeChoiceRequiredException) { return "等待选择语言模式"; }
+        }
         int[] ordinals = kind != "language" ? [0] : draft.Practice switch
         {
             PracticeChoice.Reading => [0], PracticeChoice.Writing => [1], _ => [0, 1]

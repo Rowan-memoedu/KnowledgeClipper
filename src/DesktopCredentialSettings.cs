@@ -85,7 +85,8 @@ namespace KnowledgeClipper
         internal void ApplyTo(ProcessStartInfo start)
         {
             if (start == null) throw new ArgumentNullException("start");
-            if (!string.IsNullOrEmpty(DeepSeekApiKey)) start.Environment["AI_PRODUCER_API_KEY"] = DeepSeekApiKey;
+            var key = SecretConfig.Get("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY");
+            if (!string.IsNullOrEmpty(key)) start.Environment["DEEPSEEK_KNOWLEDGECLIPPER_API_KEY"] = key;
             if (!string.IsNullOrEmpty(MineruApiToken)) start.Environment["MINERU_API_TOKEN"] = MineruApiToken;
         }
 

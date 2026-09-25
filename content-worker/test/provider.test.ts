@@ -75,12 +75,12 @@ test("snapshot-bound provider overrides take precedence over local model and ret
 async function withFakeProvider(run: () => Promise<void>): Promise<void> {
   const originalFetch = globalThis.fetch;
   const original = {
-    key: process.env.AI_PRODUCER_API_KEY,
+    key: process.env.DEEPSEEK_KNOWLEDGECLIPPER_API_KEY,
     baseUrl: process.env.AI_PRODUCER_BASE_URL,
     model: process.env.AI_PRODUCER_MODEL,
     retries: process.env.AI_PRODUCER_MAX_RETRIES,
   };
-  process.env.AI_PRODUCER_API_KEY = "test-key-not-a-secret";
+  process.env.DEEPSEEK_KNOWLEDGECLIPPER_API_KEY = "test-key-not-a-secret";
   process.env.AI_PRODUCER_BASE_URL = "https://provider.test.invalid";
   process.env.AI_PRODUCER_MODEL = "test-model";
   process.env.AI_PRODUCER_MAX_RETRIES = "2";
@@ -88,7 +88,7 @@ async function withFakeProvider(run: () => Promise<void>): Promise<void> {
     await run();
   } finally {
     globalThis.fetch = originalFetch;
-    restoreEnv("AI_PRODUCER_API_KEY", original.key);
+    restoreEnv("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY", original.key);
     restoreEnv("AI_PRODUCER_BASE_URL", original.baseUrl);
     restoreEnv("AI_PRODUCER_MODEL", original.model);
     restoreEnv("AI_PRODUCER_MAX_RETRIES", original.retries);

@@ -1,7 +1,9 @@
 <Project>
   <PropertyGroup>
-    <BaseIntermediateOutputPath>D:\Caches\KnowledgeClipper\build\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
-    <BaseOutputPath>D:\Artifacts\KnowledgeClipper\build\$(MSBuildProjectName)\</BaseOutputPath>
+    <KnowledgeClipperBuildCache Condition="'$(KnowledgeClipperBuildCache)' == ''">D:\Caches\KnowledgeClipper\build</KnowledgeClipperBuildCache>
+    <KnowledgeClipperBuildOutput Condition="'$(KnowledgeClipperBuildOutput)' == ''">D:\Artifacts\KnowledgeClipper\build</KnowledgeClipperBuildOutput>
+    <BaseIntermediateOutputPath>$(KnowledgeClipperBuildCache)\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(KnowledgeClipperBuildOutput)\$(MSBuildProjectName)\</BaseOutputPath>
     <!--
       Each desktop project has its own output subtree under desktop/bin.  The
       SDK's computed default excludes only cover the active project's output

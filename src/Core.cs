@@ -79,7 +79,7 @@ namespace KnowledgeClipper
             return new UserSettings
             {
                 ChineseVoice = "zh-CN-XiaoxiaoNeural",
-                EnglishVoice = "en-US-AvaMultilingualNeural",
+                EnglishVoice = "en-US-AnaNeural",
                 SpanishVoice = "es-ES-XimenaNeural",
                 JapaneseVoice = "ja-JP-NanamiNeural",
                 KoreanVoice = "ko-KR-SunHiNeural",
@@ -468,6 +468,12 @@ namespace KnowledgeClipper
 
     internal static class SecretConfig
     {
+        internal static EnvironmentVariableTarget DeepSeekWriteTarget = EnvironmentVariableTarget.User;
+        internal static void SetDeepSeek(string value)
+        {
+            Environment.SetEnvironmentVariable("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY", value, DeepSeekWriteTarget);
+            Environment.SetEnvironmentVariable("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY", value, EnvironmentVariableTarget.Process);
+        }
         public static string Get(string name)
         {
             var value = Environment.GetEnvironmentVariable(name);
@@ -493,8 +499,8 @@ namespace KnowledgeClipper
         public async Task<CleanOutcome> ReviewAsync(string source)
         {
             if (string.IsNullOrWhiteSpace(source)) return new CleanOutcome { Problem = "没有可清洗的文本" };
-            var key = SecretConfig.Get("AI_PRODUCER_API_KEY");
-            if (string.IsNullOrWhiteSpace(key)) return new CleanOutcome { Problem = "未找到 DeepSeek API Key（AI_PRODUCER_API_KEY）" };
+            var key = SecretConfig.Get("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY");
+            if (string.IsNullOrWhiteSpace(key)) return new CleanOutcome { Problem = "未找到 DeepSeek API Key（DEEPSEEK_KNOWLEDGECLIPPER_API_KEY）" };
             var baseUrl = SecretConfig.Get("AI_PRODUCER_BASE_URL") ?? config.DeepSeekBaseUrl;
             var model = SecretConfig.Get("AI_PRODUCER_MODEL") ?? config.DeepSeekModel;
             var retriesText = SecretConfig.Get("AI_PRODUCER_MAX_RETRIES");

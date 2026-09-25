@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>KnowledgeClipper copy-blocked selection fixture</title>
+<p>Before the selection.</p>
+<p id="selected">The browser still knows these selected words.</p>
+<p>After the selection.</p>
+<script>
+  document.addEventListener('copy', event => event.preventDefault());
+  function selectFixture() {
+    document.body.tabIndex = -1;
+    document.body.focus();
+    const range = document.createRange();
+    range.selectNodeContents(document.getElementById('selected'));
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+  addEventListener('load', selectFixture);
+  setInterval(selectFixture, 500);
+</script>
+</html>

@@ -1,0 +1,5 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>KnowledgeClipper 剪藏</title></head><body><script type="module">
+const name = new URLSearchParams(location.search).get('widgetName');
+if (name === 'index' || name === 'status') { const script=document.createElement('script'); script.type='module'; script.src=name+'-sandbox.js'; document.body.append(script); }
+else document.body.textContent='KnowledgeClipper 剪藏插件';
+</script></body></html>

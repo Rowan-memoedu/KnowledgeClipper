@@ -1,8 +1,243 @@
 # 零碎知识剪藏
 
+## 当前源码与验证（2026-09-25）
+
+无上下文语言卡先从 Tatoeba 取得包含原样目标的真实整句；查不到时尝试 Wiktionary 的完整例句，仍无结果则保留草稿并要求补充上下文。模型处理已选定例句的学习字段，不再新造英文主例句。有上下文时沿用原句。词典栏保留 Wiktionary 返回的全部词性、释义、例句及可取得的词源，不再把 MyMemory 的机器互译当作词义。新增卡片的词典栏可折叠；已确认卡片保持冻结。
+
+本次隔离构建位于 [language-quality-20260925/release](D:/Artifacts/KnowledgeClipper/language-quality-20260925/release/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)。四模式字段契约、词典夹具和真实接口、`kinetic` 真实模型译文及设置页已验收。正式提示词尚未发布；仓库 `modes` 文件是现有工程配置。下文按日期保留历史版本证据，不代表当前源码行为。
+
+桌面快捷方式已指向本次构建，2026-09-25 11:43（北京时间）运行进程 PID 44324 回读为该可执行文件。此前已确认的错误 `kinetic` 卡片保留原身份与内容，未静默改写；后续新卡使用修正流程。
+
+## 原文摘录目标快速切换（2026-09-24）
+
+当时桌面程序位于 [excerpt-destination-20260924/final](D:/Artifacts/KnowledgeClipper/excerpt-destination-20260924/final/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，快捷方式曾指向此版本。设置的“导出对象”页可查看原文摘录目标和更改面板快捷键，默认 `Ctrl+Alt+Space`；托盘另有“原文摘录目标…”入口。面板从独立 RemNote 插件实时读取“零碎知识剪藏 → 摘录”下的直接子 Document，可选按日期导入或某个现有子 Document。选择保存后用于新建的纯原文摘录；摘录制卡仍按日期导入，已确认导入的目标不变。所选 Document 的 ID 与标题会冻结到新导入计划中，写入时再次核对目录位置，拒绝投向同名或已移动的目录。
+
+源码已通过桌面零警告构建、13 项摘录目标定向检查、89 项插件检查、40 项 host 检查和隔离 Windows 桌面设置检查。个人设置已绑定包含测试目录的现用“零碎知识剪藏”根节点 ID，避免误入同名空根目录。独立 host 与插件已更新。插件刷新后，实时目录接口返回“题目”“AI”“投资”和两个日期 Document；一条公开测试原文导入“AI”后，经独立回读确认父级是所选 Document，普通笔记无制卡属性。软件仍默认按日期导入，用户可从面板按材料类型切换。
+
+## 划词浮点位置（2026-09-24，已切换版本）
+
+鼠标拖选期间不显示浮点；松开左键、选区稳定后再读取。浮点以鼠标松开处为锚点，向上、向下拖选均如此；键盘选区继续使用辅助功能提供的位置。当时程序位于 [selection-endpoint-20260924/release](D:/Artifacts/KnowledgeClipper/selection-endpoint-20260924/release/KnowledgeClipper.exe)，构建、隔离测试及运行进程回读见 [验收记录](D:/Artifacts/KnowledgeClipper/selection-endpoint-20260924/validation.md)。
+
+## 划词词典字段（2026-09-23，上一版验收）
+
+新生成的四种语言卡片另存 `DictionaryDetails`：程序直接向免费互译和词典接口查询所选词块，保存翻译及可取得的词性、释义、例句和来源。查询与语言提示词、模型输出和重试相互独立。Anki 使用新的专用笔记类型，旧冻结卡片仍按原类型核对；RemNote 导出把词典内容排在原答案之后。设置“采集与练习 → 划词词典”控制制卡页是否显示该栏，默认关闭，不影响卡片保存。当前接口是可替换的初始实现，词典资料不按来源语境消歧；免费服务缺项或失败时不编造内容。
+
+上一版程序位于 [dictionary-20260923/release](D:/Artifacts/KnowledgeClipper/dictionary-20260923/release/KnowledgeClipper.exe)，当时实际进程、快捷方式与个人设置已回读；见[验收记录](D:/Artifacts/KnowledgeClipper/dictionary-20260923/validation.md)。
+
 Windows 悬浮式知识采集工具。活动源码位于 `D:\Projects\RemNote Quick Clipper`，应用数据位于 `D:\AppData\KnowledgeClipper`，构建和验证产物位于 `D:\Artifacts\KnowledgeClipper`。
 
-## 当前状态（2026-09-10）
+## 内容重试与 Anki 待导入恢复（2026-09-22，上一版验收）
+
+上一版程序位于 [import-recovery-20260922/release](D:/Artifacts/KnowledgeClipper/import-recovery-20260922/release/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，当时实际进程、快捷方式和个人设置已回读；见[完整验收](D:/Artifacts/KnowledgeClipper/import-recovery-20260922/validation/README.md)。
+
+- 内容校验失败时，重试带上上一候选和具体错误，修正此前反复重放相同请求的问题。原 Curriculum 失败已复现、修复并从原材料重新生成，原草稿经待导入队列实际导入 Anki，独立回读成功。
+- 生成例句允许目标重复出现，程序选首次原样匹配；来源原句仍使用实际选中的位置。保留目标原样与字段校验，不手改模型候选。
+- Anki 已运行且集合就绪时直接导入；不可连接时持久保存待导入内容。剪藏运行时每 5 秒检查集合，恢复后自动提交并核验；剪藏重启也恢复待导入记录。确认内容、媒体引用和身份保持不变，断连后的 Unknown 不重复添加。
+- 不自动启动 Anki：当前版本的官方启动流程主动显示并激活窗口，无法保证隐式启动不打扰用户，因此采用用户授权的等待方案。无需修改 Anki 或 RemNote 插件。
+
+最终队列 21 项、待导入界面 14 项、全部入口 139 项、快捷朗读 47 项、历史复用 72 项、历史界面 51 项通过；内容重试 11 项、正式语言 111 项、Basic Anki 15 项通过。真实恢复测试以受控连接拒绝模拟离线，不关闭用户 Anki；自动提交与随后独立回读使用真实 AnkiConnect。个人设置保持不变。
+
+## 中文词义浮窗与历史录音复用（2026-09-22，上一版验收）
+
+上一版程序位于 [word-history-20260922/release](D:/Artifacts/KnowledgeClipper/word-history-20260922/release/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，现由上方版本替代；见[当时验收记录](D:/Artifacts/KnowledgeClipper/word-history-20260922/validation/README.md)。
+
+- 浮点“读”在选区旁显示简短中文词义，按本次来源句解释。辅助提示词开放在 `modes/lookup-meaning.md`，不改已有制卡提示词。首次释义需要等待 API；同词同句可复用已有释义。缺少来源句时显示未识别到当前句子。
+- 关闭上下文时直接播放已有词块录音，不等待释义；开启上下文时先匹配来源句或当前读音。词义与录音来源分别保存，避免把新的词义当作旧录音的发音依据。
+- 浮点快捷“读”遇到历史词块时保留一条新记录，但不自动重复制卡；可从历史进入该记录继续制卡。首次处理未结束时连续点击也只自动制卡一次。新词沿用默认制卡导入，主“语言”入口保留原面板。
+- 后续朗读优先于迟到的旧查词结果；历史音频失效会报错，不悄悄重新合成。播放索引后台初始化，点击只查询对应词块。
+
+最终包历史复用 72 项、快捷朗读 47 项、完整入口 137 项、历史 51 项通过；选区 82 项、释义结构 13 项与公开双语境真实释义通过。原录音到真实接收进程约 230 毫秒的验证不涉及音频设备，不能等同于实际听觉延迟。个人设置和 RemNote 插件未改。
+
+## 历史性能、语言快捷与日期导入（2026-09-21，上一版验收）
+
+上一版程序位于 [history-daily-20260921/release-final](D:/Artifacts/KnowledgeClipper/history-daily-20260921/release-final/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，现由上方版本替代；见[当时完整验收](D:/Artifacts/KnowledgeClipper/history-daily-20260921/validation/README.md)。
+
+- 历史后台读取、每页 20 条且全部可翻页访问，重新激活不再重读及重建全库，同页刷新复用控件。公开 220 条记录的隔离实测：首页约 0.8–1.1 秒、刷新毫秒级，查看卡片后返回约 6–48 毫秒；单卡初次显示仍可能约 1 秒。
+- 浮点“读”默认快捷朗读与制卡导入，成功不弹窗，异常回原草稿，设置仍可关闭。本机只开启 quickLanguage，其余个人设置语义不变。
+- 新 RemNote 计划在模式最下层目录下按确认当日本地日期添加 `M.d` document，例如 `9.21`。同日共用、按批次连续追加且各带一个普通尾空行；旧确认目标保留，旧内容不整理。
+
+最终包历史 51 项、朗读快捷 47 项、完整入口 137 项通过；日期客户端 134 项、插件 88 项和两批真实导入/独立纯读通过。无需刷新 RemNote 插件。性能旧超时及测试边界保留在验收记录，不将离线语音夹具当作真实 TTS 音质验收。
+
+## 图片入口、并行 OCR 与普通节点修复（2026-09-20，上一版验收）
+
+上一版程序位于 [image-routing-refinement/release-final](D:/Artifacts/KnowledgeClipper/image-routing-refinement/release-final/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，现由上方版本替代。当时实际进程和快捷方式已切换，个人设置未改；见[完整验收与边界](D:/Artifacts/KnowledgeClipper/image-routing-refinement/validation/README.md)和[切换回读](D:/Artifacts/KnowledgeClipper/image-routing-refinement/validation/switch.json)。
+
+- 图片浮点为“图 / 读 / 问 / 摘”。“图”和悬浮窗“截图”进入多图收集，界面统一使用正面、反面；其余按钮只处理当次单图，明确动作优先于多图默认路径。
+- 关闭原图：先 OCR，再摘录、语言学习或问答。开启原图：摘录直接保留图片；语言先 OCR、正面保留图片，且只用理解与朗读；普通问答使用视觉模型，快捷问答先 OCR，两者正面都保留图片。缺少上下文时沿用原有选择页面。
+- OCR 最多 3 图并行，输出顺序保持不变，已完成结果和中断步骤可恢复。MinerU 保持直连。
+- 原图问答的上下文和本轮问题放在背面，历史按文字问题展示；冻结卡片和图片身份持续核验，重复导入复用原 ID。
+- 新 RemNote 目录和批次空行不制造空背面；多行卡仅把答案子项标为卡片项，不再让所属目录误作卡片正面。3 个旧空行受 SDK 原位编辑能力限制尚未清除，3 条内容已变更或缺失的旧卡拒绝自动修复。
+
+最终包 137 项桌面流程、46 项路由导出检查通过。三张真实图片上传及解析达到 3 路并行；实际图片问答、原图语言和无窗口的原图快捷摘录均完成导入、身份和托管图片字节回读。OCR 标题符曾进入语言目标，已修正并从原图恢复；失败样本保留且暂停复习，未手改生成卡面。测试配置错误、失败和旧记录拒绝回执均见上方验收说明。
+
+## 浮点悬停与选区核验（2026-09-16，上一版验收）
+
+上一版程序位于 [selection-refinement/release-final](D:/Artifacts/KnowledgeClipper/selection-refinement/release-final/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，已由上方版本替代；当时实际进程与快捷方式切换、个人设置保全见[验收记录](D:/Artifacts/KnowledgeClipper/selection-refinement/validation/README.md)和[切换回读](D:/Artifacts/KnowledgeClipper/selection-refinement/validation/switch.json)。
+
+- 文字、图片浮点悬停时保持显示；每次移开重新计时 2 秒，重新进入会取消隐藏倒计时。新选区、新剪贴板和来源变化仍使旧快照失效。
+- 明确触发全局摘录后，用受保护复制读取当前真实选区，不直接使用浮点保存的 UIA 文字候选。复制结果必须来自当前窗口进程且剪贴板序号已更新；输入、来源、lease 和剪贴板保全检查继续生效。
+- 英文边界补词保持原逻辑，只使用精确匹配的相邻上下文。复制失败时不拿旧选区生成草稿或快捷导入；导入阶段失败仍回到原草稿。
+- 已完成当前 PDF 的[离线诊断](D:/Artifacts/KnowledgeClipper/selection-refinement/pdf-diagnosis/diagnosis.md)。PDF 文字层顺序正常，保存后的卡面与捕获原文一致；现有历史不能证明用户当时的选择范围。自动回归使用隔离原生文本控件，不模拟浏览器键鼠，也不将离线检查表述为当前 Chrome 选区的实测通过。
+- 文字选区 80 项、图片浮点 99 项通过；最终包的原生复制 11 个场景 / 113 项通过，包含中英文范围、英文补词、空选区拒绝、PID 核验与剪贴板恢复。首次隔离前台限制、并发剪贴板与用户输入中断记录保留；最终串行运行未放宽断言。
+
+## 浮点与快捷导入（2026-09-16，上一版验收）
+
+上一版程序为 [floating-quick/release](D:/Artifacts/KnowledgeClipper/floating-quick/release/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，现由上方版本替代；见[当时切换回读](D:/Artifacts/KnowledgeClipper/floating-quick/validation/switch.json)和[当时验收](D:/Artifacts/KnowledgeClipper/floating-quick/validation/README.md)。独立 RemNote host 与插件继续部署在 `standalone-remnote/host`、`standalone-remnote/plugin`。
+
+- 文字浮点顺序改为“读 / 问 / 摘”。剪贴板新增图片时，光标旁出现“图 / 摘”，在出现位置停留 2 秒；不因开启监听而重放旧剪贴板图片。
+- 图片“图”以当次图片开始已有截图收集，可继续添加、撤销、分组；图片“摘”及主窗口“摘录”保留现有图片处理流程。
+- 设置新增“浮点”页，集中管理两类浮点及四条快捷路径；托盘也可分别开关文字、图片浮点。设置页采用单行标签，重复打开复用原窗口；托盘更改会同步已打开的设置页，并保留其余未保存编辑。
+- 快捷模式成功时后台导入，不弹预览；失败或需选择时回到原草稿。默认仅开启文字“摘”：直接保存原文。语言按默认练习格式制卡，提问仅生成第一轮，图片“图”仅保存单张原图，不生成答案；后三项默认关闭。导出对象沿用逐模式设置。
+- 处理中从历史打开同一份语言或摘录记录，复用正在处理的草稿与导入锁，避免重复请求和重复提交。
+- RemNote 每个新导入计划的全部正文后追加一个同级空节点，不产生复习卡。重复导入保持原节点，旧记录不追溯修改。原失败批次恢复、新批次导入和后台冷启动回读已通过。
+- 四条快捷路径完成真实导入并核验内容、身份、复习卡、图片字节和历史状态，成功期间没有弹窗。最终显示修正包另通过 57 项纯回读，无新增生成或导入；主窗原图按钮显示开关状态，删除旧的固定 Anki 文案。
+
+## 剪藏专用 RemNote 插件（2026-09-16，接入历史与当前独立服务）
+
+剪藏 SDK 接入已拆为本仓库中的 [remnote-plugin](remnote-plugin/README.md) 与 [remnote-host](remnote-host/README.md)。插件 ID 为 `knowledge-clipper`，显示名“KnowledgeClipper 剪藏”；独立 HTTP 43111、WebSocket 43112、本地插件安装地址 `http://localhost:43113/`。正常运行不依赖 MCP Bridge、MCP server、其 fork 代码或启动任务，可以分别升级。插件代码固定官方 SDK 版本，并与剪藏的制卡协议一起验收。
+
+该阶段程序曾切换到 [standalone-remnote](D:/Artifacts/KnowledgeClipper/standalone-remnote/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，现已由上方浮点版本替代；独立服务架构继续使用。11 条旧测试来源完成同 ID 迁移，另 1 条旧图片测试卡因内容与冻结记录不符被拒绝，未重建，历史失败证据保留。迁移说明见 [身份迁移](tools/KnowledgeClipper.RemNoteMigration/README.md)。
+
+新客户端把旧标准 SDK 地址 43101 解析到独立服务 43111，保留自定义地址与既有草稿的冻结内容／目标；Unknown 和已有身份仍先纯回读。仅安装插件并不等于端到端验收通过。独立产物位于 `D:\Artifacts\KnowledgeClipper\standalone-remnote`。
+
+客户端 94 项、插件 32 项、独立服务 24 项本地测试通过。真实矩阵覆盖 20 个 RemNote 来源：23 条顶层内容、26 条答案子节点、17 张复习卡，另有 1 张默认导向 Anki 的语言卡。覆盖四语言模板、原文、手动、挖空、公式、OCR 文字、多图、题目、翻译、问答与追问；独立服务冷启动后回读同 ID，新增导入请求为 0，SDK 请求全部使用 43111。见[最终验收与清理](D:/Artifacts/KnowledgeClipper/standalone-remnote/validation/README.md)。本轮未调用模型、OCR 或 TTS，不代表这些上游生成链被重新验收。
+
+正式模式目录已补齐，含根共 14 个 document。按用户要求，两轮测试的 36 条顶层内容及 40 条子节点已移至根级 trash 下的测试回收目录，正式目录保留；两条 Anki 测试笔记已备份并删除。固定测试数据集已退役，不再将清理后的状态当作可继续重跑的在线样本。个人设置保持切换前的内容。
+
+## RemNote SDK 导出（2026-09-16，历史验收）
+
+当时程序为 [remnote-sdk](D:/Artifacts/KnowledgeClipper/remnote-sdk/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，现已由上方独立插件版本替代。历史结果见[当时验收](D:/Artifacts/KnowledgeClipper/remnote-sdk/validation/README.md)、[当时进程与设置回读](D:/Artifacts/KnowledgeClipper/remnote-sdk/validation/switch.json)及[当时界面检查](D:/Artifacts/KnowledgeClipper/remnote-sdk/validation/deployed-ui.json)。
+
+- 设置中的“导出对象”可逐模式选择 Anki / RemNote。未配置时语言制卡默认 Anki，摘录、图片、翻译、问答等模式默认 RemNote；已确认草稿仍使用原内容与目标。
+- RemNote 导入直接通过本机 HTTP 和官方 SDK，复用现有本机连接，不经过 MCP 制卡。SDK 插件须保持启用；本机后台通过现有 Windows 登录任务启动，不依赖本次工具会话。
+- 内容进入“零碎知识剪藏”根 document 下的模式 document。普通空背面内容保存为并列笔记；正反面内容转为原生多行卡，正面换行留在同一个 Rem；挖空按 Anki 分组转为原生挖空，不使用 LLM 转换。
+- 多图按原顺序上传为 RemNote 托管图片，逐图核对字节。失败重试先回读已有身份；图片恢复仅完成原节点的托管，不新建替代卡片。历史状态仍以全部有效内容核验导入为准。
+
+真实验收包含 13 条顶层 Rem 内容、10 张 RemNote 复习卡和 1 条 Anki 笔记／卡片。原失败图片卡保留原身份完成恢复，独立新图片卡直接导入通过；重开和后台冷启动后全部回读相同身份，未新增导入或媒体恢复请求。测试使用公开手写材料；本轮不重新验证内容模型、TTS 或跨设备同步。
+
+## 重播与统一历史记录（2026-09-16，历史验收）
+
+当时程序为 [unified-history](D:/Artifacts/KnowledgeClipper/unified-history/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)。[历史验收](D:/Artifacts/KnowledgeClipper/unified-history/validation/README.md)包含交互、卡片状态、启动包和[当时的进程回读](D:/Artifacts/KnowledgeClipper/unified-history/validation/switch.json)。以下行为保留在当前版本中。
+
+- 单击重播上一条语言音频；双击只打开“历史记录”。单击等待系统双击间隔，避免双击同时启动音频；右键也可打开历史。
+- 历史汇总全部摘录、语言、问答与翻译记录，不再限制为最近 20 / 30 条。既有语言子模式和追问仍归入原记录，两个存储及各自的预览、导入流程保持独立。
+- 只有语言历史记录可播放。其他记录可打开原有卡片页面，查看或继续制卡。
+- 至少一张卡已经核验导入，且当前所有已制成的卡都已导入时显示“查看”；其余显示“继续制卡”。统计包括已生成但后来取消勾选的语言模式、后续问答及摘录的有效卡片；被合并替代的挖空草稿不重复计入。导入或新增卡片后自动更新按钮。
+
+150 项检查通过：历史及按钮状态 48、基础工作流 37、摘录 31、独立语言模式 34。历史界面在隔离 Windows 桌面用 66 条公开测试记录检查，播放调用真实播放器读取缓存音频；导入状态使用隔离 fixture，本轮未重新调用内容 API 或写入 Anki。现有截图与 MinerU 直连实现保留。
+
+## 截图与默认路径更新（2026-09-15，历史验收）
+
+当时程序为 [screenshot-routing](D:/Artifacts/KnowledgeClipper/screenshot-routing/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)。实际进程、控件和个人设置回读见[历史切换核验](D:/Artifacts/KnowledgeClipper/screenshot-routing/validation/switch.json)，完整结果见[截图验收](D:/Artifacts/KnowledgeClipper/screenshot-routing/validation/README.md)。以下功能保留在当前版本中。
+
+- 截图保留多图收集、题图／答案图分组、继续和撤销。点“完成”后把明确排序的原材料交给当前工作流。点击摘录时，剪贴板最新内容若为图片则进入相同图片路线；浮点的明确文字选区继续走文字摘录。
+- 关闭原图时，逐图调用现有 MinerU 程序，保存原始结果，再调用已发布清洗和审核提示词。OCR 与 Ask 选择并行；完成后进入所选摘录或语言工作流。失败步骤可重试，已完成 OCR 的结果下载可以恢复，不重新上传。
+- 原图有答案图时，题图组成正面、答案图组成反面，不调用内容模型。没有答案图时调用 `image-modes.json` 所选模式，实际图片按 role / index 传给模型；默认“题目解答”，也可选择不生成答案的原图摘录。已有摘录模板承载多张原图，媒体存储和顺序均独立回读。
+- “默认路径与图片”设置页分别保存文字、OCR 图片、原图默认路径。Ask 或失效的默认模式都会显示选择窗。文字框旁的选项已移除，默认恢复“结尾问号提问，否则翻译”；提示文字随设置更新。
+- 右键“最近图片”可打开结果或继续未完成的材料。原图、清洗结果、疑点、审核意见和导入状态分开保存；疑点与审核意见不上卡。
+
+190 项本地检查通过，两种原图路线和 OCR 原文卡均已真实导入 Anki 并回读，共三张卡，重复导入不新增。此前失败的 OCR 图片复用原批次完成直连下载、ZIP／Markdown 校验、DeepSeek 清洗与审核；调用桥接支持 Windows 长路径，避免下载后解包失败。MinerU 全程直连，物理网卡恢复由已有 MinerU 程序负责，没有修改系统代理或个人设置。旧下载失败与解包失败证据保留。
+
+## 独立摘录更新（2026-09-15，历史验收）
+
+历史已验收版本：[KnowledgeClipper.exe](D:/Artifacts/KnowledgeClipper/independent-excerpt/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)。该次发布的实际按钮、文字输入四个选项、文件指纹与设置见 [历史发布回读](D:/Artifacts/KnowledgeClipper/independent-excerpt/validation/switch.json)。以下记录该次更新，当前文字输入行为以上方章节为准。
+
+主窗口“摘录”和“语言”分别进入独立流程，浮点提供“读 / 摘 / 问”三个小按钮。文字输入明确选择“语言 / 摘录 / 翻译 / 问答”，不按文字、问号或 AI 分类改变功能。语言入口沿用已发布的四种语言模式与默认练习设置；“采集与练习 → 语言入口”可关闭触发后的自动朗读，手动播放仍可用。
+
+摘录页初始只有原文卡，正面为选中原文，反面为空，可直接导入 Anki。勾选“手动”后可编辑独立的正、反面并添加新卡；开启“挖空”后，在手动正面选中文字即产生一张 `{{c1::文字}}` 预览。每次选区独立制卡，合并所勾选的挖空卡时，各空统一为 `c1`，在 Anki 中共同组成一张卡。合并替换待导入原卡并保留恢复信息；尚未确认导入时可撤销合并，已导入卡片不修改。
+
+所有派生卡与原文卡独立，可逐张导入或导入全部未导入项。已确认卡片保持固定，超时、未知写入状态先核对，不盲目重加。摘录历史在右键“最近摘录”，与语言历史分开保存。
+
+新提示词接口在 [摘录输出字段](modes/excerpt-output-fields.md)，工程 Schema 为 `modes/excerpt-card.schema.json`，注册表为 `modes/excerpt-modes.json`。本轮注册表为空；原文与手动流程已经接通，新提示词正文和效果测试等用户发布后进行。可以设置本地提示词目录，并在摘录页刷新，多选模式各生成一张独立卡。
+
+该次独立摘录发布后，图片流程提示词与结果字段交付到 `modes`；当前接入状态见 [图片流程字段](modes/image-output-fields.md) 和上方截图更新。
+
+验收：31 项摘录领域检查、15 项生产界面组件检查、104 项旧导入回归通过；界面在隔离的 Windows 测试桌面渲染。Anki 独立验收牌组真实生成 3 条笔记 / 3 张卡，字段、卡面、牌组和可复习状态均回读，重开与重复导入没有新增。回执见 [摘录领域](D:/Artifacts/KnowledgeClipper/independent-excerpt/validation/excerpt-domain.json)、[界面](D:/Artifacts/KnowledgeClipper/independent-excerpt/validation/excerpt-ui.json)、[实际 Anki](D:/Artifacts/KnowledgeClipper/independent-excerpt/validation/excerpt-live-anki.json)。本轮没有测试生产摘录提示词，也没有重复调整用户已经验收的旧功能。
+
+## 已验收修复记录（2026-09-11）
+
+当时修复版为 `selection-speech-fixes`。默认制卡格式移到“采集与练习”页首行，三种选项均已验证保存和立即生效。选词浮点当时由 90×46 调整为 45×23，优先靠近选区右上角，显示器边缘自动避让；本次增加独立“摘”按钮后为 66×23，保留各按钮的小尺寸。
+
+输入钩子将观察事件交给独立队列处理，监视消息泵、未被钩子接收的输入和定期续接；启动失败、消息泵退出及钩子丢失可自动恢复。旧读取完成不能清除新读取，取消和读取上限避免长期占用取词槽。现有选区、前台窗口与剪贴板保护继续生效。
+
+Flux 原记录的两个音标都是 `/flʌks/`，语音设置为 Ava 多语种音色。当前路由对 Ava、Andrew、Brian、Emma 使用同名美式英语专用音色；Flux 已从原记录重生成、播放并重播，新的已验证音频放入独立缓存键，供历史记录后续重播使用。用户已确认这一批功能测试通过、无需继续调整，该阶段关闭；本次更新保留现有语音实现。Edge TTS 不接收 IPA 的技术边界不变。
+
+本轮 140 项工程检查与边界见 [修复验收](D:/Artifacts/KnowledgeClipper/selection-speech-fixes/checks/README.md)，实际运行进程、设置首屏控件、快捷方式与个人设置回读见 [switch.json](D:/Artifacts/KnowledgeClipper/selection-speech-fixes/checks/switch.json)。故障恢复测试不等于长时间真实操作观察，Windows 音频输出也不等于逐音素听辨验收。
+
+## 正式提示词接入记录（2026-09-11）
+
+提示词接入时曾按授权切换到 `prompt-integration` 构建；该次进程、六页设置、文件指纹与快捷方式回读见 [历史 switch.json](D:/Artifacts/KnowledgeClipper/prompt-integration/checks/switch.json)。现行入口以上方最新部署状态为准。
+
+四个模式按 [language-output-fields.md](modes/language-output-fields.md) 接入独立 Schema、`ready` / `unresolved`、输入选区标记和字段保存。原文重复词按已验证的 UTF-16 位置标记；生成例句要求唯一精确匹配，由程序计算位置。来源原文保留，原文中的 XML / HTML 字符会被转义。
+
+英语阅读背面严格为音标、英文解释、整句中文翻译三行，lemma 独立保存。英语书写正面为原句内音标替换选区及英文解释，背面为原选区及整句中文翻译，各两行。汉语书写以“（拼音；意义线索）”替换本次选区，背面只保留原选区。阅读预览高亮本次目标；重复答案留在原文其他位置时显示书写提醒。待处理结果保存原因、禁止导入，可重试；已就绪的其他模式保持独立。
+
+本次字段带 `language-content.2026-09-11` 标识。新版卡片使用所选语言笔记类型名称加“ · 语言20260911”，首次导入创建；旧草稿和已确认卡片保留原配置、字段和模板。现有笔记类型与用户卡片不被迁移或覆盖。
+
+验证与边界见 [验收记录](D:/Artifacts/KnowledgeClipper/prompt-integration/checks/README.md)：四个模式的来源原文与允许生成场景均执行真实 API；实际 Anki 四条独立笔记 / 四张卡已逐张回读。原文损坏样本返回 `unresolved`。额外未知字母串 `qzxvpt` 被模型标为 `ready`，缺少读音依据，保留为内容未决项，不计入通过结果也不导入；提示词发布记录中的 `were postponed` 读音变体仍未决。工程接入不等于所有模型输出已完成语言学验证。四份提示词正文未修改。
+
+## 已包含的设置修复（2026-09-11）
+
+以下设置修复已包含在上方提示词接入版；原验证输出保留在 `settings-editing`。
+
+当时“设置…”与“其他功能设置…”改为打开并复用同一个窗口，读取真正使用的 `language-settings.json`。旧入口不再打开与朗读、内容和 Anki 流程脱节的设置面板。当时先完成已接入功能，OCR 与 RemNote 随后已在上方版本接入；当前浮点版本只保留一个“设置…”入口。
+
+36 个设置控件均可编辑，分为采集与练习、音色与播放、Anki 导入、内容处理、运行程序、模式与提示词六页。语音可选择中文、英文或其他语种音色，修改速度、音量、音调及自动播放；进入音色页会读取可用列表，成功查询的目录保存在 `D:\Caches\KnowledgeClipper\voices`，重开可直接选择，手动刷新失败仍保留已有列表和选项。试听使用本页尚未保存的参数，关闭设置会停止试听。自动播放关闭后仍保存音频，明确点击重播或句子播放时立即播放。
+
+内容 API、模型、单次超时和失败重试次数均作用于后续请求。默认保持 90 秒、首次失败后重试一次；重试不包含首次请求，取消或认证失败不重试。Python、Node.js、ffplay 的完整路径可修改，新路径不存在时保存会被拒绝。API Key 在安全输入框修改，留空保留已有值，通过本机加密凭据存储保存。上下文、练习、牌组、模式提示词等修改继续使用当前直接流程；已保存的任务保留自己的设置快照。
+
+验证记录：[checks](D:/Artifacts/KnowledgeClipper/settings-editing/checks)。桌面构建 0 警告、0 错误；共 212 项相关检查通过：全部设置 44、牌组设置与列表 51、选词与托盘 23、内容接口和请求策略 37、语音用途与缓存 20、既有工作流 37。全部设置检查通过生产菜单和控件修改、保存、重开、下一次操作快照验证，并使用隔离配置完成真实中英文音色切换、试听、自动播放关闭与手动重播。改过的速度、音量、音调也实际传入语音服务。测试未改动用户个人配置，Anki 列表和导入回归使用明确标注的本地 fixture。
+
+音色目录查询和一次中文试听曾出现服务失败，相同中文音色与参数随后成功；失败日志与成功音频均保留，不能据此保证外部服务始终可用。目录缓存用于保留可选项，试听失败会显示错误并可再次点击。六页设置截图已生成，当前 DPI 下检查了控件、滚动和固定保存按钮。
+
+## 上一批工程版记录（2026-09-11）
+
+历史工程版保存在 `maintenance-integration`。程序使用现有单实例机制，已有进程运行时，双击另一份 EXE 会恢复该进程，切换需先退出旧进程。
+
+上一批接入了四个具体模式的独立处理、设置和预览，当时正式提示词尚未发布，验收仅覆盖接口；本页上方为收到正式提示词后的接入结果。
+
+当时按用户要求暂停并保留工程证据；现已按后续请求恢复接入。
+
+本批使用方式：
+
+1. 在设置开启全局选词。一次抓取失败只影响当次选区，监视继续；无需为了下一次选词重新开启设置。选区本身仍按变化、来源切换及超时规则失效。
+2. 主悬浮窗的 `×` 隐藏到已有系统托盘；双击托盘或选择“显示悬浮窗”恢复。菜单“退出”才结束进程和监视。
+3. 当时浮点左侧在“读 / 摘”之间切换；2026-09-15 起改为“读 / 摘 / 问”三个独立按钮。“问”直接解释本次选区并进入已有追问流程，不先弹输入框，不依赖末尾问号。原选区和来源上下文独立保留。
+4. 只选到英文首尾部分字母时，共用捕获根据可核验的邻接原文补齐词界；多词之间原样保留。没有可靠原文时不猜测，不扩成整句；关闭制卡上下文不会关闭词界补全。
+5. 默认朗读选中的内容；预览句子旁的 `▶` 才播放当前句子。翻译在译文完成后朗读完整译文，重播使用有效译文。选区、句子、译文的缓存按用途、文本及音色等配置隔离，句子播放不覆盖默认重播音频。
+6. “读取可用音色”加载当前 Edge TTS 的音色，中文与英文可分别选择。自动选择时，纯中文沿用中文音色，英文及中英混合使用英文音色；混合文本在送往语音服务前跳过汉字，保留词间边界，因此用户选用多语言音色也不依赖服务自行跳过中文。原始材料和制卡上下文保持完整。关闭自动后使用指定音色朗读完整选区。新安装的英文默认值为 `en-US-AnaNeural`，既有音色选择不自动改写。
+7. 根牌组和模式页共用 AnkiConnect 的真实牌组列表；选择根牌组后，各模式可选择它下面任意层级的已有子牌组，或填写相对子路径并点击“新建此子牌组”。新建后刷新列表；每个模式独立保存目标。设置改变只影响后续新操作，不迁移既有卡片，不改冻结草稿的目标。
+8. “两者”对同一次捕获分别执行理解与朗读、书写两个模式，独立预览、编辑和导入，自动 TTS 一次。底部导入在点击时固定本次选择，全部核验为 `Verified` 才关闭预览；失败、缺配置、缺失绑定或未知写入结果保留窗口。“导入当前模式”成功后也关闭，其他未完成草稿可从最近草稿恢复；若后台仍有内容处理，等它保存完成后再关闭。仅追问卡片旁的“导入本张”保留窗口。
+9. 缺少提示词或 Schema 时仍可打开设置、修改牌组及普通选项；保存不会创建空提示词、抹掉已有覆盖或把缺配置标为已完成。关闭预览仍保留草稿，已导入内容继续跳过，不盲目重写。
+
+10. 右键“提问…”和 `--open-question` 是明确问答入口，无需末尾问号。旧文字框的自动分流已在 2026-09-15 更新中改为四项明确选择。
+
+四个独立模式如下；翻译与问答继续使用各自现有模式。`modes.json` 的 `schemaFile` 是可配置引用；本次由工程按正式字段定义维护四个模式的 Schema。
+
+| 模式 ID | 根牌组下的默认相对子牌组 | 已发布提示词 |
+|---|---|---|
+| `language-zh` | `语言学习::汉语::理解与朗读` | `language-zh.md` |
+| `language-writing-zh` | `语言学习::汉语::书写练习` | `language-writing-zh.md` |
+| `language-en` | `语言学习::英语::理解与朗读` | `language-en.md` |
+| `language-writing-en` | `语言学习::英语::书写练习` | `language-writing-en.md` |
+
+已有处理成功或确认冻结的草稿使用自己的配置快照。缺配置的独立子稿可点击“重试内容”补齐本次正式处理器，保留原目标和已成功的其他模式。旧四字段结果不会被重新解释为本次字段格式。
+
+重新构建工程版：
+
+~~~powershell
+pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -BuildOutput 'D:\Artifacts\KnowledgeClipper\maintenance-integration' -BuildCache 'D:\Caches\KnowledgeClipper\maintenance-integration'
+~~~
+
+隔离构建不会修改桌面快捷方式；明确传入 `-InstallShortcut` 才将快捷方式指向此输出，`-Start` 用于启动构建结果。默认正式输出仍为 `D:\Artifacts\KnowledgeClipper\build`。脚本会拒绝覆盖正在使用的目标。直接调用 MSBuild 时，同时指定 `KnowledgeClipperBuildOutput` 和 `KnowledgeClipperBuildCache`，用 `-getProperty:TargetPath,IntermediateOutputPath` 核对输出与缓存。界面检查的 `DesktopAssemblyPath` 必须指向同一桌面 DLL。测试先 `dotnet build`，再按隔离绝对路径运行 DLL；本机 .NET 8 的 `dotnet run` 曾在构建隔离输出后启动旧默认产物，该失败日志保留。
+
+本批检查与真实外部验证保存在 [engineering-checks](D:/Artifacts/KnowledgeClipper/maintenance-integration/engineering-checks)。接口和界面 fixture、真实内容 API、真实语音以及 Anki 写入分别说明证据范围。独立模式 Anki Canary 使用公开英文样本和两份明确标注的接口结果，仅验证每模式一张实际卡、独立牌组、回读与重复导入；测试卡保留在 `KnowledgeClipper Canary::Engineering 20260911`，不会混入正式牌组。
+
+验证结果：桌面构建 0 警告、0 错误；相关接口及语义界面检查共 260 项通过。真实 API 分别通过显式选区解释和中文翻译；Ava 多语言音色的混合样本完成合成和未静音进程输出，服务输入已排除汉字，听感仍未由用户核听。Anki 实际产生两条独立笔记／两张卡并逐张回读，重复导入为零外部调用。设置截图已检查，连续选词与浮点形状复用同一源码的既有证据，托盘生命周期在当前工程版语义界面检查中通过。上述结果不替代四模式正式提示词的验收。
+
+本批证据：选词失败复现与修复、托盘在 [selection](D:/Artifacts/KnowledgeClipper/maintenance/selection)，实际 DPI 浮点在 [dot](D:/Artifacts/KnowledgeClipper/maintenance/dot/validation.json)，真实音色与语音样本在 [maintenance-speech-live](D:/Artifacts/KnowledgeClipper/validation/maintenance-speech-live)。中文先前的 `NoAudioReceived` 已保留；随后同文本、同音色的生产助手与参数对照成功，未证实稳定的代码或参数故障。设备静音时只认定合成和进程音频流，不认定可听效果。UI 的本地 HTTP 与导入状态 fixture 只验证界面和状态边界，不代替真实 Anki 写入或正式提示词验收。
+
+## 已验收运行版记录（2026-09-10）
 
 **M1、M2 的工程流程均已通过用户验收；现已切换到正式 `KnowledgeClipper` 牌组，并完成分层牌组自测与测试卡清理。提示词与产出效果优化后置。**
 
@@ -23,19 +258,9 @@ M2 只增加选区入口：选中文字后显示浮点，点击后把当次文�
 
 模式确定后，`outputKind`、`followUpDefault` 和 `requiresContext` 随草稿保存，分别控制字段映射、追问默认展开和语言上下文处理。翻译使用简单单卡：正面原始输入，反面英文译文。问答每轮一张卡，正面为本轮问题，反面为本轮答案；前序问答默认放入正面的独立辅助字段，可在设置中关闭。语言模式仍用原有练习选择；默认收起追问，用户可主动展开。
 
-## 构建与使用
+## 旧运行版使用记录
 
-使用当前构建脚本，不再运行旧 .NET Framework 的整批 Canary 构建：
-
-~~~powershell
-pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Start
-~~~
-
-脚本使用已安装的 .NET SDK 8.0.424，缺少 selection-hook 依赖时从锁文件安装；可用 `-DotnetPath` 指定其他 .NET 8 SDK。编译缓存位于 `D:\Caches\KnowledgeClipper\build`，NuGet 缓存位于 `D:\Caches\NuGet\packages`。
-
-当前可执行入口：[KnowledgeClipper.exe](D:/Artifacts/KnowledgeClipper/build/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)。保留整个输出目录；重新构建前退出正在使用该输出目录的进程。
-
-日常使用桌面的 `KnowledgeClipper` 快捷方式。每次 `build.ps1` 构建成功后会自动创建或修正它，始终指向上述固定正式输出路径，不指向历史构建目录。只需修复快捷方式时，可单独运行 `tools/Install-DesktopShortcut.ps1`，无需重新构建。
+以下记录对应先前已验收版本；本批工程版的入口、构建方式和差异以上文为准。旧运行入口仍为 [KnowledgeClipper.exe](D:/Artifacts/KnowledgeClipper/build/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)。本机 .NET SDK 为 8.0.424；`-DotnetPath` 可指定其他 .NET 8 SDK，NuGet 缓存位于 `D:\Caches\NuGet\packages`。
 
 1. 在普通应用选中文字，点击悬浮窗“朗读”或“摘录”。
 2. 上下文开启时使用可靠的来源原文；提取失败时选择允许生成、补充原文或取消。补充上下文不会自动重播。
@@ -75,7 +300,7 @@ pwsh -NoLogo -NoProfile -File 'D:\Projects\RemNote Quick Clipper\build.ps1' -Sta
 - 本机设置和草稿在 `D:\AppData\KnowledgeClipper`，提示词覆盖文件在其 `modes` 子目录，完整任务音频在 `D:\Caches\KnowledgeClipper\audio`。
 - API Key 使用设置中的安全输入框或既有环境配置；不进入仓库、提示词、命令行参数或回执。
 
-截图、原图、OCR 和 RemNote 尚未迁入新主流程；相关旧源码与入口保留，当前构建未验收它们的可用性。旧候选、SDK 和历史报告不作为新流程的运行前提或验收证据。
+本历史阶段中，截图、原图、OCR 和 RemNote 尚未迁入新主流程；它们后续的接入与验收以上方当前版本及对应历史更新为准。旧候选、SDK 和历史报告不作为当前流程的运行前提或当前验收证据。
 
 共用内容 CLI 接受 `selectedText`、可选上下文及 `input` 元数据；指定 `followUp` 时，附带可选 `initialContent` 和 `conversation`，直接调用同一追问模块。例如：
 
@@ -116,4 +341,4 @@ M2 证据：[局部取词](D:/Artifacts/KnowledgeClipper/m2-local/selection-chec
 
 常规接口检查使用 [Workflow.Tests](tests/KnowledgeClipper.Workflow.Tests/KnowledgeClipper.Workflow.Tests.csproj)；内容、语音、Anki 和捕获各有薄 CLI，均调用生产实现。真实写入和播放检查只针对明确的隔离输入与目标，不作为每次构建的自动步骤。没有新变化或未解决问题时，不重跑整批外部检查。
 
-实施依据：[架构交接文件](D:/Artifacts/KnowledgeClipper/architecture/knowledge-clipper-architecture-handover.md)。原有改动已保存在 Git 基线 `ede7fbe`；历史版本由 Git 保留，不复制版本目录或整批旧报告。
+当前实施依据：[单一工程接管说明](D:/Artifacts/KnowledgeClipper/architecture/knowledge-clipper-engineering-brief.md)。本任务接续 `49491fd` 和其后的既有未提交改动。旧架构文件中的双工程线、跨任务汇报和固定文件交接约定已失效；由此工程任务统一实现并直接向用户交付。历史版本由 Git 保留，不复制活动源码目录。

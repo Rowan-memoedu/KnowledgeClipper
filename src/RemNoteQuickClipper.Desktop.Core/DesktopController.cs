@@ -17,6 +17,7 @@ namespace KnowledgeClipper.Desktop.Core
         private bool screenshotOriginalImageSnapshot;
         private CaptureResult pendingCapture;
         private string pendingIntent;
+        internal Func<CaptureBundleV1, SubmissionResult> ScreenshotSubmission { get; set; }
 
         internal DesktopController(ICaptureProvider captureProvider, IScreenshotProvider screenshotProvider, IDesktopOrchestratorPort orchestrator, IClock clock, IIdProvider ids)
         {
@@ -241,6 +242,25 @@ namespace KnowledgeClipper.Desktop.Core
             CaptureScreenshotFrame();
         }
 
+        internal DesktopSemanticState StartScreenshotFromImage(CaptureArtifact artifact)
+        {
+            if (artifact == null || !string.Equals(artifact.mediaType, "image/png", StringComparison.Ordinal) || string.IsNullOrWhiteSpace(artifact.sourcePath))
+                throw new ArgumentException("需要已保存的剪贴板图片。", nameof(artifact));
+            state.revision++;
+            state.lastAction = "screenshot.clipboard-start";
+            if (!RequireIdle()) return Snapshot();
+            screenshotEntries.Clear();
+            screenshotOriginalImageSnapshot = state.originalImageMode;
+            state.screenshotSession = ScreenshotSessionState.Empty();
+            state.screenshotSession.active = true;
+            state.screenshotSession.activeGroup = "question";
+            screenshotEntries.Add(new ScreenshotEntry { Group = "question", Artifact = artifact.Copy() });
+            state.foregroundState = "screenshot-review";
+            state.noticeCode = "screenshot.frame-captured";
+            RefreshScreenshotState();
+            return Snapshot();
+        }
+
         private void ContinueScreenshot()
         {
             if (!state.screenshotSession.active || state.foregroundState != "screenshot-review")
@@ -319,7 +339,7 @@ namespace KnowledgeClipper.Desktop.Core
             bundle.modeSnapshot.contextApplied = false;
             bundle.modeSnapshot.imageHandling = screenshotOriginalImageSnapshot ? "original" : "ocr";
             CaptureBundleValidator.Validate(bundle);
-            var result = orchestrator.SubmitCapture(bundle);
+            var result = ScreenshotSubmission != null ? ScreenshotSubmission(bundle) : orchestrator.SubmitCapture(bundle);
             screenshotEntries.Clear();
             state.screenshotSession = ScreenshotSessionState.Empty();
             state.foregroundState = "idle";

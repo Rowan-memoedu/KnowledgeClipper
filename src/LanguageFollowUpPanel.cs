@@ -134,7 +134,7 @@ internal sealed class LanguageFollowUpPanel : TableLayoutPanel
         private readonly ClipDraft draft;
         private readonly TextBox question, answer, context;
         private readonly GroupBox contextGroup;
-        private readonly Label status;
+        private readonly Label status, destination;
         private readonly CheckBox selected;
         private readonly Button import;
         private bool loading, initialized, frozen, answered;
@@ -158,18 +158,30 @@ internal sealed class LanguageFollowUpPanel : TableLayoutPanel
             import = MakeButton("导入本张", "question-card-" + index + ".import");
             import.Click += async (_, _) => { if (import.Enabled && Available) await requestImport(new[] { Index }); };
             header.Controls.AddRange(new Control[] { selected, status, import }); Controls.Add(header, 0, 0);
-            Controls.Add(new Label { Text = "问题 · 卡片正面", AutoSize = true }, 0, 1);
-            question = MakeText("question-card-" + index + ".question", 64); question.ReadOnly = true; Controls.Add(question, 0, 2);
-            Controls.Add(new Label { Text = "回答 · 卡片反面", AutoSize = true }, 0, 3);
-            answer = MakeText("question-card-" + index + ".answer", 120); Controls.Add(answer, 0, 4);
+            var row = 1;
+            var hasImage = draft.Original.FrontImage != null;
+            if (draft.Original.FrontImage is { } frontImage)
+            {
+                Controls.Add(new Label { Text = "正面 · 原图", AutoSize = true }, 0, row++);
+                var image = new TableLayoutPanel { Name = Name + ".front-image", Dock = DockStyle.Top, AutoSize = true, ColumnCount = 1 };
+                image.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                ExcerptDraftForm.AddImage(image, frontImage); Controls.Add(image, 0, row++);
+            }
+            Controls.Add(new Label { Text = hasImage ? "本轮问题 · 随回答放入反面" : "问题 · 卡片正面", AutoSize = true }, 0, row++);
+            question = MakeText("question-card-" + index + ".question", 64); question.ReadOnly = true; Controls.Add(question, 0, row++);
+            Controls.Add(new Label { Text = "回答 · 卡片反面", AutoSize = true }, 0, row++);
+            answer = MakeText("question-card-" + index + ".answer", 120); Controls.Add(answer, 0, row++);
             answer.TextChanged += (_, _) => {
                 if (loading || frozen || !answered) return;
                 draft.EditedAnswers[Index] = answer.Text; store.Save(draft); changed();
             };
             contextGroup = new GroupBox { Text = "辅助上下文 · 随卡片带入", Name = Name + ".context-group", Dock = DockStyle.Top, Height = 120, Padding = new Padding(6) };
             context = MakeText("question-card-" + index + ".context", 90); context.Dock = DockStyle.Fill; context.ReadOnly = true;
-            contextGroup.Controls.Add(context); Controls.Add(contextGroup, 0, 5);
-            SizeChanged += (_, _) => status.MaximumSize = new Size(Math.Max(120, ClientSize.Width - 28), 0);
+            contextGroup.Controls.Add(context); Controls.Add(contextGroup, 0, row++);
+            destination = new Label { Name = Name + ".destination", AccessibleName = Name + ".destination", AutoSize = true,
+                ForeColor = Color.DimGray, Margin = new Padding(4) };
+            Controls.Add(destination, 0, row);
+            SizeChanged += (_, _) => status.MaximumSize = destination.MaximumSize = new Size(Math.Max(120, ClientSize.Width - 28), 0);
         }
 
         internal void Refresh(QuestionCardPreview preview, bool blocked)
@@ -180,6 +192,7 @@ internal sealed class LanguageFollowUpPanel : TableLayoutPanel
                 state = preview.State; frozen = preview.Frozen;
                 answered = Index < draft.Conversation.Count && draft.Conversation[Index].Answer.Answered;
                 SetText(question, preview.Question); SetText(answer, preview.Answer ?? ""); SetText(context, preview.Context ?? "");
+                destination.Text = "导入：" + preview.DestinationLabel; destination.Visible = !string.IsNullOrWhiteSpace(preview.DestinationLabel);
                 contextGroup.Visible = context.Text.Length > 0;
                 if (!initialized) { selected.Checked = Available; initialized = true; }
                 if (state == ImportState.Verified || !answered) selected.Checked = false;

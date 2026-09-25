@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["front", "back", "cardType"],
+  "properties": {
+    "front": { "type": "string", "minLength": 1 },
+    "back": { "type": "string" },
+    "cardType": { "type": "string", "enum": ["basic", "cloze"] }
+  }
+}

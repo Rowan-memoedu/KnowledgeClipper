@@ -35,7 +35,7 @@ namespace RemNoteQuickClipper
             Equal("route Spanish", "es", LanguageRouter.Detect("¿Cómo estás? Esta es una prueba."));
             var settings = UserSettings.Defaults();
             Equal("default edge Chinese voice", "zh-CN-XiaoxiaoNeural", settings.Voice("zh"));
-            Equal("default edge English voice", "en-US-AvaMultilingualNeural", settings.Voice("en"));
+            Equal("default edge English voice", "en-US-AnaNeural", settings.Voice("en"));
             Equal("edge positive rate", "+15%", TtsService.Signed(15, "%"));
             Equal("edge negative pitch", "-8Hz", TtsService.Signed(-8, "Hz"));
             var settingsTest = Path.Combine("D:\\RemNoteQuickClipperData", "settings-test-" + Guid.NewGuid().ToString("N"));

@@ -1,0 +1,12 @@
+{
+  "manifestVersion":1,
+  "id":"knowledge-clipper",
+  "name":"KnowledgeClipper 剪藏",
+  "author":"KnowledgeClipper",
+  "description":"零碎知识剪藏专用官方 SDK 插件。独立于 MCP，仅处理剪藏导入、回读和图片恢复。",
+  "version":{"major":1,"minor":0,"patch":0},
+  "repoUrl":"https://github.com/amymiller76717-sudo/remnote-quick-clipper",
+  "enableOnMobile":false,
+  "requestNative":false,
+  "requiredScopes":[{"type":"KnowledgeBaseInfo","level":"Read"},{"type":"All","level":"ReadCreateModifyDelete"}]
+}

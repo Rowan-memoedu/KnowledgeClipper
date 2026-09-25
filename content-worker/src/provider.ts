@@ -59,8 +59,8 @@ export class DeepSeekProvider implements ContentProvider {
   ) {}
 
   static async create(overrides?: { model?: "deepseek-chat" | "deepseek-reasoner"; maxRetries?: number }): Promise<DeepSeekProvider> {
-    const apiKey = await discoverSetting("AI_PRODUCER_API_KEY");
-    if (!apiKey) throw new Error("AI_AUTH missing AI_PRODUCER_API_KEY");
+    const apiKey = await discoverSetting("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY");
+    if (!apiKey) throw new Error("AI_AUTH missing DEEPSEEK_KNOWLEDGECLIPPER_API_KEY");
     const baseUrl = (await discoverSetting("AI_PRODUCER_BASE_URL")) ?? "https://api.deepseek.com";
     const model = overrides?.model ?? (await discoverSetting("AI_PRODUCER_MODEL")) ?? "deepseek-chat";
     const retryText = await discoverSetting("AI_PRODUCER_MAX_RETRIES");
@@ -140,12 +140,13 @@ async function discoverSetting(name: string): Promise<string | undefined> {
       // Continue to the explicit local configuration file.
     }
   }
+  if (name === "DEEPSEEK_KNOWLEDGECLIPPER_API_KEY") return undefined;
   const configuredPath = process.env.AI_PRODUCER_CONFIG_FILE?.trim() || path.join(homedir(), "Documents", "New project", "DeepSeek API 配置.md");
   try {
     const content = await readFile(configuredPath, "utf8");
     const patterns = [
       new RegExp(`^\\s*${escapeRegex(name)}\\s*[=:]\\s*[\"']?([^\"'\\r\\n]+)`, "mi"),
-      name === "AI_PRODUCER_API_KEY" ? /^\s*(?:DeepSeek\s*)?API\s*Key\s*[=:]\s*["']?([^"'\r\n]+)/mi : undefined,
+      name === "DEEPSEEK_KNOWLEDGECLIPPER_API_KEY" ? /^\s*(?:DeepSeek\s*)?API\s*Key\s*[=:]\s*["']?([^"'\r\n]+)/mi : undefined,
     ].filter((pattern): pattern is RegExp => Boolean(pattern));
     for (const pattern of patterns) {
       const match = content.match(pattern);

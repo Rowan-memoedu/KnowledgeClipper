@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\LanguageSelectionDot.cs" Link="Production\LanguageSelectionDot.cs" />
+    <Compile Include="..\..\src\ClipboardImageMonitor.cs" Link="Production\ClipboardImageMonitor.cs" />
+    <Compile Include="..\..\src\RemNoteQuickClipper.Desktop.Core\DesktopController.cs" Link="Production\DesktopController.cs" />
+    <Compile Include="..\..\src\RemNoteQuickClipper.Desktop.Core\DesktopState.cs" Link="Production\DesktopState.cs" />
+    <Compile Include="..\..\src\RemNoteQuickClipper.Desktop.Core\Ports.cs" Link="Production\Ports.cs" />
+    <Compile Include="..\..\src\RemNoteQuickClipper.Desktop.Core\CaptureBundle.cs" Link="Production\CaptureBundle.cs" />
+    <Compile Include="..\..\src\RemNoteQuickClipper.Desktop.Core\CaptureBundleValidator.cs" Link="Production\CaptureBundleValidator.cs" />
+    <Compile Include="..\..\src\RemNoteQuickClipper.Desktop.Core\QuestionAnswerArtifactReader.cs" Link="Production\QuestionAnswerArtifactReader.cs" />
+    <Compile Include="..\..\src\RemNoteQuickClipper.Desktop.Core\DesktopArtifactVerification.cs" Link="Production\DesktopArtifactVerification.cs" />
+    <Compile Include="..\..\src\RemNoteQuickClipper.Desktop.Core\AutomationCatalog*.cs" Link="Production\%(Filename)%(Extension)" />
+    <Compile Include="..\..\src\RemNoteQuickClipper.Desktop.Core\FakeProviders.cs" Link="Fixtures\FakeProviders.cs" />
+  </ItemGroup>
+</Project>

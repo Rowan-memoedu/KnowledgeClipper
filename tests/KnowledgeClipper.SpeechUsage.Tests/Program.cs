@@ -1,12 +1,31 @@
 using KnowledgeClipper.Workflow;
 using System.Text.Json;
 
+if (args.Contains("-nodisp")) { await RecordedSpeechChecks.ReceivePlayerAsync(); return; }
+if (args.Contains("--recorded")) { await RecordedSpeechChecks.RunAsync(); return; }
+
 var settings = new LanguageSettings();
-if (args.Contains("--live")) { await LiveSpeechCheck.RunAsync(settings, args.SkipWhile(a => a != "--case").Skip(1).FirstOrDefault()); return; }
+if (args.Contains("--live"))
+{
+    string? Option(string name) => args.SkipWhile(a => a != name).Skip(1).FirstOrDefault();
+    await LiveSpeechCheck.RunAsync(settings with { EnglishVoice = Option("--voice") ?? settings.EnglishVoice }, Option("--case"), Option("--output")); return;
+}
 Check(StreamingSpeech.SelectVoice("只有中文。", settings) == settings.Voice, "Chinese voice");
 Check(StreamingSpeech.SelectVoice("English text", settings) == settings.EnglishVoice, "English voice");
 Check(StreamingSpeech.SelectVoice("这段 English 保留中文", settings) == settings.EnglishVoice, "Mixed text uses English voice");
 Check(StreamingSpeech.SelectVoice("English", settings with { AutoVoice = false }) == settings.Voice, "Manual voice retained");
+foreach (var speaker in new[] { "Ava", "Andrew", "Brian", "Emma" })
+{
+    var multilingual = settings with { EnglishVoice = "en-US-" + speaker + "MultilingualNeural" };
+    Check(StreamingSpeech.SelectVoice("Flux", multilingual) == "en-US-" + speaker + "Neural", speaker + " automatic English uses monolingual counterpart");
+    Check(StreamingSpeech.SelectVoice("pain", multilingual) == "en-US-" + speaker + "Neural", speaker + " independent shared-language word keeps English voice");
+}
+Check(StreamingSpeech.SpokenText("苹果 apple，葡萄 grape", settings) == "apple， grape", "Mixed speech skips Chinese before synthesis");
+Check(StreamingSpeech.SpokenText("前缀hello中间world后缀", settings) == "hello world", "Removing Chinese does not join adjacent English words");
+Check(StreamingSpeech.SpokenText("𠀀hello𰀀", settings) == "hello", "Supplementary Han characters are skipped");
+Check(StreamingSpeech.SpokenText("只有中文。", settings) == "只有中文。", "Pure Chinese playback is preserved");
+Check(StreamingSpeech.SpokenText("English\ntext", settings) == "English\ntext", "Pure English text is preserved");
+Check(StreamingSpeech.SpokenText("苹果 apple", settings with { AutoVoice = false }) == "苹果 apple", "Manual playback preserves mixed text");
 var key = StreamingSpeech.AudioCacheKey("selected", SpeechPurpose.Selection, settings);
 Check(key != StreamingSpeech.AudioCacheKey("selected", SpeechPurpose.Sentence, settings), "Purpose isolation");
 Check(key != StreamingSpeech.AudioCacheKey("selected sentence", SpeechPurpose.Selection, settings), "Text isolation");
@@ -28,6 +47,11 @@ using (var speech = new StreamingSpeech(Path.Combine(AppContext.BaseDirectory, "
     Check(draft.SpeechError == null && File.ReadAllText(draft.AudioPath!) == "the full translation", "Explicit translation transport");
     await speech.SpeakAsync(draft, true, () => { });
     Check(draft.SpeechError == null && draft.AudioPath == selectionAudio, "Selection replay restores AudioPath after translation");
+    var mixed = new ClipDraft { Id = Guid.NewGuid().ToString("N"), Original = new("苹果 apple 和 pear"),
+        Settings = settings with { EnglishVoice = "en-US-AvaMultilingualNeural" } };
+    await speech.SpeakAsync(mixed, false, () => { });
+    Check(mixed.SpeechError == null && File.ReadAllText(mixed.AudioPath!) == "apple pear" && mixed.Original.SelectedText == "苹果 apple 和 pear",
+        "Multilingual voice transport receives only English while the captured source stays intact");
 }
 if (args.Length == 2 && args[0] == "--discover")
 {
@@ -47,8 +71,9 @@ namespace KnowledgeClipper.Workflow
         public string PythonPath { get; init; } = @"D:\Applications\RemNoteQuickClipperRuntime\edge-tts-7.2.8\Scripts\python.exe";
         public string FfplayPath { get; init; } = "unused";
         public bool AutoVoice { get; init; } = true;
+        public bool SpeechAutoPlay { get; init; } = true;
         public string Voice { get; init; } = "zh-CN-XiaoxiaoNeural";
-        public string EnglishVoice { get; init; } = "en-US-AvaMultilingualNeural";
+        public string EnglishVoice { get; init; } = "en-US-AnaNeural";
         public int RatePercent { get; init; }
         public int VolumePercent { get; init; }
         public int PitchHz { get; init; }

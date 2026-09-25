@@ -21,7 +21,8 @@ internal static class DeckSettingsChecks
         var defaults = ModeConfigurationLoader.Load(Path.Combine(projectRoot, "modes"));
         var definitions = defaults.Modes.Select(m => m.Definition with { Description = m.Definition.Description + "（设置检查）" }).ToArray();
         WorkflowJson.Save(Path.Combine(overrides, "modes.json"), new ModeFile(definitions));
-        foreach (var mode in defaults.Modes) File.WriteAllText(Path.Combine(overrides, mode.Definition.PromptFile), mode.Prompt + "\n设置检查保留行。\n");
+        foreach (var mode in defaults.Modes.Where(m => !string.IsNullOrWhiteSpace(m.Prompt)))
+            File.WriteAllText(Path.Combine(overrides, mode.Definition.PromptFile), mode.Prompt);
         var original = ModeConfigurationLoader.Load(Path.Combine(projectRoot, "modes"), overrides);
         var originalModeFile = File.ReadAllText(Path.Combine(overrides, "modes.json"));
         var assembly = Assembly.Load("KnowledgeClipper");
@@ -35,11 +36,17 @@ internal static class DeckSettingsChecks
         Call(main, "EnableLanguageWorkflow"); main.Show(); await Task.Delay(60);
         var flow = Get(main, "languageFlow")!;
         Form Open() => (Form)assembly.GetType("KnowledgeClipper.LanguageSettingsForm", true)!.GetConstructors(Instance).Single().Invoke(new[] { flow, dataRoot });
-        var editedPaths = new Dictionary<string, string> { ["language"] = "学习::{语种}::{格式}", ["question"] = "问答::课堂", ["translation"] = "翻译::专用" };
+        var editedPaths = defaults.Modes.ToDictionary(m => m.Definition.Id, m => "检查::" + m.Definition.Id + "::独立目标");
         using (var dialog = Open())
         {
             dialog.Show(main); await Task.Delay(50);
             Check(Find<ComboBox>(dialog, "deck").Text == "旧牌组", "legacy deck is shown as the editable root before migration");
+            Check(!Find<CheckBox>(dialog, "show-dictionary-preview").Checked, "dictionary preview setting defaults off");
+            Find<CheckBox>(dialog, "show-dictionary-preview").Checked = true;
+            Find<CheckBox>(dialog, "auto-read").Checked = false;
+            var englishVoice = Find<ComboBox>(dialog, "english-voice");
+            var voiceOption = new SpeechVoiceOption("en-US-AnaNeural", "en-US", "Female");
+            englishVoice.Items.Add(voiceOption); englishVoice.SelectedItem = voiceOption;
             Find<ComboBox>(dialog, "deck").Text = "KnowledgeClipper UI Fixture";
             var modes = Find<ComboBox>(dialog, "mode");
             var page = modes.Parent; while (page is not TabPage) page = page!.Parent;
@@ -47,22 +54,22 @@ internal static class DeckSettingsChecks
             for (var index = 0; index < modes.Items.Count; index++)
             {
                 modes.SelectedIndex = index; var mode = (ModeDefinition)modes.SelectedItem!;
-                Check(Find<TextBox>(dialog, "mode-deck-path").Text == DeckRouting.PathFor(mode), "mode editor exposes effective default path for " + mode.Id);
-                Find<TextBox>(dialog, "mode-deck-path").Text = editedPaths[mode.OutputKind];
+                Check(Find<ComboBox>(dialog, "mode-deck-path").Text == DeckRouting.PathFor(mode), "mode editor exposes effective default path for " + mode.Id);
+                Find<ComboBox>(dialog, "mode-deck-path").Text = editedPaths[mode.Id];
             }
             for (var index = 0; index < modes.Items.Count; index++)
             {
                 modes.SelectedIndex = index; var mode = (ModeDefinition)modes.SelectedItem!;
-                Check(Find<TextBox>(dialog, "mode-deck-path").Text == editedPaths[mode.OutputKind], "mode switching retains the edited path for " + mode.Id);
+                Check(Find<ComboBox>(dialog, "mode-deck-path").Text == editedPaths[mode.Id], "mode switching retains the edited path for " + mode.Id);
             }
             var questionIndex = Enumerable.Range(0, modes.Items.Count).Single(i => ((ModeDefinition)modes.Items[i]!).OutputKind == "question");
-            modes.SelectedIndex = questionIndex; Find<TextBox>(dialog, "mode-deck-path").Text = "问答::{未知}";
+            modes.SelectedIndex = questionIndex; Find<ComboBox>(dialog, "mode-deck-path").Text = "问答::{未知}";
             Find<Button>(dialog, "save-settings").PerformClick();
             Check(!dialog.IsDisposed && WorkflowJson.Read<LanguageSettings>(settingsPath).AnkiRootDeck == null &&
                 File.ReadAllText(Path.Combine(overrides, "modes.json")) == originalModeFile, "invalid mode path blocks all settings and mode writes");
-            Find<TextBox>(dialog, "mode-deck-path").Text = editedPaths["question"];
+            Find<ComboBox>(dialog, "mode-deck-path").Text = editedPaths["question"];
             dialog.Size = dialog.MinimumSize; await Task.Delay(50);
-            var path = Find<TextBox>(dialog, "mode-deck-path"); ((TabPage)page).ScrollControlIntoView(path);
+            var path = Find<ComboBox>(dialog, "mode-deck-path"); ((TabPage)page).ScrollControlIntoView(path);
             Check(path.Visible && path.Width > 200 && path.Height > 0 && ((TabPage)page).ClientRectangle.Contains(((TabPage)page).RectangleToClient(path.RectangleToScreen(path.ClientRectangle))) &&
                 ((TabPage)page).DisplayRectangle.Height >= ((TabPage)page).ClientSize.Height,
                 "path input remains editable in the scrollable mode page at minimum size");
@@ -72,12 +79,14 @@ internal static class DeckSettingsChecks
             Check(dialog.IsDisposed, "valid root and all mode paths save in one action");
         }
         var saved = WorkflowJson.Read<LanguageSettings>(settingsPath);
+        Check(!saved.LanguageAutoRead && saved.EnglishVoice == "en-US-AnaNeural", "language speech preference and voice ID persist without the display label");
+        Check(saved.ShowDictionaryInPreview, "dictionary preview setting persists independently of the card field");
         Check(saved.AnkiRootDeck == "KnowledgeClipper UI Fixture" && saved.AnkiDeck == saved.AnkiRootDeck, "root persists and synchronizes the legacy deck value");
         var updated = ModeConfigurationLoader.Load(Path.Combine(projectRoot, "modes"), overrides);
         foreach (var mode in updated.Modes)
         {
             var before = original.Modes.Single(m => m.Definition.Id == mode.Definition.Id);
-            Check(mode.Definition.AnkiDeckPath == editedPaths[mode.Definition.OutputKind] && mode.Prompt == before.Prompt &&
+            Check(mode.Definition.AnkiDeckPath == editedPaths[mode.Definition.Id] && mode.Prompt == before.Prompt &&
                 mode.Definition.Description == before.Definition.Description && mode.Definition.FollowUpDefault == before.Definition.FollowUpDefault,
                 "saved path preserves prompt, description and follow-up default for " + mode.Definition.Id);
         }
@@ -85,11 +94,40 @@ internal static class DeckSettingsChecks
         {
             dialog.Show(main); var modes = Find<ComboBox>(dialog, "mode");
             Check(Find<ComboBox>(dialog, "deck").Text == saved.AnkiRootDeck, "reopened settings show the saved root");
+            Check(Find<CheckBox>(dialog, "show-dictionary-preview").Checked, "reopened settings retain dictionary preview choice");
             for (var index = 0; index < modes.Items.Count; index++)
-            { modes.SelectedIndex = index; Check(Find<TextBox>(dialog, "mode-deck-path").Text == editedPaths[((ModeDefinition)modes.SelectedItem!).OutputKind], "reopened settings retain path " + index); }
+            { modes.SelectedIndex = index; Check(Find<ComboBox>(dialog, "mode-deck-path").Text == editedPaths[((ModeDefinition)modes.SelectedItem!).Id], "reopened settings retain path " + index); }
             dialog.Close();
         }
-        main.Close();
-        WorkflowJson.Save(receipt, new { passed = true, checks, dataRoot, scope = "production settings semantic controls; no API, Anki write, speech request or global selection" });
+        foreach (var missing in defaults.Modes.Where(m => string.IsNullOrWhiteSpace(m.Prompt)))
+            Check(!File.Exists(Path.Combine(overrides, missing.Definition.PromptFile)), "settings save does not create missing prompt " + missing.Definition.Id);
+        using (var dialog = Open())
+        {
+            dialog.Show(main);
+            await SettingsListsChecks.RunAsync(dialog, checks);
+            dialog.Close();
+        }
+        using (var dialog = Open())
+        {
+            dialog.Show(main);
+            var tabs = dialog.Controls.Cast<Control>().SelectMany(AllControls).OfType<TabControl>().Single();
+            for (var index = 0; index < tabs.TabPages.Count; index++)
+            {
+                tabs.SelectedIndex = index; await Task.Delay(40);
+                using var bitmap = new System.Drawing.Bitmap(dialog.Width, dialog.Height);
+                dialog.DrawToBitmap(bitmap, new System.Drawing.Rectangle(System.Drawing.Point.Empty, dialog.Size));
+                bitmap.Save(Path.Combine(Path.GetDirectoryName(receipt)!, "settings-page-" + index + ".png"));
+            }
+            dialog.Close();
+        }
+        Call(main, "ExitApplication");
+        WorkflowJson.Save(receipt, new { passed = true, checks, dataRoot, scope = "production settings semantic controls and explicitly local HTTP fixtures; no real Anki write, speech request or global selection" });
+    }
+
+    private static IEnumerable<Control> AllControls(Control control)
+    {
+        yield return control;
+        foreach (Control child in control.Controls)
+            foreach (var item in AllControls(child)) yield return item;
     }
 }

@@ -47,8 +47,8 @@ await anki.ImportAsync(first, store);
 Check(backend.Actions.Count == previousCalls, "repeated Basic confirmation makes no provider call");
 
 var second = Confirm("question"); backend.DropAfterWrite = true;
-try { await anki.ImportAsync(second, store); throw new Exception("Expected lost response"); } catch (TaskCanceledException) { }
-Check(second.ImportState == ImportState.Unknown && second.NoteId == null, "Basic lost write response remains Unknown");
+await anki.ImportAsync(second, store);
+Check(second.ImportState == ImportState.Unknown && second.NoteId == null && second.AwaitingAnki, "Basic lost write response remains Unknown and queued for Anki");
 var restored = store.Recent().Single(d => d.Id == second.Id);
 Check(restored.ConfirmedNote!.IsBasic && restored.Content!.Basic != null, "persisted Basic draft preserves frozen type and fields");
 // Late content changes must not replace the exact Back that was already confirmed.

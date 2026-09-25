@@ -19,10 +19,11 @@ public static class QuestionCards
             row.IntegrityError != null ? ImportState.Unknown : row.Child?.ImportState ?? ImportState.Unconfirmed,
             row.Frozen,
             row.IntegrityError ?? (!row.Turn.Answer.Answered ? "该轮尚未解答，不能导入卡片。" :
-                string.IsNullOrWhiteSpace(row.Turn.Answer.AnswerText) ? "该轮答案为空，请先补全。" : row.Child?.ImportError))).ToArray();
+                string.IsNullOrWhiteSpace(row.Turn.Answer.AnswerText) ? "该轮答案为空，请先补全。" : row.Child?.ImportError))
+            { DestinationLabel = row.Child != null ? ExportRouting.Describe(row.Child) : ExportRouting.Describe(parent, true) }).ToArray();
     }
 
-    public static async Task ImportAsync(ClipDraft parent, int[] indexes, DraftStore store, AnkiConnection anki,
+    public static async Task ImportAsync(ClipDraft parent, int[] indexes, DraftStore store, ICardImporter anki,
         Action changed, CancellationToken ct = default)
     {
         await parent.ConversationImportGate.WaitAsync(ct);
@@ -49,17 +50,19 @@ public static class QuestionCards
                 if (row.Frozen)
                 {
                     if (child.ConfirmedNote == null) throw new InvalidDataException($"第 {index + 1} 轮缺少已确认卡片记录，不能重新添加。");
-                    plans.Add(new(index, child, null, child.ConfirmedNote, row.Owners));
+                    plans.Add(new(index, child, null, ExportRouting.Prepare(child, child.ConfirmedNote, anki.FixedDestination), row.Owners));
                 }
                 else
                 {
-                    var basic = new BasicFields(child.Original.SelectedText, row.Turn.Answer.AnswerText!, Context(rows, index, parent.Settings.QuestionCardIncludeContext));
+                    var basic = new BasicFields(child.QuestionText, row.Turn.Answer.AnswerText!, Context(rows, index, parent.Settings.QuestionCardIncludeContext));
                     // Build with a temporary view so a later invalid selection cannot partially confirm an old child.
                     var candidate = new ClipDraft { Id = child.Id, Original = child.Original, Material = child.Material,
-                        Settings = child.Settings, Configuration = child.Configuration, Practice = child.Practice,
+                        Settings = child.Settings, Configuration = child.Configuration, Practice = child.Practice, Input = child.Input,
+                        ModeId = child.ModeId, Route = child.Route, ParentDraftId = child.ParentDraftId,
                         Content = new(child.Content?.ModeId ?? child.ModeId ?? parent.ModeId ?? "question", Basic: basic,
                             Answer: child.Content?.Answer ?? parent.Conversation[index].Answer) };
-                    plans.Add(new(index, child, candidate.Content, AnkiNoteDraft.From(candidate), row.Owners));
+                    plans.Add(new(index, child, candidate.Content, ExportRouting.Prepare(child,
+                        ExportRouting.BuildNote(candidate, anki.FixedDestination), anki.FixedDestination), row.Owners));
                 }
             }
             if (plans.Select(plan => plan.Child.Id).Distinct(StringComparer.Ordinal).Count() != plans.Count)
@@ -72,7 +75,7 @@ public static class QuestionCards
                 {
                     plan.Child.Content = plan.Content;
                     plan.Child.EditedBasic = null;
-                    plan.Child.ConfirmedNote = plan.Note;
+                    plan.Note.Apply(plan.Child);
                     plan.Child.ImportState = ImportState.Ready;
                     plan.Child.ImportError = null;
                     plan.Child.Times["confirmed"] = DateTimeOffset.UtcNow;
@@ -156,7 +159,7 @@ public static class QuestionCards
                         child = store.Find(id);
                         if (child != null && child.Id != id) throw new InvalidDataException("共同历史卡片的本机身份不符。");
                     }
-                    if (child != null && Normalize(child.Original.SelectedText) != Normalize(turn.Question))
+                    if (child != null && Normalize(child.QuestionText) != Normalize(turn.Question))
                         throw new InvalidDataException("已关联卡片的原文与本轮问题不符；不会重新添加。");
                 }
             }
@@ -171,8 +174,8 @@ public static class QuestionCards
             {
                 if (frozen && child.ConfirmedNote is { IsBasic: true } confirmed)
                 {
-                    basic = new(Decode(confirmed.Fields["Front"]), Decode(confirmed.Fields["Back"]),
-                        confirmed.Fields.TryGetValue("Context", out var context) ? Decode(context) : null);
+                    try { basic = FrozenBasic(child, confirmed); }
+                    catch (InvalidDataException ex) { error ??= $"第 {index + 1} 轮：" + ex.Message; }
                 }
                 else if (frozen) error ??= $"第 {index + 1} 轮缺少可读的已确认正反面记录。";
                 else basic = child.PreviewContent?.Basic;
@@ -247,19 +250,51 @@ public static class QuestionCards
 
     private static int OwnFrozenIndex(ClipDraft parent, ConversationTurn[] conversation)
     {
-        if (!Frozen(parent) || parent.ConfirmedNote is not { IsBasic: true } note ||
-            note.Fields["Front"] != AnkiNoteDraft.Html(parent.Original.SelectedText)) return -1;
-        if (parent.ParentDraftId == null && conversation.Length > 0 && conversation[0].Question == parent.Original.SelectedText) return 0;
-        var answer = Decode(note.Fields["Back"]);
-        var matches = conversation.Select((turn, index) => (turn, index)).Where(x => x.turn.Question == parent.Original.SelectedText &&
+        if (!Frozen(parent) || parent.ConfirmedNote is not { IsBasic: true } note) return -1;
+        BasicFields basic;
+        try { basic = FrozenBasic(parent, note); }
+        catch (InvalidDataException) { return -1; }
+        if (parent.ParentDraftId == null && conversation.Length > 0 && conversation[0].Question == parent.QuestionText) return 0;
+        var answer = basic.Back;
+        var matches = conversation.Select((turn, index) => (turn, index)).Where(x => x.turn.Question == parent.QuestionText &&
             (Normalize(x.turn.Answer.AnswerText ?? "") == answer || x.turn.Answer.AnswerText == parent.Content?.Answer?.AnswerText)).ToArray();
         return matches.Length == 1 ? matches[0].index : -1;
+    }
+
+    private static BasicFields FrozenBasic(ClipDraft draft, AnkiNoteDraft note)
+    {
+        var back = note.Fields["Back"];
+        if (draft.Original.FrontImage is { } image)
+        {
+            if (note.Fields["Front"] != "<div>" + image.Html + "</div>" ||
+                note.Media.Length != 1 || note.Media[0] != image)
+                throw new InvalidDataException("已确认卡片的原图与本轮材料不符。");
+            if (!string.IsNullOrEmpty(note.ImageQuestionContext))
+            {
+                var contextPrefix = AnkiNoteDraft.Html(note.ImageQuestionContext + "\n\n");
+                if (!back.StartsWith(contextPrefix, StringComparison.Ordinal))
+                    throw new InvalidDataException("已确认图片卡缺少对应的问答上下文。");
+                back = back[contextPrefix.Length..];
+            }
+            if (draft.ParentDraftId != null)
+            {
+                var prefix = AnkiNoteDraft.Html(draft.QuestionText + "\n\n");
+                if (!back.StartsWith(prefix, StringComparison.Ordinal))
+                    throw new InvalidDataException("已确认图片卡缺少对应的追问文字。");
+                back = back[prefix.Length..];
+            }
+        }
+        else if (note.Fields["Front"] != AnkiNoteDraft.Html(draft.QuestionText))
+            throw new InvalidDataException("已确认卡片的正面与本轮问题不符。");
+        return new(draft.QuestionText, Decode(back),
+            draft.Original.FrontImage != null ? note.ImageQuestionContext :
+                note.Fields.TryGetValue("Context", out var context) ? Decode(context) : null);
     }
 
     private static int OwnUnconfirmedIndex(ClipDraft parent, ConversationTurn[] conversation)
     {
         if (Frozen(parent) || parent.PreviewContent?.Basic == null) return -1;
-        var matches = conversation.Select((turn, index) => (turn, index)).Where(x => x.turn.Question == parent.Original.SelectedText &&
+        var matches = conversation.Select((turn, index) => (turn, index)).Where(x => x.turn.Question == parent.QuestionText &&
             x.turn.Answer.AnswerText == parent.Content?.Answer?.AnswerText).ToArray();
         return matches.Length == 1 ? matches[0].index : -1;
     }
@@ -268,9 +303,10 @@ public static class QuestionCards
     {
         var mode = parent.Configuration.Modes.SingleOrDefault(m => m.Definition.OutputKind == "question");
         var modeId = mode?.Definition.Id ?? parent.Content?.ModeId ?? parent.ModeId ?? "question";
-        var material = new CaptureMaterial(turn.Question, null, "generated_allowed", null, parent.Original.SourceTitle, 0, DateTimeOffset.UtcNow);
+        var material = new CaptureMaterial(turn.Question, null, "generated_allowed", null, parent.Original.SourceTitle, 0, DateTimeOffset.UtcNow)
+            { FrontImage = parent.Original.FrontImage, VisualQuestion = parent.Original.VisualQuestion };
         return new() { Id = id, Original = material, Material = material, Settings = parent.Settings, Configuration = parent.Configuration,
-            Input = parent.Input with { Intent = "question", ReadRequested = false }, ParentDraftId = parent.Id,
+            Input = parent.Input with { Intent = "question", ReadRequested = false, ExplicitQuestion = null }, ParentDraftId = parent.Id,
             ModeId = modeId, Route = new(modeId, "question", true, false),
             ConversationMaterial = parent.ConversationMaterial ?? parent.Material,
             ConversationContent = parent.ConversationContent ?? parent.PreviewContent,
@@ -284,5 +320,5 @@ public static class QuestionCards
     private static void Notify(Action changed) { try { changed(); } catch (ObjectDisposedException) { } }
     private sealed record Owner(ClipDraft Draft, int SharedPrefix, Dictionary<int, string> Bindings);
     private sealed record Row(ConversationTurn Turn, ClipDraft? Child, bool Frozen, BasicFields? Basic, string? IntegrityError, ClipDraft[] Owners);
-    private sealed record ImportPlan(int Index, ClipDraft Child, ContentResult? Content, AnkiNoteDraft Note, ClipDraft[] Owners);
+    private sealed record ImportPlan(int Index, ClipDraft Child, ContentResult? Content, CardExportConfirmation Note, ClipDraft[] Owners);
 }

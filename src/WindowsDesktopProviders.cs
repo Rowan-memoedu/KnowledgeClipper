@@ -389,6 +389,119 @@ namespace KnowledgeClipper
         private const int MaximumDocumentCharacters = 200000;
         private const int MaximumSegmentCharacters = 4000;
 
+        // Read the live range only from the focused control's path to the
+        // verified source HWND. A document elsewhere in the browser is not a
+        // substitute for the user's current selection.
+        internal string ReadCurrentSelection(long sourceWindow)
+        {
+            if (sourceWindow == 0) return null;
+            for (var attempt = 0; attempt < 4; attempt++)
+            {
+                if (attempt != 0) Thread.Sleep(75);
+                var selected = ReadCurrentSelectionOnce(sourceWindow);
+                if (!string.IsNullOrWhiteSpace(selected)) return selected;
+            }
+            return null;
+        }
+
+        private static string ReadCurrentSelectionOnce(long sourceWindow)
+        {
+            try
+            {
+                var source = AutomationElement.FromHandle(new IntPtr(sourceWindow));
+                if (source == null) return null;
+                // GetGUIThreadInfo targets this source's own focus queue. Unlike
+                // FocusedElement it also works on an isolated, non-input desktop.
+                var thread = GetWindowThreadProcessId(new IntPtr(sourceWindow), out _);
+                var gui = new GuiThreadInfo { Size = Marshal.SizeOf<GuiThreadInfo>() };
+                var nativeBound = false;
+                if (thread != 0 && GetGUIThreadInfo(thread, ref gui) && gui.Focus != IntPtr.Zero &&
+                    GetAncestor(gui.Focus, 2).ToInt64() == sourceWindow)
+                {
+                    nativeBound = true;
+                    var text = TryReadFromFocusPath(() => AutomationElement.FromHandle(gui.Focus), source, nativeBound: true);
+                    if (text != null) return text;
+                }
+                var focusedText = TryReadFromFocusPath(() => AutomationElement.FocusedElement, source, nativeBound: false);
+                if (focusedText != null) return focusedText;
+                // Chrome can focus its frame while a visible page Document still
+                // reports the browser selection. Search only this HWND, and only
+                // when the source's own GUI queue confirms focus belongs to it.
+                return nativeBound ? ReadVisibleDocumentSelection(source) : null;
+            }
+            catch (ElementNotAvailableException) { }
+            catch (InvalidOperationException) { }
+            catch (COMException) { }
+            return null;
+        }
+
+        private static string TryReadFromFocusPath(Func<AutomationElement> getFocused, AutomationElement source, bool nativeBound)
+        {
+            try { return ReadFromFocusPath(getFocused(), source, nativeBound); }
+            catch (ElementNotAvailableException) { return null; }
+            catch (InvalidOperationException) { return null; }
+            catch (COMException) { return null; }
+        }
+
+        private static string ReadFromFocusPath(AutomationElement focused, AutomationElement source, bool nativeBound)
+        {
+            if (focused == null) return null;
+            var patterns = new List<TextPattern>();
+            var belongsToSource = nativeBound;
+            var depth = 0;
+            for (var element = focused; element != null && depth++ < 128;)
+            {
+                if (element.TryGetCurrentPattern(TextPattern.Pattern, out var raw) && raw is TextPattern pattern)
+                    patterns.Add(pattern);
+                if (element.Equals(source)) { belongsToSource = true; break; }
+                element = TreeWalker.ControlViewWalker.GetParent(element);
+            }
+            if (!belongsToSource) return null;
+            foreach (var pattern in patterns)
+            {
+                var ranges = pattern.GetSelection();
+                if (ranges == null || ranges.Length == 0) continue;
+                if (ranges.Length != 1) return null;
+                var text = ranges[0].GetText(MaximumDocumentCharacters + 1);
+                if (string.IsNullOrWhiteSpace(text) || text.Length > MaximumDocumentCharacters) continue;
+                return text;
+            }
+            return null;
+        }
+
+        private static string ReadVisibleDocumentSelection(AutomationElement source)
+        {
+            var condition = new AndCondition(
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Document),
+                new PropertyCondition(AutomationElement.IsTextPatternAvailableProperty, true),
+                new PropertyCondition(AutomationElement.IsOffscreenProperty, false));
+            var documents = source.FindAll(TreeScope.Descendants, condition);
+            string selected = null;
+            foreach (AutomationElement document in documents)
+            {
+                if (!document.TryGetCurrentPattern(TextPattern.Pattern, out var raw) || raw is not TextPattern pattern) continue;
+                var ranges = pattern.GetSelection();
+                if (ranges == null || ranges.Length == 0) continue;
+                if (ranges.Length != 1) return null;
+                var text = ranges[0].GetText(MaximumDocumentCharacters + 1);
+                if (string.IsNullOrWhiteSpace(text) || text.Length > MaximumDocumentCharacters) continue;
+                if (selected != null && !string.Equals(selected, text, StringComparison.Ordinal)) return null;
+                selected = text;
+            }
+            return selected;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct GuiThreadInfo
+        {
+            public int Size, Flags;
+            public IntPtr Active, Focus, Capture, MenuOwner, MoveSize, Caret;
+            public Rectangle CaretRect;
+        }
+        [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
+        [DllImport("user32.dll")] private static extern bool GetGUIThreadInfo(uint threadId, ref GuiThreadInfo info);
+        [DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr window, uint flags);
+
         public bool TryRead(string selectedText, string granularity, out WindowsContextSnapshot context)
         {
             context = null;
@@ -621,7 +734,11 @@ namespace KnowledgeClipper
                         var text = Clipboard.GetText(TextDataFormat.UnicodeText);
                         if (!string.IsNullOrWhiteSpace(text)) value.Text = text;
                     }
-                    if (string.IsNullOrWhiteSpace(value.Text) && Clipboard.ContainsImage()) value.Image = (Image)Clipboard.GetImage().Clone();
+                    if (Clipboard.ContainsImage())
+                    {
+                        using var image = Clipboard.GetImage();
+                        if (image != null) value.Image = (Image)image.Clone();
+                    }
                     return value;
                 }
                 catch (ExternalException ex) { last = ex; Thread.Sleep(25); }

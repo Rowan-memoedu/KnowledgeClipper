@@ -150,6 +150,7 @@ namespace KnowledgeClipper
         private CheckBox contextMode, originalImageMode, speechAutoPlay, remnoteDestination, ankiDestination, ocrTable, ocrFormula, contentPromptAfterRecognition;
         private NumericUpDown rate, volume, pitch, ocrTimeout, ocrPoll, contentMaxRetries;
         private TextBox deepSeekCredential, mineruCredential, ocrScript, remnoteRootId, remnoteRootTitle, ankiProfile, ankiEndpoint, ankiDeckRoutes, ankiProbeStatus, ankiInitializeStatus, speechVoiceCatalogAvailability, speechPreviewAvailability, remnoteProbeStatus, remnoteDiscoverTargetStatus, remnoteBoundTargetStatus;
+        private string initialDeepSeekEnvironment;
         private Button promptCopy, promptOpen, promptValidate, promptDiff, ankiProbe, ankiInitialize, voiceDiscovery, speechPreview, remnoteProbe, remnoteDiscoverTarget;
         private string speechCatalogJson;
 
@@ -313,8 +314,9 @@ namespace KnowledgeClipper
             AddRow(contentAdvanced, "模型", contentModel);
             contentMaxRetries = Number(contentDescriptor == null ? 1 : contentDescriptor.MinimumRetries, contentDescriptor == null ? 5 : contentDescriptor.MaximumRetries, moduleSettings.ContentProviderMaxRetries, SettingsAutomationCatalog.ContentMaxRetries);
             AddRow(contentAdvanced, "最大重试", contentMaxRetries);
-            deepSeekCredential = AddCredentialRow(contentAdvanced, "DeepSeek 凭据", initialCredentials.DeepSeekApiKey, SettingsAutomationCatalog.DeepSeekCredential, SettingsAutomationCatalog.DeepSeekCredentialTest);
-            AddReadOnly(contentAdvanced, "凭据保护", CredentialProtectionText(initialCredentials), SettingsAutomationCatalog.DeepSeekCredentialProtection);
+            initialDeepSeekEnvironment = SecretConfig.Get("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY") ?? "";
+            deepSeekCredential = AddCredentialRow(contentAdvanced, "DeepSeek 凭据", initialDeepSeekEnvironment, SettingsAutomationCatalog.DeepSeekCredential, SettingsAutomationCatalog.DeepSeekCredentialTest);
+            AddReadOnly(contentAdvanced, "凭据来源", "Windows 用户环境变量 DEEPSEEK_KNOWLEDGECLIPPER_API_KEY", SettingsAutomationCatalog.DeepSeekCredentialProtection);
             AddReadOnly(contentAdvanced, "Prompt 身份", contentDescriptor == null ? "conditional · 等待 descriptor" : contentDescriptor.PromptIdentity, SettingsAutomationCatalog.ContentPromptIdentity);
             AddReadOnly(contentAdvanced, "分类 Profile 身份", contentDescriptor == null ? "conditional · 等待 descriptor" : contentDescriptor.ProfileIdentity, SettingsAutomationCatalog.ContentProfileIdentity);
             AddReadOnly(contentAdvanced, "受限可调项", contentDescriptor == null ? "conditional · 等待 descriptor" : contentDescriptor.RestrictedControls, SettingsAutomationCatalog.ContentRestrictedControls);
@@ -911,7 +913,12 @@ namespace KnowledgeClipper
                 PrepareRemNoteBindingPersistence();
                 moduleSettingsStore.Save(moduleSettings);
                 var value = Collect();
-                new DesktopCredentialSettings { DeepSeekApiKey = deepSeekCredential.Text, MineruApiToken = mineruCredential.Text }.Save(config.WorkDirectory);
+                if (deepSeekCredential.Text.Trim() != initialDeepSeekEnvironment) {
+                    SecretConfig.SetDeepSeek(deepSeekCredential.Text.Trim());
+                }
+                var preservedCredentials = DesktopCredentialSettings.Load(config.WorkDirectory);
+                preservedCredentials.MineruApiToken = mineruCredential.Text;
+                preservedCredentials.Save(config.WorkDirectory);
                 value.Save(config); settingsDraft.MarkPersisted(settingsService.CurrentRevision); SavedSettings = value; DialogResult = DialogResult.OK; Close();
             }
             catch (Exception ex) { status.Text = "保存失败：" + ex.Message; }

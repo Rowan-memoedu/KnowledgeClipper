@@ -13,20 +13,22 @@ def emit(name, **details):
 
 async def main():
     request = json.load(sys.stdin)
-    import edge_tts
     audio = pathlib.Path(request["audio"])
     command = [request["ffplay"], "-nodisp", "-autoexit", "-loglevel", "error",
                "-probesize", "1024", "-analyzeduration", "1", "-f", "mp3", "-i", "pipe:0"]
     player = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
-                              stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
-    emit("playerStarted", pid=player.pid)  # Process start alone is not proof of physical sound.
+                              stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW) if request.get("play", True) else None
+    if player:
+        emit("playerStarted", pid=player.pid)  # Process start alone is not proof of physical sound.
     try:
         if request["replay"]:
             with audio.open("rb") as saved:
                 while chunk := saved.read(16384):
-                    player.stdin.write(chunk)
-                    player.stdin.flush()
+                    if player:
+                        player.stdin.write(chunk)
+                        player.stdin.flush()
         else:
+            import edge_tts
             temporary = audio.with_suffix(".partial")
             first = True
             communicate = edge_tts.Communicate(request["text"], request["voice"],
@@ -40,20 +42,22 @@ async def main():
                         emit("firstAudioChunk")
                         first = False
                     saved.write(chunk)
-                    player.stdin.write(chunk)
-                    player.stdin.flush()
+                    if player:
+                        player.stdin.write(chunk)
+                        player.stdin.flush()
             if first:
                 raise RuntimeError("服务未返回音频")
             temporary.replace(audio)
             emit("audioComplete")
-        player.stdin.close()
-        error = await asyncio.to_thread(player.stderr.read)
-        code = await asyncio.to_thread(player.wait)
-        if code:
-            raise RuntimeError("ffplay 播放失败")
-        emit("playbackComplete")
+        if player:
+            player.stdin.close()
+            error = await asyncio.to_thread(player.stderr.read)
+            code = await asyncio.to_thread(player.wait)
+            if code:
+                raise RuntimeError("ffplay 播放失败")
+            emit("playbackComplete")
     finally:
-        if player.poll() is None:
+        if player and player.poll() is None:
             player.kill()
             player.wait()
 

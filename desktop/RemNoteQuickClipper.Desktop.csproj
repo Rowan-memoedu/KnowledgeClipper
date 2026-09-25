@@ -43,7 +43,12 @@
     <Compile Include="..\src\StartupDiagnostics.cs" Link="StartupDiagnostics.cs" />
     <Compile Include="..\src\DesktopUi.cs" Link="DesktopUi.cs" />
     <Compile Include="..\src\DesktopUi.Language.cs" Link="DesktopUi.Language.cs" />
+    <Compile Include="..\src\ClipboardImageMonitor.cs" Link="ClipboardImageMonitor.cs" />
     <Compile Include="..\src\Language*.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="..\src\Excerpt*.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="..\src\Image*.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="..\src\RecordHistory*.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="..\src\MeaningPopup.cs" Link="MeaningPopup.cs" />
     <Compile Include="..\src\FlashcardPreviewUi.cs" Link="FlashcardPreviewUi.cs" />
     <Compile Include="..\src\CardResolutionUi.cs" Link="CardResolutionUi.cs" />
     <Compile Include="..\src\WindowsDesktopProviders.cs" Link="WindowsDesktopProviders.cs" />

@@ -1,0 +1,138 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "knowledge-clipper/language-en/2026-09-11",
+  "title": "language-en",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "pronunciation",
+    "generatedSentence",
+    "generatedTargetStart",
+    "unresolvedReasons",
+    "explanationEn",
+    "sentenceTranslationZh",
+    "lemma",
+    "normalizedSentence"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "ready",
+        "unresolved"
+      ]
+    },
+    "pronunciation": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "\\S"
+    },
+    "generatedSentence": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "\\S"
+    },
+    "generatedTargetStart": {
+      "type": "null"
+    },
+    "unresolvedReasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "\\S"
+      }
+    },
+    "explanationEn": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "\\S"
+    },
+    "sentenceTranslationZh": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "\\S"
+    },
+    "lemma": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "\\S"
+    },
+    "normalizedSentence": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "\\S"
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "status": {
+          "enum": [
+            "ready"
+          ]
+        },
+        "pronunciation": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "unresolvedReasons": {
+          "maxItems": 0
+        },
+        "explanationEn": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "sentenceTranslationZh": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      }
+    },
+    {
+      "properties": {
+        "status": {
+          "enum": [
+            "unresolved"
+          ]
+        },
+        "unresolvedReasons": {
+          "minItems": 1
+        },
+        "pronunciation": {
+          "type": "null"
+        },
+        "generatedSentence": {
+          "type": "null"
+        },
+        "generatedTargetStart": {
+          "type": "null"
+        },
+        "explanationEn": {
+          "type": "null"
+        },
+        "sentenceTranslationZh": {
+          "type": "null"
+        },
+        "lemma": {
+          "type": "null"
+        },
+        "normalizedSentence": {
+          "type": "null"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"name":"knowledge-clipper-remnote-host","version":"1.0.0","private":true,"type":"module","scripts":{"build":"tsc","test":"vitest run","start":"node dist/main.js"},"dependencies":{"express":"5.2.0","ws":"8.20.0","zod":"4.3.6"},"devDependencies":{"@types/express":"5.0.6","@types/node":"24.10.1","@types/ws":"8.18.1","typescript":"5.9.3","vitest":"4.1.3"}}

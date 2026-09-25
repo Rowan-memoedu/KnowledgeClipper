@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "内容审核意见",
+  "description": "审核意见不是卡片内容，不替代静态校验或实际 Anki 验收。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "verdict",
+    "errors",
+    "warnings"
+  ],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail"
+      ]
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "evidence"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "evidence"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "verdict": {
+          "enum": ["pass"]
+        },
+        "errors": {
+          "maxItems": 0
+        }
+      }
+    },
+    {
+      "properties": {
+        "verdict": {
+          "enum": ["fail"]
+        },
+        "errors": {
+          "minItems": 1
+        }
+      }
+    }
+  ]
+}

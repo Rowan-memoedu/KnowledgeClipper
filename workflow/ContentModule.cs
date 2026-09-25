@@ -18,10 +18,24 @@ public static class ModeConfigurationLoader
             return File.ReadAllText(user != null && File.Exists(user) ? user : Path.Combine(defaults, relative));
         }
         var file = LoadDefinitions(defaults, overrides);
-        var modes = file.Modes.Where(m => m.Enabled).ToArray();
+        var concrete = file.Modes.Any(m => m.Enabled && LanguageModes.IsConcrete(m));
+        var modes = file.Modes.Where(m => m.Enabled && !(concrete && m.Id == "language" && !LanguageModes.IsConcrete(m))).ToArray();
         if (modes.Length == 0 || modes.Select(m => m.Id).Distinct(StringComparer.Ordinal).Count() != modes.Length) throw new InvalidDataException("请启用至少一个模式，且模式标识不得重复。");
         foreach (var mode in modes) DeckRouting.ValidatePattern(DeckRouting.PathFor(mode), mode.OutputKind);
-        return new ContentConfiguration(Read("classification.md"), modes.Select(m => new ModeSnapshot(m, Read(m.PromptFile), Read(m.SchemaFile))).ToArray());
+        ModeSnapshot Snapshot(ModeDefinition mode)
+        {
+            string prompt = "", schema = "";
+            var errors = new List<string>();
+            try { prompt = Read(mode.PromptFile); if (string.IsNullOrWhiteSpace(prompt)) errors.Add("提示词为空：" + mode.PromptFile); }
+            catch (IOException) { errors.Add("缺少提示词：" + mode.PromptFile); }
+            try { schema = Read(mode.SchemaFile); if (string.IsNullOrWhiteSpace(schema)) errors.Add("输出定义为空：" + mode.SchemaFile); }
+            catch (IOException) { errors.Add("缺少输出定义：" + mode.SchemaFile); }
+            return new(mode, prompt, schema, errors.Count == 0 ? null : string.Join("；", errors));
+        }
+        string classification;
+        try { classification = Read("classification.md"); }
+        catch (IOException) { classification = ""; } // Explicit desktop entries do not depend on the legacy classifier.
+        return new ContentConfiguration(classification, modes.Select(Snapshot).ToArray());
     }
 
     public static ModeFile LoadDefinitions(string defaults, string? overrides = null)
@@ -34,12 +48,14 @@ public static class ModeConfigurationLoader
         if (userFile.Modes.Select(m => m.Id).Distinct(StringComparer.Ordinal).Count() != userFile.Modes.Length)
             throw new InvalidDataException("个人模式标识重复。");
         return new ModeFile(defaultsFile.Modes.Select(m => userFile.Modes.FirstOrDefault(u => u.Id == m.Id) is { } user
-                ? user with { AnkiDeckPath = user.AnkiDeckPath ?? m.AnkiDeckPath } : m)
+                ? user with { AnkiDeckPath = user.AnkiDeckPath ?? m.AnkiDeckPath, Language = user.Language ?? m.Language, Practice = user.Practice ?? m.Practice,
+                    ContentFormat = user.ContentFormat ?? m.ContentFormat } : m)
             .Concat(userFile.Modes.Where(u => !defaultsFile.Modes.Any(m => m.Id == u.Id))).ToArray());
     }
 
     public static ModeRoute Route(ContentConfiguration config, string modeId)
     {
+        if (modeId == "language" && LanguageModes.HasConcrete(config)) return new("language", "language", false, true);
         var mode = config.Modes.Single(m => m.Definition.Id == modeId).Definition;
         if (mode.OutputKind is not ("language" or "translation" or "question"))
             throw new InvalidDataException("当前未接入此模式的输出类型：" + mode.OutputKind);
@@ -53,45 +69,66 @@ public static class ContentCredentials
 {
     public static string Resolve(string? protectedKey = null)
     {
-        if (!string.IsNullOrWhiteSpace(protectedKey)) return protectedKey;
         foreach (var scope in new[] { EnvironmentVariableTarget.Process, EnvironmentVariableTarget.User })
-            foreach (var name in new[] { "AI_PRODUCER_API_KEY", "DEEPSEEK_API_KEY" })
+            foreach (var name in new[] { "DEEPSEEK_KNOWLEDGECLIPPER_API_KEY" })
             {
                 var value = Environment.GetEnvironmentVariable(name, scope);
                 if (!string.IsNullOrWhiteSpace(value)) return value.Trim();
             }
-        var legacy = @"C:\Users\fy\Documents\New project\DeepSeek API 配置.md";
-        if (File.Exists(legacy))
-        {
-            var match = Regex.Match(File.ReadAllText(legacy), @"(?<![A-Za-z0-9])sk-[A-Za-z0-9_-]{20,}");
-            if (match.Success) return match.Value;
-        }
-        throw new InvalidOperationException("未配置 DeepSeek API Key，请在设置的安全输入框中填写。");
+        throw new InvalidOperationException("未配置 DEEPSEEK_KNOWLEDGECLIPPER_API_KEY 用户环境变量。");
     }
 }
 
-public sealed class ContentModule(HttpClient http, Func<string> key)
+public sealed partial class ContentModule(HttpClient http, Func<string> key)
 {
     public static bool IsQuestion(string text) => text.TrimEnd().EndsWith('?') || text.TrimEnd().EndsWith('？');
 
     // One retry location for each necessary request; no recursive retry or reflection pipeline.
     private async Task<T> RequestAsync<T>(LanguageSettings settings, string prompt, object input,
-        Func<string, Task<T>> validate, CancellationToken cancellationToken)
+        Func<string, Task<T>> validate, CancellationToken cancellationToken, IReadOnlyList<ImageAsset>? images = null,
+        int maxTokens = 2600, bool disableThinking = false)
     {
         Exception? last = null;
-        for (var attempt = 0; attempt < 2; attempt++)
+        string? rejectedContent = null;
+        string? validationFeedback = null;
+        if (settings.ContentMaxRetries is < 0 or > 5 || settings.ContentTimeoutSeconds is < 1 or > 600)
+            throw new InvalidDataException("内容请求的重试次数或超时超出范围。");
+        for (var attempt = 0; attempt <= settings.ContentMaxRetries; attempt++)
         {
             try
             {
                 using var request = new HttpRequestMessage(HttpMethod.Post, settings.ApiBaseUrl.TrimEnd('/') + "/chat/completions");
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key());
-                request.Content = JsonContent.Create(new
+                object userContent = JsonSerializer.Serialize(input, WorkflowJson.Options);
+                if (images is { Count: > 0 })
                 {
-                    model = settings.Model, response_format = new { type = "json_object" }, max_tokens = 2600,
-                    messages = new[] { new { role = "system", content = prompt }, new { role = "user", content = JsonSerializer.Serialize(input, WorkflowJson.Options) } }
-                });
+                    var parts = new List<object> { new { type = "text", text = (string)userContent } };
+                    foreach (var item in images)
+                    {
+                        var bytes = item.ReadVerified();
+                        parts.Add(new { type = "text", text = $"image role={item.Role}, index={item.Index}, source_id={item.Sha256}" });
+                        parts.Add(new { type = "image_url", image_url = new { url = "data:image/png;base64," + Convert.ToBase64String(bytes) } });
+                    }
+                    userContent = parts;
+                }
+                var messages = new List<object> { new { role = "system", content = prompt }, new { role = "user", content = userContent } };
+                if (rejectedContent != null && validationFeedback != null)
+                {
+                    // Keep the original material intact and only the latest failed candidate.
+                    // Transport/authentication errors are never sent back to the model.
+                    messages.Add(new { role = "assistant", content = rejectedContent });
+                    messages.Add(new { role = "user", content =
+                        "上一份 JSON 未通过本地校验。请根据原始输入和原字段约定重新输出完整 JSON，修正以下问题：\n" + validationFeedback +
+                        "\n不得改写原始输入或放宽约束。涉及目标原文时，必须保留 selectedText 的大小写、空格和全部字符；生成例句允许重复目标，由程序选择首次原样匹配。位置字段仍按原字段约定返回，不自行猜测。" });
+                }
+                var payload = new Dictionary<string, object> {
+                    ["model"] = settings.Model, ["response_format"] = new { type = "json_object" }, ["max_tokens"] = maxTokens,
+                    ["messages"] = messages
+                };
+                if (disableThinking) payload["thinking"] = new { type = "disabled" };
+                request.Content = JsonContent.Create(payload);
                 using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                timeout.CancelAfter(TimeSpan.FromSeconds(90));
+                timeout.CancelAfter(TimeSpan.FromSeconds(settings.ContentTimeoutSeconds));
                 using var response = await http.SendAsync(request, timeout.Token);
                 if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
                     throw new UnauthorizedAccessException("内容 API 身份验证失败，请检查安全设置。");
@@ -101,13 +138,25 @@ public sealed class ContentModule(HttpClient http, Func<string> key)
                 if (choice.GetProperty("finish_reason").GetString() != "stop") throw new InvalidDataException("内容响应未完整结束。");
                 var content = choice.GetProperty("message").GetProperty("content").GetString();
                 if (string.IsNullOrWhiteSpace(content)) throw new InvalidDataException("内容响应为空。");
-                return await validate(content);
+                // Validate JSON with the same parser used by the workflow before a
+                // schema library can throw a different, unhandled parser exception.
+                try
+                {
+                    using var parsedContent = JsonDocument.Parse(content);
+                    return await validate(content);
+                }
+                catch (Exception ex) when (ex is JsonException or InvalidDataException or KeyNotFoundException or InvalidOperationException)
+                {
+                    rejectedContent = content;
+                    validationFeedback = ex is JsonException ? "输出必须是完整、可解析的 JSON。" : ex.Message;
+                    throw;
+                }
             }
             catch (Exception ex) when (ex is JsonException or InvalidDataException or HttpRequestException or TaskCanceledException or KeyNotFoundException or InvalidOperationException)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 last = ex;
-                if (attempt == 0) await Task.Delay(500, cancellationToken);
+                if (attempt < settings.ContentMaxRetries) await Task.Delay(500, cancellationToken);
             }
         }
         throw new InvalidDataException("内容处理未完成，可重试本次材料。" + last?.Message, last);
@@ -119,40 +168,44 @@ public sealed class ContentModule(HttpClient http, Func<string> key)
         material.Validate();
         metadata ??= new();
         // The explicit input box has a user-defined punctuation rule, before any model call.
-        if (metadata.QuestionMarkRouting && IsQuestion(material.SelectedText))
+        if (metadata.Intent == "question" || metadata.QuestionMarkRouting && IsQuestion(material.SelectedText))
         {
             var questionMode = config.Modes.SingleOrDefault(m => m.Definition.OutputKind == "question")
                 ?? throw new InvalidDataException("请启用问答模式。");
             return Task.FromResult(questionMode.Definition.Id);
         }
-        var candidates = metadata.Intent == "lookup"
-            ? config.Modes.Where(m => m.Definition.OutputKind != "question").ToArray() : config.Modes;
+        var choices = LanguageModes.ClassificationChoices(config);
+        var candidates = metadata.Intent == "lookup" ? choices.Where(m => m.OutputKind != "question").ToArray() : choices;
         return RequestAsync(settings, config.ClassificationPrompt,
             new { material.SelectedText, material.ContextText, material.ContextOrigin, metadata.Intent,
-                modes = candidates.Select(m => new { m.Definition.Id, m.Definition.Name, m.Definition.Description }) },
+                modes = candidates.Select(m => new { m.Id, m.Name, m.Description }) },
             json =>
             {
                 using var doc = JsonDocument.Parse(json);
                 var id = doc.RootElement.GetProperty("modeId").GetString();
                 if (id == null) throw new ModeChoiceRequiredException(doc.RootElement.TryGetProperty("question", out var question) ? question.GetString() ?? "请选择本次模式。" : "请选择本次模式。");
-                if (!candidates.Any(m => m.Definition.Id == id)) throw new InvalidDataException("返回了本次输入不适用的模式。");
+                if (!candidates.Any(m => m.Id == id)) throw new InvalidDataException("返回了本次输入不适用的模式。");
                 return Task.FromResult(id);
             }, ct);
     }
 
-    public async Task<ContentResult> ProcessAsync(CaptureMaterial material, string modeId, ContentConfiguration config, LanguageSettings settings, CancellationToken ct)
+    public async Task<ContentResult> ProcessAsync(CaptureMaterial material, string modeId, ContentConfiguration config, LanguageSettings settings, CancellationToken ct,
+        string? questionText = null)
     {
         material.Validate();
         var mode = config.Modes.Single(m => m.Definition.Id == modeId);
+        if (mode.LoadError != null) throw new InvalidDataException(mode.Definition.Name + " 尚未配置：" + mode.LoadError);
         if (mode.Definition.OutputKind == "question")
         {
-            var answer = await AnswerAsync(material, null, [], material.SelectedText, config, settings, ct, modeId);
-            return new ContentResult(modeId, Basic: answer.Answered ? new(material.SelectedText, answer.AnswerText!) : null, Answer: answer);
+            var question = questionText ?? material.SelectedText;
+            var answer = await AnswerAsync(material, null, [], question, config, settings, ct, modeId);
+            return new ContentResult(modeId, Basic: answer.Answered ? new(question, answer.AnswerText!) : null, Answer: answer);
         }
         if (mode.Definition.RequiresContext && material.NeedsContextChoice) throw new InvalidDataException("请先处理缺失的上下文。");
+        var markedContext = PublishedLanguage.Applies(mode.Definition) ? PublishedLanguage.MarkedContext(material) : null;
         var schema = await JsonSchema.FromJsonAsync(mode.Schema, ct);
         return await RequestAsync(settings, mode.Prompt + "\n\nJSON 输出必须符合以下字段约定：\n" + mode.Schema,
-            new { material.SelectedText, material.ContextText, material.ContextOrigin, material.TargetStart },
+            new { material.SelectedText, material.ContextText, material.ContextOrigin, material.TargetStart, markedContext },
             json =>
             {
                 var errors = schema.Validate(json);
@@ -165,6 +218,8 @@ public sealed class ContentModule(HttpClient http, Func<string> key)
                     return Task.FromResult(new ContentResult(modeId, Basic: new(material.SelectedText, translation)));
                 }
                 if (mode.Definition.OutputKind != "language") throw new InvalidDataException("模式输出类型尚未接入。");
+                if (PublishedLanguage.Applies(mode.Definition))
+                    return Task.FromResult(new ContentResult(modeId, PublishedLanguage.Parse(json, mode.Definition, material)));
                 var fields = JsonSerializer.Deserialize<LanguageFields>(json, WorkflowJson.Options)!;
                 fields = ResolveGeneratedTarget(material, fields);
                 ValidateFields(material, fields);
@@ -180,8 +235,10 @@ public sealed class ContentModule(HttpClient http, Func<string> key)
         var mode = modeId == null ? config.Modes.SingleOrDefault(m => m.Definition.OutputKind == "question")
             : config.Modes.SingleOrDefault(m => m.Definition.Id == modeId && m.Definition.OutputKind == "question");
         if (mode == null) throw new InvalidDataException("请启用问答模式后再追问。");
+        if (mode.LoadError != null) throw new InvalidDataException(mode.Definition.Name + " 尚未配置：" + mode.LoadError);
         var schema = await JsonSchema.FromJsonAsync(mode.Schema, ct);
-        return await RequestAsync(settings, mode.Prompt + "\n\nJSON 输出必须符合以下字段约定：\n" + mode.Schema,
+        return await RequestAsync(originalMaterial.VisualQuestion ? settings with { Model = settings.ImageModel } : settings,
+            mode.Prompt + "\n\nJSON 输出必须符合以下字段约定：\n" + mode.Schema,
             new { originalMaterial = new { originalMaterial.SelectedText, originalMaterial.ContextText, originalMaterial.ContextOrigin },
                 initialContent, currentPreview, conversation, question },
             json =>
@@ -197,8 +254,8 @@ public sealed class ContentModule(HttpClient http, Func<string> key)
                     answer.Answered && (string.IsNullOrWhiteSpace(answer.AnswerText) || answer.UnresolvedReasons.Length != 0) ||
                     !answer.Answered && (answer.UnresolvedReasons.Length == 0 || answer.UnresolvedReasons.Any(string.IsNullOrWhiteSpace)))
                     throw new InvalidDataException("回答状态与内容不一致。");
-                return Task.FromResult(answer);
-            }, ct);
+                return Task.FromResult(answer.Answered ? answer with { AnswerText = AnkiMathText.Normalize(answer.AnswerText!) } : answer);
+            }, ct, originalMaterial.VisualQuestion ? [originalMaterial.FrontImage!] : null);
     }
 
     private static LanguageFields ResolveGeneratedTarget(CaptureMaterial material, LanguageFields fields)
@@ -206,15 +263,14 @@ public sealed class ContentModule(HttpClient http, Func<string> key)
         if (material.ContextOrigin != "generated_allowed" || material.ContextText != null) return fields;
         var sentence = fields.GeneratedSentence;
         if (string.IsNullOrWhiteSpace(sentence)) throw new InvalidDataException("缺少生成例句。");
-        var start = sentence.IndexOf(material.SelectedText, StringComparison.Ordinal);
-        // Search from the next UTF-16 position so overlapping occurrences are ambiguous too.
-        if (start < 0 || sentence.IndexOf(material.SelectedText, start + 1, StringComparison.Ordinal) >= 0)
-            throw new InvalidDataException("生成例句必须包含且只包含一次原样目标。");
+        var start = PublishedLanguage.FirstTarget(sentence, material.SelectedText);
         return fields with { GeneratedTargetStart = start };
     }
 
     public static void ValidateFields(CaptureMaterial material, LanguageFields fields)
     {
+        if (PublishedLanguage.Applies(fields))
+            throw new InvalidDataException("正式语言字段需要按具体模式校验。");
         if (string.IsNullOrWhiteSpace(fields.Pronunciation) || string.IsNullOrWhiteSpace(fields.Meaning)) throw new InvalidDataException("读音和语境义不能为空。");
         if (material.ContextText != null)
         {

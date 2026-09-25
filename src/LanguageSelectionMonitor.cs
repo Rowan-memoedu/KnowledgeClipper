@@ -8,8 +8,8 @@ using KnowledgeClipper.Workflow;
 
 namespace KnowledgeClipper;
 
-// Input callbacks only update value state. Node, clipboard and UIA work always run
-// outside the hook message pump and the application's UI thread.
+// Input values arrive in order on a worker. Node, clipboard and UIA work always
+// run outside the hook message pump and the application's UI thread.
 internal sealed class LanguageSelectionMonitor : IDisposable
 {
     private readonly object gate = new();
@@ -22,15 +22,18 @@ internal sealed class LanguageSelectionMonitor : IDisposable
     private readonly Action<string> error;
     private readonly SelectionGestureTracker gestures = new();
     private readonly SelectionWatchState state = new();
+    private Func<bool> leftButtonDown = () => LanguageDesktopCapture.LeftButtonDown;
     private LanguageDesktopCapture.CaptureInputMonitor input;
     private System.Threading.Timer timer;
     private CancellationTokenSource lifetime, reading;
     private LanguageSettings settings;
     private SelectionReadTicket pending;
     private bool running, dotClick, readInFlight;
-    private long due, observedWindow;
+    private bool inputStarting;
+    private int inputFailures;
+    private long due, observedWindow, inputRetryAt;
     private uint observedPid;
-    private const int SettleMilliseconds = 160;
+    private const int SettleMilliseconds = 220;
 
     internal LanguageSelectionMonitor(Form dispatcher, string helperPath, Func<Point, bool> isDotPoint,
         Action<SelectionSnapshot> selected, Action invalidated, Action<string> error)
@@ -60,6 +63,8 @@ internal sealed class LanguageSelectionMonitor : IDisposable
             observedWindow = LanguageDesktopCapture.Foreground;
             observedPid = LanguageDesktopCapture.WindowProcessId(observedWindow);
             gestures.Reset();
+            inputStarting = true; inputFailures = 0; inputRetryAt = 0;
+            timer = new System.Threading.Timer(Tick, null, 80, 80);
         }
         _ = StartInputAsync(session);
     }
@@ -72,11 +77,20 @@ internal sealed class LanguageSelectionMonitor : IDisposable
             lock (gate)
             {
                 if (!running || state.Session != session) { started.Dispose(); return; }
-                input = started;
-                timer = new System.Threading.Timer(Tick, null, 80, 80);
+                input = started; inputStarting = false; inputFailures = 0;
             }
         }
-        catch (Exception ex) { Fail(session, "无法启动全局选词：" + ex.Message); }
+        catch (Exception ex)
+        {
+            long epoch; bool report;
+            lock (gate)
+            {
+                if (!running || state.Session != session) return;
+                inputStarting = false; inputRetryAt = Environment.TickCount64 + 2000;
+                report = ++inputFailures == 1; epoch = state.Epoch;
+            }
+            if (report) Post(session, epoch, () => error("选词监听暂时不可用，正在自动重连：" + ex.Message));
+        }
     }
 
     internal void Stop()
@@ -87,11 +101,12 @@ internal sealed class LanguageSelectionMonitor : IDisposable
             running = false;
             state.Stop();
             session = state.Session; epoch = state.Epoch;
-            pending = null; dotClick = false;
+            pending = null; dotClick = false; inputStarting = false;
             timer?.Dispose(); timer = null;
             input?.Dispose(); input = null;
             if (lifetime != null) { _ = CancelLifetimeAsync(lifetime); lifetime = null; }
             CancelRead();
+            reading = null; readInFlight = false;
             gestures.Reset();
         }
         Post(session, epoch, invalidated, requireRunning: false);
@@ -102,8 +117,11 @@ internal sealed class LanguageSelectionMonitor : IDisposable
         long session, epoch;
         lock (gate)
         {
+            if (!running) return false;
             var window = LanguageDesktopCapture.Foreground;
-            if (!running || !state.TryConsume(snapshot, window, LanguageDesktopCapture.WindowProcessId(window), Environment.TickCount64)) return false;
+            var now = Environment.TickCount64;
+            state.ObservePointer(isDotPoint(LanguageDesktopCapture.CursorPosition), now);
+            if (!state.TryConsume(snapshot, window, LanguageDesktopCapture.WindowProcessId(window), now)) return false;
             pending = null;
             session = state.Session; epoch = state.Epoch;
         }
@@ -135,7 +153,7 @@ internal sealed class LanguageSelectionMonitor : IDisposable
             if (candidate && !own && value.Window != 0 && value.ProcessId != Environment.ProcessId)
             {
                 var anchor = value.Keyboard ? LanguageDesktopCapture.CursorPosition : point;
-                pending = state.BeginRead(value.Window, value.ProcessId, anchor);
+                pending = state.BeginRead(value.Window, value.ProcessId, anchor) with { PreferPointerAnchor = !value.Keyboard };
                 due = value.Timestamp + SettleMilliseconds;
             }
         }
@@ -149,20 +167,29 @@ internal sealed class LanguageSelectionMonitor : IDisposable
         LanguageSettings configuration = null;
         long session = 0, epoch = 0;
         var hide = false;
+        var restartInput = false;
         lock (gate)
         {
             if (!running) return;
             var window = LanguageDesktopCapture.Foreground;
             var pid = LanguageDesktopCapture.WindowProcessId(window);
             var now = Environment.TickCount64;
+            if (input != null && !input.IsAlive)
+            {
+                input.Dispose(); input = null; inputRetryAt = 0;
+                state.Invalidate(); pending = null; CancelRead(); gestures.Reset(); hide = true;
+            }
+            if (input == null && !inputStarting && now >= inputRetryAt)
+            { inputStarting = true; restartInput = true; }
             if (window != observedWindow || pid != observedPid)
             {
                 observedWindow = window; observedPid = pid;
                 state.Invalidate(); pending = null; CancelRead(); gestures.ForegroundChanged(window); hide = true;
             }
+            state.ObservePointer(isDotPoint(LanguageDesktopCapture.CursorPosition), now);
             if (state.Expire(now)) hide = true;
             session = state.Session; epoch = state.Epoch;
-            if (pending != null && now >= due && !readInFlight)
+            if (pending != null && now >= due && !readInFlight && !leftButtonDown())
             {
                 ticket = pending; pending = null;
                 readInFlight = true;
@@ -171,6 +198,7 @@ internal sealed class LanguageSelectionMonitor : IDisposable
             }
         }
         if (hide) Post(session, epoch, invalidated);
+        if (restartInput) _ = StartInputAsync(session);
         if (ticket != null) _ = ReadAsync(ticket, configuration, cancellation);
     }
 
@@ -178,13 +206,18 @@ internal sealed class LanguageSelectionMonitor : IDisposable
     {
         try
         {
-            var result = await readSelection(configuration, ticket.Window, ticket.Anchor, cancellation.Token);
+            var result = await readSelection(configuration, ticket.Window, ticket.Anchor, cancellation.Token)
+                .WaitAsync(TimeSpan.FromSeconds(12), cancellation.Token);
             if (result == null) return;
+            // UIA can report the document's logical end, which is the opposite
+            // end of an upward drag. The mouse-up point is the user's endpoint.
+            if (ticket.PreferPointerAnchor)
+                result = result with { X = ticket.Anchor.X, Y = ticket.Anchor.Y };
             SelectionSnapshot snapshot;
             lock (gate)
             {
                 var window = LanguageDesktopCapture.Foreground;
-                if (cancellation.IsCancellationRequested || !running) return;
+                if (cancellation.IsCancellationRequested || !running || leftButtonDown()) return;
                 snapshot = state.Publish(ticket, result, window, LanguageDesktopCapture.WindowProcessId(window), Environment.TickCount64);
             }
             if (snapshot != null) Post(snapshot.Session, snapshot.Epoch, () => selected(snapshot));
@@ -199,9 +232,9 @@ internal sealed class LanguageSelectionMonitor : IDisposable
         {
             lock (gate)
             {
-                if (ReferenceEquals(reading, cancellation)) reading = null;
-                readInFlight = false;
+                if (ReferenceEquals(reading, cancellation)) { reading = null; readInFlight = false; }
             }
+            if (!cancellation.IsCancellationRequested) await cancellation.CancelAsync();
             cancellation.Dispose();
         }
     }
@@ -236,13 +269,6 @@ internal sealed class LanguageSelectionMonitor : IDisposable
         finally { cancellation.Dispose(); }
     }
 
-    private void Fail(long session, string message)
-    {
-        lock (gate) { if (!running || state.Session != session) return; }
-        Stop();
-        PostError(message);
-    }
-
     private void Post(long session, long epoch, Action callback, bool requireRunning = true)
     {
         try
@@ -266,7 +292,10 @@ internal sealed class LanguageSelectionMonitor : IDisposable
     public void Dispose() => Stop();
 }
 
-internal sealed record SelectionReadTicket(long Session, long Epoch, long Window, uint ProcessId, Point Anchor);
+internal sealed record SelectionReadTicket(long Session, long Epoch, long Window, uint ProcessId, Point Anchor)
+{
+    internal bool PreferPointerAnchor { get; init; }
+}
 
 // Shared by the native observer and its bounded semantic regression checks.
 internal sealed class SelectionWatchState
@@ -274,12 +303,12 @@ internal sealed class SelectionWatchState
     private static long nextSession;
     private SelectionSnapshot current;
     private SelectionCaptureLease lease;
-    private long expires;
+    private readonly FloatingDotLifetime display = new();
     internal long Session { get; private set; }
     internal long Epoch { get; private set; }
     internal void Start() { Invalidate(); Session = Interlocked.Increment(ref nextSession); }
     internal void Stop() { Invalidate(); Session = Interlocked.Increment(ref nextSession); }
-    internal void Invalidate() { Epoch++; lease?.Invalidate(); lease = null; current = null; }
+    internal void Invalidate() { Epoch++; lease?.Invalidate(); lease = null; current = null; display.Clear(); }
     internal SelectionReadTicket BeginRead(long window, uint pid, Point anchor) => new(Session, Epoch, window, pid, anchor);
     internal SelectionSnapshot Publish(SelectionReadTicket request, SelectionSnapshot value, long foreground, uint pid, long now)
     {
@@ -287,17 +316,19 @@ internal sealed class SelectionWatchState
             value.Window != request.Window || value.ProcessId != pid || string.IsNullOrWhiteSpace(value.Text)) return null;
         lease?.Invalidate();
         lease = new SelectionCaptureLease();
-        expires = now + 12_000;
+        display.Start(now);
         return current = value with { Session = Session, Epoch = Epoch, Lease = lease };
     }
     internal bool TryConsume(SelectionSnapshot value, long foreground, uint pid, long now)
     {
         if (current == null || !ReferenceEquals(current, value) || value.Epoch != Epoch || value.Session != Session ||
-            !value.Lease.IsValid || foreground != value.Window || pid != value.ProcessId || now >= expires) return false;
+            !value.Lease.IsValid || foreground != value.Window || pid != value.ProcessId || display.IsExpired(now)) return false;
         current = null;
+        display.Clear();
         return true;
     }
-    internal bool Expire(long now) { if (current == null || now < expires) return false; Invalidate(); return true; }
+    internal void ObservePointer(bool inside, long now) { if (current != null) display.ObservePointer(inside, now); }
+    internal bool Expire(long now) { if (current == null || !display.IsExpired(now)) return false; Invalidate(); return true; }
 }
 
 internal sealed class SelectionGestureTracker
@@ -333,6 +364,7 @@ internal sealed class SelectionGestureTracker
         }
         keyboardSelectionAt = 0;
         var point = new Point(input.X, input.Y);
+        if (input.Message == 0x200) return false;
         if (input.Message == 0x201)
         {
             down = point; downAt = input.Timestamp; downWindow = target; leftDown = true; eligible = true;

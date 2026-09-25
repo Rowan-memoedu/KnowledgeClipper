@@ -1,0 +1,3 @@
+Before the selection.
+Notepad can expose these selected words.
+After the selection.

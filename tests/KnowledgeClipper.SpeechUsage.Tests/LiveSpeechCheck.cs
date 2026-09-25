@@ -5,10 +5,10 @@ using KnowledgeClipper.Workflow;
 
 internal static class LiveSpeechCheck
 {
-    public static async Task RunAsync(LanguageSettings defaults, string? caseFilter = null)
+    public static async Task RunAsync(LanguageSettings defaults, string? caseFilter = null, string? outputRoot = null)
     {
         if (caseFilter != null && !new[] { "selection", "sentence", "mixed", "translation", "alternate_voice", "chinese" }.Contains(caseFilter)) throw new ArgumentException("Unknown live case.");
-        const string root = @"D:\Artifacts\KnowledgeClipper\validation\maintenance-speech-live";
+        var root = outputRoot ?? @"D:\Artifacts\KnowledgeClipper\validation\maintenance-speech-live";
         const string helper = @"D:\Projects\RemNote Quick Clipper\helpers\stream_speech.py";
         const string ffplay = @"D:\Applications\P47\FFmpeg\ffmpeg-8.1.2-full_build\bin\ffplay.exe";
         Directory.CreateDirectory(root);
@@ -32,7 +32,7 @@ internal static class LiveSpeechCheck
         var originalAudio = draft.AudioPath;
         await Run("sentence", draft, "An apple is on the table.", SpeechPurpose.Sentence);
         if (caseFilter == null) checks.Add(originalAudio == draft.AudioPath);
-        await Run("mixed", draft, "苹果 apple", SpeechPurpose.Selection);
+        await Run("mixed", draft, "苹果 apple，葡萄 grape，最后一句 The pear is ripe.", SpeechPurpose.Selection);
         await Run("translation", draft, "The apple is on the table.", SpeechPurpose.Translation);
         var alternativeDraft = new ClipDraft { Id = draft.Id, Original = new("apple"), Settings = settings with { EnglishVoice = alternate.Id } };
         await Run("alternate_voice", alternativeDraft, "apple", SpeechPurpose.Selection);
@@ -62,7 +62,7 @@ internal static class LiveSpeechCheck
             valid &= probe != null;
             var outputSeen = output?.FirstOutputAt != null;
             checks.Add(valid && outputSeen);
-            reports.Add(new { name, text, timedOut, purpose = purpose.ToString(), voice = StreamingSpeech.SelectVoice(text, item.Settings),
+            reports.Add(new { name, text, spokenText = StreamingSpeech.SpokenText(text, item.Settings), timedOut, purpose = purpose.ToString(), voice = StreamingSpeech.SelectVoice(text, item.Settings),
                 item.SpeechStatus, item.SpeechError, path, bytes,
                 sha256 = exists ? Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))) : null,
                 probe, times = item.Times.ToDictionary(), output, synthesisAndPlaybackComplete = valid, unmutedProcessOutputObserved = outputSeen });

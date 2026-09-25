@@ -26,6 +26,9 @@ internal static class Program
         try
         {
             var root = args[0]; var artifacts = args[1];
+            if (args.Contains("--published-language")) { await PublishedPreviewChecks.RunAsync(root, artifacts); return; }
+            if (args.Contains("--maintenance-preview")) { await MaintenancePreviewChecks.RunAsync(root, artifacts); return; }
+            if (args.Contains("--language-modes")) { await LanguageModePreviewChecks.RunAsync(root, artifacts); return; }
             if (args.Contains("--deck-routing")) { await DeckPreviewChecks.RunAsync(root, artifacts); return; }
             var store = new DraftStore(Path.Combine(artifacts, "preview-state"));
             var configuration = ModeConfigurationLoader.Load(Path.Combine(root, "modes"));
@@ -44,7 +47,7 @@ internal static class Program
             using (var preview = new LanguageDraftForm(draft, store, () => Task.CompletedTask, () => Task.CompletedTask, () => { }))
             {
                 preview.Show(); await Task.Delay(100);
-                Check(Find<TextBox>(preview, "reading-preview").Text.Contains("反面") && Find<TextBox>(preview, "writing-preview").Text.Contains("［"), "readable card faces");
+                Check(Find<TextBoxBase>(preview, "reading-preview").Text.Contains("反面") && Find<TextBoxBase>(preview, "writing-preview").Text.Contains("［"), "readable card faces");
                 var longMeaning = string.Concat(Enumerable.Repeat("长内容排版检查，可滚动阅读。", 40));
                 Find<TextBox>(preview, "meaning").Text = longMeaning;
                 Find<ComboBox>(preview, "practice").SelectedIndex = 2;

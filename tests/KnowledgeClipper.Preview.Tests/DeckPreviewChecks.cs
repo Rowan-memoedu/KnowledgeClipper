@@ -10,6 +10,9 @@ internal static class DeckPreviewChecks
         void Check(bool condition, string name) { if (!condition) throw new Exception(name); checks.Add(name); Console.WriteLine("PASS " + name); }
         var store = new DraftStore(Path.Combine(artifacts, "deck-preview-state"));
         var configuration = ModeConfigurationLoader.Load(Path.Combine(root, "modes"));
+        // This shared-result fixture represents a saved pre-concrete-mode draft and must keep that definition.
+        configuration = configuration with { Modes = configuration.Modes.Where(m => m.Definition.OutputKind != "language").Prepend(new ModeSnapshot(
+            new ModeDefinition("language", "旧语言模式", true, "", "language.md", "language.schema.json"), "", "")).ToArray() };
         ClipDraft Create(string mode, string text)
         {
             var material = new CaptureMaterial(text, null, "generated_allowed", null, "牌组预览 fixture", 0, DateTimeOffset.UtcNow);

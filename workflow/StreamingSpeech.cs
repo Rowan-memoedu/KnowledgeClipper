@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 
 namespace KnowledgeClipper.Workflow;
 
@@ -44,16 +45,74 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
     public Task SpeakAsync(ClipDraft draft, bool replay, Action changed, Action<int>? playerStarted = null) =>
         SpeakTextAsync(draft, draft.Original.SelectedText, SpeechPurpose.Selection, replay, changed, playerStarted);
 
-    public static string SelectVoice(string text, LanguageSettings settings) =>
-        settings.AutoVoice && text.Any(c => c is >= 'a' and <= 'z' or >= 'A' and <= 'Z')
-            ? settings.EnglishVoice : settings.Voice;
+    // The caller resolves word/context eligibility. Playback preserves the source
+    // recording's exact text, voice and synthesis settings without changing the new draft.
+    // Invalid/missing recordings fail explicitly; this API never falls back to TTS.
+    public Task SpeakRecordedAsync(ClipDraft draft, string sourceText, LanguageSettings sourceSettings, string audioPath,
+        Action changed, Action<int>? playerStarted = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceText);
+        ArgumentNullException.ThrowIfNull(sourceSettings);
+        ArgumentException.ThrowIfNullOrWhiteSpace(audioPath);
+        var root = Path.GetFullPath(audioRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        var path = Path.GetFullPath(audioPath);
+        if (!Path.IsPathFullyQualified(audioPath) || !path.StartsWith(root, StringComparison.OrdinalIgnoreCase) ||
+            !Path.GetFileName(path).EndsWith("-" + AudioCacheKey(sourceText, SpeechPurpose.Selection, sourceSettings) + ".mp3", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("历史录音的路径、文字或音色参数与原记录不符。");
+        var file = new FileInfo(path);
+        if (!file.Exists || file.Length == 0) throw new FileNotFoundException("历史录音不存在或尚未保存完整。", path);
+        if ((file.Attributes & FileAttributes.ReparsePoint) != 0) throw new InvalidDataException("历史录音必须是音频缓存中的实际文件。");
+        for (var directory = file.Directory; directory != null &&
+            !string.Equals(directory.FullName.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, root, StringComparison.OrdinalIgnoreCase);
+            directory = directory.Parent)
+            if ((directory.Attributes & FileAttributes.ReparsePoint) != 0)
+                throw new InvalidDataException("历史录音不能通过链接目录离开音频缓存。");
+        return SpeakCoreAsync(draft, sourceText, SpeechPurpose.Selection, true, changed, playerStarted, new(path, sourceSettings));
+    }
+
+    public static string SelectVoice(string text, LanguageSettings settings)
+    {
+        if (!settings.AutoVoice || !text.Any(c => c is >= 'a' and <= 'z' or >= 'A' and <= 'Z')) return settings.Voice;
+        // English learning must not let a multilingual voice reinterpret a short word
+        // as another language. Keep the same speaker's English-only counterpart.
+        return settings.EnglishVoice switch
+        {
+            "en-US-AvaMultilingualNeural" => "en-US-AvaNeural",
+            "en-US-AndrewMultilingualNeural" => "en-US-AndrewNeural",
+            "en-US-BrianMultilingualNeural" => "en-US-BrianNeural",
+            "en-US-EmmaMultilingualNeural" => "en-US-EmmaNeural",
+            _ => settings.EnglishVoice
+        };
+    }
+
+    public static string SpokenText(string text, LanguageSettings settings)
+    {
+        if (!settings.AutoVoice || !text.Any(c => c is >= 'a' and <= 'z' or >= 'A' and <= 'Z')) return text;
+        // Keep the captured material intact. Mixed automatic English playback skips Han text
+        // before synthesis, including when the user's selected English voice is multilingual.
+        var spoken = new StringBuilder(text.Length);
+        var filtered = false;
+        foreach (var rune in text.EnumerateRunes())
+        {
+            var han = rune.Value is >= 0x3400 and <= 0x4DBF or >= 0x4E00 and <= 0x9FFF or
+                >= 0xF900 and <= 0xFAFF or >= 0x20000 and <= 0x2FA1F or >= 0x30000 and <= 0x3347F;
+            spoken.Append(han ? " " : rune.ToString());
+            filtered |= han;
+        }
+        return filtered ? Regex.Replace(spoken.ToString(), @"\s+", " ").Trim() : text;
+    }
 
     // Persisted audio is reusable only for the same purpose, exact text, voice and synthesis settings.
     public static string AudioCacheKey(string text, SpeechPurpose purpose, LanguageSettings settings) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
-        { text, purpose, voice = SelectVoice(text, settings), settings.RatePercent, settings.VolumePercent, settings.PitchHz })))).ToLowerInvariant();
+        { text, purpose, voice = SelectVoice(text, settings), spokenText = SpokenText(text, settings),
+            settings.RatePercent, settings.VolumePercent, settings.PitchHz })))).ToLowerInvariant();
 
-    public async Task SpeakTextAsync(ClipDraft draft, string text, SpeechPurpose purpose, bool replay, Action changed, Action<int>? playerStarted = null)
+    public Task SpeakTextAsync(ClipDraft draft, string text, SpeechPurpose purpose, bool replay, Action changed, Action<int>? playerStarted = null) =>
+        SpeakCoreAsync(draft, text, purpose, replay, changed, playerStarted, null);
+
+    private async Task SpeakCoreAsync(ClipDraft draft, string text, SpeechPurpose purpose, bool replay, Action changed,
+        Action<int>? playerStarted, RecordedAudio? recording)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(text);
         var invokedAt = DateTimeOffset.UtcNow;
@@ -76,19 +135,25 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
         try
         {
             var settings = draft.Settings;
+            var synthesisSettings = recording?.Settings ?? settings;
             Directory.CreateDirectory(audioRoot);
-            var cacheKey = AudioCacheKey(text, purpose, settings);
-            var cached = Path.Combine(audioRoot, draft.Id + "-" + cacheKey + ".mp3");
+            var cacheKey = AudioCacheKey(text, purpose, synthesisSettings);
+            var cached = recording?.Path ?? Path.Combine(audioRoot, draft.Id + "-" + cacheKey + ".mp3");
             // Unique partial paths prevent a cancelled request from deleting the next request's stream.
             var audio = Path.Combine(audioRoot, draft.Id + "-" + Guid.NewGuid().ToString("N") + ".mp3");
-            var reuse = replay && File.Exists(cached);
+            var reuse = recording != null || replay && File.Exists(cached);
             if (!reuse) incompleteAudio = Path.ChangeExtension(audio, ".partial");
             PreparedHelper selectedHelper;
             lock (gate)
             {
                 ObjectDisposedException.ThrowIf(disposed, this);
                 if (prepared != null && prepared.PythonPath == settings.PythonPath && !prepared.Process.HasExited)
-                { selectedHelper = prepared; prepared = null; }
+                {
+                    // A saved recording does not need edge_tts. Do not queue it
+                    // behind dependency imports in an unfinished warm helper.
+                    if (reuse && prepared.Ready?.IsCompleted == false) selectedHelper = StartHelper(settings, warm: false);
+                    else { selectedHelper = prepared; prepared = null; }
+                }
                 else
                 {
                     ClosePrepared(prepared); prepared = null;
@@ -96,15 +161,16 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
                 }
             }
             process = selectedHelper.Process;
-            Prepare(settings);
             using var registration = token.Register(() => { try { if (!process.HasExited) process.Kill(true); }
                 catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { } });
             var stderr = process.StandardError.ReadToEndAsync();
-            var voice = SelectVoice(text, settings);
-            await process.StandardInput.WriteLineAsync(JsonSerializer.Serialize(new { text, voice,
-                rate = settings.RatePercent, volume = settings.VolumePercent, pitch = settings.PitchHz, ffplay = settings.FfplayPath,
-                audio = reuse ? cached : audio, replay = reuse }, WorkflowJson.Options).AsMemory(), token).ConfigureAwait(false);
+            var voice = SelectVoice(text, synthesisSettings);
+            await process.StandardInput.WriteLineAsync(JsonSerializer.Serialize(new { text = SpokenText(text, synthesisSettings), voice,
+                rate = synthesisSettings.RatePercent, volume = synthesisSettings.VolumePercent, pitch = synthesisSettings.PitchHz, ffplay = settings.FfplayPath,
+                audio = reuse ? cached : audio, replay = reuse, play = replay || settings.SpeechAutoPlay || purpose == SpeechPurpose.Sentence }, WorkflowJson.Options).AsMemory(), token).ConfigureAwait(false);
             process.StandardInput.Close();
+            // Send the current request before starting the next idle helper.
+            Prepare(settings);
             Update(() => {
                 draft.SpeechStatus = reuse ? "重播中" : "正在连接朗读"; draft.SpeechError = null;
                 if (reuse && purpose != SpeechPurpose.Sentence) draft.AudioPath = cached;
@@ -126,7 +192,7 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
                 }
                 Update(() => {
                     draft.Times[name] = data.RootElement.TryGetProperty("at", out var at) ? at.GetDateTimeOffset() : DateTimeOffset.UtcNow;
-                    if (name == "firstAudioChunk") draft.SpeechStatus = "已收到音频，正在开始播放";
+                    if (name == "firstAudioChunk") draft.SpeechStatus = settings.SpeechAutoPlay || replay || purpose == SpeechPurpose.Sentence ? "已收到音频，正在开始播放" : "已收到音频，正在保存";
                     if (name == "audioComplete")
                     {
                         File.Move(audio, cached, true);
@@ -136,7 +202,7 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
             }
             await process.WaitForExitAsync(token).ConfigureAwait(false);
             if (process.ExitCode != 0) throw new InvalidOperationException("朗读组件未能完成播放：" + (await stderr.ConfigureAwait(false)).Trim());
-            Update(() => draft.SpeechStatus = "朗读完成，可重播");
+            Update(() => draft.SpeechStatus = settings.SpeechAutoPlay || replay || purpose == SpeechPurpose.Sentence ? "朗读完成，可重播" : "音频已保存，点击播放可听取");
         }
         catch (OperationCanceledException) { Update(() => draft.SpeechStatus = "朗读已停止"); }
         catch (Exception) when (token.IsCancellationRequested) { Update(() => draft.SpeechStatus = "朗读已停止"); }
@@ -217,4 +283,5 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
     }
 
     private sealed record PreparedHelper(Process Process, string PythonPath, Task<string?>? Ready);
+    private sealed record RecordedAudio(string Path, LanguageSettings Settings);
 }

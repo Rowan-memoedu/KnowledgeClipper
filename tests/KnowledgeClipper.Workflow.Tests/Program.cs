@@ -4,7 +4,10 @@ using System.Text.Json;
 using KnowledgeClipper.Workflow;
 
 var root = args[0];
-var config = ModeConfigurationLoader.Load(Path.Combine(root, "modes"));
+// This suite protects saved legacy drafts, whose prompt/config snapshot predates concrete modes.
+var config = new ContentConfiguration("legacy fixture classifier", [new(
+    new ModeDefinition("language", "legacy language", true, "", "language.md", "language.schema.json"),
+    File.ReadAllText(Path.Combine(root, "modes", "language.md")), File.ReadAllText(Path.Combine(root, "modes", "language.schema.json")))]);
 var store = new DraftStore(@"D:\Caches\KnowledgeClipper\workflow-tests\" + Guid.NewGuid().ToString("N"));
 var checks = 0;
 void Check(bool condition, string name) { if (!condition) throw new Exception(name); checks++; Console.WriteLine("PASS " + name); }
@@ -107,7 +110,7 @@ sealed class ContentHandler : HttpMessageHandler
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
         Calls++;
-        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { choices = new[] { new { finish_reason = "stop", message = new { content = AlwaysBad || FailFirst && Calls == 1 ? "{}" : JsonSerializer.Serialize(Response, WorkflowJson.Options) } } } }) });
+        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { choices = new[] { new { finish_reason = "stop", message = new { content = AlwaysBad || FailFirst && Calls == 1 ? "{}" : JsonSerializer.Serialize(new { Response.Pronunciation, Response.Meaning, Response.GeneratedSentence, Response.GeneratedTargetStart }, WorkflowJson.Options) } } } }) });
     }
 }
 

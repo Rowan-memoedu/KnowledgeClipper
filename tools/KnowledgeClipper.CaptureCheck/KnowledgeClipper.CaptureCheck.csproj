@@ -7,11 +7,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ValidateExecutableReferencesMatchSelfContained>false</ValidateExecutableReferencesMatchSelfContained>
+    <DesktopAssemblyPath Condition="'$(DesktopAssemblyPath)' == ''">$(KnowledgeClipperBuildOutput)\RemNoteQuickClipper.Desktop\Release\net8.0-windows\win-x64\KnowledgeClipper.dll</DesktopAssemblyPath>
+    <DesktopRuntimeDirectory>$([System.IO.Path]::GetDirectoryName('$(DesktopAssemblyPath)'))</DesktopRuntimeDirectory>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="KnowledgeClipper">
-      <HintPath>D:\Artifacts\KnowledgeClipper\build\RemNoteQuickClipper.Desktop\Release\net8.0-windows\win-x64\KnowledgeClipper.dll</HintPath>
+      <HintPath>$(DesktopAssemblyPath)</HintPath>
     </Reference>
-    <ProjectReference Include="..\..\workflow\KnowledgeClipper.Workflow.csproj" />
+    <Reference Include="KnowledgeClipper.Workflow"><HintPath>$(DesktopRuntimeDirectory)\KnowledgeClipper.Workflow.dll</HintPath></Reference>
   </ItemGroup>
 </Project>

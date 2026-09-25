@@ -1081,7 +1081,7 @@ test("settings adapter exposes only real mappings and never credential values", 
   const settings = await describeContentSettings(workerRoot);
   assert.equal(settings.schemaVersion, "content-settings-adapter/1.0.0");
   const serialized = JSON.stringify(settings);
-  assert.match(serialized, /AI_PRODUCER_API_KEY/u);
+  assert.match(serialized, /DEEPSEEK_KNOWLEDGECLIPPER_API_KEY/u);
   assert.match(serialized, /content-config-snapshot/u);
   assert.match(serialized, /meaning-reading/u);
   assert.match(serialized, /writing/u);
@@ -1153,7 +1153,7 @@ test("settings validation rejects credentials embedded in an editable Prompt", a
   const parent = await mkdtemp(path.join(tmpdir(), "clipper-content-secret-settings-"));
   const userRoot = path.join(parent, "user-copy-v1");
   await copyBuiltInSettings(workerRoot, userRoot);
-  await writeFile(path.join(userRoot, "prompts", "stages", "cleaning.md"), "AI_PRODUCER_API_KEY=sk-this-must-never-be-packaged-123456789\n");
+  await writeFile(path.join(userRoot, "prompts", "stages", "cleaning.md"), "DEEPSEEK_KNOWLEDGECLIPPER_API_KEY=sk-this-must-never-be-packaged-123456789\n");
   const validation = await validateContentSettingsDraft(workerRoot, userRoot) as { valid: boolean; errors: Array<{ message: string }> };
   assert.equal(validation.valid, false);
   assert.match(validation.errors.map((entry) => entry.message).join(";"), /PROMPT_SECRET_DETECTED/u);

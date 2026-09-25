@@ -10,6 +10,7 @@ var output = Path.GetFullPath(args.Skip(1).FirstOrDefault() ?? @"D:\Artifacts\Kn
 var smoke = args.Contains("--smoke");
 var stateOnly = args.Contains("--state-only");
 var latencyOnly = args.Contains("--latency");
+var savedDraftPath = args.SkipWhile(a => a != "--saved-draft").Skip(1).FirstOrDefault();
 var audioRoot = Path.Combine(Path.GetDirectoryName(output)!, "speech-audio");
 Directory.CreateDirectory(audioRoot);
 var report = new SpeechReport { StartedAt = DateTimeOffset.UtcNow, OperatingSystem = Environment.OSVersion.ToString() };
@@ -21,6 +22,28 @@ const string english = "A patient gardener noticed a resilient plant beside the 
 var exitCode = 0;
 try
 {
+    if (savedDraftPath != null)
+    {
+        var before = SHA256.HashData(File.ReadAllBytes(savedDraftPath));
+        var saved = WorkflowJson.Read<ClipDraft>(savedDraftPath);
+        var effectiveVoice = StreamingSpeech.SelectVoice(saved.Original.SelectedText, saved.Settings);
+        var catalog = await SpeechVoiceCatalog.DiscoverAsync(saved.Settings.PythonPath);
+        Require(catalog.Any(v => v.Id == effectiveVoice && v.Locale == "en-US") && !effectiveVoice.Contains("Multilingual"),
+            "Saved English selection resolves to a currently available American English-only voice: " + effectiveVoice);
+        saved.Times.Clear();
+        var fresh = await Complete("saved_selection_resynthesized", saved);
+        Require(fresh.ValidOutput && fresh.Times.ContainsKey("audioComplete"), "Original saved selection resynthesizes, decodes and produces unmuted Windows output.");
+        Require(!Path.GetFileName(fresh.Audio!.Path).Equals(Path.GetFileName(WorkflowJson.Read<ClipDraft>(savedDraftPath).AudioPath), StringComparison.OrdinalIgnoreCase),
+            "Fixed voice identity invalidates the old multilingual audio cache key.");
+        saved.Times.Clear();
+        var replay = await Complete("fixed_selection_replayed", saved, replay: true);
+        Require(replay.ValidOutput && !replay.Times.ContainsKey("firstAudioChunk") && replay.Audio!.Sha256 == fresh.Audio!.Sha256,
+            "Replay reuses the newly synthesized complete audio without another provider request.");
+        var independent = await Complete("independent_shared_language_word", Draft("pain", saved.Settings));
+        Require(independent.ValidOutput, "An independent word shared by English and French also uses the same English-only route.");
+        Require(before.SequenceEqual(SHA256.HashData(File.ReadAllBytes(savedDraftPath))), "Read-only regression preserves the original history record.");
+        return 0;
+    }
     if (args.Contains("--temporarily-unmute"))
     {
         testEndpoint = new TestEndpoint();
@@ -266,7 +289,8 @@ sealed record SpeechCase(string Name, ClipDraft Draft, bool Replay, DateTimeOffs
     Dictionary<string, DateTimeOffset> Times, PlaybackObservation? Observation, AudioMeasurement? Audio, bool ValidOutput)
 {
     [JsonIgnore] public ClipDraft Draft { get; init; } = Draft;
-    public string Text { get; } = Draft.Original.SpokenText;
+    public string Text { get; } = Draft.Original.SelectedText;
+    public string EffectiveVoice { get; } = StreamingSpeech.SelectVoice(Draft.Original.SelectedText, Draft.Settings);
     public string Status { get; } = Draft.SpeechStatus;
     public string? Error { get; } = Draft.SpeechError;
     public object Settings { get; } = new { Draft.Settings.AutoVoice, Draft.Settings.Voice, Draft.Settings.EnglishVoice,

@@ -20,7 +20,7 @@ try
     var config = ModeConfigurationLoader.Load(options["--modes"], options.GetValueOrDefault("--overrides"));
     var settings = options.TryGetValue("--settings", out var settingsFile) ? WorkflowJson.Read<LanguageSettings>(settingsFile) : new LanguageSettings();
     settings.Validate();
-    using var http = new HttpClient();
+    using var http = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
     var module = new ContentModule(http, () => ContentCredentials.Resolve());
     var metadata = data.TryGetProperty("input", out var meta) ? meta.Deserialize<InputMetadata>(WorkflowJson.Options) : new InputMetadata();
     object result;
@@ -34,7 +34,13 @@ try
     else
     {
         var mode = options.GetValueOrDefault("--mode") ?? await module.ClassifyAsync(material, config, settings, CancellationToken.None, metadata);
-        result = await module.ProcessAsync(material, mode, config, settings, CancellationToken.None);
+        if (mode == "language" && LanguageModes.HasConcrete(config))
+        {
+            var selected = LanguageModes.Select(config, material, settings.Practice);
+            var results = await Task.WhenAll(selected.Select(concrete => module.ProcessAsync(material, concrete.Id, config, settings, CancellationToken.None)));
+            result = results.Length == 1 ? results[0] : results;
+        }
+        else result = await module.ProcessAsync(material, mode, config, settings, CancellationToken.None, metadata?.ExplicitQuestion);
     }
     var json = JsonSerializer.Serialize(result, WorkflowJson.Options);
     if (options.TryGetValue("--output", out var output)) WorkflowJson.Save(output, result);

@@ -4,12 +4,13 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Windows.Automation;
+using System.Windows.Automation.Text;
 using KnowledgeClipper.Workflow;
 using Forms = System.Windows.Forms;
 
 // A bounded check of the production capture API. The source owns its ordinary
 // native Edit control and message pump; no capture result or context is injected.
-internal static class Program
+internal static partial class Program
 {
     private static readonly Type CaptureType = Assembly.Load("KnowledgeClipper").GetType("KnowledgeClipper.LanguageDesktopCapture", true)!;
     private static readonly Type ClipboardType = CaptureType.GetNestedType("ClipboardState", BindingFlags.NonPublic)!;
@@ -18,15 +19,19 @@ internal static class Program
     private static int Main(string[] args)
     {
         Forms.Application.SetHighDpiMode(Forms.HighDpiMode.PerMonitorV2);
-        if (args.Length == 0 || args[0] is not ("source" or "clipboard" or "faults" or "context"))
+        if (args.Length == 0 || args[0] is not ("source" or "clipboard" or "faults" or "context" or "plain" or "plain-blocked" or "selection-range" or "chrome-range" or "notepad-range"))
         {
-            Console.Error.WriteLine("Usage: CaptureCheck source <project-root> | clipboard | faults <project-root> | context");
+            Console.Error.WriteLine("Usage: CaptureCheck source <project-root> | clipboard | faults <project-root> | context | selection-range | chrome-range <chrome.exe> <fixture.html> <isolated-profile> | plain <project-root> <receipt.json> <desktop.dll>");
             return 2;
         }
+        if (args[0] is "plain" or "plain-blocked") return RunPlain(args);
         try
         {
             if (args[0] == "clipboard") CheckClipboard();
             else if (args[0] == "context") CheckContext();
+            else if (args[0] == "selection-range") CheckSelectionRange();
+            else if (args[0] == "chrome-range") CheckChromeRange(args);
+            else if (args[0] == "notepad-range") CheckNotepadRange(args);
             else if (args[0] == "faults") CheckFaults(Path.GetFullPath(args.Length > 1 ? args[1] : Environment.CurrentDirectory));
             else CheckSource(Path.GetFullPath(args.Length > 1 ? args[1] : Environment.CurrentDirectory));
             Console.WriteLine(JsonSerializer.Serialize(new { status = "PASS", checks = Checks }, WorkflowJson.Options));
@@ -72,6 +77,181 @@ internal static class Program
         Require(ambiguousElement.TryGetCurrentPattern(TextPattern.Pattern, out var ambiguousPattern), "native-edit-exposes-text-pattern-without-selected-range");
         var withoutRange = new object?[] { (TextPattern)ambiguousPattern, "resilient", "sentence", null };
         Require(!(bool)read.Invoke(provider, withoutRange)! && withoutRange[3] == null, "truncated-document-cannot-prove-unique-target");
+    }
+
+    private static void CheckSelectionRange()
+    {
+        var providerType = CaptureType.Assembly.GetType("KnowledgeClipper.WindowsUiAutomationContextProvider", true)!;
+        var read = providerType.GetMethod("ReadCurrentSelection", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var provider = Activator.CreateInstance(providerType)!;
+        const string document = "First public passage. Selected public words. Final passage.";
+        const string selected = "Selected public words";
+        using var source = new SourceWindow(document, document.IndexOf(selected, StringComparison.Ordinal), selected.Length);
+        SetForegroundWindow(source.Window);
+        Thread.Sleep(100);
+        var first = (string?)read.Invoke(provider, [source.Window.ToInt64()]);
+        if (first != selected)
+        {
+            var root = AutomationElement.FromHandle(source.Window);
+            var focus = AutomationElement.FocusedElement;
+            var thread = GetWindowThreadProcessId(source.Window, out _);
+            var info = new GuiThreadInfo { Size = Marshal.SizeOf<GuiThreadInfo>() };
+            var hasGui = GetGUIThreadInfo(thread, ref info);
+            var chain = new List<object>();
+            var depth = 0;
+            for (var element = focus; element != null && depth++ < 12;)
+            {
+                chain.Add(new { element.Current.Name, element.Current.NativeWindowHandle, sameRoot = element.Equals(root),
+                    hasText = element.TryGetCurrentPattern(TextPattern.Pattern, out _) });
+                element = TreeWalker.ControlViewWalker.GetParent(element);
+            }
+            Console.WriteLine(JsonSerializer.Serialize(new { returned = first, foreground = GetForegroundWindow().ToInt64(), sourceWindow = source.Window.ToInt64(), editWindow = source.EditWindow.ToInt64(), hasGui, guiFocus = info.Focus.ToInt64(), guiActive = info.Active.ToInt64(), chain }));
+        }
+        Require(first == selected,
+            "live-uia-selection-reads-exact-focused-source-range-without-copy");
+        using var other = new SourceWindow("Unrelated focused selection", 0, 9);
+        SetForegroundWindow(other.Window);
+        Thread.Sleep(100);
+        Require((string?)read.Invoke(provider, [source.Window.ToInt64()]) == selected,
+            "live-uia-selection-remains-bound-to-the-requested-source-window");
+        Require((string?)read.Invoke(provider, [other.Window.ToInt64()]) == "Unrelated",
+            "live-uia-selection-can-read-the-new-focused-source-only");
+        using var collapsed = new SourceWindow("Collapsed range", 3, 0);
+        SetForegroundWindow(collapsed.Window);
+        Thread.Sleep(100);
+        Require(read.Invoke(provider, [collapsed.Window.ToInt64()]) == null,
+            "live-uia-selection-rejects-a-collapsed-range");
+        using var whitespace = new SourceWindow("Left.   Right.", 5, 3);
+        SetForegroundWindow(whitespace.Window);
+        Thread.Sleep(100);
+        Require(read.Invoke(provider, [whitespace.Window.ToInt64()]) == null,
+            "live-uia-selection-rejects-whitespace-only-ranges");
+    }
+
+    private static void CheckChromeRange(string[] args)
+    {
+        if (args.Length is not (4 or 5) || args.Length == 5 && args[4] != "--default-accessibility" ||
+            !Path.GetFullPath(args[3]).StartsWith(@"D:\Caches\KnowledgeClipper\", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Chrome selection fixture requires an isolated D: cache profile.");
+        var previousForeground = GetForegroundWindow();
+        Directory.CreateDirectory(args[3]);
+        var start = new ProcessStartInfo(Path.GetFullPath(args[1])) { UseShellExecute = false, CreateNoWindow = false };
+        start.ArgumentList.Add("--user-data-dir=" + Path.GetFullPath(args[3]));
+        start.ArgumentList.Add("--no-first-run");
+        start.ArgumentList.Add("--no-default-browser-check");
+        start.ArgumentList.Add("--disable-extensions");
+        start.ArgumentList.Add("--disable-background-networking");
+        if (args.Length == 4) start.ArgumentList.Add("--force-renderer-accessibility=complete");
+        start.ArgumentList.Add("--app=" + new Uri(Path.GetFullPath(args[2])).AbsoluteUri);
+        using var chrome = Process.Start(start) ?? throw new InvalidOperationException("isolated Chrome did not start");
+        try
+        {
+            var timer = Stopwatch.StartNew();
+            nint window = 0;
+            while (timer.Elapsed < TimeSpan.FromSeconds(15) && window == 0)
+            {
+                chrome.Refresh(); window = chrome.MainWindowHandle;
+                if (window == 0) Thread.Sleep(100);
+            }
+            Require(window != 0 && !chrome.HasExited, "isolated Chrome exposes its fixture window");
+            if (previousForeground != 0) SetForegroundWindow(window);
+            Thread.Sleep(1500);
+            var providerType = CaptureType.Assembly.GetType("KnowledgeClipper.WindowsUiAutomationContextProvider", true)!;
+            var provider = Activator.CreateInstance(providerType)!;
+            var read = providerType.GetMethod("ReadCurrentSelection", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            var selection = (string?)read.Invoke(provider, [window.ToInt64()]);
+            if (selection != "The browser still knows these selected words.")
+            {
+                var root = AutomationElement.FromHandle(window);
+                var textElements = root.FindAll(TreeScope.Descendants,
+                    new PropertyCondition(AutomationElement.IsTextPatternAvailableProperty, true));
+                var details = new List<object>();
+                for (var i = 0; i < Math.Min(textElements.Count, 12); i++)
+                {
+                    var element = textElements[i];
+                    var pattern = (TextPattern)element.GetCurrentPattern(TextPattern.Pattern);
+                    details.Add(new { element.Current.Name, type = element.Current.ControlType.ProgrammaticName,
+                        element.Current.IsOffscreen, selected = pattern.GetSelection()?.Select(range => range.GetText(200)).ToArray() });
+                }
+                var thread = GetWindowThreadProcessId(window, out _);
+                var gui = new GuiThreadInfo { Size = Marshal.SizeOf<GuiThreadInfo>() };
+                var hasGui = GetGUIThreadInfo(thread, ref gui);
+                var documentRead = providerType.GetMethod("ReadVisibleDocumentSelection", BindingFlags.Static | BindingFlags.NonPublic)!
+                    .Invoke(null, [root]);
+                var secondRead = (string?)read.Invoke(provider, [window.ToInt64()]);
+                Console.WriteLine(JsonSerializer.Serialize(new { returned = selection, window = window.ToInt64(), hasGui,
+                    guiFocus = gui.Focus.ToInt64(), guiRoot = GetAncestor(gui.Focus, 2).ToInt64(), documentRead, secondRead,
+                    textElements = details }));
+            }
+            Require(selection == "The browser still knows these selected words.",
+                "copy-blocked Chrome page exposes the exact live selected text without clipboard access");
+        }
+        finally
+        {
+            if (!chrome.HasExited) chrome.Kill(entireProcessTree: true);
+            if (previousForeground != 0) SetForegroundWindow(previousForeground);
+        }
+    }
+
+    private static void CheckNotepadRange(string[] args)
+    {
+        if (args.Length != 2 || !int.TryParse(args[1], out var processId))
+            throw new ArgumentException("notepad-range <isolated-notepad-pid>");
+        const string expected = "Notepad can expose these selected words.";
+        var previousForeground = GetForegroundWindow();
+        using var notepad = Process.GetProcessById(processId);
+        try
+        {
+            var timer = Stopwatch.StartNew();
+            nint window = 0;
+            while (timer.Elapsed < TimeSpan.FromSeconds(15) && window == 0 && !notepad.HasExited)
+            {
+                notepad.Refresh(); window = notepad.MainWindowHandle;
+                if (window == 0) Thread.Sleep(100);
+            }
+            if (window == 0 || notepad.HasExited)
+                Console.WriteLine(JsonSerializer.Serialize(new { notepad.Id, notepad.HasExited,
+                    exitCode = notepad.HasExited ? notepad.ExitCode : (int?)null, window = window.ToInt64() }));
+            Require(window != 0 && !notepad.HasExited, "independent Notepad exposes its fixture window");
+            SetForegroundWindow(window);
+            Thread.Sleep(500);
+            var root = AutomationElement.FromHandle(window);
+            var documents = root.FindAll(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.IsTextPatternAvailableProperty, true));
+            TextPatternRange? target = null;
+            var diagnostics = new List<object>();
+            foreach (AutomationElement element in documents)
+            {
+                var pattern = (TextPattern)element.GetCurrentPattern(TextPattern.Pattern);
+                TextPatternRange? range = null;
+                string? error = null;
+                try { range = pattern.DocumentRange.FindText(expected, backward: false, ignoreCase: false); }
+                catch (NotSupportedException ex) { error = ex.Message; }
+                diagnostics.Add(new { element.Current.Name, type = element.Current.ControlType.ProgrammaticName,
+                    element.Current.ClassName, element.Current.NativeWindowHandle,
+                    element.Current.IsOffscreen, hasTarget = range != null, error });
+                if (range != null && target == null) target = range;
+            }
+            if (target == null) Console.WriteLine(JsonSerializer.Serialize(new { diagnostics }));
+            Require(target != null, "Notepad exposes exact fixture text through UIA TextPattern");
+            try { target!.Select(); }
+            catch (NotSupportedException)
+            {
+                Console.WriteLine(JsonSerializer.Serialize(new { diagnostics }));
+                throw;
+            }
+            Thread.Sleep(250);
+            var providerType = CaptureType.Assembly.GetType("KnowledgeClipper.WindowsUiAutomationContextProvider", true)!;
+            var provider = Activator.CreateInstance(providerType)!;
+            var read = providerType.GetMethod("ReadCurrentSelection", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            var selected = (string?)read.Invoke(provider, [window.ToInt64()]);
+            if (selected != expected) Console.WriteLine(JsonSerializer.Serialize(new { selected, diagnostics }));
+            Require(selected == expected, "Notepad live selected range is readable without Ctrl+C");
+        }
+        finally
+        {
+            if (previousForeground != 0) SetForegroundWindow(previousForeground);
+        }
     }
 
     private static void CheckFaults(string root)
@@ -249,6 +429,15 @@ internal static class Program
         }
     }
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
+    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint window);
+    [StructLayout(LayoutKind.Sequential)] private struct GuiThreadInfo
+    {
+        public int Size, Flags;
+        public nint Active, Focus, Capture, MenuOwner, MoveSize, Caret;
+        public System.Drawing.Rectangle CaretRect;
+    }
+    [DllImport("user32.dll")] private static extern bool GetGUIThreadInfo(uint threadId, ref GuiThreadInfo info);
+    [DllImport("user32.dll")] private static extern nint GetAncestor(nint window, uint flags);
     [DllImport("user32.dll")] private static extern uint GetClipboardSequenceNumber();
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(nint window);
     [DllImport("user32.dll")] private static extern bool ShowWindow(nint window, int command);

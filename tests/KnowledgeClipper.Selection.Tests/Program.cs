@@ -3,6 +3,8 @@ using System.Drawing;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text.Json;
 using KnowledgeClipper.Workflow;
 using Forms = System.Windows.Forms;
 
@@ -13,18 +15,25 @@ internal static class Program
     private static readonly Assembly Desktop = Assembly.Load("KnowledgeClipper");
     private const BindingFlags All = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
     private static int checks;
+    private static readonly List<string> passedChecks = [];
+    private static object? fixtureSnapshot;
     [STAThread]
     private static int Main(string[] args)
     {
         Forms.Application.SetHighDpiMode(Forms.HighDpiMode.PerMonitorV2);
+        string? failure = null;
         try
         {
             CheckState();
+            CheckHoverState();
+            CheckHoverMonitor();
             CheckReadRecovery();
+            CheckPointerEndpoint();
             CheckWordBoundaries();
             CheckGestures();
             CheckInputLifecycle();
             CheckFaults(Path.GetFullPath(args[0]));
+            CheckNativeAnchor(Path.GetFullPath(args[0]));
             CheckHelperDpi(Path.GetFullPath(args[0]));
             Console.WriteLine($"PASS {checks} local selection checks; real application gestures remain a separate observation.");
             return 0;
@@ -32,15 +41,29 @@ internal static class Program
         catch (Exception ex)
         {
             while (ex is TargetInvocationException && ex.InnerException != null) ex = ex.InnerException;
+            failure = ex.ToString();
             Console.Error.WriteLine(ex);
             return 1;
+        }
+        finally
+        {
+            if (args.Length > 1)
+            {
+                var output = Path.GetFullPath(args[1]); Directory.CreateDirectory(output);
+                File.WriteAllText(Path.Combine(output, "validation.json"), JsonSerializer.Serialize(new
+                {
+                    passed = failure == null, checks = passedChecks, error = failure, desktop = Desktop.Location,
+                    desktopSha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(Desktop.Location))).ToLowerInvariant(),
+                    scope = "Production selection state, hover expiry, source identity and native watcher lifecycle on isolated Windows desktop; no simulated mouse or keyboard input."
+                }, new JsonSerializerOptions { WriteIndented = true }));
+            }
         }
     }
     private static Type Type(string name) => Desktop.GetType("KnowledgeClipper." + name, true)!;
     private static object New(string type, params object[] args) => Activator.CreateInstance(Type(type), All, null, args, null)!;
     private static object? Call(object value, string method, params object?[] args) => value.GetType().GetMethod(method, All)!.Invoke(value, args);
     private static object? Property(object value, string name) => value.GetType().GetProperty(name, All)!.GetValue(value);
-    private static void Check(bool value, string name) { if (!value) throw new InvalidOperationException(name); checks++; Console.WriteLine("PASS " + name); }
+    private static void Check(bool value, string name) { if (!value) throw new InvalidOperationException(name); checks++; passedChecks.Add(name); Console.WriteLine("PASS " + name); }
     private static object Snapshot(long hwnd = 10, uint pid = 20, string text = "selected") => New("SelectionSnapshot", text, hwnd, "fixture", -40, 80, DateTimeOffset.UtcNow, 0L, 0L, pid);
     private static object Ticket(object state, long hwnd = 10, uint pid = 20) => Call(state, "BeginRead", hwnd, pid, new Point(-40, 80))!;
     private static object? Publish(object state, object ticket, object? snapshot = null, long hwnd = 10, uint pid = 20, long now = 100) => Call(state, "Publish", ticket, snapshot ?? Snapshot(), hwnd, pid, now);
@@ -67,10 +90,69 @@ internal static class Program
         Call(state, "Invalidate");
         Check(!(bool)Property(lease, "IsValid")!, "new input invalidates a consumed capture before material is read");
         shown = Publish(state, Ticket(state), now: 500)!;
-        Check(!Consume(state, shown, 12500) && (bool)Call(state, "Expire", 12500L)!, "selection expiry rejects clicks and hides the dot");
+        Check(!(bool)Call(state, "Expire", 2499L)! && !Consume(state, shown, 2500) && (bool)Call(state, "Expire", 2500L)!,
+            "unhovered text selection receives exactly two seconds before expiry");
         old = Ticket(state);
         Call(state, "Stop"); Call(state, "Start");
         Check(Publish(state, old) == null, "stop and restart reject results from the previous session");
+    }
+    private static void CheckHoverState()
+    {
+        var state = New("SelectionWatchState"); Call(state, "Start");
+        var shown = Publish(state, Ticket(state), now: 100)!;
+        Call(state, "ObservePointer", true, 500L);
+        Check(!(bool)Call(state, "Expire", 50000L)! && Consume(state, shown, 50000),
+            "hover keeps text selection consumable beyond the former twelve-second limit");
+        Check((bool)Property(Property(shown, "Lease")!, "IsValid")!, "consumed hover selection keeps its frozen capture lease");
+
+        shown = Publish(state, Ticket(state), now: 51000)!;
+        Call(state, "ObservePointer", true, 52000L); Call(state, "ObservePointer", false, 53000L);
+        Check(!(bool)Call(state, "Expire", 54999L)!, "text hover departure keeps the snapshot for a complete two seconds");
+        Call(state, "ObservePointer", true, 54999L);
+        Check(!(bool)Call(state, "Expire", 70000L)!, "re-entering text dot cancels its prior expiry deadline");
+        Call(state, "ObservePointer", false, 71000L);
+        Check(!(bool)Call(state, "Expire", 72999L)! && !Consume(state, shown, 73000) && (bool)Call(state, "Expire", 73000L)!,
+            "text selection expires exactly two seconds after the final departure");
+        Check(!(bool)Property(Property(shown, "Lease")!, "IsValid")!, "text hover expiry invalidates its source lease");
+
+        shown = Publish(state, Ticket(state), now: 74000)!;
+        Call(state, "ObservePointer", true, 74001L); Call(state, "Invalidate");
+        Check(!Consume(state, shown, 74002) && !(bool)Property(Property(shown, "Lease")!, "IsValid")!,
+            "new selection input overrides hover protection immediately");
+        var replacement = Publish(state, Ticket(state), now: 75000)!;
+        Check(!(bool)Call(state, "Expire", 76999L)! && (bool)Call(state, "Expire", 77000L)!,
+            "replacement selection does not inherit the previous hover state");
+        shown = Publish(state, Ticket(state), now: 78000)!;
+        Call(state, "ObservePointer", true, 78001L);
+        Check(!(bool)Call(state, "TryConsume", shown, 11L, 20u, 90000L)! && !(bool)Call(state, "TryConsume", shown, 10L, 21u, 90000L)!,
+            "hover never bypasses foreground window or process identity validation");
+        Call(state, "Stop");
+        Check(!Consume(state, shown, 90000), "stopping text monitoring rejects a hovered snapshot");
+    }
+    private static void CheckHoverMonitor()
+    {
+        using var dispatcher = new Forms.Form(); _ = dispatcher.Handle;
+        var snapshotType = Type("SelectionSnapshot");
+        var callbackType = typeof(Action<>).MakeGenericType(snapshotType);
+        var ignored = System.Linq.Expressions.Expression.Parameter(snapshotType);
+        var callback = System.Linq.Expressions.Expression.Lambda(callbackType, System.Linq.Expressions.Expression.Empty(), ignored).Compile();
+        using var monitor = (IDisposable)New("LanguageSelectionMonitor", dispatcher, "unused.cjs",
+            (Func<Point, bool>)(_ => true), callback, (Action)(() => { }), (Action<string>)(_ => { }));
+        var state = monitor.GetType().GetField("state", All)!.GetValue(monitor)!;
+        Call(state, "Start");
+        var window = (long)Type("LanguageDesktopCapture").GetProperty("Foreground", All)!.GetValue(null)!;
+        var pid = (uint)Type("LanguageDesktopCapture").GetMethod("WindowProcessId", All)!.Invoke(null, [window])!;
+        monitor.GetType().GetField("running", All)!.SetValue(monitor, true);
+        monitor.GetType().GetField("inputStarting", All)!.SetValue(monitor, true);
+        monitor.GetType().GetField("observedWindow", All)!.SetValue(monitor, window);
+        monitor.GetType().GetField("observedPid", All)!.SetValue(monitor, pid);
+        object Published() => Publish(state, Ticket(state, window, pid), Snapshot(window, pid), window, pid, Environment.TickCount64 - 15_000)!;
+        var shown = Published();
+        Call(monitor, "Tick", (object?)null);
+        Check(!(bool)Call(state, "Expire", Environment.TickCount64)!, "text monitor samples hover before its timer expiry check");
+        Check((bool)Call(monitor, "TryConsume", shown)!, "text monitor consumes its hovered snapshot through the normal entry point");
+        shown = Published();
+        Check((bool)Call(monitor, "TryConsume", shown)!, "text monitor also samples hover at click time before a delayed timer tick");
     }
     private static bool Input(object tracker, bool keyboard, int message, int key, int x, int y, long time, long window = 10, bool own = false)
     {
@@ -106,10 +188,105 @@ internal static class Program
         var newer = Publish(state, Ticket(state))!;
         Call(monitor, "ReadFailed", failed, "delayed old failure");
         Check(Consume(state, newer), "delayed failure cannot invalidate a newer selection");
+        var currentRead = new CancellationTokenSource();
+        var reading = monitor.GetType().GetField("reading", All)!;
+        var inFlight = monitor.GetType().GetField("readInFlight", All)!;
+        reading.SetValue(monitor, currentRead); inFlight.SetValue(monitor, true);
+        ((Task)Call(monitor, "ReadAsync", failed, new LanguageSettings(), new CancellationTokenSource())!).GetAwaiter().GetResult();
+        Check(ReferenceEquals(reading.GetValue(monitor), currentRead) && (bool)inFlight.GetValue(monitor)!,
+            "an old read completion cannot clear a newer read after restart");
+        ((Task)Call(monitor, "ReadAsync", Ticket(state), new LanguageSettings(), currentRead)!).GetAwaiter().GetResult();
+        Check(reading.GetValue(monitor) == null && !(bool)inFlight.GetValue(monitor)!, "the owning read releases its in-flight slot after failure");
+        reader.SetValue(monitor, typeof(Program).GetMethod(nameof(UnresponsiveSelection), All)!
+            .MakeGenericMethod(snapshotType).CreateDelegate(reader.FieldType));
+        var canceled = new CancellationTokenSource(); canceled.Cancel();
+        reading.SetValue(monitor, canceled); inFlight.SetValue(monitor, true);
+        var canceledRead = (Task)Call(monitor, "ReadAsync", Ticket(state), new LanguageSettings(), canceled)!;
+        Check(canceledRead.Wait(1000) && reading.GetValue(monitor) == null && !(bool)inFlight.GetValue(monitor)!,
+            "cancellation releases the watcher even when an external reader does not complete");
     }
 
     private static Task<T> FailSelection<T>(LanguageSettings settings, long window, Point anchor, CancellationToken cancellation)
         => Task.FromException<T>(new InvalidOperationException("bounded helper failure"));
+
+    private static Task<T> UnresponsiveSelection<T>(LanguageSettings settings, long window, Point anchor, CancellationToken cancellation)
+        => new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously).Task;
+
+    private static Task<T> ReturnSelection<T>(LanguageSettings settings, long window, Point anchor, CancellationToken cancellation)
+        => Task.FromResult((T)fixtureSnapshot!);
+
+    private static void CheckPointerEndpoint()
+    {
+        using var dispatcher = new Forms.Form(); _ = dispatcher.Handle;
+        var snapshotType = Type("SelectionSnapshot");
+        var callbackType = typeof(Action<>).MakeGenericType(snapshotType);
+        var parameter = System.Linq.Expressions.Expression.Parameter(snapshotType);
+        var callback = System.Linq.Expressions.Expression.Lambda(callbackType,
+            System.Linq.Expressions.Expression.Empty(), parameter).Compile();
+        using var monitor = (IDisposable)New("LanguageSelectionMonitor", dispatcher, "unused.cjs",
+            (Func<Point, bool>)(_ => false), callback, (Action)(() => { }), (Action<string>)(_ => { }));
+        var monitorType = monitor.GetType();
+        var state = monitorType.GetField("state", All)!.GetValue(monitor)!;
+        Call(state, "Start");
+        var capture = Type("LanguageDesktopCapture");
+        var window = (long)capture.GetProperty("Foreground", All)!.GetValue(null)!;
+        var pid = (uint)capture.GetMethod("WindowProcessId", All)!.Invoke(null, [window])!;
+        monitorType.GetField("running", All)!.SetValue(monitor, true);
+        monitorType.GetField("inputStarting", All)!.SetValue(monitor, true);
+        monitorType.GetField("observedWindow", All)!.SetValue(monitor, window);
+        monitorType.GetField("observedPid", All)!.SetValue(monitor, pid);
+        monitorType.GetField("lifetime", All)!.SetValue(monitor, new CancellationTokenSource());
+        monitorType.GetField("settings", All)!.SetValue(monitor, new LanguageSettings());
+        var reader = monitorType.GetField("readSelection", All)!;
+        reader.SetValue(monitor, typeof(Program).GetMethod(nameof(ReturnSelection), All)!
+            .MakeGenericMethod(snapshotType).CreateDelegate(reader.FieldType));
+        var buttonHeld = true;
+        monitorType.GetField("leftButtonDown", All)!.SetValue(monitor, (Func<bool>)(() => buttonHeld));
+        var pending = monitorType.GetField("pending", All)!;
+        var due = monitorType.GetField("due", All)!;
+        var current = state.GetType().GetField("current", All)!;
+        foreach (var endpoint in new[] { new Point(73, 157), new Point(73, 17) })
+        {
+            Call(state, "Invalidate");
+            fixtureSnapshot = Snapshot(window, pid); // UIA's logical end deliberately disagrees with mouse-up.
+            var ticket = Call(state, "BeginRead", window, pid, endpoint)!;
+            ticket.GetType().GetProperty("PreferPointerAnchor", All)!.SetValue(ticket, true);
+            pending.SetValue(monitor, ticket);
+            due.SetValue(monitor, Environment.TickCount64 - 1);
+            buttonHeld = true;
+            Call(monitor, "Tick", (object?)null);
+            Check(ReferenceEquals(pending.GetValue(monitor), ticket) && current.GetValue(state) == null,
+                "dragging does not start a selection read or show the dot");
+            buttonHeld = false;
+            Call(monitor, "Tick", (object?)null);
+            Check(SpinWait.SpinUntil(() => current.GetValue(state) != null, 2000) && pending.GetValue(monitor) == null,
+                "mouse release starts the settled selection read");
+            var shown = current.GetValue(state)!;
+            Check((int)Property(shown, "X")! == endpoint.X && (int)Property(shown, "Y")! == endpoint.Y,
+                "mouse selection dot follows the final pointer endpoint at y=" + endpoint.Y);
+        }
+        Call(state, "Invalidate");
+        var keyboardTicket = Call(state, "BeginRead", window, pid, new Point(73, 17))!;
+        pending.SetValue(monitor, keyboardTicket);
+        due.SetValue(monitor, Environment.TickCount64 - 1);
+        Call(monitor, "Tick", (object?)null);
+        Check(SpinWait.SpinUntil(() => current.GetValue(state) != null, 2000) &&
+            (int)Property(current.GetValue(state)!, "X")! == -40 &&
+            (int)Property(current.GetValue(state)!, "Y")! == 80,
+            "keyboard selection retains its accessibility anchor");
+        fixtureSnapshot = null;
+    }
+
+    private static void CheckNativeAnchor(string root)
+    {
+        var capture = New("LanguageDesktopCapture", Path.Combine(root, "tools", "KnowledgeClipper.CaptureCheck", "fixtures", "coordinates.cjs"));
+        var task = (Task)Call(capture, "ReadNativeSelectionAsync", new LanguageSettings(), CancellationToken.None)!;
+        while (!task.IsCompleted) { Forms.Application.DoEvents(); Thread.Sleep(10); }
+        task.GetAwaiter().GetResult();
+        var result = task.GetType().GetProperty("Result")!.GetValue(task)!;
+        Check((Point)Property(result, "Anchor")! == new Point(-40, 120) && (bool)Property(result, "PositionValid")!,
+            "native parser uses the selection top-right corner and preserves negative monitor coordinates");
+    }
 
     private static void CheckWordBoundaries()
     {
@@ -140,20 +317,28 @@ internal static class Program
         foreach (var enabled in new[] { true, false })
         {
             var material = (CaptureMaterial)Type("LanguageDesktopCapture").GetMethod("BuildMaterial", All)!
-                .Invoke(null, ["ell", context, enabled, "verified fixture", 42L, DateTimeOffset.UtcNow])!;
+                .Invoke(null, ["ell", context, enabled, "verified fixture", 42L, DateTimeOffset.UtcNow, true])!;
             Check(material.SelectedText == "hello" && (enabled
                 ? material.ContextText == "Say hello now." && material.TargetStart == 4 && material.ContextOrigin == "source"
                 : material.ContextText == null && material.TargetStart == null && material.ContextOrigin == "generated_allowed"),
                 "capture completion preserves context setting " + enabled + " and source offset");
+            Check(material.LookupContextText == "Say hello now.", "meaning receives verified source context independently of card context mode " + enabled);
         }
     }
 
     private static void CheckGestures()
     {
         var tracker = New("SelectionGestureTracker");
-        Input(tracker, false, 0x201, 0, 10, 10, 100);
+        Check(!Input(tracker, false, 0x201, 0, 10, 10, 100), "press does not show a selection dot");
+        Check(!Input(tracker, false, 0x200, 0, 50, 10, 180), "drag movement does not show a selection dot");
         Call(tracker, "ForegroundChanged", 10L);
         Check(Input(tracker, false, 0x202, 0, 80, 10, 250), "mouse drag produces a read candidate");
+        Call(tracker, "Reset");
+        Check(!Input(tracker, false, 0x201, 0, 100, 150, 500) &&
+            !Input(tracker, false, 0x200, 0, 100, 100, 550) &&
+            Input(tracker, false, 0x202, 0, 100, 70, 600),
+            "upward drag produces a read candidate only after mouse release");
+        Call(tracker, "Reset");
         Input(tracker, false, 0x201, 0, 10, 10, 1000);
         Check(!Input(tracker, false, 0x202, 0, 10, 10, 1050), "single click only cancels the previous selection");
         Input(tracker, false, 0x201, 0, 10, 10, 1100);
@@ -207,7 +392,10 @@ internal static class Program
         var monitorType = Type("LanguageDesktopCapture").GetNestedType("CaptureInputMonitor", BindingFlags.NonPublic)!;
         for (var attempt = 0; attempt < 2; attempt++)
         {
-            var starting = (Task)monitorType.GetMethod("StartAsync", All)!.Invoke(null, [null])!;
+            var parameter = System.Linq.Expressions.Expression.Parameter(Type("DesktopInput"));
+            var observer = System.Linq.Expressions.Expression.Lambda(typeof(Action<>).MakeGenericType(parameter.Type),
+                System.Linq.Expressions.Expression.Empty(), parameter).Compile();
+            var starting = (Task)monitorType.GetMethod("StartAsync", All)!.Invoke(null, [observer])!;
             while (!starting.IsCompleted) { Forms.Application.DoEvents(); Thread.Sleep(10); }
             starting.GetAwaiter().GetResult();
             var monitor = starting.GetType().GetProperty("Result")!.GetValue(starting)!;
@@ -216,6 +404,19 @@ internal static class Program
             try
             {
                 Check(handle != IntPtr.Zero, $"native input guard session {attempt + 1} starts its own message pump");
+                var oldCount = (int)Property(monitor, "RearmCount")!;
+                ((Task)Call(monitor, "RefreshAsync")!).GetAwaiter().GetResult();
+                Check((bool)Property(monitor, "IsAlive")! && (int)Property(monitor, "RearmCount")! == oldCount + 1,
+                    "real keyboard and mouse hooks can be renewed on the existing pump without restarting a selection session");
+                var expiredGuard = monitorType.GetField("guard", All)!.GetValue(monitor)!;
+                ((IDisposable)expiredGuard).Dispose();
+                monitorType.GetField("installedAt", All)!.SetValue(monitor, Environment.TickCount64 - 31_000L);
+                var recovery = Stopwatch.StartNew();
+                while ((int)Property(monitor, "RearmCount")! == oldCount + 1 && recovery.ElapsedMilliseconds < 3500)
+                { Forms.Application.DoEvents(); Thread.Sleep(10); }
+                Check((int)Property(monitor, "RearmCount")! > oldCount + 1 &&
+                    !ReferenceEquals(expiredGuard, monitorType.GetField("guard", All)!.GetValue(monitor)),
+                    "watchdog automatically repairs removed native hooks while the pump remains alive");
                 ((IDisposable)monitor).Dispose();
                 var watch = Stopwatch.StartNew();
                 while (WaitForSingleObject(handle, 0) == 0x102 && watch.ElapsedMilliseconds < 2000)

@@ -1,0 +1,15 @@
+{
+  "modes": [
+    {
+      "id": "image-answer",
+      "name": "多图模式",
+      "enabled": true,
+      "description": "按采集顺序读取全部正面图片，生成文字反面。已有反面图片时直接配对，不调用模型。",
+      "promptFile": "image-answer.md",
+      "schemaFile": "question.schema.json",
+      "outputKind": "image-answer",
+      "requiresContext": false,
+      "ankiDeckPath": "摘录::多图"
+    }
+  ]
+}

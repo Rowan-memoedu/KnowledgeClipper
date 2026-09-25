@@ -248,7 +248,7 @@ export async function describeContentSettings(workerRoot: string): Promise<JsonO
     },
     provider: {
       id: setting("provider.id", "read-only", "deepseek"),
-      apiKey: { key: "provider.apiKey", status: "local-secret", environmentVariable: "AI_PRODUCER_API_KEY", valueExposed: false },
+      apiKey: { key: "provider.apiKey", status: "local-secret", environmentVariable: "DEEPSEEK_KNOWLEDGECLIPPER_API_KEY", valueExposed: false },
       model: { key: "provider.model", status: "supported-snapshot-bound-or-control-plane-local", snapshotPath: "runtimePolicy.provider.model", environmentVariable: "AI_PRODUCER_MODEL", allowedValues: ["deepseek-chat", "deepseek-reasoner"], default: "deepseek-chat", secret: false },
       baseUrl: { key: "provider.baseUrl", status: "supported", scope: "control-plane-local", environmentVariable: "AI_PRODUCER_BASE_URL", default: "https://api.deepseek.com", secret: false },
       maxRetries: { key: "provider.maxRetries", status: "supported-advanced-snapshot-bound-or-control-plane-local", snapshotPath: "runtimePolicy.provider.maxRetries", environmentVariable: "AI_PRODUCER_MAX_RETRIES", default: 3, minimum: 1, maximum: 5, secret: false },

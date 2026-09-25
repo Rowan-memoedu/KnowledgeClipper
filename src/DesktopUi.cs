@@ -165,7 +165,7 @@ namespace KnowledgeClipper
             var sections = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, RowCount = 1, Margin = Padding.Empty, Padding = new Padding(2), BackColor = Color.FromArgb(246, 248, 250) };
             sections.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.333F)); sections.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.333F)); sections.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.334F));
             clipButton = ActionButton("摘录", AutomationCatalogV11.AutomationIds[AutomationCatalog.ClipCapture]);
-            readButton = ActionButton("朗读", AutomationCatalogV11.AutomationIds[AutomationCatalog.ReadCapture]);
+            readButton = ActionButton("语言", AutomationCatalogV11.AutomationIds[AutomationCatalog.ReadCapture]);
             screenshotButton = ActionButton("截图", AutomationCatalogV11.AutomationIds[AutomationCatalog.ScreenshotStart]);
             contextButton = ModeButton("上下文模式", AutomationCatalogV11.AutomationIds[AutomationCatalog.ContextSet]);
             originalButton = ModeButton("原图模式", AutomationCatalogV11.AutomationIds[AutomationCatalog.OriginalImageSet]);
@@ -176,8 +176,8 @@ namespace KnowledgeClipper
             {
                 Name = AutomationCatalogV12.InlineQuestionInputAutomationId,
                 AccessibleName = AutomationCatalogV12.InlineQuestionInputAutomationId,
-                AccessibleDescription = "输入文字或问题；末尾问号提问，否则学习词句，中文译成英文",
-                PlaceholderText = "输入文字或问题，Enter 提交",
+                AccessibleDescription = "按默认路径处理文字；问号结尾提问，否则翻译。Enter 提交",
+                PlaceholderText = "问号结尾提问，否则翻译；Enter 提交",
                 Dock = DockStyle.Fill,
                 Margin = new Padding(4, 4, 4, 3),
                 BorderStyle = BorderStyle.FixedSingle,
@@ -190,7 +190,9 @@ namespace KnowledgeClipper
                 ShortcutsEnabled = true
             };
             sections.Controls.Add(contextSection, 0, 0); sections.SetColumnSpan(contextSection, 2); sections.Controls.Add(originalSection, 2, 0);
-            root.Controls.Add(titleBar, 0, 0); root.Controls.Add(sections, 0, 1); root.Controls.Add(statusButton, 0, 2); root.Controls.Add(inlineQuestionInput, 0, 3);
+            var inputRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 1, Margin = Padding.Empty };
+            inputRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); inputRow.Controls.Add(inlineQuestionInput, 0, 0);
+            root.Controls.Add(titleBar, 0, 0); root.Controls.Add(sections, 0, 1); root.Controls.Add(statusButton, 0, 2); root.Controls.Add(inputRow, 0, 3);
             dragFrame = new Panel { Name = AutomationCatalogV11.DragFrameAutomationId, AccessibleName = AutomationCatalogV11.DragFrameAutomationId, Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = new Padding(6), BackColor = Color.FromArgb(156, 170, 183), Cursor = Cursors.SizeAll };
             dragFrame.Controls.Add(root); Controls.Add(dragFrame);
             CaptureFloatingMetrics(dragFrame);
@@ -202,13 +204,21 @@ namespace KnowledgeClipper
 
             clipButton.Click += async delegate
             {
-                if (languageFlow != null) await languageFlow.StartAsync(false);
+                if (excerptFlow != null)
+                {
+                    try { if (imageFlow == null || !imageFlow.TryClipboard()) await excerptFlow.StartAsync(); }
+                    catch (Exception ex) { await PresentErrorAsync(ex.Message); }
+                }
                 else if (applicationBinding != null) await ExecuteReadToAnkiAsync(ApplicationCommandKind.ClipToAnki);
                 else await ExecuteAsync(AutomationCatalog.ClipCapture, null);
             };
             readButton.Click += async delegate
             {
-                if (languageFlow != null) await languageFlow.StartAsync(true);
+                if (languageFlow != null)
+                {
+                    try { if (imageFlow == null || !imageFlow.TryClipboard("language")) await languageFlow.StartLanguageAsync(); }
+                    catch (Exception ex) { await PresentErrorAsync(ex.Message); }
+                }
                 else if (applicationBinding != null) await ExecuteReadToAnkiAsync(ApplicationCommandKind.ReadToAnki);
                 else await ExecuteAsync(AutomationCatalog.ReadCapture, null);
             };
@@ -217,11 +227,12 @@ namespace KnowledgeClipper
             originalButton.Click += async delegate { await SetOriginalImageModeAsync(!settings.OriginalImageMode); };
             statusButton.Click += async delegate
             {
-                if (languageFlow != null) languageFlow.ReplayAndShowRecent();
+                if (languageFlow != null) languageFlow.ReplayLastLanguage();
                 else if (statusButton.Text == "查看答案") await OpenQuestionAsync();
                 else if (applicationBinding != null && readToAnkiView != null && readToAnkiView.CanReplay && statusButton.Text.Contains("重播")) await ExecuteReadToAnkiAsync(ApplicationCommandKind.ReadToAnkiReplay);
                 else if (statusButton.Text == "▶ 重播") await ExecuteAsync(AutomationCatalog.PlaybackReplay, null);
             };
+            statusButton.DoubleClick += delegate { historyFlow?.Show(); };
             inlineQuestionInput.MouseDown += delegate(object sender, MouseEventArgs e)
             {
                 if (e.Button != MouseButtons.Left || inlineInputActive) return;
@@ -244,7 +255,7 @@ namespace KnowledgeClipper
                 if (!inlineActivationPending) return;
                 BeginInvoke((MethodInvoker)delegate { BeginInlineQuestionInput(); });
             };
-            inlineQuestionInput.Leave += delegate { if (!inlineSubmitInProgress) RestoreNoActivate(); };
+            inlineQuestionInput.Leave += delegate { BeginInvoke((MethodInvoker)delegate { if (!inlineSubmitInProgress && !inlineQuestionInput.ContainsFocus) RestoreNoActivate(); }); };
             inlineQuestionInput.KeyDown += async delegate(object sender, KeyEventArgs e)
             {
                 if (e.KeyCode == Keys.Escape)
@@ -261,7 +272,8 @@ namespace KnowledgeClipper
             dragFrame.MouseDown += DragMouseDown; dragFrame.MouseMove += DragMouseMove; dragFrame.MouseUp += DragMouseUp;
             titleBar.MouseDown += DragMouseDown; titleBar.MouseMove += DragMouseMove; titleBar.MouseUp += DragMouseUp;
             titleLabel.MouseDown += DragMouseDown; titleLabel.MouseMove += DragMouseMove; titleLabel.MouseUp += DragMouseUp;
-            toolTips = new ToolTip(); toolTips.SetToolTip(minimizeButton, "最小化到托盘"); toolTips.SetToolTip(closeButton, "关闭并退出");
+            toolTips = new ToolTip(); toolTips.SetToolTip(minimizeButton, "最小化到托盘"); toolTips.SetToolTip(closeButton, "隐藏到托盘，保留浮点功能");
+            toolTips.SetToolTip(statusButton, "单击重播上一条语言音频；双击打开历史记录");
 
             var menu = new ContextMenuStrip();
             menu.Items.Add("显示悬浮窗", null, delegate { RestoreFromTray(); }).Name = "knowledge-clipper.desktop.menu.window.restore";
@@ -272,7 +284,8 @@ namespace KnowledgeClipper
             contextItem.Click += async delegate { await SetContextModeAsync(contextItem.Checked); };
             originalItem.Click += async delegate { await SetOriginalImageModeAsync(originalItem.Checked); };
             menu.Items.Add(contextItem); menu.Items.Add(originalItem); menu.Items.Add(new ToolStripSeparator());
-            menu.Items.Add("重播上一条 / 最近朗读", null, delegate { languageFlow?.ReplayAndShowRecent(); });
+            menu.Items.Add("重播上一条语言音频", null, delegate { languageFlow?.ReplayLastLanguage(); });
+            menu.Items.Add("最近图片", null, delegate { imageFlow?.ShowRecent(); });
             var stopRead = menu.Items.Add("停止朗读", null, async delegate
             {
                 if (languageFlow != null) { languageFlow.Stop(); return; }
@@ -292,12 +305,11 @@ namespace KnowledgeClipper
                 await dependencies.Application.ReadToAnkiUseCases.RefreshPlaybackControlAsync(CancellationToken.None);
                 if (!IsDisposed) stopRead.Enabled = readToAnkiView?.CanStop == true;
             };
-            menu.Items.Add("最近草稿 / 朗读", null, async delegate { if (languageFlow != null) languageFlow.ShowRecent(); else await ExecuteAsync(AutomationCatalog.TaskStatusQueryRecent, null); }).Name = AutomationCatalogV11.AutomationIds[AutomationCatalog.TaskStatusQueryRecent];
+            menu.Items.Add("历史记录", null, async delegate { if (historyFlow != null) historyFlow.Show(); else await ExecuteAsync(AutomationCatalog.TaskStatusQueryRecent, null); }).Name = AutomationCatalogV11.AutomationIds[AutomationCatalog.TaskStatusQueryRecent];
+            menu.Items.Add("最近摘录", null, delegate { excerptFlow?.ShowRecent(); }).Name = "knowledge-clipper.desktop.menu.excerpt-history";
             menu.Items.Add("设置…", null, delegate { OpenSettings(); }).Name = "knowledge-clipper.desktop.menu.settings";
-            menu.Items.Add("其他功能设置…", null, delegate { OpenSettings(true); });
             menu.Items.Add("恢复默认大小", null, delegate { RestoreDefaultSize(); }).Name = "knowledge-clipper.desktop.menu.window.restore-size";
             menu.Items.Add("打开数据目录", null, delegate { Process.Start(new ProcessStartInfo(config.WorkDirectory) { UseShellExecute = true }); });
-            menu.Items.Add("显示悬浮窗", null, delegate { RestoreFromTray(); }).Name = "knowledge-clipper.desktop.menu.show";
             menu.Items.Add(new ToolStripSeparator()); menu.Items.Add("退出", null, delegate { ExitApplication(); }).Name = "knowledge-clipper.desktop.menu.exit";
             ContextMenuStrip = menu;
             tray = new NotifyIcon { Visible = true, Text = "零碎知识剪藏", Icon = SystemIcons.Application, ContextMenuStrip = menu };
@@ -468,6 +480,8 @@ namespace KnowledgeClipper
 
         protected override void WndProc(ref Message m)
         {
+            if (m.Msg == 0x0312 && m.WParam.ToInt32() == ExcerptDestinationHotkeyId)
+            { ShowExcerptDestination(); m.Result = IntPtr.Zero; return; }
             if (m.Msg == 0x02E0) // WM_DPICHANGED: use WinForms' suggested physical bounds.
             {
                 var previous = scalingForDpi;
@@ -529,7 +543,11 @@ namespace KnowledgeClipper
 
         private static Button ActionButton(string text, string automationId)
         {
-            return new Button { Text = text, Name = automationId, AccessibleName = automationId, Dock = DockStyle.Fill, Margin = Padding.Empty, FlatStyle = FlatStyle.Flat, FlatAppearance = { BorderSize = 0, MouseOverBackColor = Color.FromArgb(237, 243, 248), MouseDownBackColor = Color.FromArgb(224, 234, 243) }, BackColor = Color.FromArgb(250, 251, 253), ForeColor = Color.FromArgb(43, 57, 70), Font = new Font("微软雅黑", 10.5F, FontStyle.Bold), TabStop = false, Cursor = Cursors.Hand };
+            var button = automationId == AutomationCatalogV11.StatusAutomationId ? new RecordHistoryButton() : new Button();
+            button.Text = text; button.Name = button.AccessibleName = automationId; button.Dock = DockStyle.Fill; button.Margin = Padding.Empty;
+            button.FlatStyle = FlatStyle.Flat; button.FlatAppearance.BorderSize = 0; button.FlatAppearance.MouseOverBackColor = Color.FromArgb(237, 243, 248); button.FlatAppearance.MouseDownBackColor = Color.FromArgb(224, 234, 243);
+            button.BackColor = Color.FromArgb(250, 251, 253); button.ForeColor = Color.FromArgb(43, 57, 70); button.Font = new Font("微软雅黑", 10.5F, FontStyle.Bold); button.TabStop = false; button.Cursor = Cursors.Hand;
+            return button;
         }
 
         private static Button ModeButton(string text, string automationId)
@@ -563,6 +581,8 @@ namespace KnowledgeClipper
 
         private async Task SetOriginalImageModeAsync(bool enabled)
         {
+            if (busy) return;
+            if (languageFlow != null) { languageFlow.SaveSettings(languageFlow.Settings with { OriginalImageMode = enabled }); return; }
             SaveAuthoritativeCaptureModes(settings.ContextModeEnabled, settings.ContextGranularity, enabled);
             ApplyModeVisuals();
             await ExecuteAsync(AutomationCatalog.OriginalImageSet, new SemanticActionArguments { enabled = enabled });
@@ -612,8 +632,10 @@ namespace KnowledgeClipper
             ((ModeFramePanel)originalSection).FrameColor = settings.OriginalImageMode ? active : inactive;
             contextButton.Text = settings.ContextModeEnabled ? "上下文 · 开" : "上下文 · 关";
             contextButton.AccessibleDescription = (settings.ContextModeEnabled ? "已启用" : "未启用") + "；下一操作生效；revision=" + workflowSettingsRevision;
-            originalButton.Text = settings.OriginalImageMode ? "原图 · Anki" : "原图模式";
-            originalButton.AccessibleDescription = settings.OriginalImageMode ? "已启用；目的端仅 Anki；不检查 RemNote 原图" : "未启用";
+            originalButton.Text = settings.OriginalImageMode ? "原图 · 开" : "原图 · 关";
+            originalButton.AccessibleDescription = settings.OriginalImageMode
+                ? "已启用；保留原图，导出对象按各模式设置"
+                : "未启用；经 OCR 转为文字，再按默认路径处理";
             if (contextItem != null) contextItem.Checked = settings.ContextModeEnabled;
             if (originalItem != null) originalItem.Checked = settings.OriginalImageMode;
         }
@@ -845,6 +867,7 @@ namespace KnowledgeClipper
         private async Task ExecuteScreenshotAsync(string action)
         {
             if (busy) return;
+            using var suppressClipboardDot = clipboardImageMonitor?.Suppress();
             busy = true; SetStatus("等待截图…", Color.FromArgb(85, 95, 105), Color.White); await Task.Yield();
             Exception failure = null;
             DesktopSemanticState state = null;
@@ -852,7 +875,10 @@ namespace KnowledgeClipper
             {
                 if (screenshotSession != null) screenshotSession.Hide();
                 Hide(); await Task.Delay(120);
-                state = controller.Execute(Action(action, null));
+                var completion = new TaskCompletionSource<DesktopSemanticState>(TaskCreationOptions.RunContinuationsAsynchronously);
+                var captureThread = new Thread(() => { try { completion.SetResult(controller.Execute(Action(action, null))); } catch (Exception ex) { completion.SetException(ex); } }) { IsBackground = true };
+                captureThread.SetApartmentState(ApartmentState.STA); captureThread.Start();
+                state = await completion.Task;
                 Show(); TopMost = true;
                 if (state.screenshotSession.active)
                 {
@@ -915,7 +941,7 @@ namespace KnowledgeClipper
 
         private int SetStatus(string text, Color foreground, Color background)
         {
-            statusVersion++; statusButton.Text = text ?? ""; statusButton.ForeColor = foreground; statusButton.BackColor = background; statusButton.Cursor = (text ?? "").Contains("重播") ? Cursors.Hand : Cursors.Default; return statusVersion;
+            statusVersion++; statusButton.Text = text ?? ""; statusButton.ForeColor = foreground; statusButton.BackColor = background; statusButton.Cursor = languageFlow != null || (text ?? "").Contains("重播") ? Cursors.Hand : Cursors.Default; return statusVersion;
         }
 
         private async Task TemporaryStatusAsync(string text, Color foreground, Color background, int milliseconds, bool replayAfter)
@@ -931,9 +957,9 @@ namespace KnowledgeClipper
             return new SemanticActionEnvelope { schemaVersion = AutomationCatalogV13.IsKnownAction(action) ? AutomationCatalogV13.ActionSchemaVersion : AutomationCatalogV11.ActionSchemaVersion, requestId = "ui-" + Guid.NewGuid().ToString("N"), action = action, arguments = arguments };
         }
 
-        private void OpenSettings(bool legacy = false)
+        private void OpenSettings()
         {
-            if (languageFlow != null && !legacy) { OpenLanguageSettings(); return; }
+            if (languageFlow != null) { OpenLanguageSettings(); return; }
             if (settingsForm != null && !settingsForm.IsDisposed)
             {
                 settingsForm.Show(); settingsForm.BringToFront(); settingsForm.Activate(); return;
@@ -1070,7 +1096,21 @@ namespace KnowledgeClipper
                 try
                 {
                     RestoreNoActivate();
-                    if (await languageFlow.StartTextAsync(original)) inlineQuestionInput.Clear();
+                    var route = KnowledgeClipper.Workflow.MaterialRouting.Resolve(KnowledgeClipper.Workflow.MaterialKind.TypedText, languageFlow.Settings, original);
+                    if (route == null)
+                    {
+                        using var choice = new MaterialRouteForm(KnowledgeClipper.Workflow.MaterialRouting.Choices(KnowledgeClipper.Workflow.MaterialKind.TypedText));
+                        if (choice.ShowDialog(this) != DialogResult.OK) return;
+                        route = choice.SelectedRoute;
+                        if (choice.Remember) languageFlow.SaveSettings(languageFlow.Settings with { TypedDefaultRoute = route });
+                    }
+                    var accepted = route switch {
+                        "excerpt" => await excerptFlow.StartTextAsync(original),
+                        "translation" => await languageFlow.StartTranslationTextAsync(original),
+                        "question" => await languageFlow.StartQuestionTextAsync(original),
+                        _ => await languageFlow.StartTextAsync(original)
+                    };
+                    if (accepted) inlineQuestionInput.Clear();
                 }
                 finally { inlineQuestionInput.Enabled = true; inlineSubmitInProgress = false; }
                 return;
@@ -1233,7 +1273,7 @@ namespace KnowledgeClipper
         private Point dragStart, formStart; private bool dragging;
         private void DragMouseDown(object sender, MouseEventArgs e)
         {
-            if (e.Button != MouseButtons.Left || (ReferenceEquals(sender, statusButton) && (statusButton.Text.Contains("重播") || statusButton.Text == "查看答案"))) return;
+            if (e.Button != MouseButtons.Left || (ReferenceEquals(sender, statusButton) && (historyFlow != null || statusButton.Text.Contains("重播") || statusButton.Text == "查看答案"))) return;
             var resizeHit = ResizeHitTest(PointToClient(Cursor.Position));
             if (resizeHit != HTCLIENT)
             {
@@ -1330,10 +1370,10 @@ namespace KnowledgeClipper
         private bool ownerClosing;
         internal ScreenshotSessionForm(Func<string, Task> execute)
         {
-            Text = "多次截图"; FormBorderStyle = FormBorderStyle.FixedToolWindow; TopMost = true; ShowInTaskbar = false; ClientSize = new Size(552, 82); Font = new Font("微软雅黑", 9F);
+            Text = "多图模式"; FormBorderStyle = FormBorderStyle.FixedToolWindow; TopMost = true; ShowInTaskbar = false; ClientSize = new Size(552, 82); Font = new Font("微软雅黑", 9F);
             counts = new Label { Dock = DockStyle.Top, Height = 26, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(8, 0, 0, 0) };
             var row = new FlowLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(6), WrapContents = false };
-            question = Make("题图", AutomationCatalog.ScreenshotGroupQuestion); answer = Make("答案图", AutomationCatalog.ScreenshotGroupAnswer); next = Make("继续", AutomationCatalog.ScreenshotContinue); finish = Make("完成", AutomationCatalog.ScreenshotFinish); undo = Make("撤销上一张", AutomationCatalog.ScreenshotUndoLast, 92); cancel = Make("退出截图", AutomationCatalog.ScreenshotCancel, 84);
+            question = Make("正面", AutomationCatalog.ScreenshotGroupQuestion); answer = Make("反面", AutomationCatalog.ScreenshotGroupAnswer); next = Make("继续", AutomationCatalog.ScreenshotContinue); finish = Make("完成", AutomationCatalog.ScreenshotFinish); undo = Make("撤销上一张", AutomationCatalog.ScreenshotUndoLast, 92); cancel = Make("退出多图", AutomationCatalog.ScreenshotCancel, 84);
             foreach (var button in new[] { question, answer, next, finish, undo, cancel }) { var action = (string)button.Tag; button.Click += async delegate { await execute(action); }; row.Controls.Add(button); }
             Controls.Add(row); Controls.Add(counts);
             FormClosing += async delegate(object sender, FormClosingEventArgs e)
@@ -1346,7 +1386,7 @@ namespace KnowledgeClipper
         private static Button Make(string label, string action, int width = 78) { var id = AutomationCatalogV11.AutomationIds[action]; return new Button { Text = label, Tag = action, Name = id, AccessibleName = id, Width = width, Height = 30, FlatStyle = FlatStyle.Flat }; }
         internal void UpdateState(DesktopSemanticState state)
         {
-            counts.Text = "题图 " + state.screenshotSession.questionImageCount + "　答案图 " + state.screenshotSession.answerImageCount;
+            counts.Text = "正面 " + state.screenshotSession.questionImageCount + "　反面 " + state.screenshotSession.answerImageCount;
             question.BackColor = state.screenshotSession.activeGroup == "question" ? Color.FromArgb(220, 235, 255) : SystemColors.Control;
             answer.BackColor = state.screenshotSession.activeGroup == "answer" ? Color.FromArgb(220, 235, 255) : SystemColors.Control;
             next.Enabled = state.screenshotSession.canContinue; finish.Enabled = state.screenshotSession.canFinish; undo.Enabled = state.screenshotSession.canUndo; cancel.Enabled = state.screenshotSession.canCancel;

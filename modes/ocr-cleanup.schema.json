@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OCR 清洗内容结果",
+  "description": "专用内容字段；不是 excerpt-card 的单卡结构。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "cleaned_text",
+    "notes"
+  ],
+  "properties": {
+    "cleaned_text": {
+      "type": "string",
+      "description": "完整清洗文字；只有输入为空时允许为空。"
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_quote",
+          "reason"
+        ],
+        "properties": {
+          "source_quote": {
+            "type": "string",
+            "minLength": 1,
+            "description": "必须逐字连续来自本次 ocr_text；来源匹配由调用方检查。"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      }
+    }
+  }
+}

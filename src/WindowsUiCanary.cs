@@ -648,7 +648,7 @@ namespace KnowledgeClipper
                 var bottomEdge = Find<Panel>(contextSection, "knowledge-clipper.desktop.frame-edge.bottom");
                 var visibleContextBottom = contextSection.Parent.DisplayRectangle.Bottom - contextSection.Top;
                 Assert(contextSection.Margin.All >= 1 && originalSection.Margin.All >= 1 && contextGrid != null && originalGrid != null && bottomEdge != null && contextGrid.Left > 0 && contextGrid.Top > 0 && contextGrid.Right < contextSection.ClientSize.Width && contextGrid.Bottom < visibleContextBottom && bottomEdge.Bottom <= visibleContextBottom && originalGrid.Left > 0 && originalGrid.Top > 0 && originalGrid.Right < originalSection.ClientSize.Width && originalGrid.Bottom < originalSection.ClientSize.Height, "context and original-image partitions render closed four-sided frames inside the visible layout bounds");
-                Assert((contextMode.Text == "上下文 · 开" || contextMode.Text == "上下文 · 关") && (originalMode.Text == "原图模式" || originalMode.Text == "原图 · Anki"), "mode controls show the authoritative context on/off state and original mode visibly identifies its Anki-only destination when active");
+                Assert((contextMode.Text == "上下文 · 开" || contextMode.Text == "上下文 · 关") && (originalMode.Text == "原图 · 关" || originalMode.Text == "原图 · 开"), "mode controls show the authoritative context and original-image on/off states");
                 Assert(contextMode.Top < clip.Top && contextMode.Width > clip.Width && originalMode.Top < screenshot.Top, "context mode sits above clip and read while original-image mode sits above screenshot");
                 Assert(clip.Top == read.Top && read.Top == screenshot.Top && status.PointToScreen(Point.Empty).Y > clip.PointToScreen(Point.Empty).Y, "clip read screenshot remain one horizontal row above the independent status strip");
                 Assert(inlineInput.PlaceholderText == "输入问题，按 Enter 提问" && inlineInput.AccessibleDescription == "输入问题，按 Enter 提问" && !inlineInput.Multiline, "inline question is a real single-line TextBox with the locked hint");
@@ -805,7 +805,7 @@ namespace KnowledgeClipper
                 Assert(((ModeFramePanel)contextSection).FrameColor != inactiveFrame && ((ModeFramePanel)contextSection).FrameColor.B > ((ModeFramePanel)contextSection).FrameColor.R && contextMode.Text == "上下文 · 开" && contextMode.AccessibleDescription.StartsWith("已启用；下一操作生效；revision=", StringComparison.Ordinal), "enabled context partition uses a shallow-blue frame and exposes its workflow revision");
                 WaitUntil(delegate { return status.Text == ""; }, 1500, "context toggle status settles"); Pump(80);
                 originalMode.PerformClick(); WaitUntil(delegate { return controller.Snapshot().originalImageMode; }, 1000, "direct original-image toggle");
-                Assert(((ModeFramePanel)originalSection).FrameColor.B > ((ModeFramePanel)originalSection).FrameColor.R && originalMode.Text == "原图 · Anki" && originalMode.AccessibleDescription.Contains("目的端仅 Anki") && originalMode.AccessibleDescription.Contains("不检查 RemNote 原图"), "enabled original-image partition uses a shallow-blue frame and visibly enforces its Anki-only destination");
+                Assert(((ModeFramePanel)originalSection).FrameColor.B > ((ModeFramePanel)originalSection).FrameColor.R && originalMode.Text == "原图 · 开" && originalMode.AccessibleDescription.Contains("导出对象按各模式设置"), "enabled original-image partition shows its state without an obsolete fixed destination");
                 var workflowSettings = new DesktopWorkflowSettingsService(config.WorkDirectory, AppDomain.CurrentDomain.BaseDirectory).LoadOrCreate(UserSettings.Defaults());
                 var persistedCapture = workflowSettings.Profiles[workflowSettings.ActiveProfileId].Capture;
                 Assert(persistedCapture.ContextEnabled == true && persistedCapture.ImageHandling == "original", "direct mode toggles persist in the active authoritative workflow profile");
@@ -906,6 +906,20 @@ namespace KnowledgeClipper
         }
 
         private static void SettingsAndDialogAutomationCanary(string root)
+        {
+            var previousTarget = SecretConfig.DeepSeekWriteTarget;
+            var previousKey = Environment.GetEnvironmentVariable("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY");
+            try {
+                SecretConfig.DeepSeekWriteTarget = EnvironmentVariableTarget.Process;
+                Environment.SetEnvironmentVariable("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY", "canary-initial-local-only");
+                SettingsAndDialogAutomationCanaryIsolated(root);
+            } finally {
+                SecretConfig.DeepSeekWriteTarget = previousTarget;
+                Environment.SetEnvironmentVariable("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY", previousKey);
+            }
+        }
+
+        private static void SettingsAndDialogAutomationCanaryIsolated(string root)
         {
             AuthorityBindingProjectionCanary(root);
             var config = Config(root); var settings = UserSettings.Defaults(); settings.LanguageOverride = "en-US"; settings.ContextModeEnabled = true; settings.OriginalImageMode = true;
@@ -1050,12 +1064,12 @@ namespace KnowledgeClipper
                 var recoveredDeck = freezeStore.Load();
                 Assert(!taskAConfig.Contains("Desktop-V14") && taskBConfig.Contains("Desktop-V14") && recoveredDeck.AnkiDeckRoutes["canary"] == "零碎知识剪藏::Canary::Desktop-V14", "task A keeps the old deck while task B freezes the next-task custom deck and corrupt-primary recovery restores the verified backup");
                 var persistedCredentials = DesktopCredentialSettings.Load(config.WorkDirectory);
-                Assert(persistedCredentials.DeepSeekApiKey == deepSeekValue && persistedCredentials.MineruApiToken == mineruValue && persistedCredentials.StorageStatus == "protected-current-user", "DPAPI CurrentUser storage decrypts the exact credentials for the same Windows user");
+                Assert(SecretConfig.Get("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY") == deepSeekValue && persistedCredentials.MineruApiToken == mineruValue && persistedCredentials.StorageStatus == "protected-current-user", "Dedicated environment resolves DeepSeek and DPAPI CurrentUser decrypts MinerU");
                 var credentialPath = DesktopCredentialSettings.PathFor(config.WorkDirectory); var credentialBackupPath = credentialPath + ".bak";
                 var protectedDiskText = File.ReadAllText(credentialPath) + File.ReadAllText(credentialBackupPath);
                 Assert(protectedDiskText.Contains("knowledge-clipper-desktop-credentials.dpapi.v1") && protectedDiskText.Contains("CurrentUser") && !protectedDiskText.Contains(deepSeekValue) && !protectedDiskText.Contains(mineruValue) && !protectedDiskText.Contains("DeepSeekApiKey") && !protectedDiskText.Contains("MineruApiToken"), "credential primary and backup contain only DPAPI envelopes and zero plaintext properties or values");
                 var start = new System.Diagnostics.ProcessStartInfo(); persistedCredentials.ApplyTo(start);
-                Assert(start.Environment.ContainsKey("AI_PRODUCER_API_KEY") && start.Environment.ContainsKey("MINERU_API_TOKEN"), "local credentials map only to worker-owned environment variables at process start");
+                Assert(start.Environment.ContainsKey("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY") && start.Environment.ContainsKey("MINERU_API_TOKEN"), "local credentials map only to worker-owned environment variables at process start");
                 var settingsTaskRoot = Path.Combine(root, "settings-secret-boundary-jobs"); var settingsStaged = Path.Combine(root, "settings-secret-boundary.txt"); var settingsBytes = new UTF8Encoding(false).GetBytes("settings boundary capture"); File.WriteAllBytes(settingsStaged, settingsBytes);
                 var settingsArtifact = WindowsDesktopCaptureProvider.Artifact("capture.text.settings-boundary", "inputs/capture/settings-boundary.txt", settingsBytes, "text/plain", "utf-8", settingsStaged);
                 var settingsBundle = new CaptureBundleV1 { schemaVersion = AutomationCatalog.CaptureBundleSchemaVersion, captureId = "capture-settings-boundary", createdAt = "2026-08-28T06:00:00Z", intent = "clip", source = "clipboard", modeSnapshot = new CaptureModeSnapshot { workflow = "card", contextEnabled = false, contextGranularity = "sentence", contextApplied = false, imageHandling = "ocr" }, artifacts = new List<CaptureArtifact> { settingsArtifact }, selectedTextArtifactRef = settingsArtifact.artifactRef, questionImages = new List<string>(), answerImages = new List<string>(), questionTurns = new List<QuestionTurnReference>() };

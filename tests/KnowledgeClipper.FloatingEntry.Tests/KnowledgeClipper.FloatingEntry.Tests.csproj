@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <DesktopAssemblyPath Condition="'$(DesktopAssemblyPath)' == ''">D:\Artifacts\KnowledgeClipper\floating-quick\RemNoteQuickClipper.Desktop\Release\net8.0-windows\win-x64\KnowledgeClipper.dll</DesktopAssemblyPath>
+    <DesktopAssemblyDirectory>$([System.IO.Path]::GetDirectoryName('$(DesktopAssemblyPath)'))</DesktopAssemblyDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="KnowledgeClipper"><HintPath>$(DesktopAssemblyPath)</HintPath></Reference>
+    <Reference Include="KnowledgeClipper.Workflow"><HintPath>$(DesktopAssemblyDirectory)\KnowledgeClipper.Workflow.dll</HintPath></Reference>
+    <Content Include="..\..\modes\**\*" Link="modes\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
