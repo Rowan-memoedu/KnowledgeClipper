@@ -105,7 +105,7 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
     // Persisted audio is reusable only for the same purpose, exact text, voice and synthesis settings.
     public static string AudioCacheKey(string text, SpeechPurpose purpose, LanguageSettings settings) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
-        { text, purpose, voice = SelectVoice(text, settings), spokenText = SpokenText(text, settings),
+        { provider = "mimo-v2.5-tts", text, purpose, voice = SelectVoice(text, settings), spokenText = SpokenText(text, settings),
             settings.RatePercent, settings.VolumePercent, settings.PitchHz })))).ToLowerInvariant();
 
     public Task SpeakTextAsync(ClipDraft draft, string text, SpeechPurpose purpose, bool replay, Action changed, Action<int>? playerStarted = null) =>

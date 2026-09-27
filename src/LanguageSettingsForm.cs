@@ -118,7 +118,7 @@ internal sealed class LanguageSettingsForm : Form
         string VoiceId(ComboBox combo) => combo.SelectedItem is SpeechVoiceOption option && combo.Text == option.ToString() ? option.Id : combo.Text.Trim();
         void FillVoices(ComboBox combo, IEnumerable<SpeechVoiceOption> options)
         {
-            var selected = VoiceId(combo);
+            var selected = SpeechVoiceCatalog.NormalizeVoiceId(VoiceId(combo));
             combo.Items.Clear(); combo.Items.AddRange(options.Cast<object>().ToArray());
             var found = combo.Items.Cast<SpeechVoiceOption>().FirstOrDefault(v => v.Id == selected);
             if (found != null) combo.SelectedItem = found;
@@ -137,7 +137,7 @@ internal sealed class LanguageSettingsForm : Form
         NumericUpDown Number(int n, int min, int max, string id) => new() { Minimum = min, Maximum = max, Value = n, Name = "knowledge-clipper.language." + id };
         var rate = Number(value.RatePercent, -50, 100, "rate"); Add("速度变化 %", rate);
         var volume = Number(value.VolumePercent, -100, 100, "volume"); Add("音量变化 %", volume);
-        var pitch = Number(value.PitchHz, -50, 50, "pitch"); Add("音调变化 Hz", pitch);
+        var pitch = Number(0, 0, 0, "pitch"); pitch.Enabled = false; Add("MiMo 音高固定", pitch);
         var speechAutoPlay = new CheckBox { Text = "合成后自动播放", AutoSize = true, Checked = value.SpeechAutoPlay, Name = "knowledge-clipper.language.speech-auto-play" }; Add("自动播放", speechAutoPlay);
         Add("", new Label { AutoSize = true, ForeColor = Color.DimGray, Text = "关闭后仍保存音频，可在预览或历史记录中点击播放。试听和句子播放按钮立即播放。" });
         var previewChinese = new Button { Text = "试听中文 / 指定音色", AutoSize = true, Name = "knowledge-clipper.language.preview-voice" };

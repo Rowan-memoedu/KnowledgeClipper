@@ -13,8 +13,19 @@ public sealed record SpeechVoiceOption(string Id, string Locale, string Gender)
 
 public static class SpeechVoiceCatalog
 {
+    public static string NormalizeVoiceId(string voice)
+    {
+        if (voice.StartsWith("mimo-", StringComparison.Ordinal)) return voice[5..];
+        var english = voice.StartsWith("en-", StringComparison.OrdinalIgnoreCase);
+        var chinese = voice.StartsWith("zh-", StringComparison.OrdinalIgnoreCase);
+        if (!english && !chinese) return voice;
+        var male = new[] { "Guy", "Ryan", "Andrew", "Brian", "Yunxi", "Yunjian" }
+            .Any(name => voice.Contains(name, StringComparison.OrdinalIgnoreCase));
+        return english ? (male ? "Dean" : "Mia") : (male ? "白桦" : "茉莉");
+    }
+
     public sealed record CachedCatalog(DateTimeOffset ObservedAt, SpeechVoiceOption[] Voices);
-    private static string CachePath(string pythonPath) => Path.Combine(@"D:\Caches\KnowledgeClipper\voices",
+    private static string CachePath(string pythonPath) => Path.Combine(@"D:\Caches\KnowledgeClipper\voices\mimo-v2.5-tts",
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Path.GetFullPath(pythonPath).ToUpperInvariant()))).ToLowerInvariant() + ".json");
 
     public static CachedCatalog? ReadCached(string pythonPath)
@@ -39,7 +50,7 @@ public static class SpeechVoiceCatalog
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 
-    // Uses the same installed Python/edge_tts as streaming. No user text, settings writes or playback.
+    // Uses the shared MiMo catalog; the configured Python still serves OCR and streaming.
     public static async Task<IReadOnlyList<SpeechVoiceOption>> DiscoverAsync(string pythonPath, CancellationToken cancellationToken = default)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -50,7 +61,7 @@ public static class SpeechVoiceCatalog
             RedirectStandardError = true, StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8
         };
         info.ArgumentList.Add("-c");
-        info.ArgumentList.Add("import asyncio,json,edge_tts,sys\ntry: print(json.dumps(asyncio.run(edge_tts.list_voices())))\nexcept Exception as e:\n print(json.dumps({'errorType':type(e).__name__})); sys.exit(1)");
+        info.ArgumentList.Add("import json,sys\nsys.path.insert(0,r'D:\\Projects\\MimoTTS\\src')\nfrom mimo_tts.client import voices\nprint(json.dumps([{'ShortName':v['id'],'Locale':'en-US' if v['language']=='en' else 'zh-CN','Gender':v['gender']} for v in voices()]))");
         using var process = Process.Start(info) ?? throw new InvalidOperationException("无法启动音色目录查询。");
         using var cancel = timeout.Token.Register(() =>
         {
@@ -75,7 +86,7 @@ public static class SpeechVoiceCatalog
             var voices = document.RootElement.EnumerateArray().Select(item => new SpeechVoiceOption(
                 item.GetProperty("ShortName").GetString()!, item.GetProperty("Locale").GetString()!,
                 item.GetProperty("Gender").GetString()!)).DistinctBy(v => v.Id).OrderBy(v => v.Id).ToArray();
-            if (voices.Length == 0) throw new InvalidOperationException("Edge TTS 未返回可用音色。");
+            if (voices.Length == 0) throw new InvalidOperationException("MiMo 未返回可用音色。");
             SaveCache(pythonPath, voices);
             return voices;
         }
