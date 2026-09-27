@@ -1,5 +1,39 @@
 using System.Security.Cryptography;
+using System.Text.Json;
 using KnowledgeClipper.Workflow;
+
+if (args.Length >= 4 && args[0] == "--verify-existing")
+{
+    var recoveryStore = new DraftStore(Path.GetFullPath(args[1]));
+    var recoveryEvidence = Path.GetFullPath(args[2]);
+    Directory.CreateDirectory(recoveryEvidence);
+    using var guard = new ReadOnlyAnkiRecovery { InnerHandler = new HttpClientHandler() };
+    using var recoveryHttp = new HttpClient(guard);
+    var receipts = new List<object>();
+    foreach (var id in args.Skip(3).Distinct())
+    {
+        var original = recoveryStore.Find(id) ?? throw new InvalidDataException("Recovery draft missing.");
+        if (original.ImportState != ImportState.Unknown || original.NoteId == null || original.ConfirmedNote == null ||
+            original.ImportError != "Anki 实际卡面与正式语言模式的行序或字段内容不同。")
+            throw new InvalidDataException("Recovery scope does not match the rendered-language failure.");
+        var noteId = original.NoteId;
+        var frozen = JsonSerializer.Serialize(original.ConfirmedNote, WorkflowJson.Options);
+        var material = original.Material;
+        File.WriteAllBytes(Path.Combine(recoveryEvidence, id + ".before.json"), File.ReadAllBytes(recoveryStore.Identity(id)));
+        var importer = new AnkiConnection(recoveryHttp, original.Settings.AnkiEndpoint);
+        await importer.ImportAsync(original, recoveryStore);
+        var recovered = recoveryStore.Find(id)!;
+        await importer.VerifyAsync(recovered);
+        if (recovered.ImportState != ImportState.Verified || recovered.NoteId != noteId || recovered.Material != material ||
+            JsonSerializer.Serialize(recovered.ConfirmedNote, WorkflowJson.Options) != frozen)
+            throw new InvalidDataException("Recovery changed the frozen identity/content.");
+        receipts.Add(new { id, recovered.NoteId, recovered.CardIds, recovered.ImportState });
+        Console.WriteLine("PASS existing note recovered without adding or editing: " + id);
+    }
+    WorkflowJson.Save(Path.Combine(recoveryEvidence, "receipt.json"), new { passed = true, receipts,
+        actions = guard.Actions, scope = "Original Unknown drafts reconciled using production importer; Anki writes forbidden by transport guard." });
+    return;
+}
 
 // Explicitly requested one-record recovery; does not discover or retry old failures.
 if (args.Length != 4) throw new ArgumentException("RecoverImport <dataRoot> <childId> <repository> <evidenceDirectory>");
@@ -46,4 +80,18 @@ sealed class Offline : HttpMessageHandler
 {
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) =>
         throw new HttpRequestException("Controlled transport refusal before any Anki request.");
+}
+
+sealed class ReadOnlyAnkiRecovery : DelegatingHandler
+{
+    internal List<string> Actions { get; } = [];
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+    {
+        using var json = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct));
+        var action = json.RootElement.GetProperty("action").GetString()!;
+        if (action is not ("findNotes" or "notesInfo" or "cardsInfo" or "areSuspended" or "retrieveMediaFile"))
+            throw new InvalidDataException("Recovery refuses Anki mutation: " + action);
+        Actions.Add(action);
+        return await base.SendAsync(request, ct);
+    }
 }

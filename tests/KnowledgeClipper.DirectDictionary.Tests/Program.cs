@@ -88,6 +88,47 @@ Check(ankiHandler.Models[note.Model].GetProperty("inOrderFields").EnumerateArray
     ankiHandler.Models[note.Model].GetProperty("cardTemplates").EnumerateArray().All(t => t.GetProperty("Back").GetString()!.EndsWith("<details class='dictionary'><summary>划词词典</summary><div>{{DictionaryDetails}}</div></details>")) &&
     ankiHandler.Models[frozen.Model].GetProperty("inOrderFields").EnumerateArray().All(f => f.GetString() != "DictionaryDetails"),
     "Anki creates a separate dictionary note type while old frozen type stays intact");
+foreach (var isEnglish in new[] { true, false })
+foreach (var ordinal in new[] { 0, 1 })
+{
+    var verifyNote = note with { Fields = new(note.Fields), Ordinals = [ordinal], CardDecks = null };
+    verifyNote.Fields["EnglishMode"] = isEnglish ? "1" : "";
+    verifyNote.Fields["Meaning"] = isEnglish ? "" : "脱下";
+    verifyNote.Fields["ReadingEnabled"] = ordinal == 0 ? "1" : "";
+    verifyNote.Fields["WritingEnabled"] = ordinal == 1 ? "1" : "";
+    ankiHandler.ReadbackNote = verifyNote;
+    ankiHandler.Ordinal = ordinal;
+    var verifiedDraft = new ClipDraft { Original = material, Material = material, Settings = draft.Settings,
+        Configuration = draft.Configuration, ConfirmedNote = verifyNote, NoteId = 42 };
+    await connection.VerifyAsync(verifiedDraft);
+    Check(verifiedDraft.CardIds.SequenceEqual(new long[] { 43 }),
+        $"rendered {(isEnglish ? "English" : "Chinese")} template {ordinal} verifies with collapsed dictionary and speech controls");
+    foreach (var mutation in new[] { "label", "dictionary", "translation" })
+    {
+        ankiHandler.Mutation = mutation;
+        try { await connection.VerifyAsync(verifiedDraft); throw new Exception("Incorrect rendered content accepted"); }
+        catch (InvalidDataException) { Check(true, $"template {ordinal} still rejects altered {mutation}"); }
+    }
+    ankiHandler.Mutation = null;
+}
+if (args.Contains("--live-import"))
+{
+    var liveStore = new DraftStore(@"D:\Caches\KnowledgeClipper\anki-dictionary-live-20260927");
+    draft.ConfirmedNote = note with { Deck = "KnowledgeClipper Canary::Anki Dictionary 20260927", CardDecks = null };
+    draft.ImportState = ImportState.Ready;
+    liveStore.Save(draft);
+    using var realHttp = new HttpClient();
+    var realAnki = new AnkiConnection(realHttp, "http://127.0.0.1:8765");
+    await realAnki.ImportAsync(draft, liveStore);
+    await realAnki.VerifyAsync(draft);
+    var originalNoteId = draft.NoteId;
+    await realAnki.ImportAsync(liveStore.Find(draft.Id)!, liveStore);
+    var matching = await realAnki.CallAsync("findNotes", new { query = "tag:kc_" + draft.Id });
+    Check(draft.ImportState == ImportState.Verified && draft.CardIds.Length == 1 && matching.GetArrayLength() == 1 &&
+        matching[0].GetInt64() == originalNoteId, "LIVE fresh folded-dictionary note imports, verifies and retries without duplication");
+    WorkflowJson.Save(@"D:\Artifacts\KnowledgeClipper\anki-dictionary-recovery-20260927\validation\independent-live.json",
+        new { passed = true, draft.Id, draft.NoteId, draft.CardIds, draft.ImportState, deck = draft.ConfirmedNote.Deck });
+}
 Console.WriteLine($"{checks} direct dictionary checks passed");
 
 sealed class FixtureHandler : HttpMessageHandler
@@ -114,6 +155,27 @@ sealed class FixtureHandler : HttpMessageHandler
 sealed class AnkiFixtureHandler : HttpMessageHandler
 {
     internal Dictionary<string, JsonElement> Models = [];
+    internal AnkiNoteDraft? ReadbackNote;
+    internal int Ordinal;
+    internal string? Mutation;
+    private string Render(string side)
+    {
+        var note = ReadbackNote!;
+        var template = Models[note.Model].GetProperty("cardTemplates")[Ordinal].GetProperty(side).GetString()!;
+        var fields = new Dictionary<string, string>(note.Fields);
+        if (side == "Back") fields["FrontSide"] = Render("Front");
+        var condition = new System.Text.RegularExpressions.Regex(@"\{\{([#^])(\w+)\}\}(.*?)\{\{/\2\}\}", System.Text.RegularExpressions.RegexOptions.Singleline);
+        while (condition.IsMatch(template)) template = condition.Replace(template, match =>
+            (fields.GetValueOrDefault(match.Groups[2].Value, "").Length > 0) == (match.Groups[1].Value == "#") ? match.Groups[3].Value : "");
+        template = System.Text.RegularExpressions.Regex.Replace(template, @"\{\{(\w+)\}\}", match => fields.GetValueOrDefault(match.Groups[1].Value, ""));
+        if (side == "Back")
+        {
+            if (Mutation == "label") template = template.Replace("<summary>划词词典</summary>", "<summary>错误标题</summary>");
+            if (Mutation == "dictionary") template = template.Replace(note.Fields["DictionaryDetails"], "错误词典正文");
+            if (Mutation == "translation") template += "<div>额外错误译文</div>";
+        }
+        return "<style>.card{color:black}</style>" + template + "<!-- sftts-controls:start --><div>speech UI</div><!-- sftts-controls:end -->";
+    }
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
         using var json = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct));
@@ -128,6 +190,11 @@ sealed class AnkiFixtureHandler : HttpMessageHandler
                 .EnumerateArray().ToDictionary(t => t.GetProperty("Name").GetString()!, t => t),
             "deckNames" => new[] { "零碎知识剪藏::语言学习" },
             "createDeck" => 1,
+            "notesInfo" => new[] { new { noteId = 42, modelName = ReadbackNote!.Model,
+                fields = ReadbackNote.Fields.ToDictionary(p => p.Key, p => new { value = p.Value }), tags = ReadbackNote.Tags, cards = new[] { 43 } } },
+            "cardsInfo" => new[] { new { cardId = 43, note = 42, ord = Ordinal, deckName = ReadbackNote!.Deck,
+                queue = 0, question = Render("Front"), answer = Render("Back") } },
+            "areSuspended" => new[] { false },
             _ => throw new Exception("Unexpected Anki request: " + action)
         };
         return new HttpResponseMessage(HttpStatusCode.OK) { Content = JsonContent.Create(new { result, error = (string?)null }) };

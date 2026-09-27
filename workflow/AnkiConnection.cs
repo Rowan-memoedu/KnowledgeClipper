@@ -486,6 +486,10 @@ public sealed class AnkiConnection(HttpClient http, string endpoint) : ICardImpo
     {
         html = Regex.Replace(html, SpeechControls, "", RegexOptions.Singleline);
         html = Regex.Replace(html, @"<(style|script)\b[^>]*>.*?</\1>", "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        // The managed disclosure label is UI chrome, not an extra learning field.
+        // Match only the exact dictionary wrapper/label; its full body remains checked.
+        html = Regex.Replace(html, "(<details\\b[^>]*\\bclass=['\"]dictionary['\"][^>]*>)\\s*<summary>划词词典</summary>",
+            "$1", RegexOptions.IgnoreCase);
         html = Regex.Replace(html, @"<br\s*/?>|</div\s*>", "\n", RegexOptions.IgnoreCase);
         return NormalizeDisplay(Plain(html));
     }

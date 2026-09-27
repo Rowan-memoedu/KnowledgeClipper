@@ -1,5 +1,11 @@
 # 零碎知识剪藏
 
+## Anki 折叠词典卡面核验修复（2026-09-27）
+
+折叠词典的固定标题曾被错误计入学习字段，导致已写入 Anki 的语言卡误报卡面不一致并停在 Unknown。核验现仅排除精确匹配的词典折叠标题，继续逐字核对词典正文、学习字段、卡片身份、牌组与可复习状态。四种语言卡面及错误内容拒绝共 31 项回归通过；独立公开卡片真实导入与重复确认通过。11 张原失败卡片经只读 Anki 请求恢复为 Verified，没有新增、编辑或移动原笔记。
+
+当前运行程序和桌面入口已切换至 [anki-dictionary-recovery-20260927/release](D:/Artifacts/KnowledgeClipper/anki-dictionary-recovery-20260927/release/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，个人设置文件哈希未变。构建零警告、零错误；[恢复回执](D:/Artifacts/KnowledgeClipper/anki-dictionary-recovery-20260927/validation/receipt.json)及[独立导入验收](D:/Artifacts/KnowledgeClipper/anki-dictionary-recovery-20260927/validation/independent-live.json)保留在本机。下文为按日期保留的历史验收，“当前”均指相应日期当时的运行版本。
+
 ## 当前源码与验证（2026-09-25）
 
 无上下文语言卡先从 Tatoeba 取得包含原样目标的真实整句；查不到时尝试 Wiktionary 的完整例句，仍无结果则保留草稿并要求补充上下文。模型处理已选定例句的学习字段，不再新造英文主例句。有上下文时沿用原句。词典栏保留 Wiktionary 返回的全部词性、释义、例句及可取得的词源，不再把 MyMemory 的机器互译当作词义。新增卡片的词典栏可折叠；已确认卡片保持冻结。
