@@ -126,7 +126,7 @@ internal sealed class LanguageSettingsForm : Form
         }
         void RefreshVoiceChoices()
         {
-            FillVoices(voice, availableVoices.Where(v => !autoVoice.Checked || v.Locale.StartsWith("zh-", StringComparison.OrdinalIgnoreCase)));
+            FillVoices(voice, availableVoices.Where(v => !autoVoice.Checked || v.Id == "Mia" || v.Locale.StartsWith("zh-", StringComparison.OrdinalIgnoreCase)));
             FillVoices(englishVoice, availableVoices.Where(v => v.Locale.StartsWith("en-", StringComparison.OrdinalIgnoreCase)));
         }
         autoVoice.CheckedChanged += (_, _) => RefreshVoiceChoices();

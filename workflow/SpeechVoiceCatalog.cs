@@ -19,9 +19,7 @@ public static class SpeechVoiceCatalog
         var english = voice.StartsWith("en-", StringComparison.OrdinalIgnoreCase);
         var chinese = voice.StartsWith("zh-", StringComparison.OrdinalIgnoreCase);
         if (!english && !chinese) return voice;
-        var male = new[] { "Guy", "Ryan", "Andrew", "Brian", "Yunxi", "Yunjian" }
-            .Any(name => voice.Contains(name, StringComparison.OrdinalIgnoreCase));
-        return english ? (male ? "Dean" : "Mia") : (male ? "白桦" : "茉莉");
+        return "Mia";
     }
 
     public sealed record CachedCatalog(DateTimeOffset ObservedAt, SpeechVoiceOption[] Voices);
