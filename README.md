@@ -1,10 +1,30 @@
 # 零碎知识剪藏
 
+## 当前正式版与源码基线（2026-09-28）
+
+当前运行进程、桌面快捷方式和开机任务统一指向 [restored-selection 正式包](D:/Artifacts/MimoTTS/production/20260928/KnowledgeClipper/restored-selection/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)。它从本仓库当前源码整体构建，包含此前的快捷键、弹窗和 MiMo 语音更新；选区监听与取词保护恢复到今天之前已稳定使用的 `1724643` 源码。后续开发必须从本仓库现有源码继续合并，不得拿旧产物或旧提交覆盖其他更新。
+
+浮点锚点固定为鼠标松开位置，不再于松开后追踪指针或等待下一次停顿。此前的追踪候选虽能在短选区显示，但用户发现长段拖选会偏离鼠标，故已撤回该选区改动。92 项稳定版选区隔离测试及发布包启动自检通过；用户已在当前进程确认长段真实拖选后，浮点正常出现且位置正确。旧 [pointer-20260927 验收记录](D:/Artifacts/KnowledgeClipper/pointer-20260927/validation.md)仅供追溯。下文“当前”均指各条验收当时的版本。
+
 ## Anki 折叠词典卡面核验修复（2026-09-27）
 
 折叠词典的固定标题曾被错误计入学习字段，导致已写入 Anki 的语言卡误报卡面不一致并停在 Unknown。核验现仅排除精确匹配的词典折叠标题，继续逐字核对词典正文、学习字段、卡片身份、牌组与可复习状态。四种语言卡面及错误内容拒绝共 31 项回归通过；独立公开卡片真实导入与重复确认通过。11 张原失败卡片经只读 Anki 请求恢复为 Verified，没有新增、编辑或移动原笔记。
 
 当前运行程序和桌面入口已切换至 [anki-dictionary-recovery-20260927/release](D:/Artifacts/KnowledgeClipper/anki-dictionary-recovery-20260927/release/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，个人设置文件哈希未变。构建零警告、零错误；[恢复回执](D:/Artifacts/KnowledgeClipper/anki-dictionary-recovery-20260927/validation/receipt.json)及[独立导入验收](D:/Artifacts/KnowledgeClipper/anki-dictionary-recovery-20260927/validation/independent-live.json)保留在本机。下文为按日期保留的历史验收，“当前”均指相应日期当时的运行版本。
+
+## 点击含义弹窗重读（2026-09-26）
+
+左键点击划词“读”后的含义弹窗，调用现有“重读上一条”入口并保留弹窗；右键不触发重读。点击外部或切换焦点仍自动关闭。当前运行版本为 [meaning-replay-20260926/release](D:/Artifacts/KnowledgeClipper/meaning-replay-20260926/release/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，29 项隔离弹窗检查通过，见[验收记录](D:/Artifacts/KnowledgeClipper/meaning-replay-20260926/validation.md)。
+
+## 全局快捷键（2026-09-26）
+
+设置新增“快捷键”页，集中配置“RemNote 导入目标”和“重读上一条”，默认分别为 `Alt+Shift+《`、`Alt+Shift+/`；个人配置已初始化为同一组合。前者打开原文摘录目录面板，仍只作用于新纯原文摘录；后者复用已有最近一条语言音频，不重新合成。`《`、`<`、`,` 使用同一个物理逗号键；`/`、`?` 使用同一个物理斜杠键，Shift 按配置显式指定。
+
+快捷键支持编辑、留空关闭、恢复默认、保存后立即生效、重复组合检查和系统占用提示；重复比较包含标点别名与修饰键顺序。注册使用 Windows 全局热键并禁止按住重复触发，重新配置及退出时释放两个绑定。当前程序与桌面快捷方式指向 [hotkeys-20260926/release](D:/Artifacts/KnowledgeClipper/hotkeys-20260926/release/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)。零警告构建、16 项定向检查、53 项隔离界面检查通过；实际进程与两个全局绑定已核验，其他个人设置语义哈希保持一致。见[验收记录](D:/Artifacts/KnowledgeClipper/hotkeys-20260926/validation.md)。
+
+## 含义弹窗失焦关闭（2026-09-25）
+
+划词浮点“读”后的含义弹窗在原窗口内切换焦点、切到其他窗口或点击弹窗外时自动关闭；点击弹窗内仍可继续阅读。弹窗保持不抢焦点，关闭后移除临时鼠标监听，迟到的释义结果不再重新显示。当前桌面程序位于 [meaning-focus-20260925/release](D:/Artifacts/KnowledgeClipper/meaning-focus-20260925/release/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，见[验收记录](D:/Artifacts/KnowledgeClipper/meaning-focus-20260925/validation.md)。
 
 ## 当前源码与验证（2026-09-25）
 

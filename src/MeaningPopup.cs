@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -26,22 +27,47 @@ internal sealed class MeaningPopupLifetime
     }
 }
 
+internal readonly record struct MeaningPopupFocus(IntPtr Window, IntPtr Control);
+
 // Owns presentation only. The caller owns request generations and discards
 // responses once IsRequestVisible becomes false.
 internal sealed class MeaningPopup : Form
 {
     private readonly System.Windows.Forms.Timer timer = new() { Interval = 100 };
     private readonly MeaningPopupLifetime lifetime = new();
+    private readonly Func<MeaningPopupFocus> readFocus;
+    private delegate IntPtr MouseHook(int code, IntPtr message, IntPtr data);
+    private MouseHook mouseHookCallback;
+    private IntPtr mouseHook;
     private sealed record HitArea(Rectangle Bounds);
     private HitArea hitArea;
     private string meaning = "";
     private Point anchor;
     private bool requestVisible;
+    private MeaningPopupFocus focusWhenShown;
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect { public int Left, Top, Right, Bottom; }
+    [StructLayout(LayoutKind.Sequential)]
+    private struct GuiThreadInfo
+    {
+        public uint Size, Flags;
+        public IntPtr Active, Focus, Capture, MenuOwner, MoveSize, Caret;
+        public NativeRect CaretRect;
+    }
+    [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
+    [DllImport("user32.dll")] private static extern bool GetGUIThreadInfo(uint threadId, ref GuiThreadInfo info);
+    [DllImport("user32.dll")] private static extern IntPtr SetWindowsHookEx(int id, MouseHook callback, IntPtr module, uint threadId);
+    [DllImport("user32.dll")] private static extern IntPtr CallNextHookEx(IntPtr hook, int code, IntPtr message, IntPtr data);
+    [DllImport("user32.dll")] private static extern bool UnhookWindowsHookEx(IntPtr hook);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr GetModuleHandle(string name);
     internal bool IsRequestVisible => !IsDisposed && requestVisible && Visible;
+    internal event Action ReplayRequested;
     internal bool ContainsScreenPoint(Point point) => Volatile.Read(ref hitArea)?.Bounds.Contains(point) == true;
 
-    internal MeaningPopup()
+    internal MeaningPopup(Func<MeaningPopupFocus> readFocus = null)
     {
+        this.readFocus = readFocus ?? CaptureNativeFocus;
         Name = AccessibleName = "knowledge-clipper.language.meaning-popup";
         Text = "当前句意";
         FormBorderStyle = FormBorderStyle.None;
@@ -53,7 +79,7 @@ internal sealed class MeaningPopup : Form
         DoubleBuffered = true;
         timer.Tick += (_, _) =>
         {
-            if (lifetime.Observe(ContainsScreenPoint(Cursor.Position), Environment.TickCount64)) HideMeaning();
+            if (FocusMoved() || lifetime.Observe(ContainsScreenPoint(Cursor.Position), Environment.TickCount64)) HideMeaning();
         };
         LocationChanged += (_, _) => PublishHitArea();
         VisibleChanged += (_, _) => { if (!Visible) { requestVisible = false; timer.Stop(); } PublishHitArea(); };
@@ -65,7 +91,9 @@ internal sealed class MeaningPopup : Form
     internal void ShowError(string text, Point point) => Present(text, point, false);
     internal void HideMeaning()
     {
-        requestVisible = false; timer.Stop(); Volatile.Write(ref hitArea, null);
+        requestVisible = false; timer.Stop(); focusWhenShown = default;
+        if (mouseHook != IntPtr.Zero) { UnhookWindowsHookEx(mouseHook); mouseHook = IntPtr.Zero; }
+        Volatile.Write(ref hitArea, null);
         if (!IsDisposed) Hide();
     }
 
@@ -76,11 +104,61 @@ internal sealed class MeaningPopup : Form
         AccessibleDescription = meaning;
         anchor = point;
         LayoutMeaning();
-        if (!Visible) Show();
+        if (!Visible)
+        {
+            focusWhenShown = readFocus();
+            Show();
+        }
         LayoutMeaning();
         requestVisible = true;
         lifetime.Start(loading, Environment.TickCount64);
-        PublishHitArea(); timer.Start(); Invalidate();
+        PublishHitArea(); StartOutsideClickWatcher(); timer.Start(); Invalidate();
+    }
+
+    private void StartOutsideClickWatcher()
+    {
+        if (mouseHook != IntPtr.Zero) return;
+        mouseHookCallback ??= (code, message, data) =>
+        {
+            try
+            {
+                if (code >= 0 && message.ToInt64() is 0x201 or 0x204 or 0x207 or 0x20B)
+                    PointerDown(new Point(Marshal.ReadInt32(data), Marshal.ReadInt32(data, 4)));
+            }
+            catch (InvalidOperationException) { /* The popup handle was closed during this mouse event. */ }
+            return CallNextHookEx(IntPtr.Zero, code, message, data);
+        };
+        mouseHook = SetWindowsHookEx(14, mouseHookCallback, GetModuleHandle(null), 0);
+    }
+
+    internal void PointerDown(Point point)
+    {
+        if (IsRequestVisible && !ContainsScreenPoint(point) && IsHandleCreated)
+            BeginInvoke((Action)(() => { if (!IsDisposed && IsRequestVisible) HideMeaning(); }));
+    }
+
+    private static IntPtr ForegroundFocus(IntPtr foreground)
+    {
+        if (foreground == IntPtr.Zero) return IntPtr.Zero;
+        var thread = GetWindowThreadProcessId(foreground, out _);
+        if (thread == 0) return IntPtr.Zero;
+        var info = new GuiThreadInfo { Size = (uint)Marshal.SizeOf<GuiThreadInfo>() };
+        return GetGUIThreadInfo(thread, ref info) ? info.Focus : IntPtr.Zero;
+    }
+
+    private static MeaningPopupFocus CaptureNativeFocus()
+    {
+        var foreground = GetForegroundWindow();
+        return new(foreground, ForegroundFocus(foreground));
+    }
+
+    private bool FocusMoved()
+    {
+        if (focusWhenShown.Window == IntPtr.Zero) return false;
+        var current = readFocus();
+        if (current.Window != IntPtr.Zero && current.Window != focusWhenShown.Window) return true;
+        return focusWhenShown.Control != IntPtr.Zero && current.Control != IntPtr.Zero &&
+            current.Control != focusWhenShown.Control;
     }
 
     private int Scale(int value) => Math.Max(1, (int)Math.Round(value * DeviceDpi / 96.0));
@@ -119,6 +197,11 @@ internal sealed class MeaningPopup : Form
             Rectangle.Inflate(ClientRectangle, -padding, -padding), ForeColor,
             TextFormatFlags.WordBreak | TextFormatFlags.NoPrefix | TextFormatFlags.NoPadding);
     }
+    protected override void OnMouseClick(MouseEventArgs e)
+    {
+        base.OnMouseClick(e);
+        if (e.Button == MouseButtons.Left && IsRequestVisible) ReplayRequested?.Invoke();
+    }
     protected override bool ShowWithoutActivation => true;
     protected override CreateParams CreateParams
     {
@@ -131,7 +214,12 @@ internal sealed class MeaningPopup : Form
     }
     protected override void Dispose(bool disposing)
     {
-        if (disposing) { requestVisible = false; Volatile.Write(ref hitArea, null); timer.Stop(); timer.Dispose(); Font.Dispose(); }
+        if (disposing)
+        {
+            requestVisible = false; Volatile.Write(ref hitArea, null);
+            if (mouseHook != IntPtr.Zero) { UnhookWindowsHookEx(mouseHook); mouseHook = IntPtr.Zero; }
+            timer.Stop(); timer.Dispose(); Font.Dispose();
+        }
         base.Dispose(disposing);
     }
 }

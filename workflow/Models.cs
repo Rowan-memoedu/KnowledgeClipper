@@ -118,7 +118,8 @@ public sealed record LanguageSettings
     public string ExcerptDeckPath { get; init; } = "摘录";
     public string? OriginalExcerptDocumentId { get; init; }
     public string? OriginalExcerptDocumentTitle { get; init; }
-    public string OriginalExcerptHotkey { get; init; } = "Ctrl+Alt+Space";
+    public string OriginalExcerptHotkey { get; init; } = "Alt+Shift+《";
+    public string ReplayLastHotkey { get; init; } = "Alt+Shift+/";
     public string ExcerptModesDirectory { get; init; } = "";
     public string TypedDefaultRoute { get; init; } = MaterialRouting.Punctuation;
     public string OcrDefaultRoute { get; init; } = MaterialRouting.Ask;
@@ -165,7 +166,10 @@ public sealed record LanguageSettings
             OriginalExcerptDocumentTitle is { Length: > 200 } ||
             OriginalExcerptDocumentId != null && (string.IsNullOrWhiteSpace(OriginalExcerptDocumentId) || string.IsNullOrWhiteSpace(OriginalExcerptDocumentTitle)))
             throw new InvalidDataException("原文摘录的 RemNote 目录选择无效。");
-        ExcerptHotkey.Parse(OriginalExcerptHotkey);
+        var targetHotkey = ExcerptHotkey.Parse(OriginalExcerptHotkey);
+        var replayHotkey = ExcerptHotkey.Parse(ReplayLastHotkey);
+        if (targetHotkey.VirtualKey != 0 && targetHotkey == replayHotkey)
+            throw new InvalidDataException("RemNote 导入目标与重读上一条不能使用相同快捷键。");
         if (ExcerptModesDirectory.Length > 0 && !Path.IsPathFullyQualified(ExcerptModesDirectory))
             throw new InvalidDataException("摘录提示词目录请填写完整路径，或留空使用程序自带目录。");
         if (MineruScriptPath.Length > 0 && !Path.IsPathFullyQualified(MineruScriptPath))

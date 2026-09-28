@@ -58,8 +58,8 @@ internal static class AllSettingsChecks
         var editable = Controls(dialog).Where(c => c is TextBox or ComboBox or NumericUpDown or CheckBox).ToArray();
         Check(editable.Where(c => !c.Name.EndsWith(".pitch") && c.Parent?.Name.EndsWith(".pitch") != true).All(c => c.Enabled && (c is not TextBox text || !text.ReadOnly)), "every current functional setting is editable");
         Check(Controls(dialog).OfType<TabControl>().Single().TabPages.Cast<TabPage>().Select(page => page.Name).SequenceEqual(
-            new[] { "capture", "floating", "routing", "speech", "anki", "content", "runtime", "destinations", "modes" }
-                .Select(id => "knowledge-clipper.language.page." + id)), "all current settings are grouped into nine distinct accessible pages");
+            new[] { "capture", "floating", "routing", "speech", "anki", "content", "runtime", "hotkeys", "destinations", "modes" }
+                .Select(id => "knowledge-clipper.language.page." + id)), "all current settings are grouped into ten distinct accessible pages");
 
         var english = Find<ComboBox>(dialog, "english-voice");
         Page(english);

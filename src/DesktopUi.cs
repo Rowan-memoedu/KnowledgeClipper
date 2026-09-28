@@ -482,6 +482,8 @@ namespace KnowledgeClipper
         {
             if (m.Msg == 0x0312 && m.WParam.ToInt32() == ExcerptDestinationHotkeyId)
             { ShowExcerptDestination(); m.Result = IntPtr.Zero; return; }
+            if (m.Msg == 0x0312 && m.WParam.ToInt32() == ReplayLastHotkeyId)
+            { languageFlow?.ReplayLastLanguage(); m.Result = IntPtr.Zero; return; }
             if (m.Msg == 0x02E0) // WM_DPICHANGED: use WinForms' suggested physical bounds.
             {
                 var previous = scalingForDpi;

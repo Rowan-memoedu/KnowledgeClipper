@@ -169,6 +169,20 @@ internal sealed class LanguageSettingsForm : Form
         Add("", new Label { AutoSize = true, ForeColor = Color.DimGray, Text = "使用已安装程序的完整路径。修改保存后用于后续操作；不移动或重新安装程序。" });
         var config = ModeConfigurationLoader.Load(flow.ModeDefaults, flow.ModeOverrides);
         var definitions = ModeConfigurationLoader.LoadDefinitions(flow.ModeDefaults, flow.ModeOverrides);
+        Page("快捷键", "hotkeys");
+        var excerptHotkey = TextField(value.OriginalExcerptHotkey, "knowledge-clipper.excerpt.destination-hotkey");
+        excerptHotkey.PlaceholderText = "Alt+Shift+《；留空关闭";
+        Add("RemNote 导入目标", excerptHotkey);
+        var replayHotkey = TextField(value.ReplayLastHotkey, "knowledge-clipper.language.replay-last-hotkey");
+        replayHotkey.PlaceholderText = "Alt+Shift+/；留空关闭";
+        Add("重读上一条", replayHotkey);
+        Add("作用范围", new Label { AutoSize = true, ForeColor = Color.DimGray,
+            Text = "全局生效，无需切回剪藏窗口。导入目标快捷键打开原文摘录目录面板；重读上一条复用最近一条语言音频，不重新生成。" });
+        Add("按键规则", new Label { AutoSize = true, ForeColor = Color.DimGray,
+            Text = "格式：Ctrl / Alt / Shift + 主键，至少包含 Ctrl 或 Alt。支持标点键、Space、字母、数字和 F1–F12。\n《、<、, 都指逗号键；/ 和 ? 都指斜杠键。修饰键按配置显式指定，不依赖输入法。\n留空关闭该动作；两个动作不可重复。保存后立即生效，系统占用会在主窗口提示，托盘入口始终可用。" });
+        var resetHotkeys = new Button { Text = "恢复默认快捷键", AutoSize = true, Name = "knowledge-clipper.hotkeys.reset" };
+        resetHotkeys.Click += (_, _) => { excerptHotkey.Text = "Alt+Shift+《"; replayHotkey.Text = "Alt+Shift+/"; };
+        Add("", resetHotkeys);
         Page("导出对象", "destinations");
         var remNoteEndpoint = TextField(RemNoteConnection.ResolveEndpoint(value.RemNoteSdkEndpoint), "knowledge-clipper.export.sdk-endpoint"); Add("RemNote 插件本机地址", remNoteEndpoint);
         Add("默认规则", new Label { AutoSize = true, ForeColor = Color.DimGray,
@@ -191,11 +205,6 @@ internal sealed class LanguageSettingsForm : Form
             Name = "knowledge-clipper.excerpt.choose-destination" };
         chooseExcerptTarget.Click += (_, _) => OpenExcerptDestination?.Invoke();
         Add("", chooseExcerptTarget);
-        var excerptHotkey = TextField(value.OriginalExcerptHotkey, "knowledge-clipper.excerpt.destination-hotkey");
-        excerptHotkey.PlaceholderText = "Ctrl+Alt+Space；留空关闭";
-        Add("切换面板快捷键", excerptHotkey);
-        Add("", new Label { AutoSize = true, ForeColor = Color.DimGray,
-            Text = "支持 Ctrl / Alt / Shift 加 Space、字母、数字或 F1–F12；至少包含 Ctrl 或 Alt。保存后立即注册，快捷键冲突时可从托盘打开面板。" });
         var destinationEdits = new Dictionary<string, ComboBox>(StringComparer.Ordinal);
         foreach (var definition in definitions.Modes.Concat(ExportRouting.BuiltinModes)
             .Concat(excerptExportModes.Select(mode => mode.Definition)).Concat(imageModes.Select(mode => mode.Definition))
@@ -392,6 +401,7 @@ internal sealed class LanguageSettingsForm : Form
                     OriginalExcerptDocumentId = flow.Settings.OriginalExcerptDocumentId,
                     OriginalExcerptDocumentTitle = flow.Settings.OriginalExcerptDocumentTitle,
                     OriginalExcerptHotkey = excerptHotkey.Text.Trim(),
+                    ReplayLastHotkey = replayHotkey.Text.Trim(),
                     ModeDestinations = modeDestinations, RemNoteSdkEndpoint = remNoteEndpoint.Text.Trim(),
                     ExcerptDeckPath = excerptDeck.Text.Trim(), ExcerptModesDirectory = excerptModes.Text.Trim(),
                     TypedDefaultRoute = ((MaterialRoute)typedRoute.SelectedItem).Id, OcrDefaultRoute = ((MaterialRoute)ocrRoute.SelectedItem).Id,

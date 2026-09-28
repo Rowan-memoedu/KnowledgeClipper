@@ -6,7 +6,7 @@ public readonly record struct ExcerptHotkey(uint Modifiers, uint VirtualKey)
     {
         if (string.IsNullOrWhiteSpace(text)) return default;
         var parts = text.Split('+', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length < 2 || parts.Length > 4) throw new InvalidDataException("快捷键需包含 Ctrl 或 Alt，以及 Space、字母、数字或 F1–F12。");
+        if (parts.Length < 2 || parts.Length > 4) throw new InvalidDataException("快捷键需包含 Ctrl 或 Alt，以及一个主键。");
         uint modifiers = 0;
         foreach (var part in parts[..^1])
         {
@@ -17,11 +17,22 @@ public readonly record struct ExcerptHotkey(uint Modifiers, uint VirtualKey)
         if ((modifiers & 3) == 0) throw new InvalidDataException("快捷键必须包含 Ctrl 或 Alt。");
         var key = parts[^1].ToUpperInvariant();
         uint virtualKey;
-        if (key == "SPACE") virtualKey = 0x20;
+        if (key is "," or "<" or "《" or "OEMCOMMA") virtualKey = 0xBC;
+        else if (key is "/" or "?" or "？" or "OEMQUESTION") virtualKey = 0xBF;
+        else if (key is "." or ">" or "》" or "OEMPERIOD") virtualKey = 0xBE;
+        else if (key is ";" or ":" or "OEMSEMICOLON") virtualKey = 0xBA;
+        else if (key is "[" or "{" or "OEMOPENBRACKETS") virtualKey = 0xDB;
+        else if (key is "]" or "}" or "OEMCLOSEBRACKETS") virtualKey = 0xDD;
+        else if (key is "\\" or "|" or "OEMPIPE") virtualKey = 0xDC;
+        else if (key is "-" or "_" or "OEMMINUS") virtualKey = 0xBD;
+        else if (key is "=" or "OEMPLUS") virtualKey = 0xBB;
+        else if (key is "`" or "~" or "OEMTILDE") virtualKey = 0xC0;
+        else if (key is "'" or "\"" or "OEMQUOTES") virtualKey = 0xDE;
+        else if (key == "SPACE") virtualKey = 0x20;
         else if (key.Length == 1 && (key[0] is >= 'A' and <= 'Z' or >= '0' and <= '9')) virtualKey = key[0];
         else if (key.StartsWith('F') && int.TryParse(key[1..], out var number) && number is >= 1 and <= 12)
             virtualKey = (uint)(0x70 + number - 1);
-        else throw new InvalidDataException("快捷键仅支持 Space、字母、数字或 F1–F12。");
+        else throw new InvalidDataException("快捷键支持标点键、Space、字母、数字或 F1–F12。");
         return new(modifiers, virtualKey);
     }
 }

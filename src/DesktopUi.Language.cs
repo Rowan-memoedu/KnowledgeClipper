@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
@@ -26,10 +27,13 @@ internal sealed partial class BoundClipperForm
     private LanguageSettingsForm languageSettingsForm;
     private ExcerptDestinationForm excerptDestinationForm;
     private const int ExcerptDestinationHotkeyId = 0x4B43;
+    private const int ReplayLastHotkeyId = 0x4B44;
     [DllImport("user32.dll", SetLastError = true)] private static extern bool RegisterHotKey(IntPtr window, int id, uint modifiers, uint virtualKey);
     [DllImport("user32.dll")] private static extern bool UnregisterHotKey(IntPtr window, int id);
     private bool excerptDestinationHotkeyRegistered;
     private IntPtr excerptDestinationHotkeyHandle;
+    private bool replayLastHotkeyRegistered;
+    private IntPtr replayLastHotkeyHandle;
     private AnkiPendingQueue ankiPending;
     private readonly HttpClient pendingAnkiHttp = new();
     private readonly CancellationTokenSource pendingAnkiLifetime = new();
@@ -128,19 +132,26 @@ internal sealed partial class BoundClipperForm
         if (languageFlow == null || !IsHandleCreated || IsDisposed) return;
         UnbindExcerptDestinationHotkey();
         var gesture = ExcerptHotkey.Parse(languageFlow.Settings.OriginalExcerptHotkey);
-        if (gesture.VirtualKey == 0) return;
-        excerptDestinationHotkeyRegistered = RegisterHotKey(Handle, ExcerptDestinationHotkeyId, gesture.Modifiers | 0x4000, gesture.VirtualKey);
+        var replayGesture = ExcerptHotkey.Parse(languageFlow.Settings.ReplayLastHotkey);
+        excerptDestinationHotkeyRegistered = gesture.VirtualKey != 0 && RegisterHotKey(Handle, ExcerptDestinationHotkeyId, gesture.Modifiers | 0x4000, gesture.VirtualKey);
         if (excerptDestinationHotkeyRegistered) excerptDestinationHotkeyHandle = Handle;
-        if (!excerptDestinationHotkeyRegistered)
-            SetStatus("原文摘录目标快捷键已被占用；可从托盘或设置打开目标面板。", Color.DarkRed, Color.MistyRose);
+        replayLastHotkeyRegistered = replayGesture.VirtualKey != 0 && RegisterHotKey(Handle, ReplayLastHotkeyId, replayGesture.Modifiers | 0x4000, replayGesture.VirtualKey);
+        if (replayLastHotkeyRegistered) replayLastHotkeyHandle = Handle;
+        var failed = new List<string>();
+        if (gesture.VirtualKey != 0 && !excerptDestinationHotkeyRegistered) failed.Add("RemNote 导入目标");
+        if (replayGesture.VirtualKey != 0 && !replayLastHotkeyRegistered) failed.Add("重读上一条");
+        if (failed.Count != 0)
+            SetStatus(string.Join("、", failed) + "快捷键已被占用，请在设置 → 快捷键修改；托盘入口仍可用。", Color.DarkRed, Color.MistyRose);
     }
 
     private void UnbindExcerptDestinationHotkey()
     {
-        if (!excerptDestinationHotkeyRegistered) return;
-        UnregisterHotKey(excerptDestinationHotkeyHandle, ExcerptDestinationHotkeyId);
+        if (excerptDestinationHotkeyRegistered) UnregisterHotKey(excerptDestinationHotkeyHandle, ExcerptDestinationHotkeyId);
         excerptDestinationHotkeyRegistered = false;
         excerptDestinationHotkeyHandle = IntPtr.Zero;
+        if (replayLastHotkeyRegistered) UnregisterHotKey(replayLastHotkeyHandle, ReplayLastHotkeyId);
+        replayLastHotkeyRegistered = false;
+        replayLastHotkeyHandle = IntPtr.Zero;
     }
 
     private void ShowExcerptDestination()

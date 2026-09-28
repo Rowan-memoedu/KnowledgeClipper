@@ -90,6 +90,13 @@ Check(!selectedManual.IsOriginalExcerpt && manualPlan.TargetDocumentId == null &
 Check(ExcerptHotkey.Parse("Ctrl+Alt+Space") == new ExcerptHotkey(3, 0x20) &&
     ExcerptHotkey.Parse("").VirtualKey == 0, "original excerpt panel hotkey parses and can be disabled");
 await Reject(() => Do(() => ExcerptHotkey.Parse("Shift+E")), "unsafe unmodified excerpt panel hotkey is rejected");
+Check(ExcerptHotkey.Parse("Alt+Shift+《") == new ExcerptHotkey(5, 0xBC) &&
+    ExcerptHotkey.Parse("Alt+Shift+<") == ExcerptHotkey.Parse("Alt+Shift+,") &&
+    ExcerptHotkey.Parse("Alt+Shift+/") == new ExcerptHotkey(5, 0xBF), "requested punctuation shortcuts use physical comma and slash keys");
+await Reject(() => Do(() => (new LanguageSettings { OriginalExcerptHotkey = "Alt+Shift+《", ReplayLastHotkey = "Shift+Alt+," }).Validate()),
+    "duplicate hotkeys are rejected across aliases and modifier order");
+Check(ExcerptHotkey.Parse(new LanguageSettings().OriginalExcerptHotkey) == new ExcerptHotkey(5, 0xBC) &&
+    ExcerptHotkey.Parse(new LanguageSettings().ReplayLastHotkey) == new ExcerptHotkey(5, 0xBF), "new settings initialize both requested hotkeys");
 if (args[0] == "--destination-regression")
 {
     WorkflowJson.Save(receipt, new { passed = true, checks, scope = "original excerpt destination routing and hotkey only" });

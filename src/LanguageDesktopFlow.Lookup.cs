@@ -23,7 +23,11 @@ internal sealed partial class LanguageDesktopFlow
 
     private void BeginMeaningPopup(ClipDraft draft, Point anchor)
     {
-        meaningPopup ??= new MeaningPopup();
+        if (meaningPopup == null)
+        {
+            meaningPopup = new MeaningPopup();
+            meaningPopup.ReplayRequested += ReplayLastLanguage;
+        }
         meaningDraftId = draft.Id; meaningAnchor = anchor;
         meaningPopup.ShowLoading(anchor);
         PublishMeaning(draft);

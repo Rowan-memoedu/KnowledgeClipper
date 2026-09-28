@@ -45,6 +45,13 @@ internal static class ExportDestinationChecks
         using var main = (Form)mainType.GetConstructor(Instance, null, [configType, controllerType, typeof(bool)], null)!.Invoke([config, controller, false]);
         Call(main, "EnableLanguageWorkflow"); main.Show(); await Task.Delay(60);
         var flow = Get(main, "languageFlow")!;
+        Check((bool)Get(main, "excerptDestinationHotkeyRegistered")! && (bool)Get(main, "replayLastHotkeyRegistered")!,
+            "Windows registers both requested global punctuation shortcuts");
+        Call(main, "WndProc", Message.Create(main.Handle, 0x0312, new IntPtr(0x4B44), IntPtr.Zero));
+        Check(((Button)Get(main, "statusButton")!).Text.Contains("还没有可重播"), "replay global message reaches the existing replay action without generating audio");
+        Call(main, "UnbindExcerptDestinationHotkey");
+        Check(!(bool)Get(main, "excerptDestinationHotkeyRegistered")! && !(bool)Get(main, "replayLastHotkeyRegistered")!, "global shortcuts unregister together");
+        Call(main, "BindExcerptDestinationHotkey");
         Form Settings() => (Form)assembly.GetType("KnowledgeClipper.LanguageSettingsForm", true)!.GetConstructors(Instance).Single().Invoke([flow, dataRoot]);
         using (var form = Settings())
         {
@@ -56,9 +63,18 @@ internal static class ExportDestinationChecks
             var excerptTarget = Find<Label>(form, "knowledge-clipper.excerpt.current-target");
             var excerptChooser = Find<Button>(form, "knowledge-clipper.excerpt.choose-destination");
             var excerptHotkey = Find<TextBox>(form, "knowledge-clipper.excerpt.destination-hotkey");
-            Check(page.Contains(excerptTarget) && page.Contains(excerptChooser) && page.Contains(excerptHotkey) &&
-                excerptTarget.Text.Contains("按日期导入") && excerptHotkey.Text == "Ctrl+Alt+Space",
-                "original excerpt target and hotkey are available in export settings");
+            var hotkeyPage = Find<TabPage>(form, "knowledge-clipper.language.page.hotkeys");
+            var replayHotkey = Find<TextBox>(form, "knowledge-clipper.language.replay-last-hotkey");
+            Check(page.Contains(excerptTarget) && page.Contains(excerptChooser) && hotkeyPage.Contains(excerptHotkey) && hotkeyPage.Contains(replayHotkey) &&
+                excerptTarget.Text.Contains("按日期导入") && excerptHotkey.Text == "Alt+Shift+《" && replayHotkey.Text == "Alt+Shift+/",
+                "both initialized shortcuts share the dedicated settings page");
+            excerptHotkey.Text = replayHotkey.Text = "Alt+F10";
+            Find<Button>(form, "knowledge-clipper.language.save-settings").PerformClick();
+            Check(!form.IsDisposed && WorkflowJson.Read<LanguageSettings>(settingsPath).OriginalExcerptHotkey == "Alt+Shift+《", "duplicate shortcut save preserves existing settings");
+            ((TabControl)hotkeyPage.Parent!).SelectedTab = hotkeyPage; await Task.Delay(80);
+            Find<Button>(form, "knowledge-clipper.hotkeys.reset").PerformClick();
+            Check(excerptHotkey.Text == "Alt+Shift+《" && replayHotkey.Text == "Alt+Shift+/", "restore defaults resets both shortcuts");
+            ((TabControl)page.Parent!).SelectedTab = page; await Task.Delay(80);
             page.ScrollControlIntoView(excerptChooser); await Task.Delay(50);
             Directory.CreateDirectory(Path.GetDirectoryName(receipt)!);
             using (var bitmap = new Bitmap(form.Width, form.Height))
@@ -68,7 +84,17 @@ internal static class ExportDestinationChecks
                 finally { graphics.ReleaseHdc(dc); }
                 bitmap.Save(Path.Combine(Path.GetDirectoryName(receipt)!, "destination-target-settings.png"));
             }
+            ((TabControl)hotkeyPage.Parent!).SelectedTab = hotkeyPage; await Task.Delay(80);
+            using (var bitmap = new Bitmap(form.Width, form.Height))
+            {
+                using var graphics = Graphics.FromImage(bitmap); var dc = graphics.GetHdc();
+                try { if (!PrintWindow(form.Handle, dc, 2)) throw new Exception("Hotkey settings render failed."); }
+                finally { graphics.ReleaseHdc(dc); }
+                bitmap.Save(Path.Combine(Path.GetDirectoryName(receipt)!, "hotkey-settings.png"));
+            }
+            ((TabControl)page.Parent!).SelectedTab = page;
             excerptHotkey.Text = "Ctrl+Alt+F10";
+            replayHotkey.Text = "Ctrl+Alt+F11";
             foreach (var mode in modes)
             {
                 var input = Find<ComboBox>(form, "knowledge-clipper.export.destination." + mode.Id);
@@ -105,6 +131,7 @@ internal static class ExportDestinationChecks
         Check(saved.ModeDestinations["unavailable-saved-mode"] == ExportDestination.Anki, "saving visible modes preserves an unavailable mode's previous choice");
         Check(saved.RemNoteSdkEndpoint == "http://127.0.0.1:43102", "SDK endpoint persists independently from AnkiConnect");
         Check(saved.OriginalExcerptHotkey == "Ctrl+Alt+F10", "original excerpt panel hotkey persists independently from mode destinations");
+        Check(saved.ReplayLastHotkey == "Ctrl+Alt+F11", "replay shortcut persists independently from mode destinations");
         using (var form = Settings())
         {
             form.Show(main);
