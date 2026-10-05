@@ -26,6 +26,11 @@ internal sealed class ExcerptDesktopFlow : IDisposable
     private bool capturing;
     private readonly CancellationTokenSource lifetime = new();
     internal event Action<ExcerptSession> SessionChanged;
+    internal event Action<string> QuickFeedback;
+    private void ReportQuickFeedback(string message)
+    {
+        if (!owner.IsDisposed && !lifetime.IsCancellationRequested) QuickFeedback?.Invoke(message);
+    }
 
     internal ExcerptDesktopFlow(Form owner, string dataRoot, LanguageSettings settings, Action<string> status)
     { this.owner = owner; this.dataRoot = dataRoot; this.settings = settings; this.status = status; store = new(dataRoot); }
@@ -52,8 +57,7 @@ internal sealed class ExcerptDesktopFlow : IDisposable
             {
                 // No verified material exists yet: do not turn a stale UIA candidate
                 // into an apparently valid draft when protected copying failed.
-                MessageBox.Show(owner, ex.Message + "\n请重新选择文字后摘录。", "摘录未完成",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ReportQuickFeedback("摘录失败：" + ex.Message + "\n请重新选择文字后摘录。");
             }
         }
         finally { capturing = false; }
@@ -73,7 +77,9 @@ internal sealed class ExcerptDesktopFlow : IDisposable
         material.Validate();
         material = ExcerptTextCleanup.Clean(material);
         var session = new ExcerptSession { Original = material, Settings = snapshot, ManualFront = material.SelectedText, ImageMaterialId = imageId };
-        ExcerptCards.Add(session, store, new(material.SelectedText, ""), "原文", originalExcerpt: true);
+        var fields = new ExcerptFields(material.FrontImage == null ? material.SelectedText : "", "")
+        { FrontImages = material.FrontImage == null ? [] : [material.FrontImage] };
+        ExcerptCards.Add(session, store, fields, material.FrontImage == null ? "原文" : "图片摘录", originalExcerpt: true);
         if (quick) _ = CompleteQuickAsync(session); else Open(session);
         return session.Id;
     }
@@ -95,8 +101,13 @@ internal sealed class ExcerptDesktopFlow : IDisposable
             using var request = new HttpClient { Timeout = TimeSpan.FromSeconds(180) };
             await FloatingQuickImport.ExcerptAsync(session, store, new CardImportRouter(request), lifetime.Token);
             status("快捷摘录已完成 · " + ExportRouting.ResultSummary(ExcerptCards.Get(session, store, session.Cards[0].Id)));
+            ReportQuickFeedback("摘录成功 · " + ExportRouting.ResultSummary(ExcerptCards.Get(session, store, session.Cards[0].Id)));
         }
-        catch (AnkiPendingException) { status("摘录已保存，等待 Anki 打开后自动导入。"); }
+        catch (AnkiPendingException)
+        {
+            status("摘录已保存，等待 Anki 打开后自动导入。");
+            ReportQuickFeedback("摘录已保存，等待 Anki 打开后导入");
+        }
         catch (Exception ex)
         {
             if (lifetime.IsCancellationRequested || owner.IsDisposed) return;
@@ -104,6 +115,7 @@ internal sealed class ExcerptDesktopFlow : IDisposable
             card.ImportError ??= ex.Message; store.Cards.Save(card);
             status("快捷摘录需要继续确认：" + ex.Message);
             Open(session);
+            ReportQuickFeedback("摘录失败：" + ex.Message);
         }
         finally
         {

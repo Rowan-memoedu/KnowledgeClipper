@@ -75,7 +75,7 @@ internal sealed class ImageDesktopFlow : IDisposable
     {
         var artifact = StageClipboardImage(png);
         var snapshot = Snapshot();
-        var job = store.Create([(artifact.sourcePath, "question")], snapshot.OriginalImageMode == true ? MaterialKind.OriginalImages : MaterialKind.OcrImages,
+        var job = store.Create([(artifact.sourcePath, "question")], quick && intent == "excerpt" || snapshot.OriginalImageMode == true ? MaterialKind.OriginalImages : MaterialKind.OcrImages,
             snapshot, Defaults, language.ModeOverrides);
         ImageEntryRouting.SetSingle(job, intent, quick); store.Save(job);
         if (quick) _ = RunQuickAsync(job); else Open(job);
@@ -88,7 +88,11 @@ internal sealed class ImageDesktopFlow : IDisposable
         catch (Exception ex)
         {
             job.Error = ex.Message; store.Save(job);
-            if (!owner.IsDisposed) Open(job, autoStart: false);
+            if (!owner.IsDisposed)
+            {
+                Open(job, autoStart: false);
+                language.ReportQuickFeedback("图片处理失败：" + ex.Message);
+            }
         }
     }
     private async Task<bool> ProcessAsync(ImageMaterialJob job, Action<string> progress, CancellationToken cancellation)
@@ -122,6 +126,15 @@ internal sealed class ImageDesktopFlow : IDisposable
         {
             if (job.Route != "excerpt") throw new InvalidOperationException("请重新选择文字处理路径。");
             job.DestinationId = excerpt.StartMaterial(ImageEntryRouting.Material(job, text), job.Settings, job.Id, job.Quick);
+            job.DestinationKind = "excerpt";
+        }
+        else if (job.Entry == "excerpt")
+        {
+            // Single-image excerpts share the daily excerpt path with text;
+            // image-original remains the explicit multi-image mode.
+            var material = new CaptureMaterial("图片摘录", null, "unavailable", null,
+                "剪贴板图片", 0, job.CreatedAt) { FrontImage = job.Questions.Single() };
+            job.DestinationId = excerpt.StartMaterial(material, job.Settings, job.Id, job.Quick);
             job.DestinationKind = "excerpt";
         }
         else

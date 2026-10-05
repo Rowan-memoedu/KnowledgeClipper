@@ -132,6 +132,7 @@ internal sealed partial class LanguageDesktopFlow
                 await playback;
                 if (draft.SpeechError != null) throw new InvalidOperationException(draft.SpeechError);
                 status("已复用历史记录；可从历史继续制卡");
+                if (!draft.Input.ReadRequested) ReportQuickFeedback("已复用历史记录；可从历史继续制卡", draft);
             }
             else await CompleteQuickAsync(draft, playback);
         }
@@ -142,6 +143,7 @@ internal sealed partial class LanguageDesktopFlow
             draft.ImportError = ex.Message;
             if (quick) OpenDraft(draft).ContentReady();
             else form?.RefreshStatus();
+            if (quick) ReportQuickFeedback("快捷处理失败：" + ex.Message, draft);
         }
         finally
         {

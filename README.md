@@ -1,5 +1,13 @@
 # 零碎知识剪藏
 
+## 当前正式版：快捷反馈与单图摘录（2026-10-05）
+
+快捷任务完成后使用含义弹窗的同一小消息样式显示结果；朗读成功保留含义，不追加成功消息。失败显示原因并保留原草稿供重试；Anki 未打开时显示已保存、等待导入，朗读失败仍单独报告。消息不抢焦点，沿用含义弹窗的悬停、失焦和外部点击关闭行为。
+
+图片浮点“摘”在快捷模式下直接保留当前 PNG，不依赖原图开关，也不调用 OCR 或模型。单张原图使用摘录模式的导出设置，进入 RemNote“零碎知识剪藏 → 摘录 → 当日”普通节点；多图“图”的原图与配对流程保持独立，旧冻结导入目标不迁移。
+
+当前运行程序、桌面快捷方式和开机任务均指向 [quick-feedback-20261005/release-final](D:/Artifacts/KnowledgeClipper/quick-feedback-20261005/release-final/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)。170 项快捷反馈与入口检查、15 项等待导入检查、29 项弹窗检查通过；公开单图经真实导入及独立回读确认位于“摘录 / 10.5”，媒体字节一致、零复习卡。构建零警告、零错误，包清单及启动自检通过，个人设置哈希不变，详见[验收记录](D:/Artifacts/KnowledgeClipper/quick-feedback-20261005/validation.md)。下文为按日期保留的历史验收，当时的“当前”不代表最新运行版本。
+
 ## 当前正式版与源码基线（2026-09-28）
 
 当前运行进程、桌面快捷方式和开机任务统一指向 [restored-selection 正式包](D:/Artifacts/MimoTTS/production/20260928/KnowledgeClipper/restored-selection/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)。它从本仓库当前源码整体构建，包含此前的快捷键、弹窗和 MiMo 语音更新；选区监听与取词保护恢复到今天之前已稳定使用的 `1724643` 源码。后续开发必须从本仓库现有源码继续合并，不得拿旧产物或旧提交覆盖其他更新。

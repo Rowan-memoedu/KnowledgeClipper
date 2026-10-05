@@ -141,8 +141,8 @@ internal static partial class Program
             MineruScriptPath = Path.Combine(dataRoot, "providers-disabled", "mineru-disabled.py"),
             ExcerptModesDirectory = Path.Combine(dataRoot, "published-modes"), ModeDestinations = new(user.ModeDestinations, StringComparer.Ordinal) };
         settings.Validate();
-        if (ExportRouting.ForMode(settings, ExportRouting.BuiltinModes.Single(item => item.Id == "image-original")) != ExportDestination.RemNote)
-            throw new InvalidDataException("The current original-image destination must be RemNote for this authorized canary.");
+        if (ExportRouting.ForMode(settings, ExportRouting.BuiltinModes.Single(item => item.Id == "excerpt-manual")) != ExportDestination.RemNote)
+            throw new InvalidDataException("The current manual-excerpt destination must be RemNote for this authorized canary.");
         var pngPath = Path.Combine(dataRoot, "public-single-image-excerpt.png");
         if (File.Exists(pngPath) || Directory.Exists(settings.ExcerptModesDirectory))
             throw new InvalidDataException("Fixture files already exist without their manifest; they will not be overwritten.");

@@ -36,18 +36,23 @@ internal static partial class Program
                 $"image {intent}/{original} quick processing starts without a window");
             await Until(() => images.Recent().SingleOrDefault()?.DestinationId != null, $"image {intent}/{original}/{quick} reaches one downstream draft");
             var job = images.Recent().Single();
+            var rawExcerpt = intent == "excerpt" && (original || quick);
             Check(job.Entry == intent && job.Images.Length == 1 && ImageForms(image).Length == 0 &&
-                extractor.Calls == (!original || intent == "language" || intent == "question" && quick ? 1 : 0),
+                extractor.Calls == (rawExcerpt ? 0 : !original || intent == "language" || intent == "question" && quick ? 1 : 0),
                 $"actual image {intent}/{original}/{quick} uses the required OCR policy and never starts multi-image collection");
             if (intent == "excerpt")
             {
                 var excerpts = new ExcerptStore(root); var session = excerpts.Find(job.DestinationId!)!;
                 var card = ExcerptCards.Get(session, excerpts, session.Cards.Single().Id);
-                Check(card.Excerpt!.FrontImages.Length == (original ? 1 : 0) && card.Excerpt.Back == "" && (original || card.Excerpt.Front == "lead"),
+                Check(card.Excerpt!.FrontImages.Length == (rawExcerpt ? 1 : 0) && card.Excerpt.Back == "" && (rawExcerpt || card.Excerpt.Front == "lead"),
                     $"image excerpt/{original}/{quick} keeps exactly the raw image or OCR text with a blank back");
                 if (quick) await Until(() => Forms(excerpt).Length == 1 && ExcerptCards.Get(session, excerpts, card.Id).ImportError != null,
                     "failed image excerpt import returns to its one original preview");
                 else Check(Forms(excerpt).Length == 1 && card.ConfirmedNote == null, "normal image excerpt waits for confirmation");
+                card = ExcerptCards.Get(session, excerpts, card.Id);
+                Check(card.ModeId == "excerpt-manual" && (card.ConfirmedRemNote == null ||
+                    card.ConfirmedRemNote.DocumentPath.SequenceEqual(new[] { "摘录", DateTime.Today.ToString("M.d", System.Globalization.CultureInfo.InvariantCulture) })),
+                    "single-image excerpt uses the manual excerpt destination and daily document, never image-original");
                 Check(provider.Answers == 0, "raw image excerpt never asks the answer model");
             }
             else

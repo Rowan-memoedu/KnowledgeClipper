@@ -25,6 +25,12 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
     private readonly Dictionary<string, Task> contentTasks = new();
     private ClipDraft latest, lastSpeech;
     internal event Action<ClipDraft> DraftChanged;
+    internal event Action<string> QuickFeedback;
+    internal void ReportQuickFeedback(string message, ClipDraft draft = null)
+    {
+        if (draft != null && meaningDraftId == draft.Id) HideMeaning();
+        if (!owner.IsDisposed && !lifetime.IsCancellationRequested) QuickFeedback?.Invoke(message);
+    }
     private LanguageInputForm inputForm;
     private bool capturing;
     private readonly CancellationTokenSource lifetime = new();
@@ -84,7 +90,7 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
             var input = new InputMetadata(frozen == null ? "selection-button" : "selection-dot", Intent: question ? "question" : "language",
                 ReadRequested: read && !question, ExplicitQuestion: question ? "解释：" + material.SelectedText : null);
             var draft = StartMaterial(material, input, settings, configuration, requestedAt, quick);
-            if (frozen != null && !question) BeginMeaningPopup(draft, new Point(frozen.X, frozen.Y));
+            if (frozen != null && !question && read) BeginMeaningPopup(draft, new Point(frozen.X, frozen.Y));
             if (frozen != null) draft.Times["selectionObserved"] = frozen.CapturedAt;
             draft.Times["captureStarted"] = captureStartedAt;
             store.Save(draft);
@@ -101,6 +107,7 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
                 draft.ModeId = EntryRouting.ModeId(draft.Configuration, draft.Input.Intent);
                 store.Save(draft); OpenDraft(draft);
             }
+            if (quick) ReportQuickFeedback("快捷处理失败：" + ex.Message);
         }
         finally { capturing = false; }
     }
@@ -218,14 +225,20 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
             await ProcessAsync(draft, null, () => needsInput = true);
             lifetime.Token.ThrowIfCancellationRequested();
             using var request = new HttpClient { Timeout = TimeSpan.FromSeconds(180) };
-            await FloatingQuickImport.LanguageOrQuestionAsync(draft, store, new CardImportRouter(request), () => Changed(draft, null), lifetime.Token);
+            var awaitingAnki = false;
+            try { await FloatingQuickImport.LanguageOrQuestionAsync(draft, store, new CardImportRouter(request), () => Changed(draft, null), lifetime.Token); }
+            catch (AnkiPendingException) { awaitingAnki = true; }
             await playback;
+            lifetime.Token.ThrowIfCancellationRequested();
             if (draft.SpeechError != null) throw new InvalidOperationException(draft.SpeechError);
+            if (awaitingAnki)
+            {
+                status("内容已保存，等待 Anki 打开后自动导入。");
+                ReportQuickFeedback("已保存，等待 Anki 打开后导入", draft);
+                return;
+            }
             status("快捷导入已完成 · " + DescribeStatus(draft));
-        }
-        catch (AnkiPendingException)
-        {
-            status("内容已保存，等待 Anki 打开后自动导入。");
+            if (!draft.Input.ReadRequested) ReportQuickFeedback("快捷导入成功 · " + DescribeStatus(draft), draft);
         }
         catch (Exception ex)
         {
@@ -236,6 +249,7 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
             var form = OpenDraft(draft);
             if (needsInput) _ = ProcessAsync(draft, form);
             else form.ContentReady();
+            ReportQuickFeedback("快捷处理失败：" + ex.Message, draft);
         }
         finally
         {

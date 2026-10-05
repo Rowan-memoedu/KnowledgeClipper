@@ -64,6 +64,7 @@ internal static partial class Program
     private static async Task RunAsync()
     {
         using var owner = new Form(); _ = owner.Handle;
+        if (Environment.GetCommandLineArgs().Contains("--quick-feedback")) { await QuickFeedbackAsync(owner); return; }
         if (pendingAnkiOnly) { await PendingAnkiAsync(owner); return; }
         if (historyReuseOnly) { await HistoryReuseAsync(owner); return; }
         if (quickLanguageOnly) { await QuickLanguageSpeechAsync(owner); return; }

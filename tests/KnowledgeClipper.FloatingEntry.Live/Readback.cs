@@ -51,6 +51,7 @@ internal static partial class Program
                 Check(verified.RemIds.SequenceEqual(previous.RemIds) && verified.CardIds.SequenceEqual(previous.CardIds), key + ": forced SDK readback retains every original Rem and review-card ID");
                 Check(raw.TryGetProperty("batchSeparator", out var separator), key + ": new batch has a verified empty sibling separator");
                 var expectedDirectory = key switch { "question" => new[] { "问答" }, "excerpt" => new[] { "摘录" }, _ => new[] { "图片", "原图" } };
+                if (imageExcerptOnly) expectedDirectory = ["摘录", draft.Times["confirmed"].ToLocalTime().ToString("M.d", System.Globalization.CultureInfo.InvariantCulture)];
                 Check(plan.DocumentPath.SequenceEqual(expectedDirectory), key + ": content was routed to the expected mode document");
                 var card = raw.GetProperty("cards").EnumerateArray().Single();
                 var nodes = card.GetProperty("nodes").EnumerateArray().ToArray();

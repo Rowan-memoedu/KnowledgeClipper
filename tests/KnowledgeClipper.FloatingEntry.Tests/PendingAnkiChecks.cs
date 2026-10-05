@@ -11,6 +11,7 @@ internal static partial class Program
         var settings = Settings() with { QuickLanguage = true, ContextEnabled = false };
         WorkflowJson.Save(Path.Combine(root, "language-settings.json"), settings);
         using var language = (IDisposable)New("LanguageDesktopFlow", owner, root, (Action<string>)statuses.Add, Initial);
+        var feedback = new List<string>(); ListenQuickFeedback(language, feedback);
         using var provider = new ImageRouteProvider(); using var http = new HttpClient(provider);
         ((HttpClient)language.GetType().GetField("http", Flags)!.GetValue(language)!).Dispose();
         Field(language, "http", http);
@@ -29,6 +30,8 @@ internal static partial class Program
         Observe(); sampler.Stop();
         var children = LanguageModeCards.Children(draft, store);
         Check(observed.Count == 0 && Forms(language).Length == 0, "offline confirmed quick language never opens a preview");
+        Check(feedback.Count == 1 && feedback[0].Contains("等待") && !feedback[0].Contains("成功"),
+            "unavailable Anki emits a saved/waiting notice without claiming import success");
         Check(children.All(c => c.ConfirmedNote != null && c.ConfirmedDestination == ExportDestination.Anki &&
             c.ImportState != ImportState.Verified && c.NoteId == null && c.CardIds.Length == 0),
             "pending cards retain frozen Anki confirmation and never claim verified identities");

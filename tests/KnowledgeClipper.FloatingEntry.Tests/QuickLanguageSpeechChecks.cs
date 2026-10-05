@@ -29,6 +29,7 @@ internal static partial class Program
                 ModeDestinations = new() { ["language-en"] = ExportDestination.RemNote } };
             WorkflowJson.Save(Path.Combine(root, "language-settings.json"), settings);
             using var language = (IDisposable)New("LanguageDesktopFlow", owner, root, (Action<string>)statuses.Add, Initial);
+            var feedback = new List<string>(); ListenQuickFeedback(language, feedback);
             ((StreamingSpeech)language.GetType().GetField("speech", Flags)!.GetValue(language)!).Dispose();
             var helper = Path.Combine(root, "speech-fixture.py"); File.WriteAllText(helper, SpeechFixture);
             if (test.FailSpeech) File.WriteAllText(Path.Combine(root, "fail-speech"), "deliberate fixture failure");
@@ -102,6 +103,9 @@ internal static partial class Program
                     "disabling quick mode preserves manual import and does not affect automatic reading");
                 if (!test.Read) Check(!File.Exists(Path.Combine(root, "speech-requests.jsonl")) && draft.AudioPath == null &&
                     !draft.Times.ContainsKey("speechRequested"), "disabling automatic reading keeps quick import without requesting audio");
+                Check(test.Quick && test.FailSpeech ? feedback.Count == 1 && feedback[0].Contains("失败") :
+                    test.Quick && !test.Read ? feedback.Count == 1 && feedback[0].Contains("成功") : feedback.Count == 0,
+                    test.Name + ": successful reading keeps meaning without a success notice; failures and muted imports report their result once");
                 WorkflowJson.Save(Path.Combine(output, test.Name + ".json"), new { passed = true, draft.Id, draft.Input, draft.SpeechError,
                     exports = importer.ExportCount, languageRequests = provider.LanguageTargets.Count, windowSamples = samples,
                     windowCount = allWindows.Count, cards = LanguageModeCards.Children(draft, store).Select(child => new {

@@ -18,6 +18,7 @@ internal sealed partial class BoundClipperForm
     private ExcerptDesktopFlow excerptFlow;
     private ImageDesktopFlow imageFlow;
     private RecordHistoryFlow historyFlow;
+    private MeaningPopup quickFeedbackPopup;
     private LanguageSelectionMonitor selectionMonitor;
     private LanguageSelectionDot selectionDot;
     private ClipboardImageMonitor clipboardImageMonitor;
@@ -44,6 +45,8 @@ internal sealed partial class BoundClipperForm
             message => SetStatus(message, Color.FromArgb(38, 90, 150), Color.FromArgb(238, 245, 255)), settings);
         excerptFlow = new ExcerptDesktopFlow(this, config.WorkDirectory, languageFlow.Settings,
             message => SetStatus(message, Color.FromArgb(38, 90, 150), Color.FromArgb(238, 245, 255)));
+        languageFlow.QuickFeedback += ShowQuickFeedback;
+        excerptFlow.QuickFeedback += ShowQuickFeedback;
         imageFlow = new ImageDesktopFlow(this, config, languageFlow, excerptFlow);
         historyFlow = new RecordHistoryFlow(this, config.WorkDirectory, languageFlow, excerptFlow);
         ankiPending = new AnkiPendingQueue(config.WorkDirectory, pendingAnkiHttp);
@@ -100,8 +103,16 @@ internal sealed partial class BoundClipperForm
         languageFlow.SettingsChanged += ApplyLanguageSettings;
         Shown += (_, _) => { languageWindowShown = true; ApplyGlobalSelectionSetting(); };
         ApplyLanguageSettings();
-        FormClosed += (_, _) => { UnbindExcerptDestinationHotkey(); if (excerptDestinationForm != null && !excerptDestinationForm.IsDisposed) excerptDestinationForm.Close(); clipboardImageMonitor.Dispose(); clipboardImageDot.Dispose(); selectionMonitor.Dispose(); selectionDot.Dispose(); historyFlow.Dispose(); imageFlow.Dispose(); languageFlow.Dispose(); excerptFlow.Dispose(); };
+        FormClosed += (_, _) => { UnbindExcerptDestinationHotkey(); if (excerptDestinationForm != null && !excerptDestinationForm.IsDisposed) excerptDestinationForm.Close(); clipboardImageMonitor.Dispose(); clipboardImageDot.Dispose(); selectionMonitor.Dispose(); selectionDot.Dispose(); historyFlow.Dispose(); imageFlow.Dispose(); languageFlow.Dispose(); excerptFlow.Dispose(); quickFeedbackPopup?.Dispose(); };
         SetStatus("选中文字后点语言或摘录", Color.FromArgb(38, 90, 150), Color.FromArgb(238, 245, 255));
+    }
+
+    private void ShowQuickFeedback(string message)
+    {
+        if (IsDisposed) return;
+        quickFeedbackPopup ??= new MeaningPopup { Name = "knowledge-clipper.quick.feedback-popup", Text = "快捷处理结果" };
+        // Same presentation and dismissal as meaning, without a replay handler.
+        quickFeedbackPopup.ShowMeaning(message.TakeText(140), Cursor.Position);
     }
 
     private void ApplyLanguageSettings()
@@ -194,7 +205,14 @@ internal sealed partial class BoundClipperForm
                 await PresentStateAsync("screenshot.clipboard-start", state);
             }
         }
-        catch (Exception ex) { await PresentErrorAsync(ex.Message); }
+        catch (Exception ex)
+        {
+            await PresentErrorAsync(ex.Message);
+            if (action == ClipboardImageDotAction.Excerpt && languageFlow.Settings.QuickExcerpt ||
+                action == ClipboardImageDotAction.Read && languageFlow.Settings.QuickLanguage ||
+                action == ClipboardImageDotAction.Question && languageFlow.Settings.QuickQuestion)
+                ShowQuickFeedback("图片处理失败：" + ex.Message);
+        }
     }
 
     private void OpenLanguageSettings()
