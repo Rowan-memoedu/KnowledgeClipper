@@ -31,6 +31,7 @@ internal static class Program
             CheckPointerEndpoint();
             CheckWordBoundaries();
             CheckGestures();
+            CheckWheelGestures();
             CheckInputLifecycle();
             CheckFaults(Path.GetFullPath(args[0]));
             CheckNativeAnchor(Path.GetFullPath(args[0]));
@@ -360,6 +361,55 @@ internal static class Program
         Input(tracker, false, 0x201, 0, 10, 10, 5000);
         Check(!Input(tracker, false, 0x202, 0, 80, 10, 5050, window: 11), "cross-window drag does not bind a new source");
     }
+    private static void CheckWheelGestures()
+    {
+        foreach (var wheel in new[] { 0x20a, 0x20e })
+        foreach (var endpoint in new[] { new Point(10, 10), new Point(10, 180), new Point(10, -80) })
+        {
+            var tracker = New("SelectionGestureTracker");
+            Input(tracker, false, 0x201, 0, 10, 10, 100);
+            Check(!Input(tracker, false, wheel, 0, 10, 10, 200) &&
+                !Input(tracker, false, wheel, 0, endpoint.X, endpoint.Y, 300),
+                $"wheel {wheel:x} never publishes during a held drag ending at {endpoint}");
+            Check(Input(tracker, false, 0x202, 0, endpoint.X, endpoint.Y, 400),
+                $"wheel {wheel:x} preserves selection until release at {endpoint}");
+            Check(!Input(tracker, false, 0x202, 0, endpoint.X, endpoint.Y, 450),
+                $"wheel {wheel:x} cannot publish twice after release at {endpoint}");
+        }
+        foreach (var wheel in new[] { 0x20a, 0x20e })
+        {
+            var tracker = New("SelectionGestureTracker");
+            Check(!Input(tracker, false, wheel, 0, 10, 10, 100) &&
+                !Input(tracker, false, 0x202, 0, 10, 10, 200),
+                $"wheel {wheel:x} without a selection gesture does not create a candidate");
+            Input(tracker, false, 0x201, 0, 10, 10, 300);
+            Input(tracker, false, wheel, 0, 10, 10, 400, window: 11);
+            Check(!Input(tracker, false, 0x202, 0, 80, 10, 500),
+                $"wheel {wheel:x} in another source cancels the held selection");
+            Input(tracker, false, 0x201, 0, 10, 10, 600);
+            Input(tracker, false, wheel, 0, 10, 10, 700, own: true);
+            Check(!Input(tracker, false, 0x202, 0, 80, 10, 800),
+                $"wheel {wheel:x} in this application's controls cancels the selection");
+            Input(tracker, false, 0x201, 0, 10, 10, 900);
+            Input(tracker, false, wheel, 0, 10, 10, 1000);
+            Input(tracker, false, 0x204, 0, 10, 10, 1100);
+            Check(!Input(tracker, false, 0x202, 0, 80, 10, 1200),
+                $"a different button cancels a wheel {wheel:x} selection");
+            Input(tracker, false, 0x201, 0, 10, 10, 1300);
+            Input(tracker, false, wheel, 0, 10, 10, 1400);
+            Call(tracker, "ForegroundChanged", 11L);
+            Check(!Input(tracker, false, 0x202, 0, 80, 10, 1500),
+                $"foreground change cancels a wheel {wheel:x} selection");
+            Input(tracker, false, 0x201, 0, 10, 10, 1600);
+            Input(tracker, false, wheel, 0, 10, 10, 1700);
+            Check(!Input(tracker, false, 0x202, 0, 10, 10, 32000),
+                $"wheel {wheel:x} retains the existing gesture timeout");
+            Input(tracker, false, 0x201, 0, 10, 10, 33000);
+            Check(!Input(tracker, false, 0x202, 0, 10, 10, 33100),
+                $"a new plain click does not inherit wheel {wheel:x} displacement");
+        }
+    }
+
     private static void CheckFaults(string root)
     {
         var sequence = GetClipboardSequenceNumber();

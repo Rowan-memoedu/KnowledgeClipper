@@ -336,8 +336,8 @@ internal sealed class SelectionGestureTracker
     private readonly HashSet<int> pressed = new();
     private Point down, lastUp;
     private long downAt, downWindow, lastClickAt, lastClickWindow, keyboardSelectionAt;
-    private bool leftDown, eligible;
-    internal void Reset() { pressed.Clear(); leftDown = eligible = false; lastClickAt = keyboardSelectionAt = 0; }
+    private bool leftDown, eligible, scrolled;
+    internal void Reset() { pressed.Clear(); leftDown = eligible = scrolled = false; lastClickAt = keyboardSelectionAt = 0; }
     internal void ForegroundChanged(long window)
     {
         // The first drag can activate its source after mouse-down. Preserve that
@@ -367,19 +367,28 @@ internal sealed class SelectionGestureTracker
         if (input.Message == 0x200) return false;
         if (input.Message == 0x201)
         {
-            down = point; downAt = input.Timestamp; downWindow = target; leftDown = true; eligible = true;
+            down = point; downAt = input.Timestamp; downWindow = target; leftDown = true; eligible = true; scrolled = false;
             return false;
         }
-        if (input.Message != 0x202) { leftDown = eligible = false; return false; }
+        if (input.Message is 0x20a or 0x20e)
+        {
+            // Scrolling changes the document beneath a held pointer. Keep the
+            // drag until release, even when its screen coordinates stay fixed.
+            // The monitor still invalidates any earlier snapshot on every wheel.
+            if (eligible && leftDown && target == downWindow && input.Window == target) scrolled = true;
+            else leftDown = eligible = scrolled = false;
+            return false;
+        }
+        if (input.Message != 0x202) { leftDown = eligible = scrolled = false; return false; }
         var duration = input.Timestamp - downAt;
         var sameWindow = eligible && leftDown && target == downWindow && input.Window == target;
-        var drag = Math.Abs(point.X - down.X) >= SystemInformation.DragSize.Width || Math.Abs(point.Y - down.Y) >= SystemInformation.DragSize.Height;
+        var drag = scrolled || Math.Abs(point.X - down.X) >= SystemInformation.DragSize.Width || Math.Abs(point.Y - down.Y) >= SystemInformation.DragSize.Height;
         var doubleClick = lastClickWindow == target && input.Timestamp - lastClickAt <= SystemInformation.DoubleClickTime &&
             Math.Abs(point.X - lastUp.X) <= SystemInformation.DoubleClickSize.Width && Math.Abs(point.Y - lastUp.Y) <= SystemInformation.DoubleClickSize.Height;
         var shiftClick = pressed.Contains(0x10) || pressed.Contains(0xa0) || pressed.Contains(0xa1);
         var result = sameWindow && duration is >= 0 and < 30_000 && (drag || doubleClick || shiftClick);
         lastClickAt = sameWindow && !drag ? input.Timestamp : 0;
-        lastClickWindow = target; lastUp = point; leftDown = eligible = false;
+        lastClickWindow = target; lastUp = point; leftDown = eligible = scrolled = false;
         return result;
     }
 }
