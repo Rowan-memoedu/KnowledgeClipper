@@ -8,7 +8,7 @@ export interface ClipperTransport {
   sendRequest(action: string, payload: unknown, timeout?: number): Promise<unknown>;
 }
 const actions = new Set(['knowledge_clipper_health','knowledge_clipper_export','knowledge_clipper_readback',
-  'knowledge_clipper_excerpt_documents',
+  'knowledge_clipper_excerpt_documents','knowledge_clipper_reveal','knowledge_clipper_reveal_state',
   'knowledge_clipper_prepare_image','knowledge_clipper_finalize_media','knowledge_clipper_finalize_spacing',
   'knowledge_clipper_repair_plain_structure','knowledge_clipper_test_plain_structure','knowledge_clipper_adopt']);
 export class PluginTransport implements ClipperTransport {

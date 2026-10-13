@@ -215,6 +215,15 @@ public static class ExcerptCards
                 catch (Exception ex) when (ex is not OperationCanceledException) { errors.Add(session.Cards.Single(c => c.Id == card.Id).Label + "：" + ex.Message); }
                 finally { changed?.Invoke(); }
             }
+            // Only this explicit import batch navigates, once, after verified writes.
+            // Already imported histories never pull the user's editor back on reopen.
+            var revealed = cards.LastOrDefault(c => c.ImportState == ImportState.Verified && c.RemNoteResult != null);
+            if (revealed != null && anki is IImportedCardRevealer navigation)
+            {
+                try { await navigation.RevealAsync(revealed, ct); revealed.RemNoteRevealError = null; }
+                catch (Exception ex) { revealed.RemNoteRevealError = ex.Message; }
+                store.Cards.Save(revealed); changed?.Invoke();
+            }
             if (errors.Count > 0) throw new InvalidOperationException(string.Join("\n", errors));
         }
         finally { session.ImportGate.Release(); }

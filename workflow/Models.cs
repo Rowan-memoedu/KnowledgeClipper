@@ -276,6 +276,7 @@ public sealed class ClipDraft
     public ExportDestination? ConfirmedDestination { get; set; }
     public RemNoteExportPlan? ConfirmedRemNote { get; set; }
     public RemNoteImportReceipt? RemNoteResult { get; set; }
+    public string? RemNoteRevealError { get; set; }
     public ImportState ImportState { get; set; }
     public long? NoteId { get; set; }
     public long[] CardIds { get; set; } = [];

@@ -223,6 +223,22 @@ export function registerKnowledgeClipperHttp(app: Express, ws: WebSocketServer, 
     try{res.json(await ws.sendRequest('knowledge_clipper_excerpt_documents',requestedRoot?{rootRemId:requestedRoot}:{},15000));}
     catch(error){res.status(503).json({error:error instanceof Error?error.message:String(error)});}
   });
+  router.post('/reveal', async (req,res) => {
+    const parsed=FinalizeSchema.safeParse(req.body);
+    if(!parsed.success){res.status(400).json({error:'Invalid imported navigation identity'});return;}
+    if(!ws.hasBridgeCapability('knowledge-clipper.import-navigation.v1')){
+      res.status(503).json({error:'Refresh the KnowledgeClipper plugin for imported block navigation'});return;
+    }
+    try{res.json(await ws.sendRequest('knowledge_clipper_reveal',parsed.data,30000));}
+    catch(error){res.status(503).json({error:error instanceof Error?error.message:String(error)});}
+  });
+  router.get('/reveal-state', async (_req,res) => {
+    if(!ws.hasBridgeCapability('knowledge-clipper.import-navigation.v1')){
+      res.status(503).json({error:'Imported block navigation is unavailable'});return;
+    }
+    try{res.json(await ws.sendRequest('knowledge_clipper_reveal_state',{},5000));}
+    catch(error){res.status(503).json({error:error instanceof Error?error.message:String(error)});}
+  });
   for (const operation of ['export','readback'] as const) router.post(`/${operation}`, async (req, res) => {
     const envelope = operation==='export' && req.body?.plan ? ExportSchema.safeParse(req.body) : undefined;
     if(envelope && !envelope.success){res.status(400).json({error:'Invalid export envelope'});return;}

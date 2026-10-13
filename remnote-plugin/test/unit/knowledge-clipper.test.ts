@@ -60,6 +60,28 @@ import { BuiltInPowerupCodes, type ReactRNPlugin } from '@remnote/plugin-sdk';
 import { clipIdentity, clipNodeSnapshot, clipStructureSnapshot, KnowledgeClipperAdapter, partsToRichText, richTextToParts, type ClipPlan } from '../../src/api/knowledge-clipper';
 import {verifyEmptyBackEditor} from '../../src/testing/plain-structure-canary';
 
+describe('completed import navigation identity',()=>{
+  it('allows read-only navigation after editor spacer cleanup while preserving strict import readback',async()=>{
+    const sdk=fakeSdk(),adapter=new KnowledgeClipperAdapter(sdk.plugin,()=>true);
+    const imported:any=await adapter.export({plan:plan(),newSource:true});
+    const document=sdk.nodes.get(imported.documentRemId)!;
+    document.children=document.children.filter(id=>id!==imported.batchSeparator.remId);
+    const writes=sdk.writes,storage=JSON.stringify([...sdk.storage]);
+    expect(clipIdentity(await adapter.readNavigation(plan()) as any)).toEqual(clipIdentity(imported));
+    await expect(adapter.readback(plan())).rejects.toThrow('separator or sibling order');
+    expect(sdk.writes).toBe(writes);expect(JSON.stringify([...sdk.storage])).toBe(storage);
+  });
+  it('rejects incomplete journals and changed content without navigation or repairs',async()=>{
+    const sdk=fakeSdk(),adapter=new KnowledgeClipperAdapter(sdk.plugin,()=>true);
+    await expect(adapter.readNavigation(plan())).rejects.toThrow('completed import journal');
+    const imported:any=await adapter.export({plan:plan(),newSource:true});
+    sdk.nodes.get(imported.cards[0].remIds[0])!.text=[{i:'m',text:'Changed public content'}];
+    const writes=sdk.writes;
+    await expect(adapter.readNavigation(plan())).rejects.toThrow('content or location');
+    expect(sdk.writes).toBe(writes);
+  });
+});
+
 function fakeSdk() {
   const nodes = new Map<string, FakeRem>();
   const storage = new Map<string, unknown>();

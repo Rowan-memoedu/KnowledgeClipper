@@ -1,18 +1,23 @@
+import {ImportNavigation,NAVIGATION_CAPABILITY} from './api/import-navigation';
 import type {ReactRNPlugin} from '@remnote/plugin-sdk';
 import {verifyEmptyBackEditor} from './testing/plain-structure-canary';
 import {KnowledgeClipperAdapter, KNOWLEDGE_CLIPPER_CAPABILITY, KNOWLEDGE_CLIPPER_MEDIA_CAPABILITY, KNOWLEDGE_CLIPPER_SPACING_CAPABILITY, KNOWLEDGE_CLIPPER_SPACING_FINALIZE_CAPABILITY, KNOWLEDGE_CLIPPER_PLAIN_STRUCTURE_CAPABILITY} from './api/knowledge-clipper';
 export const CAPABILITIES=[KNOWLEDGE_CLIPPER_CAPABILITY,KNOWLEDGE_CLIPPER_MEDIA_CAPABILITY,KNOWLEDGE_CLIPPER_SPACING_CAPABILITY,KNOWLEDGE_CLIPPER_SPACING_FINALIZE_CAPABILITY,KNOWLEDGE_CLIPPER_PLAIN_STRUCTURE_CAPABILITY,'knowledge-clipper.identity-adopt.v1','knowledge-clipper.excerpt-documents.v1'];
+CAPABILITIES.push(NAVIGATION_CAPABILITY);
 export const STATUS_KEY='knowledge-clipper.connection-status';
 export const WRITE_SETTING='knowledge-clipper-enable-import';
 export const WS_URL='ws://127.0.0.1:43112';
 export function createDispatcher(plugin:ReactRNPlugin) {
  let writable=false;
  const adapter=new KnowledgeClipperAdapter(plugin,()=>writable);
+ const navigation=new ImportNavigation(plugin,adapter);
  return async (action:string,payload:unknown) => {
   writable=await plugin.settings.getSetting<boolean>(WRITE_SETTING)===true;
   switch(action) {
    case 'knowledge_clipper_health':return {connected:true,supported:true,acceptWriteOperations:writable,capabilities:CAPABILITIES,pluginId:'knowledge-clipper',version:'1.0.0',mediaFinalizeSupported:true,identityAdoptSupported:true,batchSpacingSupported:true,spacingFinalizeSupported:true,plainStructureSupported:true};
    case 'knowledge_clipper_excerpt_documents':return adapter.listExcerptDocuments(payload as {rootRemId?:string});
+   case 'knowledge_clipper_reveal':return navigation.reveal(payload);
+   case 'knowledge_clipper_reveal_state':return navigation.state();
    case 'knowledge_clipper_export':return adapter.export(payload);
    case 'knowledge_clipper_readback':return adapter.readback(payload);
    case 'knowledge_clipper_prepare_image':return adapter.prepareImage(payload);

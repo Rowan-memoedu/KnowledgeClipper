@@ -536,7 +536,11 @@ export class KnowledgeClipperAdapter {
         node.isExtraCardDetail || typeof node.practiceEnabled !== 'boolean' || !pending && node.practiceEnabled !== false || (node.children as unknown[]).length ||
         (node.cardIds as unknown[]).length || (node.cardTypes as unknown[]).length || !(pending ? pendingOrderValid : completeOrderValid) ||
         !pending && record.plainVersion === 1 && !this.plainStructureComplete(node)) {
-      throw new Error('Recorded batch separator or sibling order differs; no replacement was created');
+      throw new Error('Recorded batch separator or sibling order differs; no replacement was created: '+JSON.stringify({
+        belongs,pending,pendingOrderValid,completeOrderValid,remType:node.remType,isDocument:node.isDocument,
+        practiceEnabled:node.practiceEnabled,plainStructureComplete:this.plainStructureComplete(node),
+        contentIds,separatorRemId:record.remId,documentChildren:children,
+      }));
     }
     return {remId:record.remId,previousRemId:contentIds[contentIds.length-1],node};
   }
@@ -751,6 +755,24 @@ export class KnowledgeClipperAdapter {
   readback(value: unknown): Promise<unknown> {
     const plan = validateClipPlan(value);
     const work = this.queue.then(() => this.readbackLocked(plan));
+    this.queue = work.catch(() => undefined);
+    return work;
+  }
+
+  /** Navigation is read-only and binds to completed content, not a disposable editor spacer. */
+  readNavigation(value: unknown): Promise<unknown> {
+    const plan = validateClipPlan(value);
+    const work = this.queue.then(async () => {
+      const attempt = await this.plugin.storage.getSynced<StoredAttempt>(attemptKey(plan.sourceId));
+      if (!attempt || attempt.fingerprint !== attemptFingerprint(plan) || attempt.phase !== 'complete' ||
+          attempt.batchSeparator && attempt.batchSeparator.state !== 'complete')
+        throw new Error('Navigation requires a completed import journal');
+      const records = await Promise.all(plan.cards.map(card => this.plugin.storage.getSynced<StoredCard>(markerKey(plan.sourceId,card.key))));
+      if (records.some(record => !record)) throw new Error('Navigation content identity is incomplete');
+      // Reuse the full content, card and directory checks. Strict import/recovery
+      // readback still requires its original spacer and never calls this method.
+      return this.readbackLocked(plan, undefined, records as StoredCard[]);
+    });
     this.queue = work.catch(() => undefined);
     return work;
   }

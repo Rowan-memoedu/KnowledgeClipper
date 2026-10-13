@@ -7,7 +7,7 @@ namespace KnowledgeClipper.Workflow;
 public sealed record ExcerptDocument(string Id, string Title);
 public sealed record ExcerptDocumentList(string RootId, string ExcerptId, ExcerptDocument[] Documents);
 
-public sealed class RemNoteConnection(HttpClient http, string endpoint) : ICardImporter
+public sealed partial class RemNoteConnection(HttpClient http, string endpoint) : ICardImporter
 {
     public const string DefaultEndpoint = "http://127.0.0.1:43111";
     private static readonly string[] LegacyDefaultEndpoints = ["http://127.0.0.1:43101", "http://localhost:43101", "http://[::1]:43101"];

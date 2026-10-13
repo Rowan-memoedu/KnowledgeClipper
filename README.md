@@ -1,6 +1,12 @@
 # 零碎知识剪藏
 
-## 当前正式版：滚轮拖选浮点修复（2026-10-07）
+## 当前正式版：摘录后打开页面并选中正文（2026-10-13）
+
+手动和快捷摘录核验导入后，RemNote 自动切到目标页面并选中本批最后一项的正文块；多段正文保留完整选区。只调整内部页面和编辑器，后台或最小化时不抢前台。重复打开已导入记录不会重新定位；定位失败单独提示，已成功导入的内容不会重发。
+
+七类真实输入、22 项完整流程检查、最小化期间连续窗口监测和独立 MCP 回读通过；350 项本地回归通过。运行进程、快捷方式和启动任务已切换至[正式包](D:/Artifacts/KnowledgeClipper/excerpt-navigation-20261013/candidate/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，961 份既有数据和配置文件哈希未变。RemNote 已恢复正常窗口启动。见[验收记录](D:/Artifacts/KnowledgeClipper/excerpt-navigation-20261013/validation.md)和[部署回执](D:/Artifacts/KnowledgeClipper/excerpt-navigation-20261013/deployment.json)。
+
+## 上一正式版：滚轮拖选浮点修复（2026-10-07）
 
 按住左键选取时滚动滚轮，会保留同一来源窗口内的选取手势；松开后读取实际选区并在松开点显示浮点。横向滚动及滚动后鼠标坐标不变同样支持。滚动仍使旧快照失效，跨窗口、其他按钮和超时继续取消选取。
 

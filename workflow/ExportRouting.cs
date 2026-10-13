@@ -99,7 +99,8 @@ public static class ExportRouting
         if (draft.ImportState != ImportState.Verified) return "RemNote 导入待核对";
         var result = draft.RemNoteResult;
         return result == null ? "RemNote 导入待核对" : "已导入 RemNote：" + result.RemIds.Length + " 条内容" +
-            (result.CardIds.Length > 0 ? " · " + result.CardIds.Length + " 张卡" : "（普通节点）");
+            (result.CardIds.Length > 0 ? " · " + result.CardIds.Length + " 张卡" : "（普通节点）") +
+            (draft.RemNoteRevealError == null ? "" : " · 自动定位未完成");
     }
 
     public static AnkiNoteDraft BuildNote(ClipDraft draft, ExportDestination? forced = null) =>
@@ -125,7 +126,7 @@ public static class ExportRouting
     public static void Confirm(ClipDraft draft, AnkiNoteDraft note, ExportDestination? forced = null) => Prepare(draft, note, forced).Apply(draft);
 }
 
-public sealed class CardImportRouter(HttpClient http) : ICardImporter
+public sealed partial class CardImportRouter(HttpClient http) : ICardImporter
 {
     public ExportDestination? FixedDestination => null;
     public Task ImportAsync(ClipDraft draft, DraftStore store, CancellationToken ct = default) => ExportRouting.For(draft) switch
