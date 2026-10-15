@@ -7,6 +7,18 @@ public interface IImportedCardRevealer
 
 public sealed partial class CardImportRouter : IImportedCardRevealer
 {
+    public async Task ImportAsync(ClipDraft draft, DraftStore store, CancellationToken ct = default)
+    {
+        var alreadyVerified = draft.ImportState == ImportState.Verified;
+        await ImportCoreAsync(draft, store, ct);
+        // ExcerptCards already reveals once at the end of its batch.
+        if (alreadyVerified || draft.Excerpt != null || ExportRouting.For(draft) != ExportDestination.RemNote ||
+            draft.ImportState != ImportState.Verified) return;
+        try { await RevealAsync(draft, ct); draft.RemNoteRevealError = null; }
+        catch (Exception ex) { draft.RemNoteRevealError = ex.Message; }
+        store.Save(draft);
+    }
+
     public Task RevealAsync(ClipDraft draft, CancellationToken ct = default) =>
         ExportRouting.For(draft) == ExportDestination.RemNote
             ? new RemNoteConnection(http, draft.Settings.RemNoteSdkEndpoint).RevealAsync(draft, ct)

@@ -129,7 +129,7 @@ public static class ExportRouting
 public sealed partial class CardImportRouter(HttpClient http) : ICardImporter
 {
     public ExportDestination? FixedDestination => null;
-    public Task ImportAsync(ClipDraft draft, DraftStore store, CancellationToken ct = default) => ExportRouting.For(draft) switch
+    private Task ImportCoreAsync(ClipDraft draft, DraftStore store, CancellationToken ct) => ExportRouting.For(draft) switch
     {
         ExportDestination.Anki => new AnkiConnection(http, draft.Settings.AnkiEndpoint).ImportAsync(draft, store, ct),
         ExportDestination.RemNote => new RemNoteConnection(http, draft.Settings.RemNoteSdkEndpoint).ImportAsync(draft, store, ct),

@@ -279,6 +279,8 @@ ClipDraft Confirmed(LanguageSettings? settings = null)
     var draft = Draft(settings: settings); ExportRouting.Confirm(draft, Note()); return draft;
 }
 JsonNode ForDraft(ClipDraft draft) { var value = Fixtures.Basic(); value["sourceId"] = draft.ConfirmedRemNote!.SourceId; return value; }
+JsonNode Revealed(ClipDraft draft) => JsonSerializer.SerializeToNode(new { revealed = true, sourceId = draft.ConfirmedRemNote!.SourceId,
+    documentRemId = draft.RemNoteResult!.DocumentRemId, remIds = draft.RemNoteResult.RemIds }, WorkflowJson.Options)!;
 string FrozenSnapshot(ClipDraft draft) => JsonSerializer.Serialize(new { draft.Id, draft.Settings, draft.Original, draft.Material,
     draft.ModeId, draft.Route, draft.ConfirmedDestination, draft.ConfirmedNote, draft.ConfirmedRemNote }, WorkflowJson.Options);
 void AssertFreshExport(WireCall call, ClipDraft draft)
@@ -350,10 +352,11 @@ await Test("legacy and prior-day Unknown plans retain their exact path and recov
             "Frozen old plan acquired a new day.");
         Assert(ExportRouting.Describe(draft).EndsWith(" / " + string.Join(" / ", path)), "Old preview was relabeled with today.");
         store.Save(draft); draft = store.Find(draft.Id)!;
-        using var backend = new ScriptedHandler((_, _) => Task.FromResult(ForDraft(draft)));
+        using var backend = new ScriptedHandler((call, _) => Task.FromResult(call.Path.EndsWith("/reveal") ? Revealed(draft) : ForDraft(draft)));
         using var http = new HttpClient(backend);
         await new CardImportRouter(http).ImportAsync(draft, store);
-        var call = backend.Calls.Single();
+        Assert(backend.Calls.Select(c => c.Path.Split('/').Last()).SequenceEqual(["readback", "reveal"]), "Recovery wrote again or did not navigate after verification.");
+        var call = backend.Calls.Single(c => c.Path.EndsWith("/readback"));
         Assert(call.Path.EndsWith("/readback") && !JsonNode.Parse(call.Body!)!.AsObject().ContainsKey("newSource"), "Old recovery attempted an export.");
         Assert(JsonSerializer.Serialize(JsonSerializer.Deserialize<RemNoteExportPlan>(call.Body!, WorkflowJson.Options), WorkflowJson.Options) == original &&
             JsonSerializer.Serialize(store.Find(draft.Id)!.ConfirmedRemNote, WorkflowJson.Options) == original,
@@ -419,7 +422,7 @@ await Test("reopened legacy Ready draft imports through the independent host wit
     var snapshot = FrozenSnapshot(draft);
     using var backend = new ScriptedHandler((call, _) => Task.FromResult(call.Path.EndsWith("/health") ? Fixtures.Health() : ForDraft(draft)));
     using var http = new HttpClient(backend); await new CardImportRouter(http).ImportAsync(draft, store);
-    Assert(draft.ImportState == ImportState.Verified && backend.Calls.Count == 2 && backend.Calls.All(call => call.Address.GetLeftPart(UriPartial.Authority) == RemNoteConnection.DefaultEndpoint),
+    Assert(draft.ImportState == ImportState.Verified && backend.Calls.Count == 3 && backend.Calls.All(call => call.Address.GetLeftPart(UriPartial.Authority) == RemNoteConnection.DefaultEndpoint),
         "Legacy draft still depended on the old MCP service port.");
     AssertFreshExport(backend.Calls[1], draft);
     Assert(FrozenSnapshot(store.Find(draft.Id)!) == snapshot, "Transport migration rewrote saved fields, IDs, target, or endpoint.");
@@ -432,7 +435,7 @@ await Test("custom SDK hosts and path prefixes remain in use for health and expo
         using var backend = new ScriptedHandler((call, _) => Task.FromResult(call.Path.EndsWith("/health") ? Fixtures.Health() : ForDraft(draft)));
         using var http = new HttpClient(backend); await new CardImportRouter(http).ImportAsync(draft, store);
         Assert(backend.Calls.Select(call => call.Address).SequenceEqual(new[] {
-            new Uri(endpoint + "/sdk/knowledge-clipper/health"), new Uri(endpoint + "/sdk/knowledge-clipper/export") }), "Custom SDK route changed.");
+            new Uri(endpoint + "/sdk/knowledge-clipper/health"), new Uri(endpoint + "/sdk/knowledge-clipper/export"), new Uri(endpoint + "/sdk/knowledge-clipper/reveal") }), "Custom SDK route changed.");
         Assert(FrozenSnapshot(store.Find(draft.Id)!) == snapshot, "Custom endpoint import modified frozen content.");
         AssertFreshExport(backend.Calls[1], draft);
     }
@@ -444,9 +447,10 @@ await Test("an existing RemNote identity always takes readback even when the sav
         var draft = Confirmed(new() { RemNoteSdkEndpoint = "http://localhost:43101/" });
         draft.RemNoteResult = Verify(draft.ConfirmedRemNote!, ForDraft(draft)); draft.ImportState = state; store.Save(draft); draft = store.Find(draft.Id)!;
         var snapshot = FrozenSnapshot(draft);
-        using var backend = new ScriptedHandler((_, _) => Task.FromResult(ForDraft(draft))); using var http = new HttpClient(backend);
+        using var backend = new ScriptedHandler((call, _) => Task.FromResult(call.Path.EndsWith("/reveal") ? Revealed(draft) : ForDraft(draft))); using var http = new HttpClient(backend);
         await new CardImportRouter(http).ImportAsync(draft, store);
-        var call = backend.Calls.Single(); var body = JsonNode.Parse(call.Body!)!.AsObject();
+        Assert(backend.Calls.Select(c => c.Path.Split('/').Last()).SequenceEqual(["readback", "reveal"]), "Known identity was exported again or not revealed after verification.");
+        var call = backend.Calls.Single(c => c.Path.EndsWith("/readback")); var body = JsonNode.Parse(call.Body!)!.AsObject();
         Assert(call.Address.Port == 43111 && call.Path.EndsWith("/readback") && !body.ContainsKey("newSource") && !body.ContainsKey("plan"),
             "A known remote identity was treated as a new source after migration.");
         Assert(FrozenSnapshot(store.Find(draft.Id)!) == snapshot, "Readback migration changed frozen content.");
@@ -965,6 +969,53 @@ await Test("finalized spacing cannot substitute a new blank identity", async () 
     using var http = new HttpClient(backend);
     await RejectAsync<InvalidDataException>(() => new RemNoteConnection(http, draft.Settings.RemNoteSdkEndpoint).ImportAsync(draft, store));
     Assert(draft.ImportState == ImportState.Unknown && draft.RemNoteResult!.Evidence.GetProperty("batchSeparator").GetProperty("remId").GetString() == "batch-blank", "Finalization changed the original blank identity.");
+});
+
+foreach (var (name, plan, response) in new[] { ("basic", Fixtures.BasicPlan(), Fixtures.Basic()),
+    ("cloze", Fixtures.ClozePlan(), Fixtures.Cloze()), ("image", Fixtures.ImagesPlan(), Fixtures.Images()) })
+await Test("card router reveals verified " + name + " once and preserves frozen identity on retry", async () =>
+{
+    var draft = Confirmed(); draft.ConfirmedRemNote = plan;
+    using var backend = new ScriptedHandler((call, _) =>
+    {
+        if (call.Path.EndsWith("/health")) return Task.FromResult(Fixtures.Health());
+        if (call.Path.EndsWith("/export")) return Task.FromResult(response.DeepClone());
+        if (!call.Path.EndsWith("/reveal")) throw new Exception("Unexpected request: " + call.Path);
+        var body = JsonNode.Parse(call.Body!)!;
+        Assert(body["plan"]!["sourceId"]!.GetValue<string>() == plan.SourceId &&
+            JsonNode.DeepEquals(body["expected"]!["cards"]![0]!["remIds"], response["cards"]![0]!["remIds"]), "Navigation changed frozen identity.");
+        return Task.FromResult<JsonNode>(new JsonObject { ["revealed"] = true, ["sourceId"] = plan.SourceId,
+            ["documentRemId"] = response["documentRemId"]!.DeepClone(), ["remIds"] = response["cards"]![0]!["remIds"]!.DeepClone() });
+    });
+    using var http = new HttpClient(backend); var router = new CardImportRouter(http);
+    await router.ImportAsync(draft, store);
+    Assert(draft.ImportState == ImportState.Verified && draft.RemNoteRevealError == null && backend.Calls.Last().Path.EndsWith("/reveal"), "Card navigation did not run after verification.");
+    var calls = backend.Calls.Count; await router.ImportAsync(draft, store);
+    Assert(backend.Calls.Count == calls && store.Find(draft.Id)!.ImportState == ImportState.Verified, "Verified retry re-exported or revealed again.");
+});
+await Test("excerpt cards leave navigation to the existing batch flow", async () =>
+{
+    var draft = Confirmed(); draft.Excerpt = new("First\nSecond", "Answer A\nAnswer B");
+    using var backend = new ScriptedHandler((call, _) => Task.FromResult(call.Path.EndsWith("/health") ? Fixtures.Health() : ForDraft(draft)));
+    using var http = new HttpClient(backend); await new CardImportRouter(http).ImportAsync(draft, store);
+    Assert(draft.ImportState == ImportState.Verified && backend.Calls.Select(c => c.Path.Split('/').Last()).SequenceEqual(["health", "export"]), "Excerpt router duplicated its batch navigation.");
+});
+await Test("card navigation failure preserves verified import and persists separate feedback", async () =>
+{
+    var draft = Confirmed();
+    using var backend = new ScriptedHandler((call, _) => call.Path.EndsWith("/reveal") ? throw new IOException("Navigation unavailable") :
+        Task.FromResult(call.Path.EndsWith("/health") ? Fixtures.Health() : ForDraft(draft)));
+    using var http = new HttpClient(backend); await new CardImportRouter(http).ImportAsync(draft, store);
+    var saved = store.Find(draft.Id)!;
+    Assert(saved.ImportState == ImportState.Verified && saved.ImportError == null && saved.RemNoteRevealError!.Contains("Navigation unavailable"), "Navigation failure changed import success or lost feedback.");
+});
+await Test("unverified card import never navigates", async () =>
+{
+    var draft = Confirmed();
+    using var backend = new ScriptedHandler((call, _) => call.Path.EndsWith("/health") ? Task.FromResult(Fixtures.Health()) : throw new HttpRequestException("Export unavailable"));
+    using var http = new HttpClient(backend);
+    await RejectAsync<HttpRequestException>(() => new CardImportRouter(http).ImportAsync(draft, store));
+    Assert(draft.ImportState == ImportState.Unknown && backend.Calls.All(c => !c.Path.EndsWith("/reveal")), "An unverified card navigated.");
 });
 
 WorkflowJson.Save(receiptPath, new { success = results.All(r => r.Passed), count = results.Count, passed = results.Count(r => r.Passed),

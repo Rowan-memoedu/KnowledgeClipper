@@ -1,6 +1,12 @@
 # 零碎知识剪藏
 
-## 当前正式版：RemNote 最小化后台摘录修复（2026-10-15）
+## 当前正式版：卡片导入后自动定位（2026-10-15）
+
+普通制卡导入 RemNote 后也会自动打开内部页面并选中正文，复用摘录已验证的后台定位。定位接在共同导入路由核验成功之后，已导入卡片不重复定位；定位失败独立提示，保留导入成功。摘录仍在整批完成后仅定位最后一项。
+
+普通问答、挖空、图片与含批注组合卡的 17 项真实检查、全程最小化窗口监测及 334 项本地回归通过。运行进程、启动任务和快捷方式已切换至[正式包](D:/Artifacts/KnowledgeClipper/card-navigation-20261015/candidate/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64/KnowledgeClipper.exe)，1,086 份既有数据及配置文件哈希不变。见[验收记录](D:/Artifacts/KnowledgeClipper/card-navigation-20261015/validation.md)和[部署回执](D:/Artifacts/KnowledgeClipper/card-navigation-20261015/deployment.json)。
+
+## 上一正式版：RemNote 最小化后台摘录修复（2026-10-15）
 
 剪藏插件的连接、心跳与重连移到专用 Worker，重连间隔最多 5 秒；定位等待由本地 Node 服务计时，不再依赖隐藏页面的定时器。摘录前的只读健康检查容许短暂重连，并区分未连接、SDK 暂未响应和未允许写入；不自动重发结果未知的导入。仍只更新 RemNote 内部页面和选区，不激活窗口。
 
