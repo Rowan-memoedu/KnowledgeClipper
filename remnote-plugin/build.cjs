@@ -11,6 +11,7 @@ async function main() {
   await esbuild.build({entryPoints:[`src/widgets/${name}.tsx`],outfile:path.join(output,`${name}${sandbox?'-sandbox':''}.js`),bundle:true,minify:true,platform:'browser',format:'iife',target:'es2020',define:{'process.env.NODE_ENV':'"production"'},banner:sandbox?{}:{js:'const IMPORT_META=import.meta;'}});
  }
  for (const file of ['manifest.json','index.html']) await fs.copyFile(path.join('public',file),path.join(output,file));
+ await esbuild.build({entryPoints:['src/transport-worker.ts'],outfile:path.join(output,'transport-worker.js'),bundle:true,minify:true,platform:'browser',format:'iife',target:'es2020'});
  console.log(`Plugin build complete: ${output}`);
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

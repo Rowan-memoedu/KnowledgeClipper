@@ -1,6 +1,6 @@
 import {describe,it,expect,vi,afterEach} from 'vitest';
 import type {ReactRNPlugin} from '@remnote/plugin-sdk';
-import {createDispatcher,startRuntime,WS_URL,WRITE_SETTING} from '../src/runtime';
+import {createDispatcher,startRuntime,WRITE_SETTING} from '../src/runtime';
 afterEach(()=>{vi.unstubAllGlobals();vi.useRealTimers();});
 function sdk(){return {settings:{getSetting:vi.fn(async()=>true)},storage:{setSession:vi.fn(async()=>undefined)}} as unknown as ReactRNPlugin;}
 describe('dedicated plugin transport',()=>{
@@ -15,17 +15,20 @@ describe('dedicated plugin transport',()=>{
   const plugin=sdk();vi.mocked(plugin.settings.getSetting).mockResolvedValue(false);
   expect((await createDispatcher(plugin)('knowledge_clipper_health',{}) as any).acceptWriteOperations).toBe(false);
  });
- it('uses dedicated endpoint, responds to health and reconnects until shutdown',async()=>{
-  vi.useFakeTimers();
-  const sockets:any[]=[];
-  class Socket {static OPEN=1;readyState=1;onopen:any;onmessage:any;onclose:any;onerror:any;send=vi.fn();url:string;constructor(url:string){this.url=url;sockets.push(this);}close(){this.readyState=3;this.onclose?.();}}
-  vi.stubGlobal('WebSocket',Socket);
-  const stop=startRuntime(sdk());expect(sockets[0].url).toBe(WS_URL);
-  sockets[0].onopen();expect(JSON.parse(sockets[0].send.mock.calls[0][0]).protocol).toBe('knowledge-clipper.transport.v1');
-  await sockets[0].onmessage({data:JSON.stringify({id:'health1',action:'knowledge_clipper_health',payload:{}})});
-  expect(JSON.parse(sockets[0].send.mock.calls[1][0]).result.pluginId).toBe('knowledge-clipper');
-  await sockets[0].onmessage({data:'{"type":"ping"}'});expect(JSON.parse(sockets[0].send.mock.calls[2][0])).toEqual({type:'pong'});
-  sockets[0].close();await vi.advanceTimersByTimeAsync(1000);expect(sockets).toHaveLength(2);
-  stop();await vi.advanceTimersByTimeAsync(120000);expect(sockets).toHaveLength(2);
+ it('dispatches SDK requests with no page timers and binds late replies to the original connection',async()=>{
+  let worker:any;
+  class WorkerMock {onmessage:any;onerror:any;postMessage=vi.fn();terminate=vi.fn();constructor(public url:URL){worker=this;}}
+  vi.stubGlobal('Worker',WorkerMock);vi.stubGlobal('location',{href:'http://localhost:43113/index.html?widgetName=index'});
+  vi.stubGlobal('setTimeout',()=>{throw new Error('hidden page timer must not be used');});
+  vi.stubGlobal('setInterval',()=>{throw new Error('hidden page timer must not be used');});
+  const plugin=sdk(),stop=startRuntime(plugin);expect(String(worker.url)).toBe('http://localhost:43113/transport-worker.js');
+  expect(worker.postMessage.mock.calls[0][0].hello.protocol).toBe('knowledge-clipper.transport.v1');
+  await worker.onmessage({data:{type:'status',value:'connected',generation:1}});
+  let finish!:(value:boolean)=>void;
+  vi.mocked(plugin.settings.getSetting).mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve as any;}));
+  const response=worker.onmessage({data:{type:'message',generation:1,message:{id:'health1',action:'knowledge_clipper_health',payload:{}}}});
+  await worker.onmessage({data:{type:'status',value:'connected',generation:2}});finish(true);await response;
+  expect(worker.postMessage.mock.calls.at(-1)[0]).toMatchObject({type:'send',generation:1,message:{id:'health1',result:{pluginId:'knowledge-clipper'}}});
+  stop();expect(worker.terminate).toHaveBeenCalledOnce();
  });
 });

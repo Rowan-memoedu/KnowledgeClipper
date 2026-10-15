@@ -30,7 +30,7 @@ export class ImportNavigation {
   private revision = 0;
   private tail:Promise<unknown> = Promise.resolve();
   private phase = 'idle';
-  constructor(private plugin:ReactRNPlugin, private adapter:KnowledgeClipperAdapter) {}
+  constructor(private plugin:ReactRNPlugin, private adapter:KnowledgeClipperAdapter,private wait:()=>Promise<void>=pause) {}
   async state() {
     const paneId = await this.plugin.window.getFocusedPaneId();
     const selection = await this.plugin.editor.getSelectedRem();
@@ -84,7 +84,7 @@ export class ImportNavigation {
       const pane = await this.plugin.window.getFocusedPaneId();
       if(await this.plugin.window.getOpenPaneRemId(pane)===document._id)break;
       if(Date.now()>=pageDeadline)throw new Error('RemNote did not open the imported document');
-      await pause();
+      await this.wait();
     }
     if(superseded())return {revealed:false,superseded:true};
     this.phase='verify-selection';
@@ -106,7 +106,7 @@ export class ImportNavigation {
         await this.plugin.window.setFocusedPaneId(observed.paneId);
         await this.plugin.editor.selectRem(remIds,document._id);
       }
-      await pause();
+      await this.wait();
     }
     throw new Error('RemNote did not retain the imported block selection');
   }

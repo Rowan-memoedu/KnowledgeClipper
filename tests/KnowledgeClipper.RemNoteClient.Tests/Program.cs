@@ -502,6 +502,16 @@ await Test("health failure before write persists Failed and performs no export",
     using var http = new HttpClient(backend); await RejectAsync<InvalidDataException>(() => new RemNoteConnection(http, draft.Settings.RemNoteSdkEndpoint).ImportAsync(draft, store));
     Assert(store.Find(draft.Id)!.ImportState == ImportState.Failed && backend.Calls.Count == 1 && draft.ImportGate.CurrentCount == 1, "Preflight failure wrote or left gate locked.");
 });
+foreach (var (field, text) in new[] { ("sdkResponsive", "已连接，但暂未响应"), ("connected", "尚未连接"), ("acceptWriteOperations", "未允许写入") })
+await Test("health distinguishes " + field + " without sending an import", async () =>
+{
+    var draft = Confirmed();
+    using var backend = new ScriptedHandler((_, _) => { var health = Fixtures.Health(); health[field] = false; return Task.FromResult(health); });
+    using var http = new HttpClient(backend);
+    await RejectAsync<InvalidDataException>(() => new RemNoteConnection(http, draft.Settings.RemNoteSdkEndpoint).ImportAsync(draft, store));
+    var saved = store.Find(draft.Id)!;
+    Assert(saved.ImportState == ImportState.Failed && saved.ImportError!.Contains(text) && backend.Calls.Count == 1 && backend.Calls[0].Path.EndsWith("/health"), "Health diagnosis was conflated or an export was sent.");
+});
 await Test("raw verification failure remains Unknown across repeated recovery attempts", async () =>
 {
     var draft = Confirmed(); using var backend = new ScriptedHandler((call, _) =>

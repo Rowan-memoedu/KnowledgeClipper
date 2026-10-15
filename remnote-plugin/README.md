@@ -8,7 +8,9 @@
 
 ## 受限协议
 
-hello 为 `{type:'hello',protocol:'knowledge-clipper.transport.v1',pluginId:'knowledge-clipper',version:'1.0.0',capabilities:[...]}`。请求 `{id,action,payload}`，响应 `{id,result}` 或 `{id,error}`。仅允许 `knowledge_clipper_health`、`knowledge_clipper_excerpt_documents`、`knowledge_clipper_export`、`knowledge_clipper_readback`、`knowledge_clipper_prepare_image`、`knowledge_clipper_finalize_media`、`knowledge_clipper_finalize_spacing`、`knowledge_clipper_repair_plain_structure`、`knowledge_clipper_test_plain_structure`、`knowledge_clipper_adopt`。目录查询只读，返回“零碎知识剪藏 → 摘录”下直接子 Document 的 ID 与标题；不提供任意脚本或 MCP 工具调用。
+hello 为 `{type:'hello',protocol:'knowledge-clipper.transport.v1',pluginId:'knowledge-clipper',version:'1.0.1',capabilities:[...]}`。请求 `{id,action,payload}`，响应 `{id,result}` 或 `{id,error}`。仅允许 `knowledge_clipper_health`、`knowledge_clipper_excerpt_documents`、`knowledge_clipper_reveal`、`knowledge_clipper_reveal_state`、`knowledge_clipper_export`、`knowledge_clipper_readback`、`knowledge_clipper_prepare_image`、`knowledge_clipper_finalize_media`、`knowledge_clipper_finalize_spacing`、`knowledge_clipper_repair_plain_structure`、`knowledge_clipper_test_plain_structure`、`knowledge_clipper_adopt`。目录查询只读，返回“零碎知识剪藏 → 摘录”下直接子 Document 的 ID 与标题；不提供任意脚本或 MCP 工具调用。
+
+后台传输由独立 `transport-worker.js` 维持，SDK 调用仍留在 index widget；导航等待经 host 的有界 `wait` / `wait-result` 消息唤醒。能力标记为 `knowledge-clipper.background-transport.v1`，协议边界与最小化验收要求见 [host 文档](../remnote-host/README.md)。
 
 ## 旧身份迁移
 

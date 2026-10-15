@@ -1,20 +1,22 @@
 import {ImportNavigation,NAVIGATION_CAPABILITY} from './api/import-navigation';
 import type {ReactRNPlugin} from '@remnote/plugin-sdk';
+import {MAX_RECONNECT_DELAY_MS} from './transport-worker';
 import {verifyEmptyBackEditor} from './testing/plain-structure-canary';
 import {KnowledgeClipperAdapter, KNOWLEDGE_CLIPPER_CAPABILITY, KNOWLEDGE_CLIPPER_MEDIA_CAPABILITY, KNOWLEDGE_CLIPPER_SPACING_CAPABILITY, KNOWLEDGE_CLIPPER_SPACING_FINALIZE_CAPABILITY, KNOWLEDGE_CLIPPER_PLAIN_STRUCTURE_CAPABILITY} from './api/knowledge-clipper';
 export const CAPABILITIES=[KNOWLEDGE_CLIPPER_CAPABILITY,KNOWLEDGE_CLIPPER_MEDIA_CAPABILITY,KNOWLEDGE_CLIPPER_SPACING_CAPABILITY,KNOWLEDGE_CLIPPER_SPACING_FINALIZE_CAPABILITY,KNOWLEDGE_CLIPPER_PLAIN_STRUCTURE_CAPABILITY,'knowledge-clipper.identity-adopt.v1','knowledge-clipper.excerpt-documents.v1'];
 CAPABILITIES.push(NAVIGATION_CAPABILITY);
+CAPABILITIES.push('knowledge-clipper.background-transport.v1');
 export const STATUS_KEY='knowledge-clipper.connection-status';
 export const WRITE_SETTING='knowledge-clipper-enable-import';
 export const WS_URL='ws://127.0.0.1:43112';
-export function createDispatcher(plugin:ReactRNPlugin) {
+export function createDispatcher(plugin:ReactRNPlugin,wait?:()=>Promise<void>) {
  let writable=false;
  const adapter=new KnowledgeClipperAdapter(plugin,()=>writable);
- const navigation=new ImportNavigation(plugin,adapter);
+ const navigation=new ImportNavigation(plugin,adapter,wait);
  return async (action:string,payload:unknown) => {
   writable=await plugin.settings.getSetting<boolean>(WRITE_SETTING)===true;
   switch(action) {
-   case 'knowledge_clipper_health':return {connected:true,supported:true,acceptWriteOperations:writable,capabilities:CAPABILITIES,pluginId:'knowledge-clipper',version:'1.0.0',mediaFinalizeSupported:true,identityAdoptSupported:true,batchSpacingSupported:true,spacingFinalizeSupported:true,plainStructureSupported:true};
+   case 'knowledge_clipper_health':return {connected:true,supported:true,acceptWriteOperations:writable,capabilities:CAPABILITIES,pluginId:'knowledge-clipper',version:'1.0.1',reconnectMaxDelayMs:MAX_RECONNECT_DELAY_MS,mediaFinalizeSupported:true,identityAdoptSupported:true,batchSpacingSupported:true,spacingFinalizeSupported:true,plainStructureSupported:true};
    case 'knowledge_clipper_excerpt_documents':return adapter.listExcerptDocuments(payload as {rootRemId?:string});
    case 'knowledge_clipper_reveal':return navigation.reveal(payload);
    case 'knowledge_clipper_reveal_state':return navigation.state();
@@ -31,27 +33,35 @@ export function createDispatcher(plugin:ReactRNPlugin) {
  };
 }
 export function startRuntime(plugin:ReactRNPlugin) {
- const dispatch=createDispatcher(plugin);
- let socket:WebSocket|undefined, timer:ReturnType<typeof setTimeout>|undefined, stopped=false, delay=1000, lastSeen=Date.now();
+ const worker=new Worker(new URL('transport-worker.js',plugin.rootURL??globalThis.location.href),{name:'KnowledgeClipper transport'});
+ let stopped=false,generation=0,connected=false,nextWait=0;
+ const waits=new Map<string,{resolve:()=>void;reject:(error:Error)=>void}>();
+ const rejectWaits=()=>{for(const pending of waits.values())pending.reject(new Error('Navigation connection interrupted; imported content is unchanged'));waits.clear();};
+ const send=(message:unknown,current=generation)=>worker.postMessage({type:'send',generation:current,message});
+ const dispatch=createDispatcher(plugin,()=>new Promise<void>((resolve,reject)=>{
+  if(!connected){reject(new Error('Navigation connection is unavailable'));return;}
+  const id='navigation-wait-'+(++nextWait);waits.set(id,{resolve,reject});
+  // Node schedules this wakeup. Hidden-page timer clamping cannot consume the
+  // navigation deadline before the editor has had a chance to settle.
+  send({type:'wait',id,milliseconds:75});
+ }));
  const status=(value:string)=>{void plugin.storage.setSession(STATUS_KEY,value).catch(()=>undefined);};
- const connect=()=>{
-  if(stopped)return;
-  status('正在连接剪藏服务');
-  const ws=socket=new WebSocket(WS_URL);
-  ws.onopen=()=>{delay=1000;lastSeen=Date.now();status('已连接');ws.send(JSON.stringify({type:'hello',protocol:'knowledge-clipper.transport.v1',pluginId:'knowledge-clipper',version:'1.0.0',capabilities:CAPABILITIES}));};
-  ws.onmessage=async event=>{
-   lastSeen=Date.now();
-   let message:any;
-   try{message=JSON.parse(String(event.data));}catch{return;}
-   if(message.type==='ping'){ws.send(JSON.stringify({type:'pong'}));return;}
+ worker.onmessage=async event=>{
+   if(stopped)return;
+   const envelope=event.data;
+   if(envelope.type==='status'){
+    generation=envelope.generation;connected=envelope.value==='connected';
+    if(!connected)rejectWaits();
+    status(connected?'已连接':envelope.value==='connecting'?'正在连接剪藏服务':'未连接，自动重试中');return;
+   }
+   if(envelope.type!=='message'||envelope.generation!==generation)return;
+   const message=envelope.message,current=generation;
+   if(message.type==='wait-result'){const pending=waits.get(message.id);waits.delete(message.id);pending?.resolve();return;}
    if(typeof message.id!=='string'||typeof message.action!=='string')return;
-   try{const result=await dispatch(message.action,message.payload);if(ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify({id:message.id,result}));}
-   catch(error){if(ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify({id:message.id,error:error instanceof Error?error.message:String(error)}));}
-  };
-  ws.onerror=()=>ws.close();
-  ws.onclose=()=>{status('未连接，自动重试中');if(!stopped){timer=setTimeout(connect,delay);delay=Math.min(delay*2,30000);}};
+   try{const result=await dispatch(message.action,message.payload);if(!stopped)send({id:message.id,result},current);}
+   catch(error){if(!stopped)send({id:message.id,error:error instanceof Error?error.message:String(error)},current);}
  };
- const heartbeat=setInterval(()=>{if(socket?.readyState===WebSocket.OPEN && Date.now()-lastSeen>90000)socket.close();},30000);
- connect();
- return ()=>{stopped=true;clearTimeout(timer);clearInterval(heartbeat);socket?.close();status('已停用');};
+ worker.onerror=()=>{connected=false;rejectWaits();status('后台连接组件加载失败，请重新加载剪藏插件');};
+ worker.postMessage({type:'start',hello:{type:'hello',protocol:'knowledge-clipper.transport.v1',pluginId:'knowledge-clipper',version:'1.0.1',capabilities:CAPABILITIES}});
+ return ()=>{stopped=true;connected=false;rejectWaits();worker.postMessage({type:'stop'});worker.terminate();status('已停用');};
 }

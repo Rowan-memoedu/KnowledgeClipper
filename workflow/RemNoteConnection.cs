@@ -59,8 +59,14 @@ public sealed partial class RemNoteConnection(HttpClient http, string endpoint) 
     private async Task RequireHealthyAsync(CancellationToken ct, bool mediaFinalize = false, bool spacingFinalize = false)
     {
         var health = await HealthAsync(ct);
-        if (!True(health, "connected") || !True(health, "supported") || !True(health, "acceptWriteOperations"))
-            throw new InvalidDataException("RemNote SDK 插件尚未连接、未更新或未允许写入；草稿已保留。");
+        if (!True(health, "connected"))
+            throw new InvalidDataException("RemNote SDK 插件尚未连接；草稿已保留，连接恢复后可继续。");
+        if (!True(health, "supported"))
+            throw new InvalidDataException("RemNote SDK 插件需要更新以支持剪藏；草稿已保留。");
+        if (health.TryGetProperty("sdkResponsive", out var responsive) && responsive.ValueKind == JsonValueKind.False)
+            throw new InvalidDataException("RemNote SDK 已连接，但暂未响应；草稿已保留，未重新发送导入。");
+        if (!True(health, "acceptWriteOperations"))
+            throw new InvalidDataException("RemNote 剪藏插件未允许写入；草稿已保留。");
         if (mediaFinalize && !True(health, "mediaFinalizeSupported"))
             throw new InvalidDataException("RemNote SDK 插件尚未支持现有图片恢复；保留原卡片，更新插件后可继续核对。");
         if (spacingFinalize && !True(health, "spacingFinalizeSupported"))

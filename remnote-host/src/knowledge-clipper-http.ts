@@ -202,11 +202,16 @@ export function registerKnowledgeClipperHttp(app: Express, ws: WebSocketServer, 
   });
   router.use(express.json({limit:'2mb'}));
   router.get('/health', async (_req, res) => {
+    // Initial/recovered worker handshakes can race an excerpt click. Waiting here
+    // is read-only; never replay an export whose outcome may already be unknown.
+    if(!ws.isConnected())await ws.waitUntilConnected?.(10000);
+    let status:Json={},sdkResponsive=false,sdkError:string|undefined;
+    if(ws.isConnected())try{status=await ws.sendRequest('knowledge_clipper_health',{},12000) as Json;sdkResponsive=true;}
+    catch(error){sdkError=error instanceof Error?error.message:String(error);}
     const connected = ws.isConnected();
     const supported = connected && ws.hasBridgeCapability(CLIPPER_SDK_CAPABILITY);
-    const status = connected ? await ws.sendRequest('knowledge_clipper_health',{},5000).catch(() => ({})) : {};
-    res.json({schemaVersion:'knowledge-clipper.remnote.v1',connected,supported,
-      ...(status as Json),transport:'sdk-http',capability:CLIPPER_SDK_CAPABILITY,
+    res.json({schemaVersion:'knowledge-clipper.remnote.v1',...status,connected,supported,
+      sdkResponsive,...(sdkError?{sdkError}:{}),transport:'sdk-http',capability:CLIPPER_SDK_CAPABILITY,
       mediaFinalizeSupported:connected&&ws.hasBridgeCapability(CLIPPER_MEDIA_CAPABILITY),
       spacingFinalizeSupported:connected&&ws.hasBridgeCapability(CLIPPER_SPACING_FINALIZE_CAPABILITY),
       plainStructureSupported:connected&&ws.hasBridgeCapability(CLIPPER_PLAIN_STRUCTURE_CAPABILITY),

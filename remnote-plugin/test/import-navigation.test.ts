@@ -90,4 +90,14 @@ describe('verified import navigation',()=>{
     expect((await f.nav.reveal(f.request()) as any).revealed).toBe(true);
     expect(f.plugin.window.setRemWindowTree).not.toHaveBeenCalled();expect(f.calls).toEqual(['select']);
   });
+  it('settles editor readiness using host wakeups even when all hidden-page timers are suspended',async()=>{
+    const f=fixture();let mounted=false;
+    const select=f.plugin.editor.selectRem.getMockImplementation();
+    f.plugin.editor.selectRem.mockImplementation(async(ids:string[])=>{if(mounted)await select(ids);});
+    const wake=vi.fn(async()=>{mounted=true;});
+    const nav=new ImportNavigation(f.plugin,f.adapter,wake);
+    vi.stubGlobal('setTimeout',()=>{throw new Error('Background page timers are suspended');});
+    try{expect((await nav.reveal(f.request()) as any).revealed).toBe(true);expect(wake).toHaveBeenCalled();}
+    finally{vi.unstubAllGlobals();}
+  });
 });
