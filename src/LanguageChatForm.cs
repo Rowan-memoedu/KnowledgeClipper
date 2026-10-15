@@ -44,6 +44,8 @@ internal sealed class LanguageChatForm : Form
     internal void RequestInitialSend() => initialSendPending = Draft.Chat.Prompts.Count == 0;
     private object cardPreview;
     private readonly Dictionary<string, (string Raw, string Display, ChatCopyMath[] CopyMath)> displayCache = new();
+    private readonly Dictionary<string, (long Length, DateTime Modified, string Status)> exportStatusCache = new();
+    private static readonly JsonSerializerOptions ViewJson = new(WorkflowJson.Options) { WriteIndented = false };
     internal Action<string> WriteClipboardText { get; set; } = text => Clipboard.SetText(text, TextDataFormat.UnicodeText);
     private CancellationTokenSource requestCancellation;
     internal event Action<ClipDraft> Saved;
@@ -86,7 +88,7 @@ internal sealed class LanguageChatForm : Form
             config.Load();
             var directory = Path.Combine(baseRoot, "chat-view");
             if (!File.Exists(Path.Combine(directory, "index.html"))) throw new FileNotFoundException("本机聊天资源未构建，请使用 build.ps1 生成完整候选。");
-            var env = await CoreWebView2Environment.CreateAsync(null, Path.Combine(dataRoot, "webview-chat"));
+            var env = await WarmChatWebViewEnvironment.GetAsync(Path.Combine(dataRoot, "webview-chat"));
             await web.EnsureCoreWebView2Async(env);
             web.CoreWebView2.Settings.AreDevToolsEnabled = false;
             web.CoreWebView2.Settings.AreHostObjectsAllowed = false;
@@ -145,14 +147,26 @@ internal sealed class LanguageChatForm : Form
     }
     private ChatCopyMath[] CopyMath(string key, string raw)
     { if (raw == null) return []; Display(key, raw); return displayCache[key].CopyMath; }
+    private string ExportStatus(CardComposition card)
+    {
+        if (card.ExportDraftId == null) return "尚未导出";
+        if (!Guid.TryParseExact(card.ExportDraftId, "N", out _)) return "冻结草稿缺失";
+        var file = new FileInfo(store.Identity(card.ExportDraftId));
+        if (!file.Exists) { exportStatusCache.Remove(card.ExportDraftId); return "冻结草稿缺失"; }
+        if (exportStatusCache.TryGetValue(card.ExportDraftId, out var cached) && cached.Length == file.Length && cached.Modified == file.LastWriteTimeUtc)
+            return cached.Status;
+        var child = store.Find(card.ExportDraftId);
+        var status = child == null ? "冻结草稿缺失" : child.ImportState == ImportState.Verified ? ExportRouting.ResultSummary(child) : child.ImportError ?? "已确认 · 待导入或核对";
+        exportStatusCache[card.ExportDraftId] = (file.Length, file.LastWriteTimeUtc, status);
+        return status;
+    }
     private void Publish()
     {
         if (!ready || IsDisposed) return;
         var chat = Draft.Chat;
         ChatConfiguration current;
         try { current = config.Load(); } catch (Exception ex) { error = ex.Message; current = new([]); }
-        var exportStatus = chat.Compositions.ToDictionary(c => c.Id, c => c.ExportDraftId == null ? "尚未导出" :
-            store.Find(c.ExportDraftId) is { } child ? child.ImportState == ImportState.Verified ? ExportRouting.ResultSummary(child) : child.ImportError ?? "已确认 · 待导入或核对" : "冻结草稿缺失");
+        var exportStatus = chat.Compositions.ToDictionary(c => c.Id, ExportStatus);
         web.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new {
             draftId = Draft.Id, busy = Busy, conversationBusy = coordinator.Busy, error = error ?? chat.Binding.Error,
             status = auxiliaryCoordinator.Busy ? "正在生成候选…" : coordinator.Busy ? "正在回复…" : chat.Binding.NeedsReconciliation ? "结果待核对" : "草稿已保存",
@@ -167,7 +181,7 @@ internal sealed class LanguageChatForm : Form
             auxiliary = new { provider = chat.Auxiliary.Provider, model = chat.Auxiliary.Current.Model, effort = chat.Auxiliary.Current.Effort,
                 models = auxiliaryModels, loading = auxiliaryModelsLoading, busy = auxiliaryCoordinator.Busy,
                 error = auxiliaryError ?? chat.Auxiliary.Current.Binding.Error, needsReconciliation = chat.Auxiliary.Current.Binding.NeedsReconciliation }
-        }, WorkflowJson.Options));
+        }, ViewJson));
     }
 
     internal async Task CommandAsync(JsonElement e)
@@ -472,5 +486,49 @@ internal sealed class LanguageChatForm : Form
     {
         var dialog = new Form { Text = title, Size = new Size(850, 700), StartPosition = FormStartPosition.CenterParent };
         dialog.Controls.Add(new TextBox { Text = text, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Both, Dock = DockStyle.Fill }); dialog.Show(this);
+    }
+}
+
+// WebView2 shuts down its browser after the final controller closes. Reopening
+// during that shutdown can wait several seconds on the same user-data folder.
+// Retain one blank, invisible controller (no page, messages, models or draft).
+// Each conversation still gets a fresh controller and is disposed/saved normally.
+internal static class WarmChatWebViewEnvironment
+{
+    private static Entry current;
+    static WarmChatWebViewEnvironment() => Application.ApplicationExit += (_, _) => { current?.Dispose(); current = null; };
+    internal static Task<CoreWebView2Environment> GetAsync(string folder)
+    {
+        folder = Path.GetFullPath(folder);
+        if (current == null || !string.Equals(current.Folder, folder, StringComparison.OrdinalIgnoreCase) || current.Ready.IsFaulted)
+        {
+            current?.Dispose();
+            current = new Entry(folder);
+        }
+        return current.Ready;
+    }
+    private sealed class Entry : IDisposable
+    {
+        internal readonly string Folder;
+        internal readonly Task<CoreWebView2Environment> Ready;
+        private WebView2 keeper;
+        private bool disposed;
+        internal Entry(string folder) { Folder = folder; Ready = CreateAsync(); }
+        private async Task<CoreWebView2Environment> CreateAsync()
+        {
+            var environment = await CoreWebView2Environment.CreateAsync(null, Folder);
+            if (disposed) return environment;
+            var view = keeper = new WebView2 { Visible = false, Size = new Size(1, 1) };
+            _ = view.Handle;
+            try { await view.EnsureCoreWebView2Async(environment); }
+            catch { view.Dispose(); keeper = null; throw; }
+            if (disposed) return environment;
+            environment.BrowserProcessExited += (_, _) =>
+            {
+                if (ReferenceEquals(current, this)) { current = null; Dispose(); }
+            };
+            return environment;
+        }
+        public void Dispose() { disposed = true; keeper?.Dispose(); keeper = null; }
     }
 }

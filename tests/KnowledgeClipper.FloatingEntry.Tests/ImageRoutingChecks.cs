@@ -102,7 +102,9 @@ internal static partial class Program
     private static async Task ImageHistoryAndContextAsync(Form owner, byte[] png)
     {
         var root = Path.Combine(dataRoot, "image-history-context");
-        var settings = Settings() with { OriginalImageMode = true, ContextEnabled = true };
+        // This fixture deliberately holds the reply across a native window open;
+        // it exercises task reuse, not the separate one-second timeout path.
+        var settings = Settings() with { OriginalImageMode = true, ContextEnabled = true, ContentTimeoutSeconds = 20 };
         WorkflowJson.Save(Path.Combine(root, "language-settings.json"), settings);
         using var language = (IDisposable)New("LanguageDesktopFlow", owner, root, (Action<string>)statuses.Add, Initial);
         using var excerpt = (IDisposable)New("ExcerptDesktopFlow", owner, root, settings, (Action<string>)statuses.Add);
@@ -175,14 +177,16 @@ internal static partial class Program
         var questionJob = store.Recent().Single(x => x.Entry == "question");
         var activeDraft = (ClipDraft)language.GetType().GetField("latest", Flags)!.GetValue(language)!;
         Call(image, "Open", questionJob, true);
-        await Until(() => Forms(language).Length == 1, "image history opens the pending downstream question");
-        Check(ReferenceEquals(Get(Forms(language).Single(), "Draft"), activeDraft) && provider.Answers == 1,
+        var pendingChat = Application.OpenForms.Cast<Form>().Single(f => f.Name == "knowledge-clipper.chat");
+        Check(ReferenceEquals(Get(pendingChat, "Draft"), activeDraft), "image history opens the pending downstream question in the current chat route");
+        Check(ReferenceEquals(Get(pendingChat, "Draft"), activeDraft) && provider.Answers == 1,
             "image history reuses the live language/question draft and content task after destination handoff");
         provider.HoldAnswers.TrySetResult();
         await Until(() => activeDraft.ImportError != null && activeDraft.Conversation.Count == 1, "pending image question completes into the same visible draft after failed import");
-        Check(Forms(language).Length == 1 && ReferenceEquals(Get(Forms(language).Single(), "Draft"), activeDraft) && provider.Answers == 1,
+        Check(Forms(language).Length == 1 && ReferenceEquals(Get(Forms(language).Single(), "Draft"), activeDraft) &&
+            ReferenceEquals(Get(pendingChat, "Draft"), activeDraft) && provider.Answers == 1,
             "downstream recovery neither duplicates content requests nor leaves a stale history form");
-        Forms(language).Single().Close();
+        pendingChat.Close(); Forms(language).Single().Close();
     }
 
     private sealed class ImageRouteOcr : IImageOcrExtractor

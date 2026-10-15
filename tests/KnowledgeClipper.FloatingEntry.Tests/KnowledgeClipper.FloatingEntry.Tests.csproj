@@ -13,5 +13,7 @@
     <Reference Include="KnowledgeClipper"><HintPath>$(DesktopAssemblyPath)</HintPath></Reference>
     <Reference Include="KnowledgeClipper.Workflow"><HintPath>$(DesktopAssemblyDirectory)\KnowledgeClipper.Workflow.dll</HintPath></Reference>
     <Content Include="..\..\modes\**\*" Link="modes\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
+    <Content Include="$(DesktopAssemblyDirectory)\chat-view\**\*" Link="chat-view\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

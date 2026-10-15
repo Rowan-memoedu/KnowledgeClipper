@@ -307,12 +307,21 @@ public sealed class ClipDraft
 
 public sealed class DraftStore(string root, string folder = "language-drafts")
 {
+    private Dictionary<string, ClipDraft>? readSnapshot;
     public string DirectoryPath => Path.GetFullPath(Path.Combine(root, folder));
     public string Identity(string id) => Path.Combine(DirectoryPath, id + ".json");
-    public void Save(ClipDraft draft) => WorkflowJson.Save(Path.Combine(root, folder, draft.Id + ".json"), draft);
+    // A presentation load owns this short-lived snapshot. Live/resumed drafts still
+    // use Find on the writable store, with their original gates and identities.
+    public DraftStore CreateReadSnapshot() => new(root, folder) { readSnapshot = ReadDrafts().ToDictionary(d => d.Id, StringComparer.Ordinal) };
+    public void Save(ClipDraft draft)
+    {
+        if (readSnapshot != null) throw new InvalidOperationException("历史快照仅用于读取。");
+        WorkflowJson.Save(Path.Combine(root, folder, draft.Id + ".json"), draft);
+    }
     public ClipDraft? Find(string id)
     {
         if (!Guid.TryParseExact(id, "N", out _)) return null;
+        if (readSnapshot != null && readSnapshot.TryGetValue(id, out var saved)) return saved;
         var path = Path.Combine(root, folder, id + ".json");
         if (!File.Exists(path)) return null;
         var draft = WorkflowJson.Read<ClipDraft>(path);
@@ -355,6 +364,11 @@ public sealed class DraftStore(string root, string folder = "language-drafts")
     }
     private IEnumerable<ClipDraft> ReadDrafts()
     {
+        if (readSnapshot != null)
+        {
+            foreach (var saved in readSnapshot.Values) yield return saved;
+            yield break;
+        }
         var path = Path.Combine(root, folder);
         if (!Directory.Exists(path)) yield break;
         foreach (var file in new DirectoryInfo(path).EnumerateFiles("*.json").OrderByDescending(f => f.LastWriteTimeUtc))

@@ -78,6 +78,7 @@ internal static class Program
         ExcerptCards.Add(sameId, excerpts, new(sameId.Original.SelectedText, ""), "原文");
         var checks = new List<string>();
         void Check(bool pass, string message) { if (!pass) throw new Exception(message); checks.Add(message); Console.WriteLine("PASS " + message); }
+        SnapshotChecks.Run(Path.Combine(root, "snapshot-regression"), Check);
         HistoryActionChecks.Run(Check);
         var all = HistoryRecords.Read(drafts, excerpts);
         Check(all.Length == 66 && all.Count(r => r.Excerpt != null) == 37, "unified history includes all records beyond both old 20/30 limits");
@@ -203,8 +204,17 @@ internal static class Program
             excerptPreview.Close();
             history.Close(); Call(language, "Stop"); await Task.Delay(100);
             Check(HistoryRecords.LastLanguageSpeech(new DraftStore(root))?.Id == older.Id, "the last selected language recording persists across reopening");
+            var external = Draft("question", "New saved record while history is closed", 0);
             Call(historyFlow, "Show"); var reopened = History();
             Check(reopened is { Text: "历史记录", Visible: true }, "closed history reopens normally");
+            await WaitFor(() => Descendants(reopened!).OfType<Button>().Any(b => b.Name == "knowledge-clipper.history.continue.draft." + external.Id));
+            Check(true, "cached history reconciles disk changes without a desktop notification");
+            external.Chat = new() { Input = "Newer persisted input after list projection" }; drafts.Save(external);
+            Click(Button(reopened!, "knowledge-clipper.history.continue.draft." + external.Id));
+            var currentChat = Application.OpenForms.Cast<Form>().Single(f => f.Name == "knowledge-clipper.chat");
+            Check(((ClipDraft)currentChat.GetType().GetProperty("Draft", Flags)!.GetValue(currentChat)!).Chat!.Input == external.Chat.Input,
+                "opening a cached history row uses current saved content rather than the presentation snapshot");
+            currentChat.Close();
             reopened!.Close();
             WorkflowJson.Save(receipt, new { passed = true, checks, recordCount = all.Length, dataRoot = root, scope = "production controls and flow on private Windows desktop; saved public audio through real player; no content API or Anki writes" });
         }

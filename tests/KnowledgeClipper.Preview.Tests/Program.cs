@@ -30,6 +30,10 @@ internal static class Program
             if (args.Contains("--maintenance-preview")) { await MaintenancePreviewChecks.RunAsync(root, artifacts); return; }
             if (args.Contains("--language-modes")) { await LanguageModePreviewChecks.RunAsync(root, artifacts); return; }
             if (args.Contains("--deck-routing")) { await DeckPreviewChecks.RunAsync(root, artifacts); return; }
+            Directory.CreateDirectory(artifacts);
+            var previewContent = args.Contains("--fixture")
+                ? new ContentResult("language", new LanguageFields("yán jǐn", "细致而周密", "他的论证十分严谨。", 6))
+                : WorkflowJson.Read<ContentResult>(Path.Combine(artifacts, "m1-zh-result.json"));
             var store = new DraftStore(Path.Combine(artifacts, "preview-state"));
             var configuration = ModeConfigurationLoader.Load(Path.Combine(root, "modes"));
             ClipDraft Create() => new() {
@@ -37,7 +41,7 @@ internal static class Program
                 Material = new("严谨", null, "generated_allowed", null, "预览组件检查", 0, DateTimeOffset.UtcNow),
                 Settings = new LanguageSettings { AnkiDeck = "KnowledgeClipper Canary::Architecture 20260910" },
                 Configuration = configuration, ModeId = "language", Practice = PracticeChoice.Both,
-                Content = WorkflowJson.Read<ContentResult>(Path.Combine(artifacts, "m1-zh-result.json"))
+                Content = previewContent
             };
             static T Find<T>(Form form, string suffix) where T : Control => (T)form.Controls.Find("knowledge-clipper.language." + suffix, true).Single();
             void Check(bool value, string name) { if (!value) throw new Exception(name); Console.WriteLine("PASS " + name); }

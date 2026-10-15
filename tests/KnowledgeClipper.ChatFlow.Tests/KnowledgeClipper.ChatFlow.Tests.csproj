@@ -1,8 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0-windows</TargetFramework><UseWindowsForms>true</UseWindowsForms><UseWPF>true</UseWPF><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0-windows</TargetFramework><UseWindowsForms>true</UseWindowsForms><UseWPF>true</UseWPF><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><DesktopAssemblyDirectory>$([System.IO.Path]::GetDirectoryName('$(DesktopAssemblyPath)'))</DesktopAssemblyDirectory></PropertyGroup>
   <ItemGroup>
     <Reference Include="KnowledgeClipper"><HintPath>$(DesktopAssemblyPath)</HintPath></Reference>
     <Reference Include="KnowledgeClipper.Workflow"><HintPath>$([System.IO.Path]::GetDirectoryName('$(DesktopAssemblyPath)'))\KnowledgeClipper.Workflow.dll</HintPath></Reference>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31"/>
+    <Content Include="$(DesktopAssemblyDirectory)\modes\**\*" Link="modes\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(DesktopAssemblyDirectory)\chat-view\**\*" Link="chat-view\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(DesktopAssemblyDirectory)\contracts\**\*" Link="contracts\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(DesktopAssemblyDirectory)\helpers\codex_chat.py" Link="helpers\codex_chat.py" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

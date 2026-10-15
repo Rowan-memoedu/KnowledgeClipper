@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0-windows</TargetFramework><UseWindowsForms>true</UseWindowsForms><UseWPF>true</UseWPF><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup>
+    <Reference Include="KnowledgeClipper.Workflow"><HintPath>$(DesktopReleaseDir)/KnowledgeClipper.Workflow.dll</HintPath></Reference>
+    <Reference Include="KnowledgeClipper"><HintPath>$(DesktopReleaseDir)/KnowledgeClipper.dll</HintPath></Reference>
+    <Reference Include="Microsoft.Web.WebView2.Core"><HintPath>$(DesktopReleaseDir)/Microsoft.Web.WebView2.Core.dll</HintPath></Reference>
+    <Reference Include="Microsoft.Web.WebView2.WinForms"><HintPath>$(DesktopReleaseDir)/Microsoft.Web.WebView2.WinForms.dll</HintPath></Reference>
+    <Content Include="$(DesktopReleaseDir)/*.dll" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

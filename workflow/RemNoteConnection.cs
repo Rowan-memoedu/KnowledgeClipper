@@ -56,7 +56,7 @@ public sealed partial class RemNoteConnection(HttpClient http, string endpoint) 
             throw new InvalidDataException("RemNote 摘录目录列表无效。");
         return new(root, excerpt, documents);
     }
-    private async Task RequireHealthyAsync(CancellationToken ct, bool mediaFinalize = false, bool spacingFinalize = false)
+    private async Task<JsonElement> RequireHealthyAsync(CancellationToken ct, bool mediaFinalize = false, bool spacingFinalize = false)
     {
         var health = await HealthAsync(ct);
         if (!True(health, "connected"))
@@ -71,6 +71,7 @@ public sealed partial class RemNoteConnection(HttpClient http, string endpoint) 
             throw new InvalidDataException("RemNote SDK 插件尚未支持现有图片恢复；保留原卡片，更新插件后可继续核对。");
         if (spacingFinalize && !True(health, "spacingFinalizeSupported"))
             throw new InvalidDataException("RemNote SDK 插件尚未支持原批次空行恢复；保留原节点，更新插件后可继续核对。");
+        return health;
     }
 
     public async Task ImportAsync(ClipDraft draft, DraftStore store, CancellationToken ct = default)
@@ -87,14 +88,14 @@ public sealed partial class RemNoteConnection(HttpClient http, string endpoint) 
             if (uncertain) result = await RequestAsync("readback", plan, ct);
             else
             {
-                await RequireHealthyAsync(ct);
+                var health = await RequireHealthyAsync(ct);
                 if (plan.Cards.SelectMany(c => c.Front.Concat(c.Back.SelectMany(r => r))).Any(p => p.Kind == "mermaid") &&
-                    !True(await HealthAsync(ct), "mermaidSupported"))
+                    !True(health, "mermaidSupported"))
                     throw new InvalidDataException("请更新剪藏 RemNote 插件以显示 Mermaid 图；源码与草稿已保留，尚未写入。");
-                if ((plan.DocumentIds != null || plan.Cards.Any(c => c.BackParents != null)) && !True(await HealthAsync(ct), "questionCompositionSupported"))
+                if ((plan.DocumentIds != null || plan.Cards.Any(c => c.BackParents != null)) && !True(health, "questionCompositionSupported"))
                     throw new InvalidDataException("请更新剪藏专用 RemNote 插件以支持类型目录和答案层级；尚未写入。");
                 if (plan.DocumentIds is { Length: 2 } && plan.DocumentPath.Length == 3 &&
-                    !True(await HealthAsync(ct), "questionDailyDocumentsSupported"))
+                    !True(health, "questionDailyDocumentsSupported"))
                     throw new InvalidDataException("请更新剪藏专用 RemNote 插件以支持类型内的日期目录；尚未写入。");
                 if (plan.DocumentPath.FirstOrDefault() == "问答")
                     throw new InvalidDataException("旧问答目标已退役；保留冻结身份。请先核对原导入，重新选材时使用新的类型目录草稿。");

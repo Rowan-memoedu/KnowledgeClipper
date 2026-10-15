@@ -35,8 +35,14 @@ public sealed class ExcerptSession
 // Excerpts have their own session and card stores; they never enter language history.
 public sealed class ExcerptStore(string root)
 {
-    public DraftStore Cards { get; } = new(root, "excerpt-cards");
-    public void Save(ExcerptSession session) => WorkflowJson.Save(Path.Combine(root, "excerpt-sessions", session.Id + ".json"), session);
+    private bool readOnly;
+    public DraftStore Cards { get; private init; } = new(root, "excerpt-cards");
+    public ExcerptStore CreateReadSnapshot() => new(root) { Cards = Cards.CreateReadSnapshot(), readOnly = true };
+    public void Save(ExcerptSession session)
+    {
+        if (readOnly) throw new InvalidOperationException("历史快照仅用于读取。");
+        WorkflowJson.Save(Path.Combine(root, "excerpt-sessions", session.Id + ".json"), session);
+    }
     public ExcerptSession? Find(string id)
     {
         if (!Guid.TryParseExact(id, "N", out _)) return null;

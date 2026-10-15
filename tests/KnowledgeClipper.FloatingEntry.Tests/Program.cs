@@ -94,8 +94,10 @@ internal static partial class Program
             "question failure preserves original input without generating a follow-up");
         Save(preview, "question-content-failure.png");
         Call(language, "Resume", question.Id);
-        Check(Forms(language).Length == 1 && ReferenceEquals(preview, Forms(language).Single()), "resuming a failed quick question reuses its current preview");
-        preview.Close(); await Task.Delay(30);
+        var resumedChat = Application.OpenForms.Cast<Form>().Single(f => f.Name == "knowledge-clipper.chat");
+        Check(ReferenceEquals(Get(resumedChat, "Draft"), question) && question.Chat != null,
+            "resuming a failed quick question uses the current chat route and original draft identity");
+        resumedChat.Close(); preview.Close(); await Task.Delay(30);
 
         var learning = Start(language, "patience", "language", settings, configuration, true);
         Check(Forms(language).Length == 0, "quick language starts with no preview window");
@@ -137,9 +139,11 @@ internal static partial class Program
             var fromHistory = store.Find(older.Id)!;
             Call(language, "ContinueHistory", fromHistory);
             await Task.Delay(200);
-            Check(Forms(language).Length == 1 && ReferenceEquals(Get(Forms(language).Single(), "Draft"), older),
+            var pendingChat = Application.OpenForms.Cast<Form>().Single(f => f.Name == "knowledge-clipper.chat");
+            Check(ReferenceEquals(Get(pendingChat, "Draft"), older),
                 "history resolves the active older quick draft rather than a detached disk copy");
             Check(pendingApi.RequestCount == 2, "opening history during background work does not request the same content again");
+            pendingChat.Close();
             pendingApi.ReleaseResponses();
             await Until(() => Forms(language).Length == 2 && older.ImportError != null && newer.ImportError != null,
                 "both concurrent quick failures retain their original previews", 12000);

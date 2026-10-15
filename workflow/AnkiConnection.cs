@@ -237,10 +237,13 @@ public sealed class AnkiConnection(HttpClient http, string endpoint) : ICardImpo
                 cardTemplates
             }, ct);
         }
-        var fields = (await CallAsync("modelFieldNames", new { modelName = note.Model }, ct)).EnumerateArray().Select(x => x.GetString()).ToArray();
+        var fieldsRequest = CallAsync("modelFieldNames", new { modelName = note.Model }, ct);
+        var templatesRequest = CallAsync("modelTemplates", new { modelName = note.Model }, ct);
+        await Task.WhenAll(fieldsRequest, templatesRequest);
+        var fields = fieldsRequest.Result.EnumerateArray().Select(x => x.GetString()).ToArray();
         if (!fieldNames.All(name => fields.Contains(name, StringComparer.Ordinal)))
             throw new InvalidDataException("所选笔记类型缺少本次卡片字段，请选择对应专用类型；已有类型不会被修改。");
-        var templates = await CallAsync("modelTemplates", new { modelName = note.Model }, ct);
+        var templates = templatesRequest.Result;
         if (!templates.EnumerateObject().Select(p => p.Name).SequenceEqual(templateNames))
             throw new InvalidDataException("所选类型的卡片模板不兼容，请选择对应专用类型。");
         // Repair only the exact managed publication that omitted the question on answer.
@@ -432,7 +435,10 @@ public sealed class AnkiConnection(HttpClient http, string endpoint) : ICardImpo
         if (!expected.Tags.All(t => tags.Contains(t))) throw new InvalidDataException("Anki 来源标记不符。");
         var ids = note.GetProperty("cards").EnumerateArray().Select(x => x.GetInt64()).ToArray();
         if (ids.Length != expected.Ordinals.Length) throw new InvalidDataException("实际卡片数量与所选练习不同。");
-        var cards = await CallAsync("cardsInfo", new { cards = ids }, ct);
+        var cardsRequest = CallAsync("cardsInfo", new { cards = ids }, ct);
+        var suspendedRequest = CallAsync("areSuspended", new { cards = ids }, ct);
+        await Task.WhenAll(cardsRequest, suspendedRequest);
+        var cards = cardsRequest.Result;
         if (cards.GetArrayLength() != ids.Length) throw new InvalidDataException("未读回所有实际卡片。");
         var seen = new HashSet<int>();
         var seenIds = new HashSet<long>();
@@ -481,7 +487,7 @@ public sealed class AnkiConnection(HttpClient http, string endpoint) : ICardImpo
                 throw new InvalidDataException("Anki 实际答案缺少正反面分割线。");
             readback.Add(new(id, ordinal, deck));
         }
-        var suspended = await CallAsync("areSuspended", new { cards = ids }, ct);
+        var suspended = suspendedRequest.Result;
         if (suspended.GetArrayLength() != ids.Length || suspended.EnumerateArray().Any(x => x.ValueKind != JsonValueKind.False))
             throw new InvalidDataException("实际卡片处于暂停状态。");
         draft.CardIds = readback.OrderBy(card => card.Ordinal).Select(card => card.Id).ToArray();
@@ -500,7 +506,12 @@ public sealed class AnkiConnection(HttpClient http, string endpoint) : ICardImpo
     }
     private async Task VerifyMediaAsync(AnkiNoteDraft note, CancellationToken ct)
     {
-        foreach (var media in note.Media) VerifyMedia(media, await CallAsync("retrieveMediaFile", new { filename = media.FileName }, ct));
+        // Bound concurrent payloads; every real byte hash is still checked on every import.
+        foreach (var batch in note.Media.Chunk(4))
+        {
+            var actual = await Task.WhenAll(batch.Select(media => CallAsync("retrieveMediaFile", new { filename = media.FileName }, ct)));
+            for (var i = 0; i < batch.Length; i++) VerifyMedia(batch[i], actual[i]);
+        }
     }
     private static string Plain(string html) => WebUtility.HtmlDecode(Regex.Replace(html, "<[^>]*>", ""));
     private static string NormalizeDisplay(string text) => string.Join("\n", text.Replace("\r", "").Split('\n').Select(line => line.Trim()).Where(line => line.Length > 0));

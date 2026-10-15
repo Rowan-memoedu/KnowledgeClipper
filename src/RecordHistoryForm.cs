@@ -19,6 +19,7 @@ internal sealed class RecordHistoryForm : Form
     private int page;
     private readonly Label pageLabel;
     private readonly Button previous, next;
+    private bool fittingRows;
 
     internal RecordHistoryForm(Action<HistoryRecord> play, Action<HistoryRecord> continueCards, Action stop, Action refresh, Func<HistoryRecord, string> describe, Func<HistoryRecord, string> actionText)
     {
@@ -74,6 +75,9 @@ internal sealed class RecordHistoryForm : Form
         foreach (var record in records.Skip(page * PageSize).Take(PageSize))
         {
             var row = new TableLayoutPanel { AutoSize = true, ColumnCount = 1, RowCount = 3, Margin = new Padding(0, 0, 0, 8), Padding = new Padding(6), BackColor = Color.FromArgb(246, 248, 250) };
+            // Build and size each row before its first layout. AutoSize otherwise measures
+            // every intermediate label/button insertion and propagates it up the page.
+            row.SuspendLayout();
             row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             var target = new Label { Text = record.Original.CapturedAt.ToLocalTime().ToString("MM-dd HH:mm") + "  [" + record.Kind + "] " + record.Original.SelectedText.Replace("\r", " ").Replace("\n", " ").TakeText(70), AutoSize = true, Dock = DockStyle.Fill, Cursor = Cursors.Hand, Name = "knowledge-clipper.history.record." + record.Key };
             target.Click += (_, _) => { var latest = current[record.Key]; if (latest.CanPlay) play(latest); else continueCards(latest); };
@@ -83,8 +87,10 @@ internal sealed class RecordHistoryForm : Form
             playButton.Click += (_, _) => { var latest = current[record.Key]; if (latest.CanPlay) play(latest); }; continueButton.Click += (_, _) => continueCards(current[record.Key]);
             row.Controls.Add(target, 0, 0); row.Controls.Add(state, 0, 1);
             var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, Margin = Padding.Empty };
+            actions.SuspendLayout();
             actions.Controls.Add(playButton); actions.Controls.Add(continueButton); row.Controls.Add(actions, 0, 2);
-            items.Add(record.Key, (state, continueButton, playButton)); rows.Controls.Add(row); RefreshRecord(record);
+            items.Add(record.Key, (state, continueButton, playButton)); RefreshRecord(record);
+            FitRow(row); actions.ResumeLayout(false); row.ResumeLayout(false); rows.Controls.Add(row);
         }
         if (records.Count == 0) rows.Controls.Add(new Label { AutoSize = true, Text = "还没有历史记录。可以摘录、学习语言或提问。" });
         UpdatePaging(); FitRows(); rows.ResumeLayout(true);
@@ -93,15 +99,31 @@ internal sealed class RecordHistoryForm : Form
     private IEnumerable<Control> GetRows() { foreach (Control control in rows.Controls) yield return control; }
     private void FitRows()
     {
-        var width = Math.Max(200, rows.ClientSize.Width - SystemInformation.VerticalScrollBarWidth - 4);
-        foreach (Control control in rows.Controls)
+        if (fittingRows) return;
+        fittingRows = true;
+        try
         {
-            control.MaximumSize = new Size(width, 0); control.Width = width;
-            if (control is not TableLayoutPanel row) continue;
-            var textWidth = Math.Max(80, width - row.Padding.Horizontal - 12);
-            row.GetControlFromPosition(0, 0).MaximumSize = row.GetControlFromPosition(0, 1).MaximumSize = new Size(textWidth, 0);
-            row.GetControlFromPosition(0, 2).MaximumSize = new Size(textWidth, 0);
+            rows.SuspendLayout();
+            foreach (Control control in rows.Controls) FitRow(control);
         }
+        finally { rows.ResumeLayout(true); fittingRows = false; }
+    }
+    private void FitRow(Control control)
+    {
+        var width = Math.Max(200, rows.ClientSize.Width - SystemInformation.VerticalScrollBarWidth - 4);
+        control.SuspendLayout();
+        try
+        {
+            var maximum = new Size(width, 0);
+            if (control.MaximumSize != maximum) control.MaximumSize = maximum;
+            if (control.Width != width) control.Width = width;
+            if (control is not TableLayoutPanel row) return;
+            var textWidth = Math.Max(80, width - row.Padding.Horizontal - 12);
+            var textMaximum = new Size(textWidth, 0);
+            for (var i = 0; i < 3; i++)
+                if (row.GetControlFromPosition(0, i) is { } child && child.MaximumSize != textMaximum) child.MaximumSize = textMaximum;
+        }
+        finally { control.ResumeLayout(true); }
     }
     internal void RefreshDraft(ClipDraft draft) => RefreshRecord(new HistoryRecord(Draft: draft));
     internal void RefreshExcerpt(ExcerptSession session) => RefreshRecord(new HistoryRecord(Excerpt: session));

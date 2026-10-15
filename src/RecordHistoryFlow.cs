@@ -18,6 +18,7 @@ internal sealed class RecordHistoryFlow : IDisposable
     private readonly Timer refreshTimer = new() { Interval = 300 };
     private Dictionary<string, (string Status, string Action)> summaries = new();
     private bool loading, reloadPending, disposed;
+    private HistoryRecord[] cachedRecords;
     internal RecordHistoryFlow(Form owner, string dataRoot, LanguageDesktopFlow language, ExcerptDesktopFlow excerpt)
     {
         this.owner = owner; this.language = language; this.excerpt = excerpt;
@@ -43,14 +44,17 @@ internal sealed class RecordHistoryFlow : IDisposable
             // Resolve live drafts only when the user opens/plays a record, never for every row.
             var snapshot = await Task.Run(() =>
             {
-                var records = HistoryRecords.Read(drafts, excerpts);
+                var draftSnapshot = drafts.CreateReadSnapshot();
+                var excerptSnapshot = excerpts.CreateReadSnapshot();
+                var records = HistoryRecords.Read(draftSnapshot, excerptSnapshot);
                 var states = records.ToDictionary(record => record.Key,
-                    record => (Status: Describe(record), Action: HistoryRecords.ActionText(record, drafts, excerpts)));
+                    record => (Status: Describe(record, draftSnapshot, excerptSnapshot), Action: HistoryRecords.ActionText(record, draftSnapshot, excerptSnapshot)));
                 return (records, states);
             });
-            if (disposed || target.IsDisposed || !ReferenceEquals(history, target)) return;
+            if (disposed) return;
             summaries = snapshot.states;
-            target.SetRecords(snapshot.records);
+            cachedRecords = snapshot.records;
+            if (history?.IsDisposed == false) history.SetRecords(snapshot.records);
         }
         catch (Exception ex)
         {
@@ -62,9 +66,9 @@ internal sealed class RecordHistoryFlow : IDisposable
             if (reloadPending) { reloadPending = false; ScheduleReload(); }
         }
     }
-    private string Describe(HistoryRecord record)
+    private static string Describe(HistoryRecord record, DraftStore drafts, ExcerptStore excerpts)
     {
-        if (record.Draft != null) return language.DescribeStatus(record.Draft);
+        if (record.Draft != null) return HistoryRecords.DescribeStatus(record.Draft, drafts);
         var cards = record.Excerpt.Cards.Where(c => c.SupersededBy == null).Select(c => excerpts.Cards.Find(c.Id)).ToArray();
         return "共 " + cards.Length + " 张 · 已导入 " + cards.Count(c => c?.ImportState == ImportState.Verified) + " 张" +
             (cards.Any(c => c == null || c.ImportError != null || c.ImportState == ImportState.Unknown) ? " · 部分内容待核对" : "");
@@ -73,14 +77,20 @@ internal sealed class RecordHistoryFlow : IDisposable
     {
         if (history == null || history.IsDisposed)
         {
-            history = new RecordHistoryForm(record => { if (record.CanPlay) language.PlayHistory(record.Draft); },
-                record => { if (record.Excerpt != null) excerpt.Resume(record.Excerpt.Id); else language.ContinueHistory(record.Draft); },
+            history = new RecordHistoryForm(record => { if (record.CanPlay) language.PlayHistory(CurrentDraft(record)); },
+                record => { if (record.Excerpt != null) excerpt.Resume(record.Excerpt.Id); else language.ContinueHistory(CurrentDraft(record)); },
                 language.Stop, Reload, record => summaries.TryGetValue(record.Key, out var row) ? row.Status : "",
                 record => summaries.TryGetValue(record.Key, out var row) ? row.Action : "继续制卡");
             history.FormClosed += (_, _) => history = null;
+            history.Show(owner);
+            if (cachedRecords != null) history.SetRecords(cachedRecords);
         }
-        if (!history.Visible) history.Show(owner); history.Activate(); Reload();
+        if (!history.Visible) history.Show(owner); history.Activate();
+        // Show the last projection immediately, then reconcile disk on every open.
+        // External/recovery writes need not raise a desktop change event.
+        Reload();
     }
+    private ClipDraft CurrentDraft(HistoryRecord record) => drafts.Find(record.Draft.Id) ?? record.Draft;
     public void Dispose() { disposed = true; refreshTimer.Dispose(); language.DraftChanged -= Changed; excerpt.SessionChanged -= Changed; history?.Close(); }
 }
 

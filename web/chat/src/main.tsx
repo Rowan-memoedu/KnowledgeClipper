@@ -4,7 +4,7 @@ import { AssistantRuntimeProvider, ThreadPrimitive, MessagePrimitive, useExterna
 import { StreamdownTextPrimitive } from '@assistant-ui/react-streamdown';
 import { createMathPlugin } from '@streamdown/math';
 import { cjk } from '@streamdown/cjk';
-import {createMermaidPlugin} from '@streamdown/mermaid';
+import {createLazyMermaidPlugin} from './lazy-mermaid';
 import { Streamdown } from 'streamdown';
 import 'katex/dist/katex.min.css';
 import './style.css';
@@ -34,7 +34,7 @@ class ChatErrorBoundary extends React.Component<React.PropsWithChildren, {failed
 }
 const imageUrl = (sha:string) => `https://clipper-media.local/${sha}.png`;
 const math = createMathPlugin({singleDollarTextMath:true});
-const mermaid=createMermaidPlugin({config:{securityLevel:'strict',suppressErrorRendering:true}});
+const mermaid=createLazyMermaidPlugin({config:{securityLevel:'strict',suppressErrorRendering:true}});
 const markdownControls={code:false,table:false,image:false,mermaid:{download:false,copy:false,fullscreen:false,panZoom:false}};
 const Context = createContext<{state:State;card?:Card}>({state:null!});
 const empty:State = {draftId:'',busy:false,status:'加载问答…',provider:'api',model:'',typeId:'fast-answer',input:'',includeExamples:false,

@@ -529,20 +529,24 @@ export class KnowledgeClipperAdapter {
 
   private async nodeReadback(id: string): Promise<Record<string, unknown>> {
     const rem = await this.requiredRem(id);
-    const cards = await rem.getCards();
     const hasMermaid=richTextToParts(rem.text).some(p=>p.kind==='mermaid');
-    if (hasMermaid && !await rem.hasPowerup(MERMAID_POWERUP))
+    // These are independent SDK reads of the same node. Keep every validation,
+    // but pay one bridge round trip instead of serially waiting for each field.
+    const [cards, childRems, isDocument, isCardItem, isExtraCardDetail, isMultiLineCard,
+      practiceDirection, practiceEnabled, mermaidBound] = await Promise.all([
+      rem.getCards(), rem.getChildrenRem(), rem.isDocument(), rem.isCardItem(),
+      rem.hasPowerup(BuiltInPowerupCodes.ExtraCardDetail), rem.hasPowerup(BuiltInPowerupCodes.MultiLineCard),
+      rem.getPracticeDirection(), rem.getEnablePractice(), hasMermaid ? rem.hasPowerup(MERMAID_POWERUP) : true,
+    ]);
+    if (hasMermaid && !mermaidBound)
       throw new Error('Mermaid source lost its renderer binding; original identity retained');
     // SDK text projections may omit the children field after reload. Fetch the
     // actual ordered children; no additional answer node is ignored.
-    const children=(await rem.getChildrenRem()).map(child=>child._id);
+    const children=childRems.map(child=>child._id);
     return { remId: rem._id, parentId: rem.parent, text: rem.text ?? [], backText: rem.backText ?? [],
       rawBackText: rem.backText ?? null, backTextState: rem.backText === undefined ? 'absent' : rem.backText === null ? 'null' : 'present',
-      children, remType: rem.type ?? 0, rawRemType: rem.type ?? null, isDocument: await rem.isDocument(),
-      isCardItem: await rem.isCardItem(), isExtraCardDetail: await rem.hasPowerup(BuiltInPowerupCodes.ExtraCardDetail),
-      isMultiLineCard: await rem.hasPowerup(BuiltInPowerupCodes.MultiLineCard),
-      practiceDirection: await rem.getPracticeDirection(),
-      practiceEnabled: await rem.getEnablePractice(),
+      children, remType: rem.type ?? 0, rawRemType: rem.type ?? null, isDocument,
+      isCardItem, isExtraCardDetail, isMultiLineCard, practiceDirection, practiceEnabled,
       cardIds: cards.map(c => c._id), cardTypes: cards.map(c => c.type),
       parts: richTextToParts(rem.text), backParts: richTextToParts(rem.backText) };
   }

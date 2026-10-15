@@ -96,6 +96,31 @@ public static class HistoryRecords
             (children.Any(c => c?.ImportState == ImportState.Unknown || c?.ImportError != null) ? " · 部分卡片待核对" : "");
     }
 
+    public static string DescribeStatus(ClipDraft draft, DraftStore store)
+    {
+        if (draft.Chat != null && Kind(draft) == "问答") return ChatStatus(draft, store);
+        string state;
+        if (draft.ModeCards.Count > 0)
+        {
+            var children = LanguageModeCards.Children(draft, store);
+            var ready = children.Count(child => child.PreviewContent != null && child.PreviewContent.Fields?.IsUnresolved != true);
+            var imported = children.Count(child => child.ImportState == ImportState.Verified);
+            state = $"语言模式 {ready}/{children.Length} 就绪 · 已导入 {imported} 张";
+            if (children.Any(child => child.AwaitingAnki)) state += " · 等待 Anki 打开后自动导入";
+            if (children.Any(child => child.ContentError != null || child.ImportError != null || child.Content?.Fields?.IsUnresolved == true)) state += " · 部分待处理";
+        }
+        else if (draft.Content == null) state = draft.HistoryReplayOnly ? "历史词块 · 可继续制卡" : draft.ContentError != null ? "内容待重试" : "内容处理中";
+        else state = draft.AwaitingAnki ? "等待 Anki 打开后自动导入" : draft.Content.Fields?.IsUnresolved == true ? PublishedLanguage.PendingReason(draft.Content.Fields) : draft.ImportState == ImportState.Verified ? ExportRouting.ResultSummary(draft) : "预览已就绪";
+        if (draft.Conversation.Count > 0)
+        {
+            var verified = QuestionCards.Preview(draft, store).Count(card => card.State == ImportState.Verified);
+            var questions = "问答 " + draft.Conversation.Count + " 轮 · 已导入 " + verified + " 张";
+            state = draft.SupportsSpeech ? state + " · " + questions : questions;
+        }
+        if (draft.ConversationImportError != null || draft.ImportError != null) state += " · 导入待核对";
+        return draft.SupportsSpeech ? state + " · " + draft.SpeechStatus : state;
+    }
+
     public static string ActionText(HistoryRecord record, DraftStore drafts, ExcerptStore excerpts)
     {
         try
