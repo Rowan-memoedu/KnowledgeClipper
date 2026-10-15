@@ -12,7 +12,7 @@ internal static class RecordedSpeechChecks
         await Console.OpenStandardInput().CopyToAsync(bytes);
         var report = Environment.GetEnvironmentVariable("KC_RECORDED_PLAYER_REPORT")!;
         await File.WriteAllTextAsync(report, JsonSerializer.Serialize(new { bytes = bytes.Length,
-            sha256 = Convert.ToHexString(SHA256.HashData(bytes.ToArray())) }));
+            sha256 = Convert.ToHexString(SHA256.HashData(bytes.ToArray())), arguments = Environment.GetCommandLineArgs().Skip(1).ToArray() }));
         if (Environment.GetEnvironmentVariable("KC_RECORDED_PLAYER_FAIL") == "1") Environment.ExitCode = 9;
     }
 
@@ -22,9 +22,20 @@ internal static class RecordedSpeechChecks
         Directory.CreateDirectory(root);
         var audioRoot = Path.Combine(root, "audio"); Directory.CreateDirectory(audioRoot);
         var helper = Path.Combine(root, "stream_speech.py");
-        File.Copy(@"D:\Projects\RemNote Quick Clipper\helpers\stream_speech.py", helper);
-        // Warm imports are deliberately slow. Recorded playback must bypass them.
-        File.WriteAllText(Path.Combine(root, "edge_tts.py"), "import time\ntime.sleep(4)\nraise RuntimeError('TTS forbidden in recorded playback fixture')\n");
+        // Gate the actual warm transport, and forbid synthesis in every child.
+        // The installed transport now uses MiMo rather than importing edge_tts.
+        File.WriteAllText(helper, """
+            import pathlib, runpy, sys, time
+            sys.path.insert(0, r'D:\Projects\MimoTTS\src')
+            from mimo_tts import adapters
+            def forbidden(*args, **kwargs):
+                raise RuntimeError('TTS forbidden in recorded playback fixture')
+            adapters.synthesize = forbidden
+            if '--prepare' in sys.argv:
+                while not pathlib.Path(__file__).with_name('release-warm').exists():
+                    time.sleep(.02)
+            runpy.run_path(r'D:\Projects\RemNote Quick Clipper\helpers\stream_speech.py', run_name='__main__')
+            """);
         var playerReport = Path.Combine(root, "player.json");
         Environment.SetEnvironmentVariable("KC_RECORDED_PLAYER_REPORT", playerReport);
         var settings = new LanguageSettings { FfplayPath = Path.Combine(AppContext.BaseDirectory, "KnowledgeClipper.SpeechUsage.Tests.exe") };
@@ -36,13 +47,14 @@ internal static class RecordedSpeechChecks
         var originalHash = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(recording)));
         using var speech = new StreamingSpeech(helper, audioRoot);
         speech.Prepare(settings);
+        var warmReady = speech.PreparationReady;
         var draft = new ClipDraft { Id = "new-draft", Original = new("lead"), Settings = settings with { EnglishVoice = "changed-voice", RatePercent = -20 } };
         var snapshot = draft.Settings;
         var clock = Stopwatch.StartNew();
         double? playerMs = null;
         await speech.SpeakRecordedAsync(draft, "Lead", oldSettings, recording, () => { }, _ => playerMs = clock.Elapsed.TotalMilliseconds);
         Check(draft.SpeechError == null && draft.Times.ContainsKey("playbackComplete"), "production helper completed explicit recorded playback");
-        Check(playerMs is >= 0 and < 3500, "recorded player starts before four-second TTS dependency import");
+        Check(playerMs is >= 0 && !warmReady.IsCompleted, "recorded playback bypasses an explicitly blocked warm helper");
         Check(ReferenceEquals(draft.Settings, snapshot) && draft.AudioPath == recording, "new draft settings and source recording remain intact");
         using (var received = JsonDocument.Parse(File.ReadAllText(playerReport)))
             Check(received.RootElement.GetProperty("sha256").GetString() == originalHash, "real player child received exact existing MP3 bytes");
@@ -55,9 +67,26 @@ internal static class RecordedSpeechChecks
         await Reject("empty recording", () => speech.SpeakRecordedAsync(draft, "Lead", oldSettings, empty, () => { }));
         await Reject("missing recording", () => speech.SpeakRecordedAsync(draft, "Lead", oldSettings, Path.Combine(audioRoot, "missing-" + Path.GetFileName(recording)), () => { }));
         Environment.SetEnvironmentVariable("KC_RECORDED_PLAYER_FAIL", "1");
-        await speech.SpeakRecordedAsync(draft, "Lead", oldSettings, recording, () => { });
+        // An already prepared helper retains the environment from its creation.
+        // Start this failure fixture after setting the child-process exit flag.
+        using var failingSpeech = new StreamingSpeech(helper, audioRoot);
+        await failingSpeech.SpeakRecordedAsync(draft, "Lead", oldSettings, recording, () => { });
         Check(draft.SpeechError != null && Directory.GetFiles(audioRoot).Length == 2, "failed explicit playback reports failure without TTS fallback");
         Environment.SetEnvironmentVariable("KC_RECORDED_PLAYER_FAIL", null);
+        var pcm = Enumerable.Range(0, 4800).SelectMany(i => BitConverter.GetBytes((short)(Math.Sin(i * .17) * 12000))).ToArray();
+        var metadata = JsonSerializer.SerializeToUtf8Bytes(new { schema = 1, audio_sha256 = originalHash.ToLowerInvariant(),
+            pcm_sha256 = Convert.ToHexString(SHA256.HashData(pcm)).ToLowerInvariant(), rate = .97, volume = .82 });
+        File.WriteAllBytes(recording + ".pcm", metadata.Concat(new byte[] { 10 }).Concat(pcm).ToArray());
+        await speech.SpeakRecordedAsync(draft, "Lead", oldSettings, recording, () => { });
+        Check(draft.SpeechError == null, "production transport accepts the paired original PCM recording");
+        using (var received = JsonDocument.Parse(File.ReadAllText(playerReport)))
+        {
+            Check(received.RootElement.GetProperty("sha256").GetString() == Convert.ToHexString(SHA256.HashData(pcm)),
+                "real player child receives exact original streaming samples");
+            var arguments = received.RootElement.GetProperty("arguments").EnumerateArray().Select(v => v.GetString()).ToArray();
+            Check(arguments.Contains("s16le") && arguments.Contains("atempo=0.97,volume=0.82"),
+                "real player uses the original PCM format and saved playback filters");
+        }
         File.WriteAllText(Path.Combine(root, "result.json"), JsonSerializer.Serialize(new { passed = true, playerStartedMs = playerMs, originalHash,
             scope = "Production C# and Python helper, generated MP3 and real receiver process; no TTS service or audio device." }, new JsonSerializerOptions { WriteIndented = true }));
         Console.WriteLine("RESULT " + Path.Combine(root, "result.json"));

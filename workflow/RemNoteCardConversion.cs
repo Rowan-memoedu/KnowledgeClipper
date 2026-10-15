@@ -6,7 +6,11 @@ namespace KnowledgeClipper.Workflow;
 
 public sealed record RemNoteRichPart(string Kind, string? Text = null, string? Uri = null,
     string? Sha256 = null, int? ClozeId = null, string? Hint = null, bool? Block = null);
-public sealed record RemNoteCardPlan(string Key, string Kind, RemNoteRichPart[] Front, RemNoteRichPart[][] Back);
+public sealed record RemNoteCardPlan(string Key, string Kind, RemNoteRichPart[] Front, RemNoteRichPart[][] Back)
+{
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public int[]? BackParents { get; init; }
+}
 
 // Converts only the fields and templates produced by this application. It does not ask an LLM,
 // interpret arbitrary Anki templates, or use RemNote's Markdown importer to infer card structure.
@@ -17,7 +21,6 @@ public static class RemNoteCardConversion
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     private static readonly Regex Cloze = new(@"\{\{c(?<id>[1-9]\d*)::(?<text>(?:(?!\{\{|\}\}|::).)+)(?:::(?<hint>(?:(?!\{\{|\}\}).)*))?\}\}", RegexOptions.Singleline);
     private static readonly Regex ClozeStart = new(@"\{\{c\d+::", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-    private static readonly Regex Math = new(@"(?<!\\)\\\(.*?(?<!\\)\\\)|(?<!\\)\\\[.*?(?<!\\)\\\]|(?<!\\)\$\$.*?(?<!\\)\$\$", RegexOptions.Singleline);
 
     public static RemNoteCardPlan[] Convert(AnkiNoteDraft note)
     {
@@ -179,15 +182,13 @@ public static class RemNoteCardConversion
     private static RemNoteRichPart[][] Rows(IEnumerable<RemNoteRichPart> parts)
     {
         var rows = new List<RemNoteRichPart[]>(); var row = new List<RemNoteRichPart>();
-        foreach (var part in parts)
+        foreach (var part in ParseMath(parts.ToArray()))
         {
             if (part.Kind != "text") { row.Add(part); continue; }
-            var value = part.Text ?? ""; var formulas = Math.Matches(value).Cast<Match>().ToArray();
-            var offset = 0; var formulaIndex = 0;
+            var value = part.Text ?? ""; var offset = 0;
             for (var index = 0; index < value.Length; index++)
             {
-                while (formulaIndex < formulas.Length && formulas[formulaIndex].Index + formulas[formulaIndex].Length <= index) formulaIndex++;
-                if (value[index] != '\n' || formulaIndex < formulas.Length && formulas[formulaIndex].Index <= index) continue;
+                if (value[index] != '\n') continue;
                 if (index > offset) row.Add(Text(value[offset..index]));
                 Flush(); offset = index + 1;
             }
@@ -208,15 +209,11 @@ public static class RemNoteCardConversion
         foreach (var part in parts)
         {
             if (part.Kind is not ("text" or "cloze")) { result.Add(part); continue; }
-            var value = part.Text ?? ""; var offset = 0;
-            foreach (Match formula in Math.Matches(value))
+            foreach (var segment in ChatMarkdown.MathParts(part.Text ?? ""))
             {
-                if (formula.Index > offset) result.Add(part with { Text = value[offset..formula.Index] });
-                result.Add(new("latex", Text: formula.Value[2..^2], ClozeId: part.ClozeId, Hint: part.Hint,
-                    Block: !formula.Value.StartsWith(@"\(", StringComparison.Ordinal)));
-                offset = formula.Index + formula.Length;
+                result.Add(segment.Kind == "text" ? part with { Text = segment.Text } :
+                    segment with { ClozeId = part.ClozeId, Hint = part.Hint });
             }
-            if (offset < value.Length) result.Add(part with { Text = value[offset..] });
         }
         return Compact(result);
     }

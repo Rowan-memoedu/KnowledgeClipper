@@ -1,5 +1,6 @@
 import { BuiltInPowerupCodes, type PluginRem, type ReactRNPlugin, type RichTextInterface } from '@remnote/plugin-sdk';
 import { clearEmptyBackWithEditor } from './plain-structure-editor';
+import {MERMAID_POWERUP} from './mermaid';
 
 export const KNOWLEDGE_CLIPPER_CAPABILITY = 'knowledge-clipper.sdk.v1';
 export const KNOWLEDGE_CLIPPER_MEDIA_CAPABILITY = 'knowledge-clipper.media-finalize.v1';
@@ -9,7 +10,7 @@ export const KNOWLEDGE_CLIPPER_PLAIN_STRUCTURE_CAPABILITY = 'knowledge-clipper.p
 export const KNOWLEDGE_CLIPPER_SCHEMA = 'knowledge-clipper.remnote.v1';
 
 export interface ClipPart {
-  kind: 'text' | 'image' | 'cloze' | 'latex';
+  kind: 'text' | 'image' | 'cloze' | 'latex' | 'mermaid';
   text?: string;
   uri?: string;
   sha256?: string;
@@ -22,6 +23,7 @@ export interface ClipCard {
   kind: 'basic' | 'plain' | 'cloze';
   front: ClipPart[];
   back: ClipPart[][];
+  backParents?: number[];
 }
 export interface ClipPlan {
   schemaVersion: typeof KNOWLEDGE_CLIPPER_SCHEMA;
@@ -30,6 +32,7 @@ export interface ClipPlan {
   rootRemId?: string;
   documentPath: string[];
   targetDocumentId?: string;
+  documentIds?: string[];
   cards: ClipCard[];
 }
 export interface ClipIdentity {
@@ -72,7 +75,8 @@ const attemptKey = (sourceId: string) => `knowledge-clipper.attempt.v1.${encodeU
 const attemptFingerprint = (plan: ClipPlan) => JSON.stringify(plan);
 const fingerprint = (plan: ClipPlan, card: ClipCard) => JSON.stringify({
   rootTitle: plan.rootTitle, rootRemId: plan.rootRemId ?? '', documentPath: plan.documentPath,
-  ...(plan.targetDocumentId ? {targetDocumentId: plan.targetDocumentId} : {}), card,
+  ...(plan.targetDocumentId ? {targetDocumentId: plan.targetDocumentId} : {}),
+  ...(plan.documentIds ? {documentIds: plan.documentIds} : {}), card,
 });
 const content = (parts: ClipPart[]) => parts.some(p => p.kind === 'image' || (p.text ?? '').trim());
 const emptyRichText = (value: unknown): boolean => Array.isArray(value) && value.every(part => typeof part === 'string'
@@ -94,11 +98,18 @@ export function validateClipPlan(value: unknown): ClipPlan {
       !Array.isArray(p.documentPath) || !p.documentPath.length || p.documentPath.length > 5 ||
       p.documentPath.some(x => typeof x !== 'string' || !x.trim() || x.length > 200) ||
       (p.targetDocumentId !== undefined && (typeof p.targetDocumentId !== 'string' || !p.targetDocumentId ||
-        p.targetDocumentId.length > 200 || p.documentPath.length !== 2 || p.documentPath[0] !== '摘录')) ||
+        p.targetDocumentId.length > 200 || p.documentPath.length !== 2 || !['摘录','零碎知识制卡'].includes(p.documentPath[0]))) ||
       !Array.isArray(p.cards) || !p.cards.length || p.cards.length > 1000) {
     throw new Error('Invalid KnowledgeClipper export plan');
   }
   const keys = new Set<string>();
+  const dailyQuestion = p.documentPath[0] === '零碎知识制卡' && p.documentPath.length === 3 &&
+    Array.isArray(p.documentIds) && p.documentIds.length === 2 && p.targetDocumentId === undefined &&
+    /^(?:[1-9]|1[0-2])\.(?:[1-9]|[12]\d|3[01])$/.test(p.documentPath[2]);
+  if (p.documentIds !== undefined && (!Array.isArray(p.documentIds) ||
+      (!dailyQuestion && (p.documentIds.length !== p.documentPath.length || p.targetDocumentId !== p.documentIds.at(-1))) ||
+      p.documentIds.some(id => typeof id !== 'string' || !id || id.length > 200) || !p.rootRemId)) throw new Error('Invalid exact Document chain');
+  if (p.documentPath[0] === '零碎知识制卡' && !p.documentIds) throw new Error('Question cards require exact Document chain');
   for (const card of p.cards) {
     if (typeof card.key !== 'string' || !card.key || card.key.length > 200 || keys.has(card.key) ||
         !['plain', 'basic', 'cloze'].includes(card.kind) || !Array.isArray(card.front) ||
@@ -106,8 +117,12 @@ export function validateClipPlan(value: unknown): ClipPlan {
       throw new Error('Invalid or duplicate card key');
     }
     keys.add(card.key);
+    if (card.backParents !== undefined && (card.kind !== 'basic' || card.backParents.length !== card.back.length ||
+        card.backParents.some((parent,index) => !Number.isInteger(parent) || parent < -1 || parent >= index) ||
+        card.back.some(row => !content(row)))) throw new Error('Invalid answer hierarchy');
     for (const part of [...card.front, ...card.back.flat()]) {
-      if (!part || !['text', 'image', 'cloze', 'latex'].includes(part.kind)) throw new Error('Invalid rich part');
+      if (!part || !['text', 'image', 'cloze', 'latex', 'mermaid'].includes(part.kind)) throw new Error('Invalid rich part');
+      if (part.kind === 'mermaid' && (part.clozeId || !part.text?.trim())) throw new Error('Mermaid requires nonempty source without clozes');
       if (part.kind === 'image') {
         const url = new URL(part.uri ?? '');
         if (url.protocol !== 'file:' || url.host || !/\.(png|jpe?g|gif|webp)$/i.test(url.pathname) ||
@@ -128,6 +143,7 @@ export function validateClipPlan(value: unknown): ClipPlan {
 /** Direct rich text avoids treating source punctuation as Markdown card commands. */
 export function partsToRichText(parts: ClipPart[]): RichTextInterface {
   return parts.map(part => {
+    if (part.kind === 'mermaid') return {i:'m' as const,text:part.text!,code:true,language:'mermaid'};
     if (part.kind === 'image') return { i: 'i' as const, url: part.uri! };
     if (part.kind === 'latex') return { i: 'x' as const, text: part.text!, block: part.block ?? false,
       ...(part.clozeId ? { cId: `kc_${part.clozeId}` } : {}),
@@ -150,7 +166,7 @@ export function richTextToParts(value: RichTextInterface | undefined): ClipPart[
     else if (raw.i === 'x') part = { kind: 'latex', text: raw.text, block: raw.block ?? false,
       ...(raw.cId ? { clozeId: raw.cId.replace(/^kc_/, '') } : {}),
       ...((raw as unknown as Record<string, unknown>)['cloze-hint'] ? { hint: String((raw as unknown as Record<string, unknown>)['cloze-hint']) } : {}) };
-    else if (raw.i === 'm') part = raw.cId
+    else if (raw.i === 'm') part = raw.code && raw.language === 'mermaid' ? {kind:'mermaid',text:raw.text} : raw.cId
       ? { kind: 'cloze', text: raw.text, clozeId: raw.cId.replace(/^kc_/, ''), ...(raw['cloze-hint'] ? { hint: raw['cloze-hint'] } : {}) }
       : { kind: 'text', text: raw.text };
     else throw new Error(`Unexpected rich text element ${raw.i}; refusing lossy readback`);
@@ -331,7 +347,7 @@ export class KnowledgeClipperAdapter {
 
   private async appendTo(rem: PluginRem, parentId: string): Promise<void> {
     // The SDK documents an omitted position as insertion at the front.
-    await rem.setParent(parentId, (await this.requiredRem(parentId)).children?.length ?? 0);
+    await rem.setParent(parentId, (await (await this.requiredRem(parentId)).getChildrenRem()).length);
   }
 
   private async configurePlainStructure(rem: PluginRem): Promise<void> {
@@ -357,6 +373,7 @@ export class KnowledgeClipperAdapter {
         throw new Error(`Document location or type differs: ${title}`);
       }
       if (!await rem.isDocument()) {
+        if (suppliedId) throw new Error(`Selected Rem is not a Document: ${title}`);
         const literalTitle = (rem.text ?? []).every(part => typeof part === 'string' ||
           (part.i === 'm' && Object.keys(part).every(key => key === 'i' || key === 'text')));
         if ((rem.type ?? 0) !== 0 || !literalTitle || (rem.backText?.length ?? 0) || (rem.children?.length ?? 0) ||
@@ -382,6 +399,8 @@ export class KnowledgeClipperAdapter {
 
   private async exportLocked(plan: ClipPlan, prepared: PreparedImage[], prepareOnly: boolean, newSource: boolean): Promise<unknown> {
     if (!this.canWrite()) throw new Error('Write operations are disabled in the RemNote bridge');
+    // Historical identities remain readable. Retired routes may never receive another write.
+    if (plan.documentPath[0] === '问答') throw new Error('Retired question destination; reconcile original identity or choose a new draft');
     // Check every existing entry before any new mutation, including partial previous attempts.
     const existing = await Promise.all(plan.cards.map(c => this.plugin.storage.getSynced<StoredCard>(markerKey(plan.sourceId, c.key))));
     const previousAttempt = await this.plugin.storage.getSynced<StoredAttempt>(attemptKey(plan.sourceId));
@@ -425,7 +444,7 @@ export class KnowledgeClipperAdapter {
       directory = root;
       for (let i = 0; i < plan.documentPath.length; i++)
         directory = await this.document(plan.documentPath[i]!, directory._id,
-          i === plan.documentPath.length - 1 ? plan.targetDocumentId : undefined);
+          plan.documentIds?.[i] ?? (i === plan.documentPath.length - 1 ? plan.targetDocumentId : undefined));
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await savePhase('failed_before_cards', message);
@@ -446,21 +465,31 @@ export class KnowledgeClipperAdapter {
       if (!rem) throw new Error(`SDK could not create card ${card.key}`);
       record.remIds.push(rem._id);
       await this.plugin.storage.setSynced(key, record);
+      // Build the complete basic card before allowing native card generation.
+      // An image front can otherwise generate a transient forward card before its answer exists.
+      if (card.kind === 'basic') {
+        await rem.setEnablePractice(false);
+        await rem.setPracticeDirection('none');
+      }
       await rem.setText(this.partsToSdkRichText(card.front, prepared));
+      if (card.front.some(p=>p.kind==='mermaid')) await rem.addPowerup(MERMAID_POWERUP);
       await this.appendTo(rem, directory._id);
       await rem.setIsDocument(false);
       if (card.kind === 'basic' || card.kind === 'cloze') {
         // MultiLineCard marks an answer item for the parent, not a card front.
         // Marking this front would turn its containing directory into a card.
-        for (const row of card.back.filter(content)) {
+        for (const [rowIndex,row] of card.back.filter(content).entries()) {
           const child = await this.plugin.rem.createRem();
           if (!child) throw new Error('SDK could not create an answer item');
           record.childRemIds.push(child._id);
           await this.plugin.storage.setSynced(key, record);
           await child.setText(this.partsToSdkRichText(row, prepared));
-          await this.appendTo(child, rem._id);
+          if (row.some(p=>p.kind==='mermaid')) await child.addPowerup(MERMAID_POWERUP);
+          const parentIndex = card.backParents?.[rowIndex] ?? -1;
+          await this.appendTo(child, parentIndex < 0 ? rem._id : record.childRemIds[parentIndex]);
           await child.setIsDocument(false);
-          if (card.kind === 'basic') await child.setIsCardItem(true);
+          if (card.kind === 'basic' && parentIndex < 0) await child.setIsCardItem(true);
+          else if (card.kind === 'basic') await child.setEnablePractice(false);
           else await child.addPowerup(BuiltInPowerupCodes.ExtraCardDetail);
         }
         if (card.kind === 'basic') await rem.setPracticeDirection('forward');
@@ -501,9 +530,15 @@ export class KnowledgeClipperAdapter {
   private async nodeReadback(id: string): Promise<Record<string, unknown>> {
     const rem = await this.requiredRem(id);
     const cards = await rem.getCards();
+    const hasMermaid=richTextToParts(rem.text).some(p=>p.kind==='mermaid');
+    if (hasMermaid && !await rem.hasPowerup(MERMAID_POWERUP))
+      throw new Error('Mermaid source lost its renderer binding; original identity retained');
+    // SDK text projections may omit the children field after reload. Fetch the
+    // actual ordered children; no additional answer node is ignored.
+    const children=(await rem.getChildrenRem()).map(child=>child._id);
     return { remId: rem._id, parentId: rem.parent, text: rem.text ?? [], backText: rem.backText ?? [],
       rawBackText: rem.backText ?? null, backTextState: rem.backText === undefined ? 'absent' : rem.backText === null ? 'null' : 'present',
-      children: rem.children ?? [], remType: rem.type ?? 0, rawRemType: rem.type ?? null, isDocument: await rem.isDocument(),
+      children, remType: rem.type ?? 0, rawRemType: rem.type ?? null, isDocument: await rem.isDocument(),
       isCardItem: await rem.isCardItem(), isExtraCardDetail: await rem.hasPowerup(BuiltInPowerupCodes.ExtraCardDetail),
       isMultiLineCard: await rem.hasPowerup(BuiltInPowerupCodes.MultiLineCard),
       practiceDirection: await rem.getPracticeDirection(),
@@ -520,7 +555,7 @@ export class KnowledgeClipperAdapter {
     }
     const pending = record.state === 'writing';
     const node = await this.nodeReadback(record.remId);
-    const children = directory.children ?? [];
+    const children = (await directory.getChildrenRem()).map(child=>child._id);
     const expectedOrder = [...contentIds, record.remId];
     const start = children.indexOf(contentIds[0]);
     const belongs = node.parentId === directory._id;
@@ -684,11 +719,22 @@ export class KnowledgeClipperAdapter {
         frontNode.practiceEnabled !== (card.kind !== 'plain') ||
         (card.kind === 'basic' && frontNode.practiceDirection !== 'forward') ||
         semantic(front) !== semantic(card.front) ||
-        JSON.stringify(frontNode.children) !== JSON.stringify(record.childRemIds) ||
-        nodes.slice(1).some(n => n.parentId !== record.remIds[0] ||
-          (card.kind === 'basic' ? !n.isCardItem : !n.isExtraCardDetail)) ||
+        JSON.stringify(frontNode.children) !== JSON.stringify(record.childRemIds.filter((_,i)=>(card.backParents?.[i]??-1)<0)) ||
+        nodes.slice(1).some((n,i) => {
+          const parent = card.backParents?.[i] ?? -1;
+          return n.parentId !== (parent<0?record.remIds[0]:record.childRemIds[parent]) ||
+            JSON.stringify(n.children) !== JSON.stringify(record.childRemIds.filter((_,j)=>card.backParents?.[j]===i)) ||
+            (card.kind === 'basic' ? Boolean(n.isCardItem)!==(parent<0) : !n.isExtraCardDetail);
+        }) ||
         JSON.stringify(back.map(semantic)) !== JSON.stringify(card.back.filter(content).map(semantic))) {
-      throw new Error(`Recorded content or location differs for ${card.key}; no replacement was created`);
+      const differences={parent:frontNode.parentId!==record.documentRemId,
+        nodeType:nodes.some(n=>n.isDocument||n.remType!==0),practice:frontNode.practiceEnabled!==(card.kind!=='plain'),
+        direction:card.kind==='basic'&&frontNode.practiceDirection!=='forward',
+        front:semantic(front)!==semantic(card.front),
+        frontChildren:JSON.stringify(frontNode.children)!==JSON.stringify(record.childRemIds.filter((_,i)=>(card.backParents?.[i]??-1)<0)),
+        back:JSON.stringify(back.map(semantic))!==JSON.stringify(card.back.filter(content).map(semantic))};
+      throw new Error(`Recorded content or location differs for ${card.key} (${Object.entries(differences).filter(([,v])=>v).map(([k])=>k).join(',')||'answer structure'}); no replacement was created`+
+        (differences.frontChildren?`; observed children=${JSON.stringify(frontNode.children)}`:''));
     }
     return { key: card.key, kind: card.kind, reused, remIds: record.remIds, childRemIds: record.childRemIds,
       cardIds: nodes.flatMap(n => n.cardIds as string[]), front, back, nodes };
@@ -805,8 +851,9 @@ export class KnowledgeClipperAdapter {
     const directoryNodes = [await this.nodeReadback(rootRemId)];
     for (let i = 0; i < plan.documentPath.length; i++) {
       const title = plan.documentPath[i]!;
-      const child = i === plan.documentPath.length - 1 && plan.targetDocumentId
-        ? await this.plugin.rem.findOne(plan.targetDocumentId)
+      const exact = plan.documentIds?.[i] ?? (i === plan.documentPath.length - 1 ? plan.targetDocumentId : undefined);
+      const child = exact
+        ? await this.plugin.rem.findOne(exact)
         : await this.plugin.rem.findByName([title], parent._id);
       if (!child || child.parent !== parent._id || !await child.isDocument() ||
           await this.plugin.richText.toString(child.text ?? []) !== title) throw new Error('Recorded mode directory changed');
@@ -818,7 +865,7 @@ export class KnowledgeClipperAdapter {
       records.flatMap(record => record!.remIds)) : undefined;
     const batchSeparatorPending = attempt?.batchSeparator?.state === 'writing';
     return { schemaVersion: KNOWLEDGE_CLIPPER_SCHEMA, sourceId: plan.sourceId, rootRemId, documentRemId, cards: results, directoryNodes,
-      ...(batchSeparator ? {batchSeparator,documentChildren:[...(parent.children ?? [])],...(batchSeparatorPending ? {
+      ...(batchSeparator ? {batchSeparator,documentChildren:(await parent.getChildrenRem()).map(child=>child._id),...(batchSeparatorPending ? {
         batchSeparatorPending:true,spacingRecovery:{eligible:true,kind:'finalize-batch-separator'} } : {})} : {}) };
   }
 }

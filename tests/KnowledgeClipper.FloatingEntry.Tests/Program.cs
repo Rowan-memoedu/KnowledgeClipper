@@ -18,7 +18,7 @@ internal static partial class Program
     private static readonly List<string> statuses = [];
     private static string output = "", dataRoot = "";
     private static Assembly desktop = null!;
-    private static bool imageHistoryOnly, quickLanguageOnly, historyReuseOnly, pendingAnkiOnly;
+    private static bool imageHistoryOnly, quickLanguageOnly, historyReuseOnly, pendingAnkiOnly, meaningReplayOnly;
     private static object Initial => Type("UserSettings").GetMethod("Defaults", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, null)!;
 
     [STAThread]
@@ -30,6 +30,7 @@ internal static partial class Program
         quickLanguageOnly = args.Length == 2 && args[1] == "--quick-language";
         historyReuseOnly = args.Length == 2 && args[1] == "--history-reuse";
         pendingAnkiOnly = args.Length == 2 && args[1] == "--pending-anki";
+        meaningReplayOnly = args.Length == 2 && args[1] == "--meaning-replay";
         dataRoot = Path.Combine(@"D:\Caches\KnowledgeClipper\floating-entry-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dataRoot);
         Environment.SetEnvironmentVariable("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY", "isolated-test-fixture-not-a-real-credential");
@@ -65,6 +66,7 @@ internal static partial class Program
     {
         using var owner = new Form(); _ = owner.Handle;
         if (Environment.GetCommandLineArgs().Contains("--quick-feedback")) { await QuickFeedbackAsync(owner); return; }
+        if (meaningReplayOnly) { await MeaningReplayAsync(owner); return; }
         if (pendingAnkiOnly) { await PendingAnkiAsync(owner); return; }
         if (historyReuseOnly) { await HistoryReuseAsync(owner); return; }
         if (quickLanguageOnly) { await QuickLanguageSpeechAsync(owner); return; }
@@ -77,6 +79,8 @@ internal static partial class Program
         var settings = Settings();
         var languageRoot = Path.Combine(dataRoot, "language");
         WorkflowJson.Save(Path.Combine(languageRoot, "language-settings.json"), settings);
+        WorkflowJson.Save(Path.Combine(languageRoot, "modes", "chat", "question-types.json"), new ChatConfiguration(
+            [new("fast-answer", "快速答案", "types/fast-answer.md", "few-shots/fast-answer.md", [], DocumentId: "fixture-type")], "fixture-root", "fixture-base"));
         using var language = (IDisposable)New("LanguageDesktopFlow", owner, languageRoot, (Action<string>)statuses.Add, Initial);
         var configuration = ModeConfigurationLoader.Load(Path.Combine(AppContext.BaseDirectory, "modes"));
 
@@ -104,10 +108,10 @@ internal static partial class Program
         preview = Forms(language).Single(); Save(preview, "language-content-failure.png"); preview.Close(); await Task.Delay(30);
 
         var normal = Start(language, "Why is the sky blue?", "question", settings, configuration, false);
-        Check(Forms(language).Length == 1 && ReferenceEquals(Get(Forms(language).Single(), "Draft"), normal), "disabled quick mode opens normal preview immediately");
-        await Until(() => normal.ContentError != null, "normal preview keeps reporting content errors");
-        Check(Forms(language).Length == 1 && normal.ImportState == ImportState.Unconfirmed, "ordinary preview never imports automatically");
-        Forms(language).Single().Close(); await Task.Delay(30);
+        var normalChat = Application.OpenForms.Cast<Form>().Single(f => f.Name == "knowledge-clipper.chat");
+        Check(ReferenceEquals(Get(normalChat, "Draft"), normal) && normal.Chat?.Input == "Why is the sky blue?", "disabled quick question opens chat with the original input");
+        Check(normal.Chat!.Prompts.Count == 0 && normal.ImportState == ImportState.Unconfirmed, "ordinary question waits for explicit send and never imports automatically");
+        normalChat.Close(); await Task.Delay(30);
 
         using (var fixture = new QuestionApiFixture())
         {
@@ -269,6 +273,7 @@ internal static partial class Program
     private static object? Call(object target, string method, params object?[] args) => target.GetType().GetMethod(method, Flags)!.Invoke(target, args);
     private static object? Get(object target, string property) => target.GetType().GetProperty(property, Flags)!.GetValue(target);
     private static Form[] Forms(object flow) => ((IEnumerable)flow.GetType().GetField("forms", Flags)!.GetValue(flow)!).Cast<Form>().Where(f => !f.IsDisposed).ToArray();
+    private static Form[] ChatForms(object flow) => ((IEnumerable)flow.GetType().GetField("chatForms", Flags)!.GetValue(flow)!).Cast<Form>().Where(f => !f.IsDisposed).ToArray();
     private static void Check(bool condition, string name) { if (!condition) throw new InvalidOperationException(name); checks.Add(name); Console.WriteLine("PASS " + name); }
     private static async Task Until(Func<bool> condition, string name, int timeout = 8000)
     { var timer = Stopwatch.StartNew(); while (!condition() && timer.ElapsedMilliseconds < timeout) await Task.Delay(25); Check(condition(), name); }

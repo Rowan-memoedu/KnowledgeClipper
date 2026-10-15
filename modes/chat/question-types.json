@@ -1,0 +1,76 @@
+{
+  "types": [
+    {
+      "id": "fast-answer",
+      "label": "快速答案",
+      "promptFile": "types/fast-answer.md",
+      "examplesFile": "few-shots/fast-answer.md",
+      "profiles": [],
+      "modelHint": "instant"
+    },
+    {
+      "id": "global-motivation",
+      "label": "高观点与整体动机",
+      "promptFile": "types/global-motivation.md",
+      "examplesFile": "few-shots/global-motivation.md",
+      "profiles": [],
+      "modelHint": "high"
+    },
+    {
+      "id": "extract-pattern",
+      "label": "从题目提取范式",
+      "promptFile": "types/extract-pattern.md",
+      "examplesFile": "few-shots/extract-pattern.md",
+      "profiles": [],
+      "modelHint": "high"
+    },
+    {
+      "id": "chunk-solution",
+      "label": "范式分块与逐块解答",
+      "promptFile": "types/chunk-solution.md",
+      "examplesFile": "few-shots/chunk-solution.md",
+      "profiles": [],
+      "modelHint": "high"
+    },
+    {
+      "id": "step-motivation",
+      "label": "局部步骤的动机",
+      "promptFile": "types/step-motivation.md",
+      "examplesFile": "few-shots/step-motivation.md",
+      "profiles": [],
+      "modelHint": "high"
+    },
+    {
+      "id": "explain-concept",
+      "label": "概念、符号与方法讲解",
+      "promptFile": "types/explain-concept.md",
+      "examplesFile": "few-shots/explain-concept.md",
+      "profiles": [],
+      "modelHint": "high"
+    },
+    {
+      "id": "check-solution",
+      "label": "解答核验与差异诊断",
+      "promptFile": "types/check-solution.md",
+      "examplesFile": "few-shots/check-solution.md",
+      "profiles": [],
+      "modelHint": "high"
+    },
+    {
+      "id": "alternative-route",
+      "label": "另法或指定路线求解",
+      "promptFile": "types/alternative-route.md",
+      "examplesFile": "few-shots/alternative-route.md",
+      "profiles": [],
+      "modelHint": "high"
+    },
+    {
+      "id": "transfer-framework",
+      "label": "相似题迁移与框架泛化",
+      "promptFile": "types/transfer-framework.md",
+      "examplesFile": "few-shots/transfer-framework.md",
+      "profiles": [],
+      "modelHint": "high"
+    }
+  ]
+}

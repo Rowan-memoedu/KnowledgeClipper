@@ -88,6 +88,16 @@ public sealed partial class RemNoteConnection(HttpClient http, string endpoint) 
             else
             {
                 await RequireHealthyAsync(ct);
+                if (plan.Cards.SelectMany(c => c.Front.Concat(c.Back.SelectMany(r => r))).Any(p => p.Kind == "mermaid") &&
+                    !True(await HealthAsync(ct), "mermaidSupported"))
+                    throw new InvalidDataException("请更新剪藏 RemNote 插件以显示 Mermaid 图；源码与草稿已保留，尚未写入。");
+                if ((plan.DocumentIds != null || plan.Cards.Any(c => c.BackParents != null)) && !True(await HealthAsync(ct), "questionCompositionSupported"))
+                    throw new InvalidDataException("请更新剪藏专用 RemNote 插件以支持类型目录和答案层级；尚未写入。");
+                if (plan.DocumentIds is { Length: 2 } && plan.DocumentPath.Length == 3 &&
+                    !True(await HealthAsync(ct), "questionDailyDocumentsSupported"))
+                    throw new InvalidDataException("请更新剪藏专用 RemNote 插件以支持类型内的日期目录；尚未写入。");
+                if (plan.DocumentPath.FirstOrDefault() == "问答")
+                    throw new InvalidDataException("旧问答目标已退役；保留冻结身份。请先核对原导入，重新选材时使用新的类型目录草稿。");
                 draft.ImportState = ImportState.Writing; store.Save(draft);
                 result = await RequestAsync("export", new { plan, newSource = true }, ct);
             }
@@ -203,6 +213,22 @@ public sealed partial class RemNoteConnection(HttpClient http, string endpoint) 
         var rootId = Id(result, "rootRemId"); var directory = Id(result, "documentRemId");
         Require(plan.RootRemId == null || plan.RootRemId == rootId, "根目录");
         Require(plan.TargetDocumentId == null || plan.TargetDocumentId == directory, "所选摘录目录");
+        if (plan.DocumentIds != null)
+        {
+            Require(result.TryGetProperty("directoryNodes", out var directories), "类型目录原始节点");
+            var chain = directories.EnumerateArray().ToArray();
+            Require(chain.Length == plan.DocumentPath.Length + 1 && Id(chain[0], "remId") == rootId &&
+                Id(chain[^1], "remId") == directory, "类型目录完整祖先链");
+            for (var i = 0; i < chain.Length; i++)
+            {
+                var node = chain[i];
+                Require(True(node, "isDocument") && (i == 0 ? Id(node, "remId") == rootId :
+                    i > plan.DocumentIds.Length || Id(node, "remId") == plan.DocumentIds[i - 1]), "类型目录身份和 document 标记");
+                Require(i == 0 ? node.GetProperty("parentId").ValueKind == JsonValueKind.Null : Id(node, "parentId") == Id(chain[i - 1], "remId"), "类型目录祖先位置");
+                var title = string.Concat(node.GetProperty("text").EnumerateArray().Select(p => p.ValueKind == JsonValueKind.String ? p.GetString() : p.GetProperty("text").GetString()));
+                Require(title == (i == 0 ? plan.RootTitle : plan.DocumentPath[i - 1]), "类型目录标题");
+            }
+        }
         Require(previous == null || previous.RootRemId == rootId && previous.DocumentRemId == directory, "已确认目录");
         Require(allowOriginalImages || !True(result, "mediaPending"), "图片仍未保存到 RemNote");
         if (previous != null) RequireIdentity(result, IdentityOf(previous.Evidence));
@@ -224,13 +250,15 @@ public sealed partial class RemNoteConnection(HttpClient http, string endpoint) 
             Require(nodes[0].TryGetProperty("practiceEnabled", out var enabled) && enabled.ValueKind is JsonValueKind.True or JsonValueKind.False &&
                 enabled.GetBoolean() == (expected.Kind != "plain"), "复习启用状态");
             Require(expected.Kind != "basic" || nodes[0].TryGetProperty("practiceDirection", out var direction) && direction.GetString() == "forward", "卡片练习方向");
-            Require(Ids(nodes[0], "children").SequenceEqual(children), "背面节点顺序");
+            Require(Ids(nodes[0], "children").SequenceEqual(children.Where((_,i) => (expected.BackParents?[i] ?? -1) < 0)), "背面节点顺序");
             Require(EqualParts(expected.Front, ActualParts(nodes[0], allowOriginalImages, ref pendingImages), allowOriginalImages), "正面文字、换行、挖空或图片");
             for (var row = 0; row < expected.Back.Length; row++)
             {
                 var node = nodes[row + 1];
-                Require(Id(node, "remId") == children[row] && Id(node, "parentId") == ids[0], "反面节点父级");
-                Require(expected.Kind == "basic" ? True(node, "isCardItem") : True(node, "isExtraCardDetail") && !True(node, "isCardItem"), "多行卡或挖空附加说明类型");
+                var parent = expected.BackParents?[row] ?? -1;
+                Require(Id(node, "remId") == children[row] && Id(node, "parentId") == (parent < 0 ? ids[0] : children[parent]), "反面节点父级");
+                Require(Ids(node, "children").SequenceEqual(children.Where((_,i) => expected.BackParents?[i] == row)), "答案子层级顺序");
+                Require(expected.Kind == "basic" ? True(node, "isCardItem") == (parent < 0) : True(node, "isExtraCardDetail") && !True(node, "isCardItem"), "多行卡或挖空附加说明类型");
                 Require(EqualParts(expected.Back[row], ActualParts(node, allowOriginalImages, ref pendingImages), allowOriginalImages), "反面文字、公式或图片顺序");
             }
             Require(nodes.All(node => !True(node, "isDocument") && node.GetProperty("remType").GetInt32() == 0 &&
@@ -313,7 +341,8 @@ public sealed partial class RemNoteConnection(HttpClient http, string endpoint) 
                     value.StartsWith("kc_", StringComparison.Ordinal) && int.TryParse(value[3..], out var number) && number > 0 ? number :
                         throw new InvalidDataException("RemNote 挖空组身份无法核对。") : null;
                 var hint = raw.TryGetProperty("cloze-hint", out var help) ? help.GetString() : null;
-                if (kind is "m" or "x") parts.Add(new(kind == "x" ? "latex" : group != null ? "cloze" : "text", raw.GetProperty("text").GetString(),
+                if (kind is "m" or "x") parts.Add(new(kind == "x" ? "latex" : group != null ? "cloze" :
+                    True(raw, "code") && raw.TryGetProperty("language", out var language) && language.GetString() == "mermaid" ? "mermaid" : "text", raw.GetProperty("text").GetString(),
                     ClozeId: group, Hint: hint, Block: kind == "x" ? True(raw, "block") : null));
                 else if (kind == "i")
                 {

@@ -81,16 +81,13 @@ internal static class LanguageModePreviewChecks
             Check(meaning.Text == "阅读模式的独立编辑" && Child(parent, PracticeChoice.Writing).EditedFields.Meaning == "书写模式的独立编辑" &&
                 parent.EditedFields == null && parent.Content == null,
                 "switching back retains both separate edits without writing content into the parent");
-            var toggle = Find<Button>(preview, "follow-up-toggle"); toggle.PerformClick();
-            var input = Find<TextBox>(preview, "follow-up-input"); input.Text = "继续说明"; input.Select(1, 2);
-            Check(Find<TableLayoutPanel>(preview, "question-cards").Controls.Count == 1 && !selector.Visible && !single.Visible &&
-                Find<Label>(preview, "source").Text.Contains(parent.Original.SelectedText),
-                "follow-up view keeps one parent conversation and the captured material while hiding original mode actions");
-            toggle.PerformClick(); selector.SelectedIndex = 1; toggle.PerformClick();
-            Check(ReferenceEquals(input, Find<TextBox>(preview, "follow-up-input")) && input.Text == "继续说明" && input.SelectionStart == 1 &&
-                parent.Conversation.Count == 1 && store.Find(parent.Id).PendingFollowUp == input.Text,
-                "mode switching preserves the same follow-up input and ordered parent history");
-            toggle.PerformClick();
+            var opened = 0; preview.OpenChatRequested += () => opened++;
+            Find<Button>(preview, "open-chat").PerformClick();
+            Check(opened == 1 && parent.Conversation.Count == 1 && selector.Visible && single.Visible,
+                "current chat entry preserves parent history and independent language mode controls");
+            Check(preview.Controls.Find("knowledge-clipper.language.follow-up-toggle", true).Length == 0,
+                "retired follow-up mechanism is absent from language mode preview");
+            selector.SelectedIndex = 1;
             preview.LanguageImportRunning = true;
             Check(!confirm.Enabled && !single.Enabled && !practice.Enabled && meaning.ReadOnly,
                 "Flow language import state locks conflicting edits and both import actions");
@@ -187,13 +184,9 @@ internal static class LanguageModePreviewChecks
             ModeId = "question", Route = new("question", "question", true, false), Input = new(Intent: "question", ExplicitQuestion: "对角线为什么相等？"),
             Content = new("question", Basic: new("对角线为什么相等？", "因为相应直角三角形全等。"), Answer: new("answered", "因为相应直角三角形全等。", [])) };
         question.Conversation.Add(new(question.QuestionText, question.Content.Answer)); store.Save(question);
-        using (var preview = Form(question))
-        {
-            preview.Show(); await Task.Delay(40);
-            Check(Find<TextBox>(preview, "question-card-0.question").Text == question.QuestionText && preview.Text.Contains(question.QuestionText) &&
-                Find<Label>(preview, "source").Text.Contains(original.SelectedText) && question.Original == original,
-                "explicit question is the question front and title while captured source remains separate"); preview.Close();
-        }
+        var restoredQuestion = QuestionCards.RestoreChatCompositions(question, store, new ChatSession { Messages = [new(), new()] }).Single();
+        Check(restoredQuestion.Front == question.QuestionText && question.Original == original,
+            "explicit legacy question restores into current card while captured source stays separate");
 
         var legacyMode = new ModeDefinition("language", "旧语言模式", true, "", "", "");
         var legacy = new ClipDraft { Original = original, Material = original, Settings = new(),

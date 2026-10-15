@@ -68,6 +68,19 @@ describe('verified import navigation',()=>{
     expect(f.plugin.editor.selectRem).toHaveBeenCalledTimes(2);
     expect(f.plugin.window.setFocusedPaneId).toHaveBeenCalledTimes(3);
   });
+  it('allows the first selection and editor settling after slow background SDK state queries',async()=>{
+    const f=fixture();let clock=0,mounted=false,firstRead=true;
+    const now=vi.spyOn(Date,'now').mockImplementation(()=>clock);
+    const read=f.plugin.editor.getSelectedRem;
+    const select=f.plugin.editor.selectRem.getMockImplementation();
+    f.plugin.editor.getSelectedRem=async()=>{if(firstRead){clock+=8000;firstRead=false;}return read();};
+    f.plugin.editor.selectRem.mockImplementation(async(ids:string[])=>{if(!mounted)clock+=8000;else await select(ids);});
+    const nav=new ImportNavigation(f.plugin,f.adapter,async()=>{mounted=true;});
+    try{
+      expect((await nav.reveal(f.request()) as any).revealed).toBe(true);
+      expect(f.plugin.editor.selectRem).toHaveBeenCalledTimes(2);
+    }finally{now.mockRestore();}
+  });
   it('preserves other panes and focuses the replaced pane after SDK regenerates pane IDs',async()=>{
     const f=fixture();let tree:any={direction:'row',splitPercentage:37,first:{paneId:'other',remId:'keep'},second:{paneId:'pane',remId:'previous'}};
     let focused='pane';

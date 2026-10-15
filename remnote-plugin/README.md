@@ -8,7 +8,9 @@
 
 ## 受限协议
 
-hello 为 `{type:'hello',protocol:'knowledge-clipper.transport.v1',pluginId:'knowledge-clipper',version:'1.0.1',capabilities:[...]}`。请求 `{id,action,payload}`，响应 `{id,result}` 或 `{id,error}`。仅允许 `knowledge_clipper_health`、`knowledge_clipper_excerpt_documents`、`knowledge_clipper_reveal`、`knowledge_clipper_reveal_state`、`knowledge_clipper_export`、`knowledge_clipper_readback`、`knowledge_clipper_prepare_image`、`knowledge_clipper_finalize_media`、`knowledge_clipper_finalize_spacing`、`knowledge_clipper_repair_plain_structure`、`knowledge_clipper_test_plain_structure`、`knowledge_clipper_adopt`。目录查询只读，返回“零碎知识剪藏 → 摘录”下直接子 Document 的 ID 与标题；不提供任意脚本或 MCP 工具调用。
+hello 为 `{type:'hello',protocol:'knowledge-clipper.transport.v1',pluginId:'knowledge-clipper',version:'1.0.2',capabilities:[...]}`。请求 `{id,action,payload}`，响应 `{id,result}` 或 `{id,error}`。仅允许 `knowledge_clipper_health`、`knowledge_clipper_excerpt_documents`、`knowledge_clipper_reveal`、`knowledge_clipper_reveal_state`、`knowledge_clipper_export`、`knowledge_clipper_readback`、`knowledge_clipper_mermaid_render_state`、`knowledge_clipper_prepare_image`、`knowledge_clipper_finalize_media`、`knowledge_clipper_finalize_spacing`、`knowledge_clipper_repair_plain_structure`、`knowledge_clipper_test_plain_structure`、`knowledge_clipper_adopt`。目录查询只读，返回“零碎知识剪藏 → 摘录”下直接子 Document 的 ID 与标题；不提供任意脚本或 MCP 工具调用。
+
+Mermaid 部分保存为 `{i:'m',text:source,code:true,language:'mermaid'}`，节点绑定本插件的 `knowledge_clipper_mermaid` powerup；`UnderRemEditor` widget 使用固定同版 Mermaid 离线生成 SVG，监听原节点改动。源码错误保留原文、清除过期图形并显示提示。原生 widget 将真实 DOM 的 SVG、尺寸及源码哈希保存为临时 session 回执，`mermaid_render_state` 先核验已完成 journal 与正文再读取这些回执，不构造图形或修改内容。
 
 后台传输由独立 `transport-worker.js` 维持，SDK 调用仍留在 index widget；导航等待经 host 的有界 `wait` / `wait-result` 消息唤醒。能力标记为 `knowledge-clipper.background-transport.v1`，协议边界与最小化验收要求见 [host 文档](../remnote-host/README.md)。
 
@@ -21,6 +23,8 @@ hello 为 `{type:'hello',protocol:'knowledge-clipper.transport.v1',pluginId:'kno
 空 journal 的 export 必须显式传 `{plan,newSource:true}`；host 仅在持久化记录证明此前未发起任何导入时允许。缺少 journal 不证明未导入，不能自动降级为 newSource。已有 journal 的重试无需该标记。
 
 ## 批次间空行
+
+新问答使用 `knowledge-clipper.question-daily-documents.v1`：`documentPath` 为“零碎知识制卡 / 类型 / M.d”，`documentIds` 仅精确绑定前两层，省略 `targetDocumentId`；日期子 document 沿用普通摘录的目录创建、回读与有序追加。旧完整 ID 链及冻结目标继续兼容。
 
 新导入的每个 source 在其叶目录下，全部正文节点之后追加一个空的普通 text Rem；答案子节点内不插空行。空节点关闭练习，不生成卡片，也不计入导入内容数量。一个多段原文仍只追加一个空节点。
 

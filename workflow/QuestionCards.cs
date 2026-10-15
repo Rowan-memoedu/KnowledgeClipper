@@ -6,6 +6,24 @@ namespace KnowledgeClipper.Workflow;
 
 public static class QuestionCards
 {
+    // Read-only compatibility for saved sessions. New UI exports keep the existing
+    // child identity, including Unknown/Verified states and frozen destinations.
+    public static CardComposition[] RestoreChatCompositions(ClipDraft parent, DraftStore store, ChatSession chat)
+    {
+        var rows = Snapshot(parent, store);
+        if (rows.Any(row => row.IntegrityError != null))
+            throw new InvalidDataException(string.Join("\n", rows.Where(row => row.IntegrityError != null).Select(row => row.IntegrityError)));
+        return rows.Select((row, index) => new CardComposition {
+            TypeId = chat.TypeId,
+            Front = (row.Basic?.Front ?? row.Turn.Question) + (parent.Original.FrontImage is { } image ? "\n\n![图片](asset:" + image.Sha256 + ")" : ""),
+            Back = row.Basic?.Back ?? row.Turn.Answer.DisplayText,
+            FrontSources = [chat.Messages[index * 2].Id],
+            BackSources = [chat.Messages[index * 2 + 1].Id],
+            ManuallyEdited = true,
+            ExportDraftId = row.Child?.Id
+        }).ToArray();
+    }
+
     public static IReadOnlyList<ConversationTurn> EffectiveConversation(ClipDraft parent, DraftStore? store = null) =>
         Snapshot(parent, store).Select(row => row.Turn).ToArray();
 
@@ -94,6 +112,8 @@ public static class QuestionCards
                 ct.ThrowIfCancellationRequested();
                 try { await anki.ImportAsync(plan.Child, store, ct); }
                 finally { Notify(changed); }
+                if (plan.Child.AwaitingAnki) throw new AnkiPendingException();
+                if (plan.Child.ImportState != ImportState.Verified) throw new InvalidOperationException("当前轮尚未核验，后续已确认卡片保留待处理。");
             }
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -307,7 +327,7 @@ public static class QuestionCards
             { FrontImage = parent.Original.FrontImage, VisualQuestion = parent.Original.VisualQuestion };
         return new() { Id = id, Original = material, Material = material, Settings = parent.Settings, Configuration = parent.Configuration,
             Input = parent.Input with { Intent = "question", ReadRequested = false, ExplicitQuestion = null }, ParentDraftId = parent.Id,
-            ModeId = modeId, Route = new(modeId, "question", true, false),
+            ModeId = modeId, Route = new(modeId, "question", true, false), QuestionTarget = parent.QuestionTarget,
             ConversationMaterial = parent.ConversationMaterial ?? parent.Material,
             ConversationContent = parent.ConversationContent ?? parent.PreviewContent,
             Conversation = parent.Conversation.Take(index + 1).ToList() };

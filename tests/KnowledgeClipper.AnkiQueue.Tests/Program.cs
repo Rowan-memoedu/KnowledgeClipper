@@ -145,6 +145,7 @@ sealed class QueueHandler : HttpMessageHandler
     public TaskCompletionSource AddEntered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public TaskCompletionSource ReleaseAdd { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private bool model;
+    private JsonElement template;
     private readonly Dictionary<long, JsonElement> notes = [];
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
@@ -158,9 +159,9 @@ sealed class QueueHandler : HttpMessageHandler
         {
             case "version": result = 6; break;
             case "modelNames": result = model ? new[] { AnkiNoteDraft.BasicModelName } : Array.Empty<string>(); break;
-            case "createModel": model = true; result = new { }; break;
+            case "createModel": model = true; template=p.GetProperty("cardTemplates")[0].Clone(); result = new { }; break;
             case "modelFieldNames": result = new[] { "ClipId", "Front", "Back", "Source" }; break;
-            case "modelTemplates": result = new Dictionary<string, object> { [SemanticFailure ? "user-customized" : "正反面"] = new { } }; break;
+            case "modelTemplates": result = new Dictionary<string, object> { [SemanticFailure ? "user-customized" : "正反面"] = template }; break;
             case "deckNames":
                 if (!CollectionLoaded) return new(HttpStatusCode.OK) { Content = JsonContent.Create(new { result = (object?)null, error = "collection is not loaded" }) };
                 result = new[] { "零碎知识剪藏::语言学习" }; break;
@@ -178,7 +179,7 @@ sealed class QueueHandler : HttpMessageHandler
                 result = new[] { new { noteId = id, modelName = note.GetProperty("modelName").GetString(), fields = note.GetProperty("fields").EnumerateObject().ToDictionary(f => f.Name, f => new { value = f.Value.GetString() }), tags = note.GetProperty("tags"), cards = new[] { id * 10 } } }; break;
             case "cardsInfo":
                 result = p.GetProperty("cards").EnumerateArray().Select(c => { var cid = c.GetInt64(); var n = notes[cid / 10]; var f = n.GetProperty("fields");
-                    return new { cardId = cid, note = cid / 10, ord = 0, queue = 0, deckName = n.GetProperty("deckName").GetString(), question = f.GetProperty("Front").GetString(), answer = f.GetProperty("Back").GetString() }; }).ToArray(); break;
+                    return new { cardId = cid, note = cid / 10, ord = 0, queue = 0, deckName = n.GetProperty("deckName").GetString(), question = f.GetProperty("Front").GetString(), answer = f.GetProperty("Front").GetString() + "<hr id='answer'>" + f.GetProperty("Back").GetString() }; }).ToArray(); break;
             case "areSuspended": result = p.GetProperty("cards").EnumerateArray().Select(_ => false).ToArray(); break;
             default: throw new InvalidOperationException("Unexpected mutation or action: " + action);
         }

@@ -9,6 +9,30 @@ internal static class TemplateRepairChecks
 {
     internal static async Task RunAsync(ContentConfiguration configuration, LanguageSettings settings, Action<bool, string> check)
     {
+        foreach(var model in new[]{AnkiNoteDraft.BasicModelName,AnkiNoteDraft.QuestionModelName,AnkiNoteDraft.ExcerptModelName,AnkiNoteDraft.DictionaryImageModelName})
+        {
+            using var basicFixture=new Provider();using var basicHttp=new HttpClient(basicFixture);
+            var basicAnki=new AnkiConnection(basicHttp,"http://127.0.0.1");
+            var method=typeof(AnkiConnection).GetMethod("PrepareAsync",BindingFlags.NonPublic|BindingFlags.Instance)!;
+            Task BasicPrepare(AnkiNoteDraft value)=>(Task)method.Invoke(basicAnki,[value,CancellationToken.None])!;
+            var basicFields=new Dictionary<string,string>{["ClipId"]="fixture",["Front"]="题目",["Back"]="答案",["Source"]=""};
+            if(model==AnkiNoteDraft.QuestionModelName)basicFields["Context"]="上下文";
+            if(model==AnkiNoteDraft.DictionaryImageModelName)basicFields["DictionaryDetails"]="词典";
+            var note=new AnkiNoteDraft("Published fixture",model,basicFields,[],[0]);
+            await BasicPrepare(note);
+            var current=basicFixture.Templates["正反面"];
+            check(current["Back"].StartsWith("{{FrontSide}}<hr id='answer'>"),model+" new template retains the front above the answer");
+            const string speech="\n<!-- sftts-controls:start --><div>speech controls</div><!-- sftts-controls:end -->";
+            current["Front"]+=speech;current["Back"]=current["Back"].Replace("{{FrontSide}}<hr id='answer'>","")+speech;
+            var frontBefore=current["Front"];var oldBack=current["Back"];var updates=basicFixture.Updates;
+            await BasicPrepare(note);
+            check(basicFixture.Updates==updates+1&&basicFixture.Templates["正反面"]["Front"]==frontBefore&&basicFixture.Templates["正反面"]["Back"]=="{{FrontSide}}<hr id='answer'>"+oldBack,model+" migrates the exact old template while preserving speech controls");
+            await BasicPrepare(note);
+            check(basicFixture.Updates==updates+1,model+" migration is idempotent");
+            basicFixture.Templates["正反面"]["Front"]+="<div>custom</div>";
+            var rejected=false;try{await BasicPrepare(note);}catch(InvalidDataException){rejected=true;}
+            check(rejected&&basicFixture.Updates==updates+1,model+" custom templates are never overwritten");
+        }
         using var fixture = new Provider(); using var http = new HttpClient(fixture);
         var anki = new AnkiConnection(http, "http://127.0.0.1");
         var prepare = typeof(AnkiConnection).GetMethod("PrepareAsync", BindingFlags.NonPublic | BindingFlags.Instance)!;

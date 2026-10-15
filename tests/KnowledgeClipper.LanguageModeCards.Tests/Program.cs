@@ -197,7 +197,7 @@ sealed class Handler : HttpMessageHandler
                 result = p.GetProperty("cards").EnumerateArray().Select(c => { var cid = c.GetInt64(); var card = cards[cid]; var n = notes[card.Note]; var f = n.GetProperty("fields"); var basic = f.TryGetProperty("Front", out var front);
                     return new { cardId = cid, note = card.Note, ord = card.Ordinal, queue = 0, deckName = n.GetProperty("deckName").GetString(),
                         question = basic ? (f.TryGetProperty("Context", out var context) ? context.GetString() : "") + front.GetString() : card.Ordinal == 0 ? f.GetProperty("Target").GetString() : f.GetProperty("Pronunciation").GetString() + f.GetProperty("Meaning").GetString(),
-                        answer = basic ? f.GetProperty("Back").GetString() : f.GetProperty("Target").GetString() + f.GetProperty("Pronunciation").GetString() + f.GetProperty("Meaning").GetString() }; }).ToArray(); break;
+                        answer = basic ? (f.TryGetProperty("Context", out var answerContext) ? answerContext.GetString() : "") + front.GetString() + "<hr id='answer'>" + f.GetProperty("Back").GetString() : f.GetProperty("Target").GetString() + f.GetProperty("Pronunciation").GetString() + f.GetProperty("Meaning").GetString() }; }).ToArray(); break;
             case "areSuspended": result = p.GetProperty("cards").EnumerateArray().Select(_ => false).ToArray(); break;
             default: throw new InvalidOperationException("Unexpected action: " + action);
         }

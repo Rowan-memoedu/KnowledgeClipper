@@ -57,8 +57,43 @@ describe('standalone plugin identity migration',()=>{
 });
 import { createHash, webcrypto } from 'node:crypto';
 import { BuiltInPowerupCodes, type ReactRNPlugin } from '@remnote/plugin-sdk';
-import { clipIdentity, clipNodeSnapshot, clipStructureSnapshot, KnowledgeClipperAdapter, partsToRichText, richTextToParts, type ClipPlan } from '../../src/api/knowledge-clipper';
+import { clipIdentity, clipNodeSnapshot, clipStructureSnapshot, KnowledgeClipperAdapter, partsToRichText, richTextToParts, validateClipPlan, type ClipPlan } from '../../src/api/knowledge-clipper';
 import {verifyEmptyBackEditor} from '../../src/testing/plain-structure-canary';
+import {MERMAID_POWERUP} from '../../src/api/mermaid';
+
+describe('native Mermaid source and renderer binding',()=>{
+ it('round trips exact graph source as code, never plain text or an image',()=>{
+  const source='flowchart LR\n A[输入] --> B[输出]';
+  const part={kind:'mermaid' as const,text:source};
+  expect(partsToRichText([part])).toEqual([{i:'m',text:source,code:true,language:'mermaid'}]);
+  expect(richTextToParts(partsToRichText([part]))).toEqual([part]);
+ });
+ it('binds native front/back Mermaid blocks and rejects loss of that binding',async()=>{
+  const sdk=fakeSdk(),adapter=new KnowledgeClipperAdapter(sdk.plugin,()=>true);
+  const p=plan();p.cards[0].front=[{kind:'mermaid',text:'flowchart LR\n A --> B'}];
+  p.cards[0].back=[[{kind:'mermaid',text:'sequenceDiagram\n A->>B: hello'}]];
+  const result:any=await adapter.export({plan:p,newSource:true});
+  expect(result.cards[0].front[0].kind).toBe('mermaid');
+  expect(result.cards[0].back[0][0].kind).toBe('mermaid');
+  const node=sdk.nodes.get(result.cards[0].remIds[0])!;
+  node.powerups.delete(MERMAID_POWERUP);
+  await expect(adapter.readback(p)).rejects.toThrow('renderer binding');
+ });
+ it('reads actual SDK children when the text projection omits them and still rejects extra answer nodes',async()=>{
+  const sdk=fakeSdk(),adapter=new KnowledgeClipperAdapter(sdk.plugin,()=>true);
+  const p=plan();p.cards[0].front=[{kind:'mermaid',text:'flowchart LR\n A --> B'}];
+  const result:any=await adapter.export({plan:p,newSource:true});
+  const front=sdk.nodes.get(result.cards[0].remIds[0])!;
+  const ids=[...front.children],cards=await front.getCards();
+  front.getChildrenRem=async()=>ids.map(id=>sdk.nodes.get(id)!);
+  front.getCards=async()=>cards;front.children=[];
+  const after:any=await adapter.readback(p);
+  expect(clipIdentity(after)).toEqual(clipIdentity(result));
+  expect(after.cards[0].nodes[0].children).toEqual(ids);
+  const additional:any=await sdk.plugin.rem.createRem();ids.push(additional._id);
+  await expect(adapter.readback(p)).rejects.toThrow('frontChildren');
+ });
+});
 
 describe('completed import navigation identity',()=>{
   it('allows read-only navigation after editor spacer cleanup while preserving strict import readback',async()=>{
@@ -110,6 +145,7 @@ function fakeSdk() {
     aliases: string[] = [];
     table = false;
     constructor() { nodes.set(this._id, this); }
+    async getChildrenRem(){return this.children.map(id=>nodes.get(id)!);}
     async setText(v: any[]) { this.text = structuredClone(v); writes++; afterSetText?.(this._id); }
     async setBackText(v: any[] | undefined) { if(!Array.isArray(v))throw new Error('backText parameter: Required');this.backText = structuredClone(v); writes++; }
     async setParent(v: string | null, position = 0) {
@@ -163,7 +199,95 @@ const plan = (): ClipPlan => ({schemaVersion:'knowledge-clipper.remnote.v1',sour
   documentPath:['摘录','手动'],cards:[{key:'card.0',kind:'basic',front:[text('first\nsecond :: literal >>')],
     back:[[text('answer one')],[text('answer two\nsoft newline')]]}]});
 
+describe('question composition exact documents and answer hierarchy',()=>{
+  async function fixture(){
+    const sdk=fakeSdk(),ids:string[]=[];
+    for(const title of ['零碎知识剪藏','零碎知识制卡','快速答案']){
+      const rem=(await sdk.plugin.rem.createRem())!;await rem.setText([title]);await rem.setParent(ids.at(-1)??null);await rem.setIsDocument(true);ids.push(rem._id);
+    }
+    const p:ClipPlan={...plan(),rootRemId:ids[0],documentPath:['零碎知识制卡','快速答案'],documentIds:ids.slice(1),targetDocumentId:ids[2],
+      cards:[{key:'card.0',kind:'basic',front:[text('求正方形面积。')],back:[[text('公式')],[{kind:'latex',text:'S=a^2',block:false}],[text('代入')],[text('结论')]],backParents:[-1,0,0,-1]}]};
+    return {sdk,p,ids,adapter:new KnowledgeClipperAdapter(sdk.plugin,()=>true)};
+  }
+  it('writes nested ordinary answers, one forward card and no date document; readback is idempotent',async()=>{
+    const {sdk,p,ids,adapter}=await fixture();const r:any=await adapter.export({plan:p,newSource:true});
+    expect(r.directoryNodes.map((n:any)=>n.remId)).toEqual(ids);
+    const c=r.cards[0];expect(c.cardIds).toHaveLength(1);
+    expect(c.nodes[0].children).toEqual([c.childRemIds[0],c.childRemIds[3]]);
+    expect(c.nodes[1].children).toEqual([c.childRemIds[1],c.childRemIds[2]]);
+    expect(c.nodes.map((n:any)=>n.isCardItem)).toEqual([false,true,false,false,true]);
+    const count=sdk.nodes.size,writes=sdk.writes;expect(clipNodeSnapshot(await adapter.readback(p) as any)).toEqual(clipNodeSnapshot(r));
+    expect(clipIdentity(await adapter.export(p) as any)).toEqual(clipIdentity(r));expect(sdk.nodes.size).toBe(count);expect(sdk.writes).toBe(writes);
+    sdk.nodes.get(c.childRemIds[1])!.parent=c.remIds[0];
+    await expect(adapter.readback(p)).rejects.toThrow();expect(sdk.nodes.size).toBe(count);
+  });
+  it('reuses the excerpt daily writer and spacing in generation order under the exact type document',async()=>{
+    const {sdk,p,ids,adapter}=await fixture();
+    const legacy:any=await adapter.export({plan:p,newSource:true});
+    const daily:ClipPlan={...p,sourceId:'daily-question-1',documentPath:[...p.documentPath,'10.15'],targetDocumentId:undefined};
+    const first:any=await adapter.export({plan:daily,newSource:true});
+    const secondPlan={...daily,sourceId:'daily-question-2',cards:[{...daily.cards[0],front:[text('Second generated card')]}]};
+    const second:any=await adapter.export({plan:secondPlan,newSource:true});
+    expect(first.directoryNodes.slice(0,3).map((n:any)=>n.remId)).toEqual(ids);
+    expect(first.documentRemId).toBe(second.documentRemId);
+    const leaf=sdk.nodes.get(first.documentRemId)!;
+    expect(leaf.parent).toBe(ids[2]);expect(leaf.text).toEqual(['10.15']);expect(leaf.document).toBe(true);
+    expect(leaf.direction).toBe('none');expect(await leaf.getCards()).toEqual([]);
+    expect(second.documentChildren).toEqual([first.cards[0].remIds[0],first.batchSeparator.remId,second.cards[0].remIds[0],second.batchSeparator.remId]);
+    for(const result of [first,second]){
+      expect(result.batchSeparator.node.text).toEqual([]);expect(result.batchSeparator.node.cardIds).toEqual([]);
+      expect(result.cards[0].nodes[1].children).toEqual(result.cards[0].childRemIds.slice(1,3));
+    }
+    const another:any=await adapter.export({plan:{...daily,sourceId:'daily-question-next',documentPath:[...p.documentPath,'10.16']},newSource:true});
+    expect(another.documentRemId).not.toBe(first.documentRemId);
+    const writes=sdk.writes,count=sdk.nodes.size;
+    expect(clipIdentity(await adapter.export(daily) as any)).toEqual(clipIdentity(first));
+    expect(clipIdentity(await adapter.readback(p) as any)).toEqual(clipIdentity(legacy));
+    expect(sdk.writes).toBe(writes);expect(sdk.nodes.size).toBe(count);
+  });
+  it('only permits the exact two-ID question prefix followed by one daily document',async()=>{
+    const {p}=await fixture();const daily={...p,documentPath:[...p.documentPath,'10.15'],targetDocumentId:undefined};
+    expect(validateClipPlan(daily)).toEqual(daily);
+    for(const invalid of [
+      {...daily,documentPath:['摘录','快速答案','10.15']},
+      {...daily,documentPath:[...p.documentPath,'other']},
+      {...daily,documentIds:[p.documentIds![0]]},
+      {...daily,documentIds:[...p.documentIds!,'wrong']},
+      {...daily,rootRemId:undefined},
+      {...daily,targetDocumentId:p.targetDocumentId},
+    ])expect(()=>validateClipPlan(invalid)).toThrow();
+  });
+  for(const dated of [false,true]) for(const mutation of ['parent','title','document'] as const) it(`rejects exact type ${mutation} mismatch ${dated?'with a daily child':'in a frozen legacy plan'} without creating replacement content`,async()=>{
+    const {sdk,p:original,ids,adapter}=await fixture();const rem=sdk.nodes.get(ids[2])!;
+    const p=dated?{...original,documentPath:[...original.documentPath,'10.15'],targetDocumentId:undefined}:original;
+    if(mutation==='parent')rem.parent=null;if(mutation==='title')rem.text=['同名误配'];if(mutation==='document')rem.document=false;
+    const count=sdk.nodes.size;const r:any=await adapter.export({plan:p,newSource:true});expect(r.notStarted).toBe(true);expect(sdk.nodes.size).toBe(count);
+  });
+  it('rejects cycles and retired question destinations before writes',async()=>{
+    const {sdk,p,adapter}=await fixture();const count=sdk.nodes.size;
+    expect(()=>adapter.export({plan:{...p,cards:[{...p.cards[0],backParents:[0,0,0,-1]}]},newSource:true})).toThrow();
+    await expect(adapter.export({plan:{...plan(),documentPath:['问答','10.9']},newSource:true})).rejects.toThrow();
+    expect(sdk.nodes.size).toBe(count);
+  });
+});
+
 describe('ordinary blank sibling between new import batches',()=>{
+  it('keeps a new basic front inactive until its full multiline answer structure is ready',async()=>{
+    const sdk=fakeSdk(),p=plan();let frontObserved=false,answerObserved=false;
+    sdk.afterSetText(id=>{
+      const rem=sdk.nodes.get(id)!;
+      if(rem.text.some(part=>part.text===p.cards[0].front[0].text)){
+        frontObserved=true;expect(rem.enabled).toBe(false);expect(rem.direction).toBe('none');
+      }
+      if(rem.text.some(part=>part.text===p.cards[0].back[0][0].text)){
+        answerObserved=true;const front=[...sdk.nodes.values()].find(n=>n.text.some(part=>part.text===p.cards[0].front[0].text))!;
+        expect(front.enabled).toBe(false);expect(front.direction).toBe('none');
+      }
+    });
+    const result:any=await new KnowledgeClipperAdapter(sdk.plugin,()=>true).export({plan:p,newSource:true});
+    expect(frontObserved&&answerObserved).toBe(true);expect(result.cards[0].cardIds).toHaveLength(1);
+    expect(result.cards[0].nodes[0]).toMatchObject({practiceEnabled:true,practiceDirection:'forward'});
+  });
   it('models SDK default prepend and rejects the numeric readback type as a setter argument',async()=>{
     const sdk=fakeSdk(),parent=await sdk.plugin.rem.createRem(),first=await sdk.plugin.rem.createRem(),second=await sdk.plugin.rem.createRem();
     await first!.setParent(parent!._id);await second!.setParent(parent!._id);

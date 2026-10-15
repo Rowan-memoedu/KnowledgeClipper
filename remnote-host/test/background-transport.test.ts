@@ -5,6 +5,17 @@ import express from 'express';
 import {createServer} from 'node:http';
 import {registerKnowledgeClipperHttp} from '../src/knowledge-clipper-http.js';
 const hello={type:'hello',protocol:'knowledge-clipper.transport.v1',pluginId:'knowledge-clipper',capabilities:['knowledge-clipper.sdk.v1']};
+it('reads actual Mermaid widget receipts through the same bounded SDK transport',async()=>{
+ const host=new PluginTransport(),port=await host.start(0);
+ const connected=host.waitUntilConnected(1000);
+ const ws=new WebSocket(`ws://127.0.0.1:${port}`);await new Promise(done=>ws.once('open',done));
+ try{
+  ws.send(JSON.stringify(hello));await connected;
+  ws.once('message',raw=>{const request=JSON.parse(String(raw));expect(request.action).toBe('knowledge_clipper_mermaid_render_state');ws.send(JSON.stringify({id:request.id,result:{receipts:[]}}));});
+  expect(await host.sendRequest('knowledge_clipper_mermaid_render_state',{sourceId:'public-canary'},1000)).toEqual({receipts:[]});
+  await expect(host.sendRequest('unknown_action',{})).rejects.toThrow('Unsupported SDK action');
+ }finally{ws.terminate();await host.stop();}
+});
 it('waits for the original plugin handshake and schedules bounded navigation wakes on Node',async()=>{
  const host=new PluginTransport(),port=await host.start(0);
  const waiting=host.waitUntilConnected(1000);

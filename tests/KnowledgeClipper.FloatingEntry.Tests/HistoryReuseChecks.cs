@@ -145,7 +145,8 @@ internal static partial class Program
                 await lookup.RefreshAsync(); gate.Release();
             }
             await Until(() => second.HistoryReplayOnly && provider.MeaningRequests == 2, "pending same-word entry is registered before content or meaning completes");
-            Check(!first.HistoryReplayOnly && first.MatchedHistoryId == null && second.MatchedHistoryId == first.Id,
+            var matchedSession = second.MatchedHistoryId == first.Id || new DraftStore(root).Find(second.MatchedHistoryId!)?.ModeParentId == first.Id;
+            Check(!first.HistoryReplayOnly && first.MatchedHistoryId == null && matchedSession,
                 "only the later pending selection is classified as history, including when both are already scanned");
             Check(first.ModeCards.Count > 0 && second.ModeCards.Count == 0 && second.Content == null,
                 "a repeated pending word starts no second card generation");
@@ -169,6 +170,11 @@ internal static partial class Program
         internal bool Released;
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
+            if (request.Method == HttpMethod.Get)
+            {
+                using var read = new HttpMessageInvoker(Inner, false);
+                return await read.SendAsync(request, ct);
+            }
             var body = await request.Content!.ReadAsStringAsync(ct);
             if (body.Contains("meaning_zh", StringComparison.Ordinal))
             {

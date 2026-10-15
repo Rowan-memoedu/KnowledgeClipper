@@ -19,6 +19,21 @@ class TestHttpServer {private server:any; constructor(private port:number,_host:
 const plan=()=>({schemaVersion:'knowledge-clipper.remnote.v1',sourceId:'canary',rootTitle:'零碎知识剪藏',
   documentPath:['摘录'],cards:[{key:'plain.0',kind:'plain',front:[{kind:'text',text:'test\nsecond'}],back:[]}]});
 const headers={'Content-Type':'application/json','X-KnowledgeClipper-Protocol':'1'};
+describe('daily question document contract',()=>{
+  const daily=()=>({...plan(),rootRemId:'root',documentPath:['零碎知识制卡','快速答案','10.15'],documentIds:['base','type']});
+  it('accepts a pinned type prefix and preserves the old fully pinned target contract',()=>{
+    expect(ClipPlanSchema.safeParse(daily()).success).toBe(true);
+    expect(ClipPlanSchema.safeParse({...daily(),documentPath:['零碎知识制卡','快速答案'],targetDocumentId:'type'}).success).toBe(true);
+  });
+  it('rejects shortened identities outside the one daily child of an exact question type',()=>{
+    for(const invalid of [
+      {...daily(),documentPath:['摘录','快速答案','10.15']},
+      {...daily(),documentPath:['零碎知识制卡','快速答案','other']},
+      {...daily(),documentIds:['base']},{...daily(),documentIds:['base','type','wrong']},
+      {...daily(),rootRemId:undefined},{...daily(),targetDocumentId:'type'},
+    ])expect(ClipPlanSchema.safeParse(invalid).success).toBe(false);
+  });
+});
 describe('native KnowledgeClipper SDK HTTP endpoints',()=>{
   let server:TestHttpServer, port:number, ws:any;
   beforeEach(async()=>{
@@ -30,6 +45,14 @@ describe('native KnowledgeClipper SDK HTTP endpoints',()=>{
   afterEach(async()=>{await server.stop();});
   const post=(port:number,body:unknown,extra:Record<string,string>={})=>fetch(`http://127.0.0.1:${port}/sdk/knowledge-clipper/export`,
     {method:'POST',headers:{...headers,...extra},body:JSON.stringify(body)});
+  it('requires the daily question capability before forwarding a pinned-prefix plan',async()=>{
+    const daily={...plan(),rootRemId:'root',documentPath:['零碎知识制卡','快速答案','10.15'],documentIds:['base','type']};
+    ws.hasBridgeCapability.mockImplementation((cap:string)=>cap!=='knowledge-clipper.question-daily-documents.v1');
+    expect((await post(port,daily)).status).toBe(503);expect(ws.sendRequest).not.toHaveBeenCalled();
+    ws.hasBridgeCapability.mockReturnValue(true);
+    expect((await post(port,daily)).status).toBe(200);
+    expect(ws.sendRequest).toHaveBeenCalledWith('knowledge_clipper_export',daily,120000);
+  });
   it('uses the same WebSocket SDK bridge with no MCP initialization or tools/call',async()=>{
     const result=await post(port,plan());expect(result.status).toBe(200);
     expect(ws.sendRequest).toHaveBeenCalledWith('knowledge_clipper_export',plan(),120000);

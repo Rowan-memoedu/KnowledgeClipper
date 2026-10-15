@@ -35,6 +35,20 @@ var audioRoot = @"D:\Artifacts\KnowledgeClipper\validation\speech-usage-unit";
 Directory.CreateDirectory(audioRoot);
 using (var speech = new StreamingSpeech(Path.Combine(AppContext.BaseDirectory, "speech-fixture.py"), audioRoot))
 {
+    speech.Prepare(settings);
+    await speech.PreparationReady;
+    var preparedId = speech.PreparedProcessId;
+    speech.Prepare(settings);
+    Check(speech.PreparedProcessId == preparedId, "Repeated selection keeps a recent prepared helper");
+    var preparedField = typeof(StreamingSpeech).GetField("prepared", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+    var preparedValue = preparedField.GetValue(speech)!;
+    var preparedType = preparedValue.GetType();
+    preparedField.SetValue(speech, Activator.CreateInstance(preparedType, preparedType.GetProperty("Process")!.GetValue(preparedValue),
+        settings.PythonPath, preparedType.GetProperty("Ready")!.GetValue(preparedValue),
+        System.Diagnostics.Stopwatch.GetTimestamp() - 21 * System.Diagnostics.Stopwatch.Frequency));
+    speech.Prepare(settings);
+    await speech.PreparationReady;
+    Check(speech.PreparedProcessId != preparedId, "Selection after idle refreshes an expired prepared helper without sending text");
     var draft = new ClipDraft { Id = Guid.NewGuid().ToString("N") };
     await speech.SpeakAsync(draft, false, () => { });
     Check(draft.SpeechError == null && File.ReadAllText(draft.AudioPath!) == "selected", "Default transport reads selection");

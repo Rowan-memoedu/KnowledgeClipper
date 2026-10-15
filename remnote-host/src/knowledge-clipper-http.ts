@@ -9,7 +9,7 @@ export const CLIPPER_MEDIA_CAPABILITY = 'knowledge-clipper.media-finalize.v1';
 export const CLIPPER_SPACING_FINALIZE_CAPABILITY = 'knowledge-clipper.batch-spacing-finalize.v2';
 export const CLIPPER_PLAIN_STRUCTURE_CAPABILITY = 'knowledge-clipper.plain-structure.v3';
 const Part = z.object({
-  kind: z.enum(['text', 'image', 'cloze', 'latex']), text: z.string().max(200_000).optional(),
+  kind: z.enum(['text', 'image', 'cloze', 'latex', 'mermaid']), text: z.string().max(200_000).optional(),
   uri: z.string().max(4000).optional(), sha256: z.string().regex(/^[0-9a-f]{64}$/i).optional(),
   clozeId: z.union([z.number().int().positive(), z.string().regex(/^[1-9][0-9]*$/)]).transform(String).optional(), hint: z.string().max(4000).optional(), block: z.boolean().optional(),
 }).strict().superRefine((part, ctx) => {
@@ -22,14 +22,24 @@ const Part = z.object({
 });
 const Card = z.object({ key:z.string().min(1).max(200), kind:z.enum(['basic','plain','cloze']),
   front:z.array(Part).min(1).max(500), back:z.array(z.array(Part).max(500)).max(200),
+  backParents:z.array(z.number().int().min(-1)).max(200).optional(),
 }).strict();
 export const ClipPlanSchema = z.object({ schemaVersion:z.literal('knowledge-clipper.remnote.v1'),
   sourceId:z.string().min(1).max(200), rootTitle:z.literal('零碎知识剪藏'), rootRemId:z.string().min(1).max(200).optional(),
   documentPath:z.array(z.string().trim().min(1).max(200)).min(1).max(5),
   targetDocumentId:z.string().min(1).max(200).optional(), cards:z.array(Card).min(1).max(1000),
+  documentIds:z.array(z.string().min(1).max(200)).min(1).max(5).optional(),
 }).strict().superRefine((plan, ctx) => {
   if (new Set(plan.cards.map(c => c.key)).size !== plan.cards.length) ctx.addIssue({code:'custom',message:'Duplicate card keys'});
-  if (plan.targetDocumentId && (plan.documentPath.length!==2 || plan.documentPath[0]!=='摘录'))
+  const dailyQuestion=plan.documentPath[0]==='零碎知识制卡'&&plan.documentPath.length===3&&plan.documentIds?.length===2&&
+    plan.targetDocumentId===undefined&&/^(?:[1-9]|1[0-2])\.(?:[1-9]|[12]\d|3[01])$/.test(plan.documentPath[2]);
+  if (plan.documentIds && (!plan.rootRemId || !dailyQuestion&&
+      (plan.documentIds.length!==plan.documentPath.length || plan.targetDocumentId!==plan.documentIds.at(-1))))
+    ctx.addIssue({code:'custom',message:'Invalid exact Document chain'});
+  if (plan.documentPath[0]==='零碎知识制卡'&&!plan.documentIds) ctx.addIssue({code:'custom',message:'Exact Document chain required'});
+  for(const card of plan.cards) if(card.backParents && (card.kind!=='basic'||card.backParents.length!==card.back.length||card.backParents.some((p,i)=>p>=i)))
+    ctx.addIssue({code:'custom',message:'Invalid answer hierarchy'});
+  if (plan.targetDocumentId && (plan.documentPath.length!==2 || !['摘录','零碎知识制卡'].includes(plan.documentPath[0])))
     ctx.addIssue({code:'custom',message:'Selected excerpt Document must be directly under 摘录'});
 });
 
@@ -108,7 +118,7 @@ export async function inspectClipperMediaRecovery(result:Json,plan:Plan):Promise
     if(new Set(ids).size!==ids.length || ids.includes(result.rootRemId)||ids.includes(result.documentRemId)||
         JSON.stringify(front.cardIds)!==JSON.stringify(actual.cardIds)||!validTypes||
         new Set(actual.cardIds).size!==actual.cardIds.length ||
-        JSON.stringify(front.children)!==JSON.stringify(actual.childRemIds)||
+        JSON.stringify(front.children)!==JSON.stringify(actual.childRemIds.filter((_:unknown,i:number)=>(card.backParents?.[i]??-1)<0))||
         front.parentId!==result.documentRemId || front.practiceEnabled!==(card.kind!=='plain') ||
         (card.kind==='basic'&&front.practiceDirection!=='forward') || front.isExtraCardDetail ||
         (card.kind!=='basic'&&front.isCardItem)) throw new Error('Media recovery flashcard shape changed');
@@ -117,8 +127,9 @@ export async function inspectClipperMediaRecovery(result:Json,plan:Plan):Promise
       const expectedImages=rows[ri].filter(part=>part.kind==='image');
       if(node.remId!==ids[ri] || images.length!==expectedImages.length) throw new Error('Media recovery image positions changed');
       if(node.isDocument||node.remType!==0||(node.backText?.length??0)!==0||
-          (ri>0 && (node.parentId!==ids[0]||node.children?.length||node.cardIds?.length||
-            (card.kind==='basic'?!node.isCardItem:!node.isExtraCardDetail)))) throw new Error('Media recovery node shape changed');
+          (ri>0 && (node.parentId!==ids[(card.backParents?.[ri-1]??-1)+1]||
+            JSON.stringify(node.children)!==JSON.stringify(actual.childRemIds.filter((_:unknown,i:number)=>card.backParents?.[i]===ri-1))||node.cardIds?.length||
+            (card.kind==='basic'?Boolean(node.isCardItem)!==((card.backParents?.[ri-1]??-1)<0):!node.isExtraCardDetail)))) throw new Error('Media recovery node shape changed');
       for(let ii=0;ii<images.length;ii++) {
         const image=images[ii],source=expectedImages[ii];
         if(typeof image.url==='string' && image.url.startsWith('%LOCAL_FILE%')) {
@@ -215,7 +226,17 @@ export function registerKnowledgeClipperHttp(app: Express, ws: WebSocketServer, 
       mediaFinalizeSupported:connected&&ws.hasBridgeCapability(CLIPPER_MEDIA_CAPABILITY),
       spacingFinalizeSupported:connected&&ws.hasBridgeCapability(CLIPPER_SPACING_FINALIZE_CAPABILITY),
       plainStructureSupported:connected&&ws.hasBridgeCapability(CLIPPER_PLAIN_STRUCTURE_CAPABILITY),
+      questionCompositionSupported:connected&&ws.hasBridgeCapability('knowledge-clipper.question-composition.v1'),
+      mermaidSupported:connected&&ws.hasBridgeCapability('knowledge-clipper.mermaid.v1'),
+      questionDailyDocumentsSupported:connected&&ws.hasBridgeCapability('knowledge-clipper.question-daily-documents.v1'),
       identityAdoptSupported:connected&&ws.hasBridgeCapability('knowledge-clipper.identity-adopt.v1')});
+  });
+  router.post('/mermaid-render',async(req,res)=>{
+    const parsed=ClipPlanSchema.safeParse(req.body);
+    if(!parsed.success){res.status(400).json({error:'Invalid Mermaid readback plan'});return;}
+    if(!ws.isConnected()||!ws.hasBridgeCapability('knowledge-clipper.mermaid.v1')){res.status(503).json({error:'Mermaid renderer is not connected'});return;}
+    try{res.json(await ws.sendRequest('knowledge_clipper_mermaid_render_state',parsed.data,20000));}
+    catch(error){res.status(409).json({error:error instanceof Error?error.message:String(error)});}
   });
   router.get('/excerpt-documents', async (_req,res) => {
     const requestedRoot = _req.query.rootRemId;
@@ -250,6 +271,13 @@ export function registerKnowledgeClipperHttp(app: Express, ws: WebSocketServer, 
     const newSource=envelope?.success && envelope.data.newSource===true;
     const parsed = ClipPlanSchema.safeParse(envelope?.success ? envelope.data.plan : req.body);
     if (!parsed.success) { res.status(400).json({error:'Invalid export plan',details:parsed.error.issues}); return; }
+    if ((parsed.data.documentIds || parsed.data.cards.some(c=>c.backParents)) && !ws.hasBridgeCapability('knowledge-clipper.question-composition.v1')) {
+      res.status(503).json({error:'Update the KnowledgeClipper plugin for question composition'});return;
+    }
+    if (parsed.data.documentIds?.length===2&&parsed.data.documentPath.length===3&&
+        !ws.hasBridgeCapability('knowledge-clipper.question-daily-documents.v1')) {
+      res.status(503).json({error:'Update the KnowledgeClipper plugin for daily question documents'});return;
+    }
     if (!ws.isConnected() || !ws.hasBridgeCapability(CLIPPER_SDK_CAPABILITY)) {
       res.status(503).json({error:'The connected RemNote SDK plugin does not provide knowledge-clipper.sdk.v1'}); return;
     }

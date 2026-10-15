@@ -61,7 +61,7 @@ internal static class Program
         using var dot = new LanguageSelectionDot((selection, action) => calls.Add((selection, action)));
         var left = (Button)dot.Controls.Find("knowledge-clipper.language.selection-dot.read", true).Single();
         var question = (Button)dot.Controls.Find("knowledge-clipper.language.selection-dot.question", true).Single();
-        Check(dot.LeftAction == SelectionDotAction.Read && left.Text == "读" && question.Text == "问", "defaults expose Read and Question");
+        Check(dot.LeftAction == SelectionDotAction.Read && left.Text == "读" && question.Text == "卡" && dot.Controls.OfType<Button>().Single(b=>b.Name.EndsWith(".ask")).Text == "问", "defaults expose Read, Card and Ask");
         var screenIndex = 0;
         foreach (var screen in Screen.AllScreens)
         {

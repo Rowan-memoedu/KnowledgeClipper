@@ -229,7 +229,8 @@ public sealed partial class ContentModule(HttpClient http, Func<string> key)
 
     public async Task<QuestionAnswer> AnswerAsync(CaptureMaterial originalMaterial, ContentResult? initialContent,
         IReadOnlyList<ConversationTurn> conversation, string question, ContentConfiguration config, LanguageSettings settings,
-        CancellationToken ct, string? modeId = null, ContentPreview? currentPreview = null)
+        CancellationToken ct, string? modeId = null, ContentPreview? currentPreview = null,
+        string? trustedPrompt = null, IReadOnlyList<ImageAsset>? images = null, bool preserveRawAnswer = false)
     {
         if (string.IsNullOrWhiteSpace(question)) throw new InvalidDataException("请输入追问内容。");
         var mode = modeId == null ? config.Modes.SingleOrDefault(m => m.Definition.OutputKind == "question")
@@ -237,8 +238,8 @@ public sealed partial class ContentModule(HttpClient http, Func<string> key)
         if (mode == null) throw new InvalidDataException("请启用问答模式后再追问。");
         if (mode.LoadError != null) throw new InvalidDataException(mode.Definition.Name + " 尚未配置：" + mode.LoadError);
         var schema = await JsonSchema.FromJsonAsync(mode.Schema, ct);
-        return await RequestAsync(originalMaterial.VisualQuestion ? settings with { Model = settings.ImageModel } : settings,
-            mode.Prompt + "\n\nJSON 输出必须符合以下字段约定：\n" + mode.Schema,
+        return await RequestAsync(originalMaterial.VisualQuestion && images == null ? settings with { Model = settings.ImageModel } : settings,
+            mode.Prompt + (trustedPrompt == null ? "" : "\n\n" + trustedPrompt) + "\n\nJSON 输出必须符合以下字段约定：\n" + mode.Schema,
             new { originalMaterial = new { originalMaterial.SelectedText, originalMaterial.ContextText, originalMaterial.ContextOrigin },
                 initialContent, currentPreview, conversation, question },
             json =>
@@ -254,8 +255,8 @@ public sealed partial class ContentModule(HttpClient http, Func<string> key)
                     answer.Answered && (string.IsNullOrWhiteSpace(answer.AnswerText) || answer.UnresolvedReasons.Length != 0) ||
                     !answer.Answered && (answer.UnresolvedReasons.Length == 0 || answer.UnresolvedReasons.Any(string.IsNullOrWhiteSpace)))
                     throw new InvalidDataException("回答状态与内容不一致。");
-                return Task.FromResult(answer.Answered ? answer with { AnswerText = AnkiMathText.Normalize(answer.AnswerText!) } : answer);
-            }, ct, originalMaterial.VisualQuestion ? [originalMaterial.FrontImage!] : null);
+                return Task.FromResult(answer.Answered && !preserveRawAnswer ? answer with { AnswerText = AnkiMathText.Normalize(answer.AnswerText!) } : answer);
+            }, ct, images ?? (originalMaterial.VisualQuestion ? [originalMaterial.FrontImage!] : null));
     }
 
     private static LanguageFields ResolveGeneratedTarget(CaptureMaterial material, LanguageFields fields)

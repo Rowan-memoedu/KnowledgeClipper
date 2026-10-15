@@ -7,8 +7,8 @@ using System.Windows.Forms;
 
 namespace KnowledgeClipper;
 
-internal enum SelectionDotAction { Read, Excerpt, Question }
-internal enum ClipboardImageDotAction { Image, Excerpt, Read, Question }
+internal enum SelectionDotAction { Read, Excerpt, Question, Ask }
+internal enum ClipboardImageDotAction { Image, Excerpt, Read, Question, Ask }
 
 // Both floating surfaces keep their snapshot while hovered. Only uninterrupted
 // time outside the surface counts towards expiry; a new snapshot starts fresh.
@@ -54,6 +54,7 @@ internal sealed class LanguageSelectionDot : Form
     private readonly Button read;
     private readonly Button question;
     private readonly Button excerpt;
+    private readonly Button ask;
     private readonly bool imageMode;
     private SelectionDotAction leftAction;
     private sealed record HitArea(Rectangle Bounds);
@@ -97,16 +98,19 @@ internal sealed class LanguageSelectionDot : Form
         // conversion instead of mixing WinForms autoscaling with manual layout.
         AutoScaleMode = AutoScaleMode.None;
         BackColor = Color.FromArgb(231, 237, 245);
-        ClientSize = new Size(imageMode ? 88 : 66, 23);
+        ClientSize = new Size(imageMode ? 110 : 88, 23);
         left = new CircleButton(imageMode ? "图" : "读", imageMode ? "image" : "read", Name + ".");
         read = imageMode ? new CircleButton("读", "read", Name + ".") : null;
         excerpt = new CircleButton("摘", "excerpt", Name + ".");
-        question = new CircleButton("问", "question", Name + ".");
+        question = new CircleButton("卡", "question", Name + ".");
+        ask = new CircleButton("问", "ask", Name + ".");
+        tip.SetToolTip(ask, "用默认 API 模型和快速问答直接提问");
         if (imageMode)
         {
             left.Click += (_, _) => { if (ImageSelection is { } snapshot) imageInvoke(snapshot, ClipboardImageDotAction.Image); };
             read.Click += (_, _) => { if (ImageSelection is { } snapshot) imageInvoke(snapshot, ClipboardImageDotAction.Read); };
             question.Click += (_, _) => { if (ImageSelection is { } snapshot) imageInvoke(snapshot, ClipboardImageDotAction.Question); };
+            ask.Click += (_, _) => { if (ImageSelection is { } snapshot) imageInvoke(snapshot, ClipboardImageDotAction.Ask); };
             excerpt.Click += (_, _) => { if (ImageSelection is { } snapshot) imageInvoke(snapshot, ClipboardImageDotAction.Excerpt); };
             ApplyQuickModes(false, false, false, false);
         }
@@ -118,8 +122,10 @@ internal sealed class LanguageSelectionDot : Form
             left.Click += (_, _) => { if (Selection is { } selection) invoke(selection, LeftAction); };
             excerpt.Click += (_, _) => { if (Selection is { } selection) invoke(selection, SelectionDotAction.Excerpt); };
             question.Click += (_, _) => { if (Selection is { } selection) invoke(selection, SelectionDotAction.Question); };
+            ask.Click += (_, _) => { if (Selection is { } selection) invoke(selection, SelectionDotAction.Ask); };
         }
         Controls.Add(left); if (imageMode) Controls.Add(read); Controls.Add(question); Controls.Add(excerpt);
+        Controls.Add(ask);
         SizeChanged += (_, _) => { LayoutActions(); RoundWindow(); PublishHitArea(); };
         LocationChanged += (_, _) => PublishHitArea();
         VisibleChanged += (_, _) => PublishHitArea();
@@ -206,13 +212,13 @@ internal sealed class LanguageSelectionDot : Form
 
     private void LayoutActions()
     {
-        if (left == null || excerpt == null || question == null) return;
+        if (left == null || excerpt == null || question == null || ask == null) return;
         var inset = Math.Max(1, (int)Math.Round(2.0 * DeviceDpi / 96));
-        var count = imageMode ? 4 : 3;
+        var count = imageMode ? 5 : 4;
         var diameter = Math.Min(ClientSize.Height - 2 * inset, (ClientSize.Width - (count + 1) * inset) / count);
         if (diameter <= 0) return;
         var top = (ClientSize.Height - diameter) / 2;
-        var actions = imageMode ? new[] { left, read, question, excerpt } : new[] { left, question, excerpt };
+        var actions = imageMode ? new[] { left, read, question, excerpt, ask } : new[] { left, question, excerpt, ask };
         for (var index = 0; index < actions.Length; index++)
             actions[index].Bounds = new Rectangle(inset + index * (ClientSize.Width - 2 * inset - diameter) / (count - 1), top, diameter, diameter);
     }
@@ -220,7 +226,7 @@ internal sealed class LanguageSelectionDot : Form
     private void ApplyDpiMetrics()
     {
         if (IsDisposed) return;
-        ClientSize = new Size((int)Math.Round((imageMode ? 88.0 : 66.0) * DeviceDpi / 96), (int)Math.Round(23.0 * DeviceDpi / 96));
+        ClientSize = new Size((int)Math.Round((imageMode ? 110.0 : 88.0) * DeviceDpi / 96), (int)Math.Round(23.0 * DeviceDpi / 96));
         LayoutActions(); RoundWindow(); PublishHitArea();
     }
 

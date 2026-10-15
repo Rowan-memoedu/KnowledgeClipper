@@ -149,7 +149,8 @@ await ExcerptCards.ImportAsync(session, store, anki, [secondMerge.Id]);
 Check(backend.Adds == 4, "the new merged card imports independently");
 var timeout = ExcerptCards.Add(session, store, new("Lost response card", "Answer"), "超时测试");
 backend.DropAtAdd = backend.Adds + 1;
-await Reject(() => ExcerptCards.ImportAsync(session, store, anki, [timeout.Id]), "a lost write response remains unresolved");
+await ExcerptCards.ImportAsync(session, store, anki, [timeout.Id]);
+Check(store.Cards.Find(timeout.Id)!.AwaitingAnki, "a lost write response retains automatic Anki recovery intent");
 var adds = backend.Adds;
 Check(store.Cards.Find(timeout.Id)!.ImportState == ImportState.Unknown, "uncertain write state persists");
 await ExcerptCards.ImportAsync(store.Find(session.Id)!, store, anki, [timeout.Id]);
@@ -211,7 +212,7 @@ sealed class AnkiFixture : HttpMessageHandler
                     var front = f.GetProperty("Front").GetString()!; var back = f.GetProperty("Back").GetString()!;
                     // Independent fixture rendering, never call the production cloze renderer here.
                     var question = isCloze ? Regex.Replace(front, @"\{\{c1::(.*?)\}\}", "<span class='cloze'>[...]</span>", RegexOptions.Singleline) : front;
-                    var answer = isCloze ? Regex.Replace(front, @"\{\{c1::(.*?)\}\}", "$1", RegexOptions.Singleline) + "<br>" + back : back;
+                    var answer = isCloze ? Regex.Replace(front, @"\{\{c1::(.*?)\}\}", "$1", RegexOptions.Singleline) + "<br>" + back : "<div>" + front + "</div><hr id='answer'><div>" + back + "</div>";
                     if (WrongBlankAnswer && back == "") answer += "Unexpected text";
                     if (ReverseImageOrder)
                     {

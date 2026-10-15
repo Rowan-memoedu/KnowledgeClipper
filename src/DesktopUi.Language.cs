@@ -73,6 +73,7 @@ internal sealed partial class BoundClipperForm
             selectionDot.HideSelection();
             languageFlow.HideMeaning();
             if (current) _ = action switch {
+                SelectionDotAction.Ask => languageFlow.StartQuickQuestionAsync(selection),
                 SelectionDotAction.Question => languageFlow.StartQuestionAsync(selection, languageFlow.Settings.QuickQuestion),
                 SelectionDotAction.Excerpt => excerptFlow.StartAsync(selection, languageFlow.Settings.QuickExcerpt),
                 _ => languageFlow.StartLanguageAsync(selection, languageFlow.Settings.QuickLanguage)
@@ -81,7 +82,7 @@ internal sealed partial class BoundClipperForm
         });
         selectionMonitor = new LanguageSelectionMonitor(this, Path.Combine(AppContext.BaseDirectory, "helpers", "selection.cjs"),
             point => selectionDot.ContainsScreenPoint(point),
-            selection => selectionDot.ShowSelection(selection), () => selectionDot.HideSelection(),
+            selection => { selectionDot.ShowSelection(selection); languageFlow.PrepareSpeech(); }, () => selectionDot.HideSelection(),
             message => SetStatus("自动选词未完成：" + message, Color.FromArgb(38, 90, 150), Color.FromArgb(238, 245, 255)));
         clipboardImageDot = LanguageSelectionDot.ForImages((snapshot, action) => _ = HandleClipboardImageAsync(snapshot, action));
         clipboardImageMonitor = new ClipboardImageMonitor(this,
@@ -127,7 +128,7 @@ internal sealed partial class BoundClipperForm
             SaveAuthoritativeCaptureModes(settings.ContextModeEnabled, settings.ContextGranularity, original);
             controller.Execute(Action(AutomationCatalog.OriginalImageSet, new SemanticActionArguments { enabled = original }));
         }
-        inlineQuestionInput.PlaceholderText = KnowledgeClipper.Workflow.MaterialRouting.TypedPlaceholder(languageFlow.Settings);
+        inlineQuestionInput.PlaceholderText = LanguageQuestionInputBox.Hint;
         inlineQuestionInput.AccessibleDescription = inlineQuestionInput.PlaceholderText;
         textDotItem.Checked = languageFlow.Settings.GlobalSelection;
         imageDotItem.Checked = languageFlow.Settings.ClipboardImageDotEnabled;
@@ -194,6 +195,7 @@ internal sealed partial class BoundClipperForm
             if (action == ClipboardImageDotAction.Excerpt) imageFlow.StartClipboardImage(png, "excerpt", languageFlow.Settings.QuickExcerpt);
             else if (action == ClipboardImageDotAction.Read) imageFlow.StartClipboardImage(png, "language", languageFlow.Settings.QuickLanguage);
             else if (action == ClipboardImageDotAction.Question) imageFlow.StartClipboardImage(png, "question", languageFlow.Settings.QuickQuestion);
+            else if (action == ClipboardImageDotAction.Ask) await languageFlow.StartQuestionInputAsync("", new[] { png }, true);
             else
             {
                 if (busy) { SetStatus("正在截图，请完成当前采集后继续", Color.FromArgb(38, 90, 150), Color.FromArgb(238, 245, 255)); return; }

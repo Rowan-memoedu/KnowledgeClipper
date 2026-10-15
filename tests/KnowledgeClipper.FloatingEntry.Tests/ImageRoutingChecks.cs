@@ -68,24 +68,33 @@ internal static partial class Program
                     draft = drafts.Find(job.DestinationId!)!;
                     Check(Forms(language).Length == 0, $"image language/{original}/quick pending Anki does not open an error preview");
                 }
+                else if (intent == "question" && !quick)
+                {
+                    await Until(() => ChatForms(language).Length == 1, $"image question/{original} opens the persistent chat");
+                    draft = (ClipDraft)Get(ChatForms(language).Single(), "Draft")!;
+                }
                 else
                 {
                     await Until(() => Forms(language).Length == 1, $"image {intent}/{original}/{quick} has its normal or failed-import preview");
                     draft = (ClipDraft)Get(Forms(language).Single(), "Draft")!;
                 }
-                await Until(() => intent == "language" ? LanguageModeCards.Children(draft, drafts).All(x => x.Content != null) && draft.ModeCards.Count > 0 : draft.Conversation.Count == 1,
-                    $"image {intent}/{original}/{quick} completes the selected content flow");
+                if (intent != "question" || quick)
+                    await Until(() => intent == "language" ? LanguageModeCards.Children(draft, drafts).All(x => x.Content != null) && draft.ModeCards.Count > 0 : draft.Conversation.Count == 1,
+                        $"image {intent}/{original}/{quick} completes the selected content flow");
                 Check(draft.Id == job.DestinationId && (draft.Original.FrontImage != null) == original && draft.Original.ContextText == null,
                     "downstream language/question draft retains the correct original-image policy and no invented source context");
                 if (intent == "language") Check(LanguageModeCards.Children(draft, drafts).Length == (original ? 1 : 2) &&
                     (!original || LanguageModeCards.Children(draft, drafts).Single().Practice == PracticeChoice.Reading), "image language restricts only original-image cards to reading");
-                else Check(provider.VisualAnswers == (original && !quick ? 1 : 0) && provider.Answers == 1,
-                    "normal image question is visual and quick image question is OCR-based with one answer");
+                else if (!quick) Check(provider.Answers == 0 && draft.Chat!.Prompts.Count == 0 &&
+                    draft.Chat.Attachments.Count == (original ? 1 : 0) && (original ? draft.Chat.Input == "" : draft.Chat.Input == draft.QuestionText),
+                    "normal image question preserves image-only or OCR input for explicit send without calling a model");
+                else Check(provider.VisualAnswers == 0 && provider.Answers == 1,
+                    "quick image question remains OCR-based with one answer");
                 if (intent == "language") Check(draft.Original.SelectedText == "lead" && job.Text == "## lead" &&
                     provider.LanguageTargets.Count > 0 && provider.LanguageTargets.All(x => x == "lead"),
                     "actual language entry preserves OCR evidence while sending only the heading text to the content model");
             }
-            foreach (var form in Forms(language).Concat(Forms(excerpt)).Concat(ImageForms(image))) form.Close();
+            foreach (var form in Forms(language).Concat(ChatForms(language)).Concat(Forms(excerpt)).Concat(ImageForms(image))) form.Close();
         }
         await ImageHistoryAndContextAsync(owner, png);
     }
@@ -200,6 +209,21 @@ internal static partial class Program
         internal TaskCompletionSource? HoldAnswers;
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            // The current desktop also reads public dictionaries and examples.
+            // Keep those reads inside the offline fixture instead of parsing GET
+            // requests as model POSTs or reaching an external corpus.
+            if (request.Method == HttpMethod.Get)
+            {
+                if (request.RequestUri!.Host == "api.tatoeba.org")
+                {
+                    var query = request.RequestUri.Query.TrimStart('?').Split('&')
+                        .Select(part => part.Split('=', 2)).First(part => part[0] == "q")[1];
+                    var target = Uri.UnescapeDataString(query);
+                    return new(HttpStatusCode.OK) { Content = new StringContent(JsonSerializer.Serialize(new {
+                        data = new[] { new { id = 1, text = "We practice " + target + " every day." } } })) };
+                }
+                return new(HttpStatusCode.NotFound) { Content = new StringContent("{}") };
+            }
             using var body = JsonDocument.Parse(await request.Content!.ReadAsStringAsync(cancellationToken));
             var messages = body.RootElement.GetProperty("messages"); var system = messages[0].GetProperty("content").GetString()!;
             var user = messages[1].GetProperty("content"); object result;
@@ -210,7 +234,9 @@ internal static partial class Program
                 using var input = JsonDocument.Parse(user.GetString()!);
                 LanguageTargets.Add(input.RootElement.GetProperty("selectedText").GetString()!);
                 var fields = new Dictionary<string, object?> { ["status"] = "ready", ["pronunciation"] = "/liːd/", ["explanationEn"] = "to guide or direct",
-                    ["sentenceTranslationZh"] = "他们带领这个团队。", ["normalizedSentence"] = null, ["generatedSentence"] = "They lead the team.", ["generatedTargetStart"] = null, ["unresolvedReasons"] = Array.Empty<string>() };
+                    ["sentenceTranslationZh"] = "他们带领这个团队。", ["normalizedSentence"] = null,
+                    ["generatedSentence"] = input.RootElement.TryGetProperty("contextText", out var sourceContext) && sourceContext.ValueKind == JsonValueKind.String ? null : "They lead the team.",
+                    ["generatedTargetStart"] = null, ["unresolvedReasons"] = Array.Empty<string>() };
                 if (system.Contains("\"lemma\"")) fields["lemma"] = "lead";
                 result = fields;
             }

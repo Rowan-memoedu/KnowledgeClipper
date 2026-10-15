@@ -164,7 +164,7 @@ internal static class Program
             Check(((ClipDraft)languagePreview.GetType().GetProperty("Draft", Flags)!.GetValue(languagePreview)!).Id == older.Id, "language continue opens the exact existing preview");
             languagePreview.Close();
             Click(Button(history, "knowledge-clipper.history.continue.draft." + question.Id)); await Task.Delay(80);
-            var questionPreview = Application.OpenForms.Cast<Form>().Single(f => f.Name == "knowledge-clipper.language.preview");
+            var questionPreview = Application.OpenForms.Cast<Form>().Single(f => f.Name == "knowledge-clipper.chat");
             Check(((ClipDraft)questionPreview.GetType().GetProperty("Draft", Flags)!.GetValue(questionPreview)!).Id == question.Id, "question continue preserves the existing conversation");
             questionPreview.Close();
             Click(Button(history, "knowledge-clipper.history.continue.excerpt." + excerpt.Id)); await Task.Delay(80);
@@ -180,13 +180,15 @@ internal static class Program
             Check(Button(history, "knowledge-clipper.history.continue.draft." + older.Id).Text == "查看", "language import notifications update the actual history action to view");
             var liveQuestion = (ClipDraft)Call(language, "LiveDraft", question)!;
             liveQuestion.Content = liveQuestion.Content! with { Basic = new(liveQuestion.QuestionText, liveQuestion.Content!.Answer!.AnswerText!) };
-            HistoryActionChecks.VerifyFixture(liveQuestion, drafts); Call(language, "Changed", liveQuestion, null);
+            HistoryActionChecks.VerifyFixture(liveQuestion, drafts);
+            liveQuestion.Chat!.Compositions.Single().ExportDraftId = liveQuestion.Id;
+            Call(language, "Changed", liveQuestion, null);
             await WaitFor(() => Button(history, "knowledge-clipper.history.continue.draft." + question.Id).Text == "查看");
             Check(Button(history, "knowledge-clipper.history.continue.draft." + question.Id).Text == "查看", "an imported question shows view instead of a follow-up-specific caption");
-            liveQuestion.Conversation.Add(new("A further public question?", new("answered", "A further answer.", [])));
+            liveQuestion.Chat!.Compositions.Add(new(){Front="A further public question?",Back="A further answer."});
             Call(language, "Changed", liveQuestion, null);
             await WaitFor(() => Button(history, "knowledge-clipper.history.continue.draft." + question.Id).Text == "继续制卡");
-            Check(Button(history, "knowledge-clipper.history.continue.draft." + question.Id).Text == "继续制卡", "a generated follow-up immediately restores continue in the visible history");
+            Check(Button(history, "knowledge-clipper.history.continue.draft." + question.Id).Text == "继续制卡", "a newly generated chat card immediately restores continue in the visible history");
             Click(Button(history, "knowledge-clipper.history.continue.excerpt." + excerpt.Id)); await Task.Delay(60);
             excerptPreview = Application.OpenForms.Cast<Form>().Single(f => f.GetType().Name == "ExcerptDraftForm");
             foreach (var link in excerpt.Cards) HistoryActionChecks.VerifyFixture(excerpts.Cards.Find(link.Id)!, excerpts.Cards);

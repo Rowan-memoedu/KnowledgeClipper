@@ -33,7 +33,7 @@ Check(preview.Count == 3 && preview[0].Context == "" && preview[1].Context.Conta
 Check(QuestionCards.EffectiveConversation(parent, store)[0].Answer.AnswerText == "Edited answer 1." && parent.Conversation[0].Answer.AnswerText == "Answer 1.", "effective conversation overlays edits without rewriting history");
 backend.BeforeFirstCall = () => Check(parent.FollowUpCards.Count == 3 && parent.FollowUpCards.Values.All(id => store.Find(id)!.ConfirmedNote != null), "all selected cards are saved frozen before any API call");
 backend.DropAtAdd = 2;
-try { await QuestionCards.ImportAsync(parent, [0, 1, 2], store, anki, () => { }); throw new Exception("Expected lost response"); } catch (TaskCanceledException) { }
+try { await QuestionCards.ImportAsync(parent, [0, 1, 2], store, anki, () => { }); throw new Exception("Expected pending import"); } catch (AnkiPendingException) { }
 preview = QuestionCards.Preview(parent, store);
 Check(preview.Select(x => x.State).SequenceEqual(new[] { ImportState.Verified, ImportState.Unknown, ImportState.Ready }) && preview.All(x => x.Frozen), "partial write failure keeps completed Unknown and remaining frozen cards");
 Check(parent.ConversationImportError!.Contains("第 2 轮") && backend.Adds == 2, "batch stops at failed round and identifies it");
@@ -52,7 +52,7 @@ Check(first.ConfirmedNote!.HasQuestionContext && first.ConfirmedNote.Model == An
 Check(third.ConfirmedNote!.Fields["Front"] == "Question 3?" && !third.ConfirmedNote.Fields["Front"].Contains("Answer 1") && third.ConfirmedNote.Fields["Context"].Contains("Edited answer 1."), "previous answers never enter this round Front field");
 var template = backend.Models[AnkiNoteDraft.QuestionModelName].GetProperty("cardTemplates")[0];
 Check(template.GetProperty("Front").GetString()!.IndexOf("{{Context}}", StringComparison.Ordinal) < template.GetProperty("Front").GetString()!.IndexOf("{{Front}}", StringComparison.Ordinal)
-    && template.GetProperty("Back").GetString() == "<div>{{Back}}</div>", "native template displays auxiliary context before question and only Back on reverse");
+    && template.GetProperty("Back").GetString() == "{{FrontSide}}<hr id='answer'><div>{{Back}}</div>", "native answer retains the full question/context above its divider");
 
 var selected = Parent(false); var addsBefore = backend.Adds;
 await QuestionCards.ImportAsync(selected, [2, 2], store, anki, () => { });
@@ -170,7 +170,7 @@ sealed class Handler : HttpMessageHandler
             case "cardsInfo":
                 result = p.GetProperty("cards").EnumerateArray().Select(c => { var cid = c.GetInt64(); var n = notes[cid / 10]; var f = n.GetProperty("fields");
                     return new { cardId = cid, note = cid / 10, ord = 0, queue = 0, deckName = n.GetProperty("deckName").GetString(),
-                        question = (f.TryGetProperty("Context", out var context) ? context.GetString() : "") + f.GetProperty("Front").GetString(), answer = f.GetProperty("Back").GetString() }; }).ToArray(); break;
+                        question = (f.TryGetProperty("Context", out var context) ? context.GetString() : "") + f.GetProperty("Front").GetString(), answer = (f.TryGetProperty("Context", out var answerContext) ? answerContext.GetString() : "") + f.GetProperty("Front").GetString() + "<hr id='answer'>" + f.GetProperty("Back").GetString() }; }).ToArray(); break;
             case "areSuspended": result = p.GetProperty("cards").EnumerateArray().Select(_ => false).ToArray(); break;
             default: throw new InvalidOperationException("Unexpected action including model overwrite: " + action);
         }

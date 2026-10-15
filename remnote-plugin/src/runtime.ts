@@ -1,11 +1,14 @@
-import {ImportNavigation,NAVIGATION_CAPABILITY} from './api/import-navigation';
-import type {ReactRNPlugin} from '@remnote/plugin-sdk';
+import {WidgetLocation,type ReactRNPlugin} from '@remnote/plugin-sdk';
 import {MAX_RECONNECT_DELAY_MS} from './transport-worker';
+import {ImportNavigation,NAVIGATION_CAPABILITY} from './api/import-navigation';
+import {MERMAID_CAPABILITY,MERMAID_RECEIPT_PREFIX} from './api/mermaid';
 import {verifyEmptyBackEditor} from './testing/plain-structure-canary';
 import {KnowledgeClipperAdapter, KNOWLEDGE_CLIPPER_CAPABILITY, KNOWLEDGE_CLIPPER_MEDIA_CAPABILITY, KNOWLEDGE_CLIPPER_SPACING_CAPABILITY, KNOWLEDGE_CLIPPER_SPACING_FINALIZE_CAPABILITY, KNOWLEDGE_CLIPPER_PLAIN_STRUCTURE_CAPABILITY} from './api/knowledge-clipper';
-export const CAPABILITIES=[KNOWLEDGE_CLIPPER_CAPABILITY,KNOWLEDGE_CLIPPER_MEDIA_CAPABILITY,KNOWLEDGE_CLIPPER_SPACING_CAPABILITY,KNOWLEDGE_CLIPPER_SPACING_FINALIZE_CAPABILITY,KNOWLEDGE_CLIPPER_PLAIN_STRUCTURE_CAPABILITY,'knowledge-clipper.identity-adopt.v1','knowledge-clipper.excerpt-documents.v1'];
+export const CAPABILITIES=[KNOWLEDGE_CLIPPER_CAPABILITY,KNOWLEDGE_CLIPPER_MEDIA_CAPABILITY,KNOWLEDGE_CLIPPER_SPACING_CAPABILITY,KNOWLEDGE_CLIPPER_SPACING_FINALIZE_CAPABILITY,KNOWLEDGE_CLIPPER_PLAIN_STRUCTURE_CAPABILITY,'knowledge-clipper.identity-adopt.v1','knowledge-clipper.excerpt-documents.v1','knowledge-clipper.question-composition.v1'];
 CAPABILITIES.push(NAVIGATION_CAPABILITY);
 CAPABILITIES.push('knowledge-clipper.background-transport.v1');
+CAPABILITIES.push('knowledge-clipper.question-daily-documents.v1');
+CAPABILITIES.push(MERMAID_CAPABILITY);
 export const STATUS_KEY='knowledge-clipper.connection-status';
 export const WRITE_SETTING='knowledge-clipper-enable-import';
 export const WS_URL='ws://127.0.0.1:43112';
@@ -16,12 +19,19 @@ export function createDispatcher(plugin:ReactRNPlugin,wait?:()=>Promise<void>) {
  return async (action:string,payload:unknown) => {
   writable=await plugin.settings.getSetting<boolean>(WRITE_SETTING)===true;
   switch(action) {
-   case 'knowledge_clipper_health':return {connected:true,supported:true,acceptWriteOperations:writable,capabilities:CAPABILITIES,pluginId:'knowledge-clipper',version:'1.0.1',reconnectMaxDelayMs:MAX_RECONNECT_DELAY_MS,mediaFinalizeSupported:true,identityAdoptSupported:true,batchSpacingSupported:true,spacingFinalizeSupported:true,plainStructureSupported:true};
+   case 'knowledge_clipper_health':return {connected:true,supported:true,acceptWriteOperations:writable,capabilities:CAPABILITIES,pluginId:'knowledge-clipper',version:'1.0.2',reconnectMaxDelayMs:MAX_RECONNECT_DELAY_MS,mediaFinalizeSupported:true,identityAdoptSupported:true,batchSpacingSupported:true,spacingFinalizeSupported:true,plainStructureSupported:true};
    case 'knowledge_clipper_excerpt_documents':return adapter.listExcerptDocuments(payload as {rootRemId?:string});
    case 'knowledge_clipper_reveal':return navigation.reveal(payload);
    case 'knowledge_clipper_reveal_state':return navigation.state();
    case 'knowledge_clipper_export':return adapter.export(payload);
    case 'knowledge_clipper_readback':return adapter.readback(payload);
+   case 'knowledge_clipper_mermaid_render_state':{
+    const readback=await adapter.readNavigation(payload) as {cards:{nodes:{remId:string}[]}[]};
+    const ids=readback.cards.flatMap(card=>card.nodes.map(node=>node.remId));
+    return {receipts:(await Promise.all(ids.map(id=>plugin.storage.getSession(MERMAID_RECEIPT_PREFIX+id)))).filter(Boolean),
+     widgetBoot:await plugin.storage.getSession(MERMAID_RECEIPT_PREFIX+'boot'),
+     bindings:await Promise.all(ids.map(async remId=>({remId,widgets:await plugin.widget.getWidgetsAtLocation(WidgetLocation.UnderRemEditor,remId)})))};
+   }
    case 'knowledge_clipper_prepare_image':return adapter.prepareImage(payload);
    case 'knowledge_clipper_finalize_media':return adapter.finalizeMedia(payload);
    case 'knowledge_clipper_finalize_spacing':return adapter.finalizeSpacing(payload);
@@ -62,6 +72,6 @@ export function startRuntime(plugin:ReactRNPlugin) {
    catch(error){if(!stopped)send({id:message.id,error:error instanceof Error?error.message:String(error)},current);}
  };
  worker.onerror=()=>{connected=false;rejectWaits();status('后台连接组件加载失败，请重新加载剪藏插件');};
- worker.postMessage({type:'start',hello:{type:'hello',protocol:'knowledge-clipper.transport.v1',pluginId:'knowledge-clipper',version:'1.0.1',capabilities:CAPABILITIES}});
+ worker.postMessage({type:'start',hello:{type:'hello',protocol:'knowledge-clipper.transport.v1',pluginId:'knowledge-clipper',version:'1.0.2',capabilities:CAPABILITIES}});
  return ()=>{stopped=true;connected=false;rejectWaits();worker.postMessage({type:'stop'});worker.terminate();status('已停用');};
 }

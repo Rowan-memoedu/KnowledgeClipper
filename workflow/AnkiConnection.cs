@@ -218,11 +218,11 @@ public sealed class AnkiConnection(HttpClient http, string endpoint) : ICardImpo
                 new { Name = "书写练习", Front = "{{#WritingEnabled}}{{#EnglishMode}}<div>{{SentenceBefore}}{{Pronunciation}}{{SentenceAfter}}</div><div>{{ExplanationEn}}</div>{{/EnglishMode}}{{^EnglishMode}}<div>{{SentenceBefore}}（{{Pronunciation}}；{{Meaning}}）{{SentenceAfter}}</div>{{/EnglishMode}}{{/WritingEnabled}}", Back = "{{FrontSide}}<hr id='answer'><div>{{Target}}</div>{{#EnglishMode}}<div>{{SentenceTranslationZh}}</div>{{/EnglishMode}}" }
             }
             : note.IsDictionaryImage
-            ? new[] { new { Name = "正反面", Front = "{{#Front}}<div>{{Front}}</div>{{/Front}}", Back = "<div>{{Back}}</div><details class='dictionary'><summary>划词词典</summary><div>{{DictionaryDetails}}</div></details>" } }
+            ? new[] { new { Name = "正反面", Front = "{{#Front}}<div>{{Front}}</div>{{/Front}}", Back = "{{FrontSide}}<hr id='answer'><div>{{Back}}</div><details class='dictionary'><summary>划词词典</summary><div>{{DictionaryDetails}}</div></details>" } }
             : note.HasQuestionContext
-            ? new[] { new { Name = "正反面", Front = "{{#Front}}{{#Context}}<div class='context'>{{Context}}</div>{{/Context}}<div>{{Front}}</div>{{/Front}}", Back = "<div>{{Back}}</div>" } }
+            ? new[] { new { Name = "正反面", Front = "{{#Front}}{{#Context}}<div class='context'>{{Context}}</div>{{/Context}}<div>{{Front}}</div>{{/Front}}", Back = "{{FrontSide}}<hr id='answer'><div>{{Back}}</div>" } }
             : note.IsBasic
-            ? new[] { new { Name = "正反面", Front = "{{#Front}}<div>{{Front}}</div>{{/Front}}", Back = "<div>{{Back}}</div>" } }
+            ? new[] { new { Name = "正反面", Front = "{{#Front}}<div>{{Front}}</div>{{/Front}}", Back = "{{FrontSide}}<hr id='answer'><div>{{Back}}</div>" } }
             : new[]
             {
                 new { Name = "理解与朗读", Front = "{{#ReadingEnabled}}<div>{{SentenceBefore}}<span class='target'>{{Target}}</span>{{SentenceAfter}}</div><div class='origin'>{{Origin}}</div>{{/ReadingEnabled}}", Back = "{{FrontSide}}<hr id='answer'><div>{{Target}} · {{Pronunciation}}</div><div>{{Meaning}}</div>" },
@@ -243,10 +243,6 @@ public sealed class AnkiConnection(HttpClient http, string endpoint) : ICardImpo
         var templates = await CallAsync("modelTemplates", new { modelName = note.Model }, ct);
         if (!templates.EnumerateObject().Select(p => p.Name).SequenceEqual(templateNames))
             throw new InvalidDataException("所选类型的卡片模板不兼容，请选择对应专用类型。");
-        if ((note.IsExcerpt || note.IsDictionaryImage) && cardTemplates.Any(template =>
-            TemplateContent(templates.GetProperty(template.Name).GetProperty("Front").GetString()!) != template.Front ||
-            TemplateContent(templates.GetProperty(template.Name).GetProperty("Back").GetString()!) != template.Back))
-            throw new InvalidDataException("专用笔记类型的模板已改变，无法保证卡面与预览一致；已有模板不会被覆盖。");
         // Repair only the exact managed publication that omitted the question on answer.
         // Custom templates remain untouched. Re-read the provider before accepting repair.
         const string answerPrefix = "{{FrontSide}}<hr id='answer'>";
@@ -259,7 +255,8 @@ public sealed class AnkiConnection(HttpClient http, string endpoint) : ICardImpo
                     match.Value == "<div>{{Pronunciation}}</div>" ? match.Value + "<hr>" : match.Value, RegexOptions.Singleline);
             return raw;
         }
-        if (note.IsPublishedLanguage && cardTemplates.Any(template =>
+        var managedBasic = note.IsBasic && !note.IsCloze && note.Model is (AnkiNoteDraft.BasicModelName or AnkiNoteDraft.QuestionModelName or AnkiNoteDraft.DictionaryImageModelName or AnkiNoteDraft.ExcerptModelName);
+        if ((note.IsPublishedLanguage || managedBasic) && cardTemplates.Any(template =>
             TemplateContent(templates.GetProperty(template.Name).GetProperty("Back").GetString()!) != template.Back) &&
             cardTemplates.All(template =>
                 TemplateContent(templates.GetProperty(template.Name).GetProperty("Front").GetString()!) == template.Front &&
@@ -271,10 +268,41 @@ public sealed class AnkiConnection(HttpClient http, string endpoint) : ICardImpo
                     Back = UpgradeBack(templates.GetProperty(template.Name).GetProperty("Back").GetString()!, template.Back) }) } }, ct);
             templates = await CallAsync("modelTemplates", new { modelName = note.Model }, ct);
         }
+        if ((note.IsExcerpt || note.IsDictionaryImage || managedBasic) && cardTemplates.Any(template =>
+            TemplateContent(templates.GetProperty(template.Name).GetProperty("Front").GetString()!) != template.Front ||
+            TemplateContent(templates.GetProperty(template.Name).GetProperty("Back").GetString()!) != template.Back))
+            throw new InvalidDataException("专用笔记类型的模板已改变，无法保证卡面与预览一致；已有模板不会被覆盖。");
         if (note.IsPublishedLanguage && cardTemplates.Any(template =>
             TemplateContent(templates.GetProperty(template.Name).GetProperty("Front").GetString()!) != template.Front ||
             TemplateContent(templates.GetProperty(template.Name).GetProperty("Back").GetString()!) != template.Back))
             throw new InvalidDataException("所选语言笔记类型的模板已改变，无法保证正式卡面格式；已有模板不会被覆盖。");
+        if (MermaidCards.Contains(note))
+        {
+            if (!managedBasic) throw new InvalidDataException("Mermaid 需要剪藏专用正反面模板。");
+            var runtimePath = Path.Combine(AppContext.BaseDirectory, "chat-view", "mermaid-runtime.js");
+            if (!File.Exists(runtimePath)) throw new InvalidDataException("本地 Mermaid 渲染组件缺失，源码与草稿已保留。");
+            var bytes = await File.ReadAllBytesAsync(runtimePath, ct);
+            var existing = await CallAsync("retrieveMediaFile", new { filename = MermaidCards.RuntimeFile }, ct);
+            if (existing.ValueKind == JsonValueKind.False)
+            {
+                var saved = await CallAsync("storeMediaFile", new { filename = MermaidCards.RuntimeFile, data = Convert.ToBase64String(bytes) }, ct);
+                if (saved.GetString() != MermaidCards.RuntimeFile) throw new InvalidDataException("Anki Mermaid 组件文件名不符。");
+            }
+            else if (existing.ValueKind != JsonValueKind.String || !Convert.FromBase64String(existing.GetString()!).SequenceEqual(bytes))
+                throw new InvalidDataException("Anki Mermaid 组件指纹不符，保留原文件并停止导入。");
+            if (cardTemplates.Any(t => !templates.GetProperty(t.Name).GetProperty("Front").GetString()!.Contains(MermaidCards.Bootstrap, StringComparison.Ordinal) ||
+                !templates.GetProperty(t.Name).GetProperty("Back").GetString()!.Contains(MermaidCards.Bootstrap, StringComparison.Ordinal)))
+            {
+                await CallAsync("updateModelTemplates", new { model = new { name = note.Model,
+                    templates = cardTemplates.ToDictionary(t => t.Name, t => new {
+                        Front = templates.GetProperty(t.Name).GetProperty("Front").GetString()!.Replace(MermaidCards.Bootstrap, "") + MermaidCards.Bootstrap,
+                        Back = templates.GetProperty(t.Name).GetProperty("Back").GetString()!.Replace(MermaidCards.Bootstrap, "") + MermaidCards.Bootstrap }) } }, ct);
+                var actual = await CallAsync("modelTemplates", new { modelName = note.Model }, ct);
+                if (cardTemplates.Any(t => !actual.GetProperty(t.Name).GetProperty("Front").GetString()!.EndsWith(MermaidCards.Bootstrap, StringComparison.Ordinal) ||
+                    !actual.GetProperty(t.Name).GetProperty("Back").GetString()!.EndsWith(MermaidCards.Bootstrap, StringComparison.Ordinal)))
+                    throw new InvalidDataException("Anki Mermaid 模板回读不一致。");
+            }
+        }
         var decks = (await DecksAsync(ct)).ToHashSet(StringComparer.Ordinal);
         foreach (var deck in note.Ordinals.Select(note.DeckFor).Prepend(note.Deck).Distinct(StringComparer.Ordinal))
             if (decks.Add(deck)) await CallAsync("createDeck", new { deck }, ct);
@@ -424,17 +452,17 @@ public sealed class AnkiConnection(HttpClient http, string endpoint) : ICardImpo
             var question = card.GetProperty("question").GetString() ?? "";
             var answer = card.GetProperty("answer").GetString() ?? "";
             var neededQuestion = expected.HasQuestionContext ? new[] { "Front", "Context" } : expected.IsBasic ? new[] { "Front" } : ordinal == 0 ? new[] { "Target" } : new[] { "Pronunciation", "Meaning" };
-            var neededAnswer = expected.IsBasic ? new[] { "Back" } : ordinal == 0 ? new[] { "Target", "Pronunciation", "Meaning" } : new[] { "Target" };
+            var neededAnswer = expected.IsBasic ? expected.HasQuestionContext ? new[] { "Front", "Context", "Back" } : new[] { "Front", "Back" } : ordinal == 0 ? new[] { "Target", "Pronunciation", "Meaning" } : new[] { "Target" };
             if (expected.IsExcerpt)
             {
                 string FieldText(string name) => WebUtility.HtmlDecode(expected.Fields[name].Replace("<br>", "\n"));
                 var front = FieldText("Front"); var back = FieldText("Back");
                 var expectedQuestion = expected.IsCloze ? ExcerptCloze.Question(front) : front;
-                var expectedAnswer = expected.IsCloze ? ExcerptCloze.Answer(front) + "\n" + back : back;
+                var expectedAnswer = expected.IsCloze ? ExcerptCloze.Answer(front) + "\n" + back : front + "\n" + back;
                 if (expected.Media.Length > 0)
                 {
-                    if (!ImageNames(question).SequenceEqual(ImageNames(expected.Fields["Front"])) || !ImageNames(answer).SequenceEqual(ImageNames(expected.Fields["Back"])) ||
-                        DisplayText(question) != DisplayText(expected.Fields["Front"]) || DisplayText(answer) != DisplayText(expected.Fields["Back"]))
+                    if (!ImageNames(question).SequenceEqual(ImageNames(expected.Fields["Front"])) || !ImageNames(answer).SequenceEqual(ImageNames(expected.Fields["Front"]).Concat(ImageNames(expected.Fields["Back"]))) ||
+                        DisplayText(question) != DisplayText(expected.Fields["Front"]) || DisplayText(answer) != DisplayText(expected.Fields["Front"] + "<br>" + expected.Fields["Back"]))
                         throw new InvalidDataException("Anki 图片卡的正反面、图片顺序或文字不符。");
                 }
                 else if (DisplayText(question) != NormalizeDisplay(expectedQuestion) || DisplayText(answer) != NormalizeDisplay(expectedAnswer))
@@ -449,6 +477,8 @@ public sealed class AnkiConnection(HttpClient http, string endpoint) : ICardImpo
             else if (!neededQuestion.All(f => Plain(question).Contains(Plain(expected.Fields[f]), StringComparison.Ordinal)) ||
                 !neededAnswer.All(f => Plain(answer).Contains(Plain(expected.Fields[f]), StringComparison.Ordinal)))
                 throw new InvalidDataException("Anki 实际卡面缺少本次练习内容。");
+            if (expected.IsBasic && !expected.IsCloze && !Regex.IsMatch(answer, @"<hr\b[^>]*\bid\s*=\s*['"" ]?answer\b", RegexOptions.IgnoreCase))
+                throw new InvalidDataException("Anki 实际答案缺少正反面分割线。");
             readback.Add(new(id, ordinal, deck));
         }
         var suspended = await CallAsync("areSuspended", new { cards = ids }, ct);
@@ -480,7 +510,7 @@ public sealed class AnkiConnection(HttpClient http, string endpoint) : ICardImpo
         // The installed speech extension owns this bounded block; preserve it byte-for-byte.
         if (Regex.Matches(html, "<!-- sftts-controls:start -->").Count > 1 ||
             Regex.Matches(html, "<!-- sftts-controls:start -->").Count != Regex.Matches(html, "<!-- sftts-controls:end -->").Count) return html;
-        return Regex.Replace(html, SpeechControls, "", RegexOptions.Singleline);
+        return Regex.Replace(html, SpeechControls, "", RegexOptions.Singleline).Replace(MermaidCards.Bootstrap, "");
     }
     private static string DisplayText(string html)
     {

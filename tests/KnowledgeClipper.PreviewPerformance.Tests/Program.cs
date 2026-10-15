@@ -24,12 +24,13 @@ internal static class Program
     {
         if (Environment.GetEnvironmentVariable("KNOWLEDGECLIPPER_ISOLATED_UI_TEST") != "1")
             throw new InvalidOperationException("Use tools/Invoke-IsolatedDesktopTest.ps1; this probe must never display on the user's desktop.");
-        if (args.Length is not (3 or 4)) throw new ArgumentException("PreviewPerformance.Tests <project> <fixture-directory> <receipt> [--history-only]");
+        if (args.Length is not (3 or 4)) throw new ArgumentException("PreviewPerformance.Tests <project> <fixture-directory> <receipt> [--history-only|--history-visible|--scenarios=name,...]");
         receiptPath = args[2];
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2); Application.EnableVisualStyles();
         desktop = Assembly.Load("KnowledgeClipper");
         string? error = null;
-        try { Run(args[0], args[1], args.Length == 4 && args[3].StartsWith("--history"), args.Length == 4 && args[3] == "--history-visible"); }
+        try { Run(args[0], args[1], args.Length == 4 && args[3].StartsWith("--history"), args.Length == 4 && args[3] == "--history-visible",
+            args.Length == 4 && args[3].StartsWith("--scenarios=") ? args[3][12..].Split(',') : null); }
         catch (Exception ex) { error = ex.ToString(); Console.Error.WriteLine(error); }
         finally
         {
@@ -43,7 +44,7 @@ internal static class Program
 
     private static void PersistProgress() => WorkflowJson.Save(receiptPath + ".progress.json", new { utc = DateTimeOffset.UtcNow, completedMeasurements = Measurements, checks = Checks });
 
-    private static void Run(string project, string data, bool historyOnly, bool historyVisible)
+    private static void Run(string project, string data, bool historyOnly, bool historyVisible, string[]? selected)
     {
         Directory.CreateDirectory(data);
         var store = new DraftStore(data); var excerpts = new ExcerptStore(data);
@@ -97,16 +98,15 @@ internal static class Program
             (Name: "language", Make: (Func<Form>)(() => LanguageForm(plain)), Refresh: "RefreshStatus", Pictures: 0),
             (Name: "language-two-modes", Make: (Func<Form>)(() => LanguageForm(multi)), Refresh: "RefreshStatus", Pictures: 0),
             (Name: "language-image", Make: (Func<Form>)(() => LanguageForm(originalImage)), Refresh: "RefreshStatus", Pictures: 1),
-            (Name: "question-three-rounds", Make: (Func<Form>)(() => LanguageForm(question)), Refresh: "RefreshConversation", Pictures: 0),
-            (Name: "question-image-three-rounds", Make: (Func<Form>)(() => LanguageForm(imageQuestion)), Refresh: "RefreshConversation", Pictures: 4),
             (Name: "excerpt-two-cards", Make: (Func<Form>)(() => ExcerptForm(excerpt)), Refresh: "RefreshCards", Pictures: 0),
             (Name: "excerpt-image-two-cards", Make: (Func<Form>)(() => ExcerptForm(imageExcerpt)), Refresh: "RefreshCards", Pictures: 2)
         };
-        foreach (var item in historyOnly ? cases.Take(0) : cases)
+        foreach (var item in historyOnly ? cases.Take(0) : cases.Where(c => selected == null || selected.Contains(c.Name)))
         {
             for (var iteration = 0; iteration < 4; iteration++)
             {
                 Form form = null!;
+                var cpuStart = Process.GetCurrentProcess().TotalProcessorTime;
                 var constructorMs = Measure(() => form = item.Make());
                 using (form)
                 {
@@ -117,7 +117,8 @@ internal static class Program
                     var contentReadyMs = item.Name.StartsWith("excerpt") ? 0 : Measure(() => { Call(form, "ContentReady"); Application.DoEvents(); });
                     var controls = Descendants(form).Count();
                     var closeMs = Measure(() => { form.Close(); Application.DoEvents(); });
-                    Measurements.Add(new { scenario = item.Name, iteration, constructorMs, showMs, refreshMs, contentReadyMs, closeMs, controls });
+                    var processCpuMs = (Process.GetCurrentProcess().TotalProcessorTime - cpuStart).TotalMilliseconds;
+                    Measurements.Add(new { scenario = item.Name, iteration, constructorMs, showMs, refreshMs, contentReadyMs, closeMs, controls, processCpuMs });
                     PersistProgress();
                     Console.WriteLine($"{item.Name} {iteration}: create {constructorMs:F1} ms; show {showMs:F1} ms; refresh {refreshMs:F1} ms");
                 }
@@ -125,8 +126,9 @@ internal static class Program
         }
         var records = Enumerable.Range(0, 160).Select(_ => new HistoryRecord(Draft: Language()))
             .Concat(Enumerable.Range(0, 60).Select(_ => new HistoryRecord(Excerpt: new ExcerptSession { Original = material, Settings = settings }))).ToArray();
-        for (var iteration = 0; iteration < 2; iteration++)
+        for (var iteration = 0; iteration < (selected == null || selected.Contains("history-220-records") ? (historyOnly ? 4 : 2) : 0); iteration++)
         {
+            var cpuStart = Process.GetCurrentProcess().TotalProcessorTime;
             using var history = Construct("RecordHistoryForm", (Action<HistoryRecord>)(_ => { }), (Action<HistoryRecord>)(_ => { }),
                 (Action)(() => { }), (Action)(() => { }), (Func<HistoryRecord, string>)(_ => "公开样本 · 预览已就绪 · 未导入"),
                 (Func<HistoryRecord, string>)(_ => "继续制卡"));
@@ -149,7 +151,8 @@ internal static class Program
             var openCardMs = Measure(() => { preview = LanguageForm(multi); preview.Show(history); Call(preview, "ContentReady"); Application.DoEvents(); });
             var backMs = Measure(() => { preview.Close(); history.Activate(); Application.DoEvents(); });
             preview.Dispose(); history.Close();
-            Measurements.Add(new { scenario = historyVisible ? "history-visible-220-records" : "history-220-records", iteration, setRecordsMs, showMs, showCallMs, showPumpMs, showPaintMs, refreshMs, openCardMs, backMs, controls });
+            var processCpuMs = (Process.GetCurrentProcess().TotalProcessorTime - cpuStart).TotalMilliseconds;
+            Measurements.Add(new { scenario = historyVisible ? "history-visible-220-records" : "history-220-records", iteration, setRecordsMs, showMs, showCallMs, showPumpMs, showPaintMs, refreshMs, openCardMs, backMs, controls, processCpuMs });
             PersistProgress();
             Console.WriteLine($"history {iteration}: set {setRecordsMs:F1} ms; show {showMs:F1} ms; refresh {refreshMs:F1} ms; open-card {openCardMs:F1} ms");
         }

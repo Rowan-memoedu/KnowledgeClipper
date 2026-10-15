@@ -14,6 +14,8 @@ public sealed record RemNoteExportPlan(string SourceId, string RootTitle, string
 {
     public string SchemaVersion { get; init; } = "knowledge-clipper.remnote.v1";
     public string? TargetDocumentId { get; init; }
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string[]? DocumentIds { get; init; }
 }
 public sealed record RemNoteImportReceipt(string RootRemId, string DocumentRemId, string[] RemIds, string[] CardIds,
     JsonElement Evidence);
@@ -65,6 +67,8 @@ public static class ExportRouting
     public static string[] DocumentPath(ClipDraft draft, bool questionView = false)
     {
         var definition = Definition(draft, questionView);
+        if (definition.OutputKind == "question" && draft.QuestionTarget is { } target)
+            return ["零碎知识制卡", target.Label];
         if (definition.Id == "image-original") return ["图片", "原图"];
         if (definition.Id == "image-answer") return ["图片", "多图模式"];
         if (definition.Id == "excerpt-manual") return ["摘录"];
@@ -106,7 +110,8 @@ public static class ExportRouting
     public static AnkiNoteDraft BuildNote(ClipDraft draft, ExportDestination? forced = null) =>
         draft.ConfirmedNote ?? AnkiNoteDraft.From(draft, allowEmptyBasic: (forced ?? For(draft)) == ExportDestination.RemNote);
 
-    public static CardExportConfirmation Prepare(ClipDraft draft, AnkiNoteDraft note, ExportDestination? forced = null)
+    public static CardExportConfirmation Prepare(ClipDraft draft, AnkiNoteDraft note, ExportDestination? forced = null,
+        RemNoteCardPlan? composition = null)
     {
         if (Frozen(draft))
         {
@@ -118,8 +123,15 @@ public static class ExportRouting
         var destination = forced ?? For(draft);
         var plan = destination == ExportDestination.RemNote
             ? new RemNoteExportPlan("knowledgeclipper." + draft.Id, draft.Settings.RemNoteRootTitle, draft.Settings.RemNoteRootId,
-                NewDocumentPath(draft), RemNoteCardConversion.Convert(note))
+                NewDocumentPath(draft), composition == null ? RemNoteCardConversion.Convert(note) : [composition])
                 { TargetDocumentId = draft.IsOriginalExcerpt ? draft.Settings.OriginalExcerptDocumentId : null } : null;
+        if (plan != null && Definition(draft, false).OutputKind == "question" && draft.QuestionTarget is { } target)
+        {
+            if (string.IsNullOrWhiteSpace(target.RootId) || string.IsNullOrWhiteSpace(target.BaseId) || string.IsNullOrWhiteSpace(target.DocumentId))
+                throw new InvalidDataException("请先在问题类型设置中配置 RemNote 根、制卡目录和类型 document ID。");
+            // Pin the configured type chain; the common directory writer resolves its daily child.
+            plan = plan with { RootRemId = target.RootId, DocumentIds = [target.BaseId, target.DocumentId], TargetDocumentId = null };
+        }
         return new(note, destination, plan);
     }
 

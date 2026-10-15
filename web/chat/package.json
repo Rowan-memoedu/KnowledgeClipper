@@ -1,0 +1,29 @@
+{
+  "name": "knowledgeclipper-chat-view",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && vite build && node scripts/build-mermaid.mjs && node scripts/notices.mjs"
+  },
+  "dependencies": {
+    "@assistant-ui/react": "0.15.25",
+    "@assistant-ui/react-streamdown": "0.3.19",
+    "@streamdown/cjk": "1.0.4",
+    "@streamdown/math": "1.0.3",
+    "@streamdown/mermaid": "1.0.3",
+    "mermaid": "11.16.1",
+    "katex": "0.16.47",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "streamdown": "2.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "7.0.2",
+    "esbuild": "0.28.2",
+    "vite": "8.3.4"
+  }
+}

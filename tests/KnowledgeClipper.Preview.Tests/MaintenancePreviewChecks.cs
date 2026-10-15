@@ -16,7 +16,10 @@ internal static class MaintenancePreviewChecks
         // Isolated UI configuration and saved import-state fixtures, not proof that production
         // prompt/schema files are available or that a real Anki import succeeded.
         var loaded = ModeConfigurationLoader.Load(Path.Combine(root, "modes"));
-        var configuration = loaded with { Modes = loaded.Modes.Select(mode => mode with { LoadError = null }).ToArray() };
+        // These saved four-field drafts use the legacy schema, as does the
+        // language-mode preview suite; current dictionary output is tested separately.
+        var configuration = loaded with { Modes = loaded.Modes.Select(mode => mode with { LoadError = null,
+            Definition = mode.Definition with { ContentFormat = null } }).ToArray() };
         var missingConfigPath = Path.Combine(artifacts, "missing-mode-config");
         Directory.CreateDirectory(missingConfigPath);
         WorkflowJson.Save(Path.Combine(missingConfigPath, "modes.json"), new ModeFile(loaded.Modes.Select(mode => mode.Definition).ToArray()));
@@ -51,15 +54,6 @@ internal static class MaintenancePreviewChecks
             draft.Content = new("question", Answer: new("answered", "Answer one", []));
             draft.Conversation.Add(new(draft.Original.SelectedText, new("answered", "Answer one", [])));
             draft.Conversation.Add(new("Second question", new("answered", "Answer two", []))); store.Save(draft); return draft;
-        }
-        void QuestionState(ClipDraft parent, int index, ImportState state, string error = null) {
-            var row = QuestionCards.Preview(parent, store).Single(r => r.Index == index);
-            var material = new CaptureMaterial(row.Question, null, "generated_allowed", null, parent.Material.SourceTitle, 0, DateTimeOffset.UtcNow);
-            var child = new ClipDraft { Original = material, Material = material, Settings = parent.Settings, Configuration = configuration,
-                ParentDraftId = parent.Id, ModeId = "question", Route = new("question", "question", true, false),
-                Content = new("question", Basic: new(row.Question, row.Answer, row.Context), Answer: new("answered", row.Answer, [])) };
-            child.ConfirmedNote = AnkiNoteDraft.From(child); child.ImportState = state; child.ImportError = error;
-            parent.FollowUpCards[index] = child.Id; store.Save(child); store.Save(parent);
         }
 
         {
@@ -145,21 +139,8 @@ internal static class MaintenancePreviewChecks
                 "unimported sibling remains recoverable: " + scenario);
             if (!preview.IsDisposed) preview.Close();
         }
-        foreach (var scenario in new[] { "all", "unknown", "selection-changed", "error", "local" }) {
-            var draft = Questions(); using var preview = Form(draft);
-            preview.ImportQuestionCards += selected => {
-                foreach (var index in selected) QuestionState(draft, index,
-                    index == 1 && scenario is "unknown" or "selection-changed" ? ImportState.Unknown : ImportState.Verified,
-                    scenario == "error" ? "pending verification" : null);
-                if (scenario == "selection-changed") Find<CheckBox>(preview, "question-card-1.selected").Checked = false;
-                return Task.CompletedTask;
-            };
-            preview.Show();
-            if (scenario == "local") { Find<Button>(preview, "question-card-0.import").PerformClick(); await Task.Yield(); }
-            else await Confirm(preview);
-            Check(preview.IsDisposed == (scenario == "all"), "question footer captured indexes and local boundary: " + scenario);
-            if (!preview.IsDisposed) preview.Close();
-        }
+        // Question history and frozen/unknown imports are covered through the
+        // current LanguageChatForm in ChatFlow HistoryRoutes and Chat HistoryChecks.
         WorkflowJson.Save(Path.Combine(artifacts, "maintenance-preview-checks.json"), new { passed = true, checks,
             scope = "Production WinForms with isolated ready-configuration and saved import-state fixtures; a separate metadata-only missing-mode-config directory obtains actual missing-file LoadError from the production loader, independently of production prompt availability. This does not validate production prompts/schemas or real Anki/content/speech requests." });
     }

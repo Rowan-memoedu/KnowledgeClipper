@@ -12,11 +12,9 @@ namespace KnowledgeClipper;
 internal sealed class LanguageDraftForm : Form
 {
     internal ClipDraft Draft { get; }
-    private bool contentRunning, followUpRunning, questionImportRunning, languageImportRunning;
-    internal bool ContentRunning { get => contentRunning; set { contentRunning = value; if (followUp != null) RefreshStatus(); } }
-    internal bool FollowUpRunning { get => followUpRunning; set { followUpRunning = value; if (followUp != null) RefreshStatus(); } }
-    internal bool QuestionImportRunning { get => questionImportRunning; set { questionImportRunning = value; if (followUp != null) RefreshStatus(); } }
-    internal bool LanguageImportRunning { get => languageImportRunning; set { languageImportRunning = value; if (followUp != null) RefreshStatus(); } }
+    private bool contentRunning, languageImportRunning;
+    internal bool ContentRunning { get => contentRunning; set { contentRunning = value; if (status != null) RefreshStatus(); } }
+    internal bool LanguageImportRunning { get => languageImportRunning; set { languageImportRunning = value; if (status != null) RefreshStatus(); } }
     private readonly DraftStore store;
     private readonly Func<Task> import, replay;
     private readonly Label status, source, modeStatus, meaningLabel, translationLabel, lemmaLabel;
@@ -26,13 +24,12 @@ internal sealed class LanguageDraftForm : Form
     private readonly TableLayoutPanel languageFields, basicFields, modeFields, dictionaryPanel;
     private readonly TabControl tabs;
     private readonly TabPage readTab, writeTab;
-    private readonly LanguageFollowUpPanel followUp;
     private readonly Button confirm, retry, retryDictionary, replayButton, stopButton, importCurrentMode, sentencePlay, generateExample;
     private readonly ComboBox practice, modePreview;
     private readonly PictureBox frontPicture;
     private readonly Panel decision;
     private readonly CancellationTokenSource lifetime = new();
-    private bool committing, questionCommitting, languageCommitting, loadingFields, loadingModes;
+    private bool committing, languageCommitting, loadingFields, loadingModes;
     private ClipDraft[] modeChildren = [];
     private string activeModeId, modeError, languageImportError;
     private Func<bool> closeWhenIdle;
@@ -46,8 +43,7 @@ internal sealed class LanguageDraftForm : Form
     private bool UnresolvedLanguage => EditingDraft?.Content?.Fields?.IsUnresolved == true;
     internal event Action RetryContent;
     internal event Func<Task> RetryDictionary;
-    internal event Func<string, Task> SubmitFollowUp;
-    internal event Func<int[], Task> ImportQuestionCards;
+    internal event Action OpenChatRequested;
     internal event Func<string[], Task> ImportLanguageModes;
     internal event Func<string, Task> PlaySentence;
     internal event Action GenerateExampleRequested;
@@ -86,7 +82,7 @@ internal sealed class LanguageDraftForm : Form
         sentencePlay = new Button { Text = "▶", Name = "knowledge-clipper.language.play-sentence", AccessibleName = "播放当前句子",
             AutoSize = true, MinimumSize = new Size(32, 32), Margin = Padding.Empty, Padding = new Padding(2), FlatStyle = FlatStyle.Flat };
         sentencePlay.Click += async (_, _) => {
-            if (IsBasic || QuestionView || string.IsNullOrWhiteSpace(example.Text) || PlaySentence == null) return;
+            if (IsBasic || string.IsNullOrWhiteSpace(example.Text) || PlaySentence == null) return;
             var text = example.Text;
             try { await PlaySentence(text); }
             catch (Exception ex) { if (!IsDisposed) status.Text = "句子朗读未完成：" + ex.Message; }
@@ -184,15 +180,10 @@ internal sealed class LanguageDraftForm : Form
             await ImportModesAsync([modeId]);
             TryCloseCompleted(() => languageImportError == null && Draft.ImportError == null && ModeVerified(modeId));
         };
-        followUp = new LanguageFollowUpPanel(draft, store, async question => {
-            if (ContentRunning || FollowUpRunning || committing || QuestionBusy || LanguageBusy) throw new InvalidOperationException("请等待当前处理完成后追问。");
-            var handler = SubmitFollowUp ?? throw new InvalidOperationException("追问功能尚未连接。");
-            await handler(question);
-        }, ImportQuestionsAsync);
-        followUp.StateChanged += RefreshStatus;
-        followUp.Toggle.Click += (_, _) => { scroll.AutoScrollPosition = Point.Empty; };
-        layout.Controls.Add(followUp, 0, 7);
-        controls.Controls.AddRange(new Control[] { importCurrentMode, retry, retryDictionary, replayButton, stopButton, followUp.Toggle });
+        controls.Controls.AddRange(new Control[] { importCurrentMode, retry, retryDictionary, replayButton, stopButton });
+        var openChat = new Button { Text = "多轮问答与组合制卡", AutoSize = true, Name = "knowledge-clipper.language.open-chat" };
+        openChat.Click += (_, _) => { if (!Busy) OpenChatRequested?.Invoke(); };
+        controls.Controls.Add(openChat);
         actions.RowCount = 3; actions.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         actions.Controls.Add(confirm, 0, 0); actions.Controls.Add(generateExample, 0, 1); actions.Controls.Add(controls, 0, 2);
         var note = new Label { Name = "knowledge-clipper.language.preview-note", Text = "关闭窗口会保留草稿，可从悬浮窗的“最近草稿”继续。", AutoSize = true, ForeColor = Color.DimGray };
@@ -317,32 +308,22 @@ internal sealed class LanguageDraftForm : Form
     private bool IsBasic => !HasModeCards && (Draft.Route != null ? Draft.Route.OutputKind != "language" :
         Draft.Content?.Basic != null || Draft.Content?.Answer != null);
     private bool UnresolvedAnswer => Draft.Content?.Answer is { Answered: false };
-    private bool FollowUpBusy => FollowUpRunning || followUp?.Sending == true;
-    private bool QuestionBusy => QuestionImportRunning || questionCommitting;
     private bool LanguageBusy => LanguageImportRunning || languageCommitting;
-    private bool QuestionView => followUp?.ShowingQuestions == true;
-    private bool Busy => ContentRunning || FollowUpBusy || committing || QuestionBusy || LanguageBusy;
-    private bool ModeActionBusy => FollowUpBusy || committing || QuestionBusy || LanguageBusy;
+    private bool Busy => ContentRunning || committing || LanguageBusy;
+    private bool ModeActionBusy => committing || LanguageBusy;
     private void UpdateContentKind()
     {
         var basic = IsBasic;
         var current = EditingDraft ?? Draft;
-        languageFields.Visible = practice.Visible = tabs.Visible = !basic && !QuestionView;
-        modeFields.Visible = HasModeCards && !QuestionView;
-        basicFields.Visible = basic && !UnresolvedAnswer && !QuestionView;
-        source.Text = QuestionView ? "材料：" + Draft.Original.SelectedText.TakeText(160) + "\n来源：" + Draft.Material.SourceTitle.TakeText(80) + "\n新问答默认：" + ExportRouting.Describe(Draft, true) + " · 每轮一张问答卡" :
-            basic ? "来源：" + Draft.Material.SourceTitle.TakeText(80) + "\n导入：" + ExportRouting.Describe(Draft) +
+        languageFields.Visible = practice.Visible = tabs.Visible = !basic;
+        modeFields.Visible = HasModeCards;
+        basicFields.Visible = basic && !UnresolvedAnswer;
+        source.Text = basic ? "来源：" + Draft.Material.SourceTitle.TakeText(80) + "\n导入：" + ExportRouting.Describe(Draft) +
                 (ExportRouting.For(Draft) == ExportDestination.RemNote && string.IsNullOrWhiteSpace(basicBack.Text) ? " · 仅保存正面内容" : " · 单张卡片") :
             "目标：" + current.Material.SelectedText.TakeText(120) + "\n来源：" + current.Material.SourceTitle.TakeText(80) + " · " +
             (current.Material.ContextText == null ? "AI 生成例句" : current.Material.ContextOrigin == "user" ? "用户提供原文" : "来源原文") + "\n导入：" + ExportRouting.Describe(current) +
             (ExportRouting.For(current) == ExportDestination.Anki ? " · " + (PublishedLanguage.Applies(Definition(current)) ? PublishedLanguage.DictionaryModelName(current.Settings.AnkiModel) : current.Settings.AnkiModel) : "");
-        Text = (QuestionView ? "问答卡片 · " : basic ? "卡片预览 · " : Draft.Material.ContextText == null && Draft.ParentDraftId != null ? "生成例句卡片预览 · " : "语言卡片预览 · ") + (QuestionView ? Draft.QuestionText : Draft.Original.SelectedText).TakeText(24);
-    }
-
-    internal void RefreshConversation()
-    {
-        if (IsDisposed) return;
-        RefreshStatus();
+        Text = (basic ? "卡片预览 · " : Draft.Material.ContextText == null && Draft.ParentDraftId != null ? "生成例句卡片预览 · " : "语言卡片预览 · ") + Draft.Original.SelectedText.TakeText(24);
     }
 
     private LanguageFields EditedFields()
@@ -471,24 +452,12 @@ internal sealed class LanguageDraftForm : Form
     {
         if (IsDisposed) return;
         if (HasModeCards) RefreshModes();
-        followUp.RefreshView(Busy);
         UpdateContentKind();
-        dictionaryPanel.Visible = !IsBasic && !QuestionView && Draft.Settings.ShowDictionaryInPreview;
+        dictionaryPanel.Visible = !IsBasic && Draft.Settings.ShowDictionaryInPreview;
         if (dictionaryPanel.Visible) SetText(dictionaryPreview, EditingDraft?.DictionaryDetails?.DisplayText ?? "正在查询词典…");
         retryDictionary.Visible = dictionaryPanel.Visible;
         retryDictionary.Enabled = !Busy && EditingDraft != null && !Frozen(EditingDraft);
-        if (QuestionView)
-        {
-            var count = followUp.SelectedIndexes.Length;
-            status.Text = ContentRunning ? "正在准备回答…" : FollowUpBusy ? "正在回复追问…" : QuestionBusy ? "正在核对问答卡片写入结果…" :
-                Draft.ConversationImportError ?? Draft.ConversationError ?? Draft.ContentError ?? "每轮一张卡片，可编辑回答、勾选导入，或单独导入本张。";
-            confirm.Visible = true;
-            confirm.Enabled = !Busy && count > 0;
-            confirm.Text = QuestionBusy ? "正在导入并核对…" : ContentRunning ? "等待内容准备完成…" : FollowUpBusy ? "等待追问回复…" :
-                count > 0 ? (followUp.SelectedNeedsReconciliation ? "核对并导入所选 " : "确认导入所选 ") + count + " 张问答卡" :
-                followUp.AvailableCount > 0 ? "请勾选要导入的问答卡" : "暂无待导入问答卡";
-        }
-        else if (HasModeCards)
+        if (HasModeCards)
         {
             var available = modeChildren.Where(ModeImportable).ToArray();
             var current = ActiveMode;
@@ -511,12 +480,12 @@ internal sealed class LanguageDraftForm : Form
                 Draft.ImportState == ImportState.Unknown ? "核对写入结果" : Draft.ConfirmedNote == null ? "确认导入 " + ExportRouting.For(Draft) : Draft.ImportState == ImportState.Verified ? "已导入" : "重试导入";
         }
         retry.Enabled = !Busy && (HasModeCards ? modeChildren.Any(child => (child.Content == null || child.Content.Fields?.IsUnresolved == true) && !Frozen(child)) : Draft.Content == null || UnresolvedLanguage);
-        generateExample.Visible = !IsBasic && !QuestionView && Draft.Route?.OutputKind == "language" && Draft.Material.ContextText != null;
+        generateExample.Visible = !IsBasic && Draft.Route?.OutputKind == "language" && Draft.Material.ContextText != null;
         generateExample.Enabled = generateExample.Visible && !LanguageBusy && !committing;
         replayButton.Visible = stopButton.Visible = Draft.SupportsSpeech;
-        sentencePlay.Visible = !IsBasic && !QuestionView;
+        sentencePlay.Visible = !IsBasic;
         sentencePlay.Enabled = PlaySentence != null && !string.IsNullOrWhiteSpace(example.Text);
-        importCurrentMode.Visible = HasModeCards && !QuestionView;
+        importCurrentMode.Visible = HasModeCards;
         importCurrentMode.Enabled = !ModeActionBusy && ModeImportable(ActiveMode);
         importCurrentMode.Text = ActiveMode?.ImportState is ImportState.Unknown or ImportState.Writing ? "核对当前模式" : "导入当前模式";
         var editing = EditingDraft;
@@ -535,7 +504,7 @@ internal sealed class LanguageDraftForm : Form
 
     private async Task ImportModesAsync(string[] modeIds)
     {
-        if (!HasModeCards || QuestionView || ModeActionBusy || modeIds.Length == 0) return;
+        if (!HasModeCards || ModeActionBusy || modeIds.Length == 0) return;
         RefreshModes();
         var available = modeChildren.Where(ModeImportable).Select(child => child.ModeId).ToHashSet(StringComparer.Ordinal);
         var selected = modeIds.Where(available.Contains).Distinct(StringComparer.Ordinal).ToArray();
@@ -547,31 +516,8 @@ internal sealed class LanguageDraftForm : Form
         finally { languageCommitting = false; ContentReady(); }
     }
 
-    private async Task ImportQuestionsAsync(int[] indexes)
-    {
-        if (!QuestionView || Busy || indexes.Length == 0) return;
-        var available = QuestionCards.Preview(Draft, store).Where(preview => preview.State != ImportState.Verified &&
-            Draft.Conversation[preview.Index].Answer.Answered && !string.IsNullOrWhiteSpace(preview.Answer)).Select(preview => preview.Index).ToHashSet();
-        var selected = indexes.Where(available.Contains).Distinct().ToArray();
-        if (selected.Length == 0) return;
-        questionCommitting = true; Draft.ConversationImportError = null; store.Save(Draft); RefreshStatus();
-        try { await (ImportQuestionCards ?? throw new InvalidOperationException("问答卡片导入尚未连接。"))(selected); }
-        catch (Exception ex) { Draft.ConversationImportError = ex.Message; store.Save(Draft); }
-        finally { questionCommitting = false; RefreshConversation(); }
-    }
-
     private async Task ConfirmAsync()
     {
-        if (QuestionView)
-        {
-            if (Busy) return;
-            var indexes = followUp.SelectedIndexes.ToArray();
-            await ImportQuestionsAsync(indexes);
-            TryCloseCompleted(() => indexes.Length > 0 && Draft.ConversationImportError == null &&
-                indexes.All(index => QuestionCards.Preview(Draft, store).Any(card => card.Index == index &&
-                    card.State == ImportState.Verified && card.Error == null)));
-            return;
-        }
         if (HasModeCards)
         {
             if (ModeActionBusy) return;

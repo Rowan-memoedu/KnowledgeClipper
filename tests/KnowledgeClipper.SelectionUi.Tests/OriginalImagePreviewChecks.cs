@@ -142,30 +142,16 @@ internal static class OriginalImagePreviewChecks
                 Content = new("question", Basic: new("图中有什么形状？", "蓝底上有一个黄色矩形。"), Answer: new("answered", "蓝底上有一个黄色矩形。", [])) };
             question.Conversation.Add(new("图中有什么形状？", new("answered", "蓝底上有一个黄色矩形。", [])));
             question.Conversation.Add(new("矩形位于什么位置？", new("answered", "位于图片中间。", []))); store.Save(question);
-            using (var form = Form(question))
+            var chat = new ChatSession();
+            foreach (var turn in question.Conversation)
             {
-                form.Show(); await Task.Delay(40);
-                var panel = Find<Control>(form, "follow-up");
-                Check(Controls(panel).OfType<PictureBox>().Count() == 2, "each question round previews the same original front image");
-                foreach (var picture in Controls(panel).OfType<PictureBox>()) CheckImage(picture, "question round preserves original image pixels " + picture.Parent!.Name);
-                Check(Find<TextBox>(form, "question-card-0.question").Text == question.Conversation[0].Question &&
-                    Find<TextBox>(form, "question-card-1.question").Text == question.Conversation[1].Question,
-                    "rounds show their distinct question text beside the fixed image front");
-                Check(Controls(panel).OfType<Label>().Count(label => label.Text == "本轮问题 · 随回答放入反面") == 2,
-                    "image question labels describe the actual back-side placement");
-                Find<TextBox>(form, "question-card-0.answer").Text = "黄色矩形位于蓝色背景上。";
-                Check(question.EditedAnswers[0] == "黄色矩形位于蓝色背景上。" && Find<TextBox>(form, "question-card-1.answer").Text == "位于图片中间。",
-                    "editing one answer preserves the other round and its fixed front image");
-                Find<Panel>(form, "content-scroll").ScrollControlIntoView(panel); await Task.Delay(30);
-                Render(form, Path.Combine(output, "original-image-question.png"));
-                var importer = new FixtureImporter();
-                await QuestionCards.ImportAsync(question, [0], store, importer, () => Call(form, "RefreshConversation"));
-                Check(importer.Calls == 1 && Find<TextBox>(form, "question-card-0.question").Text == question.Conversation[0].Question &&
-                    Find<TextBox>(form, "question-card-0.answer").Text == "黄色矩形位于蓝色背景上。" && Find<TextBox>(form, "question-card-0.answer").ReadOnly,
-                    "frozen image card retains its question and semantic answer without duplicate question text");
-                Check(Controls(panel).OfType<PictureBox>().Count() == 2 && Controls(panel).OfType<PictureBox>().All(picture => picture.Image != null),
-                    "refreshing after fixture import preserves both original image previews");
+                chat.Messages.Add(new() { Role = "user", Parts = [new("text", turn.Question)] });
+                chat.Messages.Add(new() { Role = "assistant", Parts = [new("text", turn.Answer.DisplayText)] });
             }
+            var restored = QuestionCards.RestoreChatCompositions(question, store, chat);
+            Check(restored.Length == 2 && restored[0].Front.Contains("asset:" + image.Sha256), "legacy image question restores registered image into current composition");
+            Check(restored[0].Back == "蓝底上有一个黄色矩形。" && restored[1].Back == "位于图片中间。", "legacy image answers remain separate and ordered");
+
         }
         catch (Exception ex) { failure = ex.ToString(); throw; }
         finally

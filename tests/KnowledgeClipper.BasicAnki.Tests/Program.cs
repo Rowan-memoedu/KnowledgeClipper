@@ -60,6 +60,9 @@ Check(restored.ImportState == ImportState.Verified && backend.Adds == 2 && backe
 backend.MissingRenderedBack = true;
 await Reject(() => anki.VerifyAsync(first), "readback rejects an empty rendered Basic answer even when fields match");
 backend.MissingRenderedBack = false;
+backend.MissingRenderedFront = true;
+await Reject(() => anki.VerifyAsync(first), "readback rejects an answer that hides the original question despite matching fields");
+backend.MissingRenderedFront = false;
 backend.IncompatibleExistingTemplate = true;
 var incompatible = Confirm();
 await Reject(() => anki.ImportAsync(incompatible, store), "existing incompatible Basic template is rejected");
@@ -77,7 +80,7 @@ sealed class BasicHandler : HttpMessageHandler
     public List<string> Actions { get; } = [];
     public int Adds { get; private set; }
     public JsonElement? CreatedModel { get; private set; }
-    public bool DropAfterWrite, MissingRenderedBack, IncompatibleExistingTemplate;
+    public bool DropAfterWrite, MissingRenderedBack, MissingRenderedFront, IncompatibleExistingTemplate;
     private readonly Dictionary<long, JsonElement> notes = [];
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
@@ -92,7 +95,7 @@ sealed class BasicHandler : HttpMessageHandler
             case "modelNames": result = CreatedModel == null ? Array.Empty<string>() : new[] { AnkiNoteDraft.BasicModelName }; break;
             case "createModel": CreatedModel = p.Clone(); result = new { }; break;
             case "modelFieldNames": result = new[] { "ClipId", "Front", "Back", "Source" }; break;
-            case "modelTemplates": result = new Dictionary<string, object> { [IncompatibleExistingTemplate ? "user-customized" : "正反面"] = new { } }; break;
+            case "modelTemplates": result = CreatedModel!.Value.GetProperty("cardTemplates").EnumerateArray().ToDictionary(t=>IncompatibleExistingTemplate ? "user-customized" : t.GetProperty("Name").GetString()!,t=>t); break;
             case "deckNames": result = new[] { "零碎知识剪藏::语言学习" }; break;
             case "findNotes":
                 var tag = p.GetProperty("query").GetString()![4..];
@@ -109,7 +112,7 @@ sealed class BasicHandler : HttpMessageHandler
             case "cardsInfo":
                 result = p.GetProperty("cards").EnumerateArray().Select(c => { var cid = c.GetInt64(); var n = notes[cid / 10]; var f = n.GetProperty("fields");
                     return new { cardId = cid, note = cid / 10, ord = 0, queue = 0, deckName = n.GetProperty("deckName").GetString(),
-                        question = f.GetProperty("Front").GetString(), answer = MissingRenderedBack ? "" : f.GetProperty("Back").GetString() }; }).ToArray(); break;
+                        question = f.GetProperty("Front").GetString(), answer = MissingRenderedBack ? "" : (MissingRenderedFront ? "" : f.GetProperty("Front").GetString()) + "<hr id='answer'>" + f.GetProperty("Back").GetString() }; }).ToArray(); break;
             case "areSuspended": result = p.GetProperty("cards").EnumerateArray().Select(_ => false).ToArray(); break;
             default: throw new InvalidOperationException("Unexpected action, including any model rewrite: " + action);
         }

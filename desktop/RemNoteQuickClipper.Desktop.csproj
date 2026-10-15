@@ -25,6 +25,9 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="..\licenses\Markdig.txt" Link="licenses\Markdig.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(NuGetPackageRoot)\microsoft.web.webview2\1.0.4258.31\LICENSE.txt" Link="licenses\Microsoft.Web.WebView2.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(NuGetPackageRoot)\microsoft.web.webview2\1.0.4258.31\NOTICE.txt" Link="licenses\Microsoft.Web.WebView2-NOTICE.txt" CopyToOutputDirectory="PreserveNewest" />
     <Compile Include="..\src\Core.cs" Link="Core.cs" />
     <Compile Include="..\src\DesktopSettingsDomain.cs" Link="DesktopSettingsDomain.cs" />
     <Compile Include="..\src\Program.cs" Link="Program.cs" />
@@ -73,6 +76,10 @@
     <ProjectReference Include="..\core-v3\src\KnowledgeClipper.Core.V3.Client\KnowledgeClipper.Core.V3.Client.csproj" />
     <ProjectReference Include="..\workflow\KnowledgeClipper.Workflow.csproj" />
     <Content Include="..\modes\**\*" Link="modes\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(KnowledgeClipperChatOutput)\**\*" Link="chat-view\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" Condition="'$(KnowledgeClipperChatOutput)' != ''" />
     <Content Include="..\helpers\**\*" Exclude="..\helpers\node_modules\.package-lock.json" Link="helpers\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
   </ItemGroup>
 </Project>

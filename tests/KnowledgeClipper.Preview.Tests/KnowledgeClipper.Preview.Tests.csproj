@@ -9,7 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="../../workflow/KnowledgeClipper.Workflow.csproj" />
     <Compile Include="../../src/LanguageDraftForm.cs" Link="LanguageDraftForm.cs" />
-    <Compile Include="../../src/LanguageFollowUpPanel.cs" Link="LanguageFollowUpPanel.cs" />
     <Compile Include="../../src/ExcerptDraftForm.cs" Link="ExcerptDraftForm.cs" />
   </ItemGroup>
 </Project>

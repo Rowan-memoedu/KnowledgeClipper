@@ -14,23 +14,69 @@ internal sealed partial class LanguageDesktopFlow
     private readonly LanguageHistoryLookup historyLookup;
     private MeaningPopup meaningPopup;
     private string meaningDraftId;
+    private ClipDraft meaningDraft;
+    private long meaningRevision;
+    private Task meaningReplay;
+    private long meaningReplayRevision;
+    private readonly Dictionary<string, TaskCompletionSource> initialPlaybacks = new(StringComparer.Ordinal);
     private Point meaningAnchor;
     private long languageEntryEpoch;
     private readonly SemaphoreSlim historyEntryGate = new(1, 1);
     private readonly HashSet<string> pendingHistoryEntries = new(StringComparer.Ordinal);
 
-    internal void HideMeaning() { meaningDraftId = null; meaningPopup?.HideMeaning(); }
+    internal void HideMeaning() { meaningRevision++; meaningDraftId = null; meaningDraft = null; meaningPopup?.HideMeaning(); }
 
     private void BeginMeaningPopup(ClipDraft draft, Point anchor)
     {
         if (meaningPopup == null)
         {
             meaningPopup = new MeaningPopup();
-            meaningPopup.ReplayRequested += ReplayLastLanguage;
+            meaningPopup.ReplayRequested += ReplayMeaning;
         }
-        meaningDraftId = draft.Id; meaningAnchor = anchor;
+        meaningRevision++; meaningDraft = draft; meaningDraftId = draft.Id; meaningAnchor = anchor;
         meaningPopup.ShowLoading(anchor);
         PublishMeaning(draft);
+    }
+
+    private void ReplayMeaning()
+    {
+        if (meaningDraft == null || meaningPopup?.IsRequestVisible != true ||
+            meaningReplayRevision == meaningRevision && meaningReplay?.IsCompleted == false) return;
+        meaningReplayRevision = meaningRevision;
+        meaningReplay = ReplayMeaningAsync(meaningDraft, meaningRevision, languageEntryEpoch);
+    }
+
+    private async Task ReplayMeaningAsync(ClipDraft draft, long revision, long epoch)
+    {
+        // An early click must not cancel the stream before its recording is saved,
+        // or turn "replay" into a second synthesis (or the previous selection).
+        if (initialPlaybacks.TryGetValue(draft.Id, out var initial)) await initial.Task;
+        if (lifetime.IsCancellationRequested || owner.IsDisposed || meaningRevision != revision ||
+            meaningDraftId != draft.Id || meaningPopup?.IsRequestVisible != true || languageEntryEpoch != epoch) return;
+        languageEntryEpoch++;
+        draft = LiveDraft(draft);
+        latest = lastSpeech = draft;
+        var recorded = draft.ReusedSpeech;
+        try
+        {
+            await speech.SpeakRecordedAsync(draft, recorded?.Text ?? draft.Original.SelectedText,
+                recorded?.Settings ?? draft.Settings, recorded?.AudioPath ?? draft.AudioPath, () => Changed(draft, null));
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or ArgumentException or UnauthorizedAccessException)
+        {
+            draft.SpeechError = ex.Message; draft.SpeechStatus = "录音不可用"; Changed(draft, null);
+        }
+    }
+
+    private async Task PlayInitialEntryAsync(ClipDraft draft, LanguageHistoryMatch match, Task<LanguageLookupResult> meaning, long epoch)
+    {
+        try { await PlayEntryAsync(draft, match, meaning, epoch); }
+        finally { CompleteInitialPlayback(draft.Id); }
+    }
+
+    private void CompleteInitialPlayback(string id)
+    {
+        if (initialPlaybacks.Remove(id, out var completion)) completion.TrySetResult();
     }
 
     private void PublishMeaning(ClipDraft draft)
@@ -104,6 +150,7 @@ internal sealed partial class LanguageDesktopFlow
 
     private async Task CompleteLanguageEntryAsync(ClipDraft draft, bool quick, LanguageDraftForm form, long epoch)
     {
+        var playbackStarted = false;
         try
         {
             LanguageHistoryMatch match;
@@ -123,7 +170,8 @@ internal sealed partial class LanguageDesktopFlow
             finally { historyEntryGate.Release(); }
             var needMeaning = draft.Input.Source == "selection-dot" || draft.Settings.ContextEnabled && match.Candidates.Any(item => item.CanPlay);
             var meaning = needMeaning ? ResolveMeaningAsync(draft, match) : Task.FromResult<LanguageLookupResult>(null);
-            var playback = PlayEntryAsync(draft, match, meaning, epoch);
+            playbackStarted = true;
+            var playback = PlayInitialEntryAsync(draft, match, meaning, epoch);
             store.Save(draft);
             if (!quick) { _ = ProcessAsync(draft, form); await playback; }
             else if (draft.HistoryReplayOnly)
@@ -147,6 +195,7 @@ internal sealed partial class LanguageDesktopFlow
         }
         finally
         {
+            if (!playbackStarted) CompleteInitialPlayback(draft.Id);
             pendingHistoryEntries.Remove(draft.Id);
             quickDrafts.Remove(draft.Id);
             if (!owner.IsDisposed && !lifetime.IsCancellationRequested) Changed(draft, null);

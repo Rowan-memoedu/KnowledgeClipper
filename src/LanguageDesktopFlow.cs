@@ -70,11 +70,14 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
 
     public Task StartAsync(bool read, SelectionSnapshot frozen = null) => StartCaptureAsync(read, frozen, false);
 
+    internal void PrepareSpeech() => speech.Prepare(Settings);
+
     public Task StartLanguageAsync(SelectionSnapshot frozen = null, bool quick = false) => StartCaptureAsync(Settings.LanguageAutoRead, frozen, false, quick);
 
     public Task StartQuestionAsync(SelectionSnapshot frozen = null, bool quick = false) => StartCaptureAsync(false, frozen, true, quick);
+    internal Task StartQuickQuestionAsync(SelectionSnapshot frozen) => StartCaptureAsync(false, frozen, true, false, true);
 
-    private async Task StartCaptureAsync(bool read, SelectionSnapshot frozen, bool question, bool quick = false)
+    private async Task StartCaptureAsync(bool read, SelectionSnapshot frozen, bool question, bool quick = false, bool autoAnswer = false)
     {
         if (capturing) return;
         capturing = true;
@@ -89,7 +92,7 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
             capturing = false;
             var input = new InputMetadata(frozen == null ? "selection-button" : "selection-dot", Intent: question ? "question" : "language",
                 ReadRequested: read && !question, ExplicitQuestion: question ? "解释：" + material.SelectedText : null);
-            var draft = StartMaterial(material, input, settings, configuration, requestedAt, quick);
+            var draft = StartMaterialCore(material, input, settings, configuration, requestedAt, quick, autoAnswer);
             if (frozen != null && !question && read) BeginMeaningPopup(draft, new Point(frozen.X, frozen.Y));
             if (frozen != null) draft.Times["selectionObserved"] = frozen.CapturedAt;
             draft.Times["captureStarted"] = captureStartedAt;
@@ -153,6 +156,10 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
     // Every entry stops at this boundary: material + metadata, then the same draft and modules.
     private ClipDraft StartMaterial(CaptureMaterial material, InputMetadata input, LanguageSettings settings,
         ContentConfiguration configuration, DateTimeOffset requestedAt, bool quick = false)
+        => StartMaterialCore(material, input, settings, configuration, requestedAt, quick);
+
+    private ClipDraft StartMaterialCore(CaptureMaterial material, InputMetadata input, LanguageSettings settings,
+        ContentConfiguration configuration, DateTimeOffset requestedAt, bool quick = false, bool autoAnswer = false)
     {
         material.Validate();
         var draft = new ClipDraft { Original = material, Material = material, Input = input, Settings = settings,
@@ -160,10 +167,17 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
         draft.Times["requested"] = requestedAt;
         draft.Times["captured"] = DateTimeOffset.UtcNow;
         latest = draft;
+        if (!quick && (input.Intent == "question" || input.QuestionMarkRouting && ContentModule.IsQuestion(material.SelectedText)))
+        {
+            StartChat(draft, autoAnswer, useTypeDefaults: input.Intent == "question");
+            return draft;
+        }
+        if (input.Intent == "question") draft.QuestionTarget = ChatConfiguration.Target("fast-answer");
         if (input.Intent == "language")
         {
             var epoch = ++languageEntryEpoch;
             pendingHistoryEntries.Add(draft.Id);
+            initialPlaybacks[draft.Id] = new(TaskCreationOptions.RunContinuationsAsynchronously);
             if (input.ReadRequested) { speech.Stop(); draft.Times["speechRequested"] = requestedAt; }
             if (quick) quickDrafts[draft.Id] = draft;
             var view = quick ? null : OpenDraft(draft);
@@ -206,13 +220,13 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
             if (generated.ImportState != ImportState.Verified && generated.ConfirmedNote == null)
                 _ = ProcessAsync(generated, generatedForm);
         };
-        form.SubmitFollowUp += text => FollowUpAsync(draft, form, text);
-        form.ImportQuestionCards += indexes => ImportQuestionCardsAsync(draft, form, indexes);
+        form.OpenChatRequested += () => StartChat(draft);
         form.ImportLanguageModes += modeIds => ImportLanguageModesAsync(draft, form, modeIds);
         form.PlaySentence += text => { languageEntryEpoch++; return speech.SpeakTextAsync(draft, text, SpeechPurpose.Sentence, true, () => Changed(draft, form)); };
         form.RefreshStatus();
         form.FormClosed += (_, _) => { forms.Remove(form); store.Save(draft); };
-        form.Show(owner);
+        // Keep card editing in the normal window band, independent of the floating bar.
+        form.Show();
         return form;
     }
 
@@ -305,6 +319,8 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
                 draft.Times["classified"] = DateTimeOffset.UtcNow;
             }
             draft.Route = ModeConfigurationLoader.Route(draft.Configuration, draft.ModeId);
+            if (draft.Route.OutputKind == "question" && !ExportRouting.Frozen(draft))
+                draft.QuestionTarget ??= ChatConfiguration.Target("fast-answer");
             if (draft.Input.ReadRequested && draft.Route.OutputKind == "language" && !draft.Times.ContainsKey("speechRequested"))
                 _ = PlayAsync(draft, false);
             if (draft.Route.RequiresContext && draft.Material.NeedsContextChoice)
@@ -451,42 +467,6 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
         finally { form.LanguageImportRunning = false; Changed(draft, form); }
     }
 
-    private async Task FollowUpAsync(ClipDraft draft, LanguageDraftForm form, string text)
-    {
-        if (string.IsNullOrWhiteSpace(text)) return;
-        draft.PendingFollowUp = text; draft.ConversationError = null; store.Save(draft);
-        try
-        {
-            var content = new ContentModule(http, () => ContentCredentials.Resolve(DesktopCredentialSettings.Load(dataRoot).DeepSeekApiKey));
-            var conversation = QuestionCards.EffectiveConversation(draft, store);
-            var answer = await content.AnswerAsync(draft.ConversationMaterial ?? draft.Material, draft.ConversationContent ?? draft.PreviewContent, conversation, text,
-                draft.Configuration, draft.Settings, form.Lifetime, currentPreview: new(draft.Original.SelectedText, draft.SupportsSpeech ? draft.PreviewContent : null, conversation,
-                    draft.ModeCards.Count == 0 ? null : LanguageModeCards.Children(draft, store).Where(d => d.PreviewContent != null).Select(d => d.PreviewContent).ToArray()));
-            draft.Conversation.Add(new ConversationTurn(text, answer));
-            draft.PendingFollowUp = null;
-            draft.Times["followUpAnswered"] = DateTimeOffset.UtcNow;
-        }
-        catch (OperationCanceledException) { draft.ConversationError = "追问已停止，输入已保留。"; }
-        catch (Exception ex) { draft.ConversationError = ex.Message; }
-        finally { store.Save(draft); if (!form.IsDisposed) form.RefreshConversation(); }
-    }
-
-    private async Task ImportQuestionCardsAsync(ClipDraft draft, LanguageDraftForm form, int[] indexes)
-    {
-        if (form.QuestionImportRunning) return;
-        form.QuestionImportRunning = true;
-        try
-        {
-            using var request = new HttpClient { Timeout = TimeSpan.FromSeconds(180) };
-            await QuestionCards.ImportAsync(draft, indexes, store, new CardImportRouter(request), () => {
-                if (!form.IsDisposed) form.RefreshConversation();
-                Changed(draft, form);
-            });
-        }
-        catch (Exception ex) { draft.ConversationImportError ??= ex.Message; }
-        finally { form.QuestionImportRunning = false; Changed(draft, form); }
-    }
-
     private void Changed(ClipDraft draft, LanguageDraftForm form)
     {
         if (owner.IsDisposed) return;
@@ -510,6 +490,7 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
 
     internal string DescribeStatus(ClipDraft draft)
     {
+        if (draft.Chat != null && HistoryRecords.Kind(draft) == "问答") return HistoryRecords.ChatStatus(draft, store);
         string state;
         if (draft.ModeCards.Count > 0)
         {
@@ -549,7 +530,8 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
     }
     internal ClipDraft LiveDraft(ClipDraft draft)
     {
-        var live = quickDrafts.TryGetValue(draft.Id, out var quick) ? quick : forms.FirstOrDefault(f => !f.IsDisposed && f.Draft.Id == draft.Id)?.Draft
+        var live = quickDrafts.TryGetValue(draft.Id, out var quick) ? quick : chatForms.FirstOrDefault(f => !f.IsDisposed && f.Draft.Id == draft.Id)?.Draft
+            ?? forms.FirstOrDefault(f => !f.IsDisposed && f.Draft.Id == draft.Id)?.Draft
             ?? (latest?.Id == draft.Id ? latest : lastSpeech?.Id == draft.Id ? lastSpeech : draft);
         RefreshCardLinks(live);
         return live;
@@ -599,11 +581,13 @@ internal sealed partial class LanguageDesktopFlow : IDisposable
 
     internal void ContinueHistory(ClipDraft draft)
     {
-        var form = OpenDraft(LiveDraft(draft)); latest = form.Draft;
+        draft = LiveDraft(draft);
+        if (HistoryRecords.Kind(draft) == "问答" || draft.Chat != null) { StartChat(draft); return; }
+        var form = OpenDraft(draft); latest = form.Draft;
         form.Draft.HistoryReplayOnly = false;
         if (form.Draft.Content != null) form.ContentReady();
         else _ = ProcessAsync(form.Draft, form);
     }
 
-    public void Dispose() { lifetime.Cancel(); meaningPopup?.Dispose(); inputForm?.Close(); foreach (var f in forms.ToArray()) f.Close(); speech.Dispose(); http.Dispose(); lifetime.Dispose(); }
+    public void Dispose() { lifetime.Cancel(); meaningPopup?.Dispose(); inputForm?.Close(); foreach (var f in chatForms.ToArray()) f.Close(); foreach (var f in forms.ToArray()) f.Close(); speech.Dispose(); http.Dispose(); lifetime.Dispose(); }
 }

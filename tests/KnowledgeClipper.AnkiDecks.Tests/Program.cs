@@ -13,10 +13,11 @@ async Task Reject(Func<Task> action, string name)
     try { await action(); } catch (InvalidDataException) { Check(true, name); return; }
     throw new Exception("Expected rejection: " + name);
 }
-async Task Lost(Func<Task> action)
+async Task Lost(Func<Task> action, ClipDraft draft)
 {
-    try { await action(); } catch (TaskCanceledException) { return; }
-    throw new Exception("Expected fixture lost response");
+    await action();
+    Check(draft.AwaitingAnki && draft.ImportState == ImportState.Unknown,
+        "lost transport response persists Unknown and automatic Anki recovery intent");
 }
 ClipDraft Confirm(PracticeChoice practice = PracticeChoice.Both, bool routed = true)
 {
@@ -53,7 +54,7 @@ await anki.ImportAsync(both, store);
 Check(backend.Actions.Count == beforeCalls, "Verified retry performs no API calls");
 
 var lostAdd = Confirm(); backend.DropAfterAddOnce = true;
-await Lost(() => anki.ImportAsync(lostAdd, store));
+await Lost(() => anki.ImportAsync(lostAdd, store), lostAdd);
 var saved = store.Find(lostAdd.Id)!;
 Check(saved.ImportState == ImportState.Unknown && saved.NoteId == null && saved.ConfirmedNote!.DeckFor(1) == WritingDeck, "lost add response persists the original per-card routing plan");
 var beforeAdds = backend.Adds; var beforeMoves = backend.Moves.Count; beforeCalls = backend.Actions.Count;
@@ -61,14 +62,14 @@ await anki.ImportAsync(saved, store);
 Check(saved.ImportState == ImportState.Verified && backend.Adds == beforeAdds && backend.Moves.Count == beforeMoves + 1 && backend.Actions[beforeCalls] == "findNotes", "Unknown after add reconciles identity then finishes the pending split without another note");
 
 var lostMove = Confirm(); backend.DropAfterMoveOnce = true;
-await Lost(() => anki.ImportAsync(lostMove, store));
+await Lost(() => anki.ImportAsync(lostMove, store), lostMove);
 Check(lostMove.ImportState == ImportState.Unknown && backend.Card(lostMove.NoteId!.Value, 1).Deck == WritingDeck, "lost deck-move response retains Unknown after the external move");
 beforeAdds = backend.Adds; beforeMoves = backend.Moves.Count;
 await anki.ImportAsync(store.Find(lostMove.Id)!, store);
 Check(backend.Adds == beforeAdds && backend.Moves.Count == beforeMoves, "already completed split is recovered with read-only calls");
 
 var pendingMove = Confirm(); backend.FailBeforeMoveOnce = true;
-await Lost(() => anki.ImportAsync(pendingMove, store));
+await Lost(() => anki.ImportAsync(pendingMove, store), pendingMove);
 Check(pendingMove.ImportState == ImportState.Unknown && backend.Card(pendingMove.NoteId!.Value, 1).Deck == ReadingDeck, "failure before split keeps the pending card in the frozen initial deck");
 beforeMoves = backend.Moves.Count;
 await Reject(() => anki.VerifyAsync(pendingMove), "public VerifyAsync remains read-only and requires final per-card decks");
@@ -77,14 +78,14 @@ await anki.ImportAsync(pendingMove, store);
 Check(pendingMove.ImportState == ImportState.Verified && backend.Moves.Count == beforeMoves + 1 && backend.Card(pendingMove.NoteId!.Value, 1).Deck == WritingDeck, "retry moves only the remaining initial-deck card");
 
 var userMoved = Confirm(); backend.DropAfterAddOnce = true;
-await Lost(() => anki.ImportAsync(userMoved, store));
+await Lost(() => anki.ImportAsync(userMoved, store), userMoved);
 backend.Card(backend.Adds, 0).Deck = "User chosen deck";
 beforeMoves = backend.Moves.Count; beforeAdds = backend.Adds;
 await Reject(() => anki.ImportAsync(userMoved, store), "a card outside its target and initial decks blocks reconciliation");
 Check(backend.Adds == beforeAdds && backend.Moves.Count == beforeMoves && backend.Card(userMoved.NoteId!.Value, 0).Deck == "User chosen deck", "all cards are checked before moves and user placement is preserved");
 
 var changedFields = Confirm(); backend.DropAfterAddOnce = true;
-await Lost(() => anki.ImportAsync(changedFields, store));
+await Lost(() => anki.ImportAsync(changedFields, store), changedFields);
 backend.WrongFields = true; beforeMoves = backend.Moves.Count;
 await Reject(() => anki.ImportAsync(changedFields, store), "field identity mismatch prevents any deck mutation");
 backend.WrongFields = false;
@@ -170,7 +171,7 @@ sealed class DeckHandler : HttpMessageHandler
                     var f = notes[c.Note].GetProperty("fields"); var basic = f.TryGetProperty("Front", out var front);
                     return new { cardId = c.Id, note = c.Note, ord = WrongOrdinal ? 9 : c.Ordinal, queue = 0, deckName = c.Deck,
                         question = basic ? front.GetString() : c.Ordinal == 0 ? f.GetProperty("Target").GetString() : f.GetProperty("Pronunciation").GetString() + " " + f.GetProperty("Meaning").GetString(),
-                        answer = basic ? f.GetProperty("Back").GetString() : f.GetProperty("Target").GetString() + " " + f.GetProperty("Pronunciation").GetString() + " " + f.GetProperty("Meaning").GetString() };
+                        answer = basic ? front.GetString() + "<hr id='answer'>" + f.GetProperty("Back").GetString() : f.GetProperty("Target").GetString() + " " + f.GetProperty("Pronunciation").GetString() + " " + f.GetProperty("Meaning").GetString() };
                 }).ToArray(); break;
             case "areSuspended": result = p.GetProperty("cards").EnumerateArray().Select(_ => false).ToArray(); break;
             default: throw new InvalidOperationException("Unexpected action: " + action);

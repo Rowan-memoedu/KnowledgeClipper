@@ -75,7 +75,7 @@ internal sealed class LanguageSettingsForm : Form
         CheckBox Quick(string id, string text, bool enabled) => new() { Text = text, Checked = enabled, AutoSize = true,
             Name = "knowledge-clipper.floating.quick-" + id, AccessibleName = "knowledge-clipper.floating.quick-" + id };
         var quickLanguage = Quick("language", "按默认格式生成并导入；原图只用理解与朗读", value.QuickLanguage); Add("读 · 语言", quickLanguage);
-        var quickQuestion = Quick("question", "生成本次回答并导入，不展开追问", value.QuickQuestion); Add("问 · 提问", quickQuestion);
+        var quickQuestion = Quick("question", "生成本次回答并导入，不展开追问", value.QuickQuestion); Add("卡 · 提问制卡", quickQuestion);
         var quickExcerpt = Quick("excerpt", "直接导入本次原文或单张图片，不生成其他卡片", value.QuickExcerpt); Add("摘 · 摘录", quickExcerpt);
         Add("图 · 多图", new Label { AutoSize = true, ForeColor = Color.DimGray, Name = "knowledge-clipper.floating.multiple-images",
             Text = "始终打开多图模式，可继续收集正面和反面图片。" });
@@ -91,7 +91,7 @@ internal sealed class LanguageSettingsForm : Form
             return box;
         }
         Page("默认路径与图片", "routing");
-        var typedRoute = RouteChoice("typed", value.TypedDefaultRoute, MaterialRouting.Choices(MaterialKind.TypedText), true); Add("文字输入默认路径", typedRoute);
+        Add("主输入", new Label { AutoSize = true, Text = "统一进入问答，可输入文字或粘贴图片；不按末尾标点分流。" });
         var ocrRoute = RouteChoice("ocr", value.OcrDefaultRoute, MaterialRouting.Choices(MaterialKind.OcrImages)); Add("多图 · OCR 默认路径", ocrRoute);
         ModeSnapshot[] imageModes;
         try { imageModes = ImageModeLoader.Load(string.IsNullOrWhiteSpace(value.ExcerptModesDirectory) ? flow.ModeDefaults : value.ExcerptModesDirectory, flow.ModeOverrides); }
@@ -99,7 +99,7 @@ internal sealed class LanguageSettingsForm : Form
         var originalRoute = RouteChoice("original", value.OriginalDefaultRoute, MaterialRouting.Choices(MaterialKind.OriginalImages, imageModes)); Add("多图 · 原图默认路径", originalRoute);
         var originalImage = new CheckBox { Text = "保留原图制卡", AutoSize = true, Checked = value.OriginalImageMode == true, Name = "knowledge-clipper.image.original" }; Add("原图模式", originalImage);
         Add("", new Label { AutoSize = true, ForeColor = Color.DimGray, Text = "截图与图片浮点“图”均进入多图模式，正面、反面分别保留顺序。\n原图有反面图片时直接配对；仅有正面时，可选原图摘录或提示词制卡。\n关闭原图后转为文字，可走摘录、语言或问答；Ask 可在识别期间选择。" });
-        var imageModel = TextField(value.ImageModel, "knowledge-clipper.image.model"); Add("图片解答与审核模型", imageModel);
+        var imageModel = TextField(value.ImageModel, "knowledge-clipper.image.model"); Add("图片解答与快捷问模型", imageModel);
         var mineruScript = TextField(value.MineruScriptPath, "knowledge-clipper.image.mineru-script"); mineruScript.PlaceholderText = "留空使用现有 MinerU 程序"; Add("MinerU 程序路径", mineruScript);
         var mineruLanguage = TextField(value.MineruLanguage, "knowledge-clipper.image.ocr-language"); Add("OCR 语言", mineruLanguage);
         var mineruTable = new CheckBox { Text = "识别表格", AutoSize = true, Checked = value.MineruTable, Name = "knowledge-clipper.image.ocr-table" }; Add("表格", mineruTable);
@@ -404,7 +404,7 @@ internal sealed class LanguageSettingsForm : Form
                     ReplayLastHotkey = replayHotkey.Text.Trim(),
                     ModeDestinations = modeDestinations, RemNoteSdkEndpoint = remNoteEndpoint.Text.Trim(),
                     ExcerptDeckPath = excerptDeck.Text.Trim(), ExcerptModesDirectory = excerptModes.Text.Trim(),
-                    TypedDefaultRoute = ((MaterialRoute)typedRoute.SelectedItem).Id, OcrDefaultRoute = ((MaterialRoute)ocrRoute.SelectedItem).Id,
+                    OcrDefaultRoute = ((MaterialRoute)ocrRoute.SelectedItem).Id,
                     OriginalDefaultRoute = ((MaterialRoute)originalRoute.SelectedItem).Id, OriginalImageMode = originalImage.Checked,
                     ImageModel = imageModel.Text.Trim(), MineruScriptPath = mineruScript.Text.Trim(), MineruLanguage = mineruLanguage.Text.Trim(),
                     MineruTable = mineruTable.Checked, MineruFormula = mineruFormula.Checked, MineruTimeoutSeconds = (int)mineruTimeout.Value,

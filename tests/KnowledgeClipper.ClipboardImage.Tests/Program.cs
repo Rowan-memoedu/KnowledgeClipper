@@ -99,11 +99,11 @@ internal static class Program
             var foreground = GetForegroundWindow();
             dot.ShowSelection(snapshot); await Task.Delay(70);
             var buttons = Buttons(dot);
-            Check(string.Join(" ", buttons.Select(b => b.Text)) == "读 问 摘", "text surface order is 读 问 摘 on display " + screenIndex);
-            Check(dot.ClientSize == new Size((int)Math.Round(66.0 * dot.DeviceDpi / 96), (int)Math.Round(23.0 * dot.DeviceDpi / 96)), "text surface retains existing compact DPI metrics");
+            Check(string.Join(" ", buttons.Select(b => b.Text)) == "读 卡 摘 问", "text surface order is 读 卡 摘 问 on display " + screenIndex);
+            Check(dot.ClientSize == new Size((int)Math.Round(88.0 * dot.DeviceDpi / 96), (int)Math.Round(23.0 * dot.DeviceDpi / 96)), "four text actions preserve height and diameter at actual DPI");
             Check(GetForegroundWindow() == foreground, "text surface does not activate");
             foreach (var button in buttons) button.PerformClick();
-            Check(textCalls.TakeLast(3).Select(c => c.Action).SequenceEqual(new[] { SelectionDotAction.Read, SelectionDotAction.Question, SelectionDotAction.Excerpt }) && textCalls.TakeLast(3).All(c => ReferenceEquals(c.Selection, snapshot)), "all text controls retain original selection and dispatch exact actions");
+            Check(textCalls.TakeLast(4).Select(c => c.Action).SequenceEqual(new[] { SelectionDotAction.Read, SelectionDotAction.Question, SelectionDotAction.Excerpt, SelectionDotAction.Ask }) && textCalls.TakeLast(4).All(c => ReferenceEquals(c.Selection, snapshot)), "all text controls retain original selection and dispatch exact actions");
             dot.ApplyQuickModes(true, true, true, true);
             Check(Tip(dot, buttons[0]).Contains("默认语言卡") && Tip(dot, buttons[1]).Contains("一轮回答") && Tip(dot, buttons[2]).Contains("直接导入摘录原文"), "text quick tooltips describe each background action");
             dot.ApplyQuickModes(false, false, false, false);
@@ -115,7 +115,7 @@ internal static class Program
             var image = new ClipboardImageSnapshot(12, anchor, DateTimeOffset.UtcNow, png);
             imageDot.ShowImage(image); await Task.Delay(70);
             buttons = Buttons(imageDot);
-            Check(string.Join(" ", buttons.Select(b => b.Text)) == "图 读 问 摘" && buttons.Length == 4, "image surface shows 图 读 问 摘 in order");
+            Check(string.Join(" ", buttons.Select(b => b.Text)) == "图 读 卡 摘 问" && buttons.Length == 5, "image surface shows 图 读 卡 摘 问 in order");
             imageDot.ApplyQuickModes(true, true, true, true);
             Check(Tip(imageDot, buttons[0]).Contains("多图模式") && !Tip(imageDot, buttons[0]).Contains("后台") &&
                 Tip(imageDot, buttons[1]).Contains("后台处理") && Tip(imageDot, buttons[2]).Contains("一轮回答") && Tip(imageDot, buttons[3]).Contains("后台摘录"),
@@ -124,13 +124,13 @@ internal static class Program
             Check(Tip(imageDot, buttons[0]).Contains("多图模式") && Tip(imageDot, buttons[1]).Contains("语言学习") &&
                 Tip(imageDot, buttons[2]).Contains("提问") && Tip(imageDot, buttons[3]).Contains("摘录") && buttons.All(button => !Tip(imageDot, button).Contains("后台")),
                 "disabling image shortcuts restores normal language question and excerpt descriptions");
-            Check(imageDot.ClientSize == new Size((int)Math.Round(88.0 * imageDot.DeviceDpi / 96), (int)Math.Round(23.0 * imageDot.DeviceDpi / 96)) && imageDot.Height == dot.Height,
-                "four image actions retain existing surface height at actual DPI");
+            Check(imageDot.ClientSize == new Size((int)Math.Round(110.0 * imageDot.DeviceDpi / 96), (int)Math.Round(23.0 * imageDot.DeviceDpi / 96)) && imageDot.Height == dot.Height,
+                "five image actions retain existing surface height at actual DPI");
             Check(buttons.All(button => button.Size == dot.Controls.OfType<Button>().First().Size) &&
                 buttons.Zip(buttons.Skip(1)).All(pair => pair.First.Right < pair.Second.Left),
                 "image actions retain text-button size without overlapping");
-            Check(buttons.Select(button => button.Name).SequenceEqual(new[] { "image", "read", "question", "excerpt" }.Select(action => "knowledge-clipper.image.selection-dot." + action)),
-                "all four image controls expose distinct image action identifiers");
+            Check(buttons.Select(button => button.Name).SequenceEqual(new[] { "image", "read", "question", "excerpt", "ask" }.Select(action => "knowledge-clipper.image.selection-dot." + action)),
+                "all five image controls expose distinct image action identifiers");
             Check(area.Contains(imageDot.Bounds) && imageDot.Left > anchor.X && imageDot.Bottom < anchor.Y, "image surface sits close to the notification anchor");
             Check(GetForegroundWindow() == foreground && SendMessage(imageDot.Handle, 0x21, IntPtr.Zero, IntPtr.Zero).ToInt64() == 3, "image surface and mouse activation preserve foreground");
             Check(imageDot.ContainsScreenPoint(new Point(imageDot.Left + imageDot.Width / 2, imageDot.Top + imageDot.Height / 2)), "image surface publishes clickable bounds");
@@ -139,8 +139,8 @@ internal static class Program
                 Check(button.Width == button.Height && button.Region.IsVisible(button.Width / 2, button.Height / 2) && !button.Region.IsVisible(0, 0), "image button " + button.Text + " uses the text surface's circular hit area");
                 button.PerformClick();
             }
-            Check(imageCalls.TakeLast(4).Select(c => c.Action).SequenceEqual(new[] { ClipboardImageDotAction.Image, ClipboardImageDotAction.Read, ClipboardImageDotAction.Question, ClipboardImageDotAction.Excerpt }) &&
-                imageCalls.TakeLast(4).All(c => ReferenceEquals(c.Image, image)), "all four image actions dispatch the exact frozen image");
+            Check(imageCalls.TakeLast(5).Select(c => c.Action).SequenceEqual(new[] { ClipboardImageDotAction.Image, ClipboardImageDotAction.Read, ClipboardImageDotAction.Question, ClipboardImageDotAction.Excerpt, ClipboardImageDotAction.Ask }) &&
+                imageCalls.TakeLast(5).All(c => ReferenceEquals(c.Image, image)), "all five image actions dispatch the exact frozen image");
             SaveSurface(imageDot, "image-" + screenIndex + ".png");
             foreach (var point in new[] { area.Location, new Point(area.Right - 1, area.Bottom - 1) })
             {

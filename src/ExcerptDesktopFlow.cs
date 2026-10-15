@@ -153,7 +153,8 @@ internal sealed class ExcerptDesktopFlow : IDisposable
             await ExcerptCards.ImportAsync(session, store, new CardImportRouter(request), ids, ct, changed);
         });
         form.CardsChanged += changed => SessionChanged?.Invoke(changed);
-        forms.Add(form); form.FormClosed += (_, _) => forms.Remove(form); form.Show(owner);
+        // The topmost capture bar must not make the card editor topmost too.
+        forms.Add(form); form.FormClosed += (_, _) => forms.Remove(form); form.Show();
     }
     internal void ShowRecent()
     {

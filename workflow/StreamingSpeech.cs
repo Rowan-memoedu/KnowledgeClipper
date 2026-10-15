@@ -26,7 +26,8 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
         lock (gate)
         {
             if (disposed) return;
-            if (prepared != null && prepared.PythonPath == settings.PythonPath && !prepared.Process.HasExited) return;
+            if (prepared != null && prepared.PythonPath == settings.PythonPath && !prepared.Process.HasExited &&
+                Stopwatch.GetElapsedTime(prepared.CreatedAt) < TimeSpan.FromSeconds(20)) return;
             ClosePrepared(prepared); prepared = null;
             try { prepared = StartHelper(settings, warm: true); }
             catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or ArgumentException) { }
@@ -167,7 +168,8 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
             var voice = SelectVoice(text, synthesisSettings);
             await process.StandardInput.WriteLineAsync(JsonSerializer.Serialize(new { text = SpokenText(text, synthesisSettings), voice,
                 rate = synthesisSettings.RatePercent, volume = synthesisSettings.VolumePercent, pitch = synthesisSettings.PitchHz, ffplay = settings.FfplayPath,
-                audio = reuse ? cached : audio, replay = reuse, play = replay || settings.SpeechAutoPlay || purpose == SpeechPurpose.Sentence }, WorkflowJson.Options).AsMemory(), token).ConfigureAwait(false);
+                audio = reuse ? cached : audio, replay = reuse, losslessReplay = true, preconnect = true,
+                play = replay || settings.SpeechAutoPlay || purpose == SpeechPurpose.Sentence }, WorkflowJson.Options).AsMemory(), token).ConfigureAwait(false);
             process.StandardInput.Close();
             // Send the current request before starting the next idle helper.
             Prepare(settings);
@@ -195,6 +197,10 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
                     if (name == "firstAudioChunk") draft.SpeechStatus = settings.SpeechAutoPlay || replay || purpose == SpeechPurpose.Sentence ? "已收到音频，正在开始播放" : "已收到音频，正在保存";
                     if (name == "audioComplete")
                     {
+                        // Publish the original streaming samples with the MP3. Older
+                        // helpers/recordings remain compatible without a sidecar.
+                        if (File.Exists(audio + ".pcm")) File.Move(audio + ".pcm", cached + ".pcm", true);
+                        else if (File.Exists(cached + ".pcm")) File.Delete(cached + ".pcm");
                         File.Move(audio, cached, true);
                         if (purpose != SpeechPurpose.Sentence) draft.AudioPath = cached;
                     }
@@ -234,6 +240,7 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
             if (incompleteAudio != null)
             {
                 try { File.Delete(incompleteAudio); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                try { File.Delete(Path.ChangeExtension(incompleteAudio, ".mp3") + ".pcm"); } catch (IOException) { } catch (UnauthorizedAccessException) { }
             }
             lock (gate) {
                 if (ReferenceEquals(current, mine)) current = null;
@@ -263,9 +270,9 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
             RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true,
             StandardInputEncoding = new UTF8Encoding(false), StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8 };
         info.ArgumentList.Add("-u"); info.ArgumentList.Add(helperPath);
-        if (warm) info.ArgumentList.Add("--prepare");
+        if (warm) { info.ArgumentList.Add("--prepare"); info.ArgumentList.Add("--preconnect"); }
         var process = Process.Start(info) ?? throw new InvalidOperationException("无法启动朗读组件。");
-        return new(process, settings.PythonPath, warm ? ReadReadyAsync(process) : null);
+        return new(process, settings.PythonPath, warm ? ReadReadyAsync(process) : null, Stopwatch.GetTimestamp());
     }
 
     private static async Task<string?> ReadReadyAsync(Process process)
@@ -282,6 +289,6 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
         helper.Process.Dispose();
     }
 
-    private sealed record PreparedHelper(Process Process, string PythonPath, Task<string?>? Ready);
+    private sealed record PreparedHelper(Process Process, string PythonPath, Task<string?>? Ready, long CreatedAt);
     private sealed record RecordedAudio(string Path, LanguageSettings Settings);
 }

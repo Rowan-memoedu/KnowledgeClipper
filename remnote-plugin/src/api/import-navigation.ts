@@ -88,7 +88,7 @@ export class ImportNavigation {
     }
     if(superseded())return {revealed:false,superseded:true};
     this.phase='verify-selection';
-    const selectionDeadline=Date.now()+7000;
+    let selectionDeadline=Date.now()+7000,selectionRequested=false;
     for(;;) {
       if(superseded())return {revealed:false,superseded:true};
       const observed = await this.state();
@@ -96,7 +96,9 @@ export class ImportNavigation {
         this.phase='revealed';
         return {revealed:true,sourceId:plan.sourceId,...observed,navigationPhase:this.phase};
       }
-      if(Date.now()>=selectionDeadline)break;
+      // A slow background SDK read must not consume the window before the first
+      // selection request. Give the editor its settling time after that request resolves.
+      if(Date.now()>=selectionDeadline&&(selectionRequested||observed.documentRemId!==document._id))break;
       // SDK navigation resolves before the editor tree mounts. Selection can be a
       // no-op during that interval. The document is the ordinary editor's root
       // portal; naming it avoids depending on the previous page's text cursor.
@@ -105,6 +107,7 @@ export class ImportNavigation {
         // Rebind to the live pane before selecting in its active editor.
         await this.plugin.window.setFocusedPaneId(observed.paneId);
         await this.plugin.editor.selectRem(remIds,document._id);
+        if(!selectionRequested){selectionRequested=true;selectionDeadline=Date.now()+7000;}
       }
       await this.wait();
     }

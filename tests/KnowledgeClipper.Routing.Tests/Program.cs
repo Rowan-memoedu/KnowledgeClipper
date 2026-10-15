@@ -3,7 +3,16 @@ using System.Text.Json;
 using KnowledgeClipper.Workflow;
 
 var root = args[0];
-var config = ModeConfigurationLoader.Load(Path.Combine(root, "modes"));
+// This suite covers the original three-mode contract, independently of the current four concrete language modes.
+var defaults = Path.Combine(@"D:\Caches\KnowledgeClipper\routing-tests", Guid.NewGuid().ToString("N"), "legacy-defaults");
+Directory.CreateDirectory(defaults);
+var current = ModeConfigurationLoader.Load(Path.Combine(root, "modes"));
+var definitions = new[] { new ModeDefinition("language", "语言", true, "语言目标", "language.md", "language.schema.json", "language",
+    RequiresContext: true, AnkiDeckPath: "语言学习::{语种}::{格式}") }.Concat(current.Modes.Where(m => m.Definition.OutputKind is "question" or "translation").Select(m => m.Definition)).ToArray();
+WorkflowJson.Save(Path.Combine(defaults,"modes.json"),new ModeFile(definitions));
+foreach(var name in definitions.SelectMany(d => new[]{d.PromptFile,d.SchemaFile}).Append("classification.md").Distinct())
+    if(File.Exists(Path.Combine(root,"modes",name)))File.Copy(Path.Combine(root,"modes",name),Path.Combine(defaults,name));
+var config = ModeConfigurationLoader.Load(defaults);
 DeckRoutingChecks.Run(config);
 var checks = 0;
 void Check(bool value, string name) { if (!value) throw new Exception(name); Console.WriteLine("PASS " + name); checks++; }
@@ -65,7 +74,7 @@ await Fail(() => module.ProcessAsync(Material("词组"), "translation", config, 
 var temporary = Path.Combine(@"D:\Caches\KnowledgeClipper\routing-tests", Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(temporary);
 WorkflowJson.Save(Path.Combine(temporary, "modes.json"), new ModeFile([config.Modes.Single(m => m.Definition.Id == "language").Definition with { Description = "personal description" }]));
-var merged = ModeConfigurationLoader.Load(Path.Combine(root, "modes"), temporary);
+var merged = ModeConfigurationLoader.Load(defaults, temporary);
 Check(merged.Modes.Length == 3 && merged.Modes.Single(m => m.Definition.Id == "language").Definition.Description == "personal description", "old single-mode overrides preserve edits while new modes remain available");
 Check(!ModeConfigurationLoader.Route(config, "language").FollowUpDefault && ModeConfigurationLoader.Route(config, "question").FollowUpDefault, "mode metadata controls follow-up default");
 var original = Material(raw);

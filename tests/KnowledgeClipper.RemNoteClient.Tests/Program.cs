@@ -811,31 +811,68 @@ await Test("destination router sends RemNote confirmations to SDK and never Anki
     using var http = new HttpClient(backend); await new CardImportRouter(http).ImportAsync(draft, store);
     Assert(draft.ImportState == ImportState.Verified && backend.Calls.All(c => c.Path.StartsWith("/sdk/knowledge-clipper/")), "Router used the wrong API.");
 });
-await Test("a two-round question batch without mode configuration defaults both cards to RemNote", async () =>
+await Test("a two-round question batch uses the exact configured type document and defaults to RemNote", async () =>
 {
     var parent = Draft("question", new() { QuestionCardIncludeContext = false }); parent.Configuration = new("", []);
+    parent.QuestionTarget = new("fast-answer", "快速答案", "root", "question-base", "document");
     parent.Conversation = [new(parent.QuestionText, new("answered", "Answer A", [])), new("Second question?", new("answered", "Answer B", []))];
     parent.Content = new("question", Basic: new(parent.QuestionText, "Answer A"), Answer: parent.Conversation[0].Answer);
     using var backend = new ScriptedHandler((call, _) =>
     {
         Assert(parent.FollowUpCards.Count == 2 && parent.FollowUpCards.Values.All(id => store.Find(id) is { ConfirmedDestination: ExportDestination.RemNote, ConfirmedRemNote: not null }), "Whole question batch was not frozen before network.");
-        if (call.Path.EndsWith("/health")) return Task.FromResult(Fixtures.Health());
+        if (call.Path.EndsWith("/health")) { var health = Fixtures.Health(); health["questionCompositionSupported"] = true; health["questionDailyDocumentsSupported"] = true; return Task.FromResult(health); }
         var body = JsonNode.Parse(call.Body!)!;
         var source = (body["plan"] ?? body)["sourceId"]!.GetValue<string>();
+        var sentPlan = body["plan"] ?? body;
+        var day = DateTime.Today.ToString("M.d", System.Globalization.CultureInfo.InvariantCulture);
+        Assert(sentPlan["documentPath"]!.AsArray().Select(n=>n!.GetValue<string>()).SequenceEqual(new[]{"零碎知识制卡","快速答案",day}) &&
+            sentPlan["documentIds"]!.AsArray().Select(n=>n!.GetValue<string>()).SequenceEqual(new[]{"question-base","document"}), "Question path did not pin the type above its daily child.");
         var first = source == "knowledgeclipper." + parent.FollowUpCards[0];
         Assert(first || source == "knowledgeclipper." + parent.FollowUpCards[1], "Unexpected card identity.");
         var value = Fixtures.Basic(); value["sourceId"] = source;
+        value["rootRemId"] = "root"; value["documentRemId"] = "daily-document";
+        value["directoryNodes"] = new JsonArray(
+            new JsonObject { ["remId"]="root", ["parentId"]=null, ["isDocument"]=true, ["text"]=new JsonArray("零碎知识剪藏") },
+            new JsonObject { ["remId"]="question-base", ["parentId"]="root", ["isDocument"]=true, ["text"]=new JsonArray("零碎知识制卡") },
+            new JsonObject { ["remId"]="document", ["parentId"]="question-base", ["isDocument"]=true, ["text"]=new JsonArray("快速答案") },
+            new JsonObject { ["remId"]="daily-document", ["parentId"]="document", ["isDocument"]=true, ["text"]=new JsonArray(day) });
         var card = value["cards"]![0]!; card["childRemIds"] = new JsonArray("answer-1"); card["nodes"]!.AsArray().RemoveAt(2);
+        card["nodes"]![0]!["parentId"] = "daily-document";
         card["nodes"]![0]!["children"] = new JsonArray("answer-1");
         card["nodes"]![0]!["text"]![0]!["text"] = first ? "First\nSecond" : "Second question?";
         card["nodes"]![1]!["text"]![0]!["text"] = first ? "Answer A" : "Answer B";
         return Task.FromResult(value);
     });
     using var http = new HttpClient(backend); var router = new CardImportRouter(http);
-    await QuestionCards.ImportAsync(parent, [0, 1], store, router, () => { });
+    await QuestionCards.ImportAsync(parent, [1, 0], store, router, () => { });
     Assert(QuestionCards.Preview(parent, store).All(row => row.State == ImportState.Verified && row.DestinationLabel.StartsWith("RemNote · ")), "Question batch lost per-row destination.");
+    var exports = backend.Calls.Where(c => c.Path.EndsWith("/export")).Select(c => JsonNode.Parse(c.Body!)!["plan"]!["sourceId"]!.GetValue<string>()).ToArray();
+    Assert(exports.SequenceEqual(new[]{"knowledgeclipper."+parent.FollowUpCards[0],"knowledgeclipper."+parent.FollowUpCards[1]}), "Reversed selection did not preserve generation order.");
+    var saved = store.Find(parent.FollowUpCards[0])!;
+    Assert(ExportRouting.Prepare(saved, saved.ConfirmedNote!).RemNote == saved.ConfirmedRemNote, "A confirmed daily plan was regenerated.");
+    foreach(var field in new[]{"parentId","text","isDocument","remId"})
+    {
+        var changed = JsonNode.Parse(saved.RemNoteResult!.Evidence.GetRawText())!;
+        var leaf = changed["directoryNodes"]![3]!;
+        if(field=="text")leaf[field]=new JsonArray("wrong day");
+        else if(field=="isDocument")leaf[field]=false;
+        else leaf[field]="wrong-id";
+        Reject(()=>Verify(saved.ConfirmedRemNote!,changed));
+    }
     var calls = backend.Calls.Count; await QuestionCards.ImportAsync(parent, [0, 1], store, router, () => { });
-    Assert(backend.Calls.Count == calls && calls == 4, "Repeated question batch re-exported verified rows.");
+    Assert(backend.Calls.Count == calls && backend.Calls.Count(c => c.Path.EndsWith("/export")) == 2, "Repeated question batch re-exported verified rows.");
+});
+await Test("daily question plans stop before writing when the installed plugin has only the old type contract",async()=>
+{
+    var draft=Draft("question");draft.QuestionTarget=new("fast-answer","快速答案","root","question-base","document");
+    ExportRouting.Confirm(draft,Note(),ExportDestination.RemNote);
+    using var backend=new ScriptedHandler((call,_)=>{
+        Assert(call.Path.EndsWith("/health"),"Unsupported daily plan reached a write endpoint.");
+        var health=Fixtures.Health();health["questionCompositionSupported"]=true;return Task.FromResult(health);
+    });
+    using var http=new HttpClient(backend);
+    await RejectAsync<InvalidDataException>(()=>new RemNoteConnection(http,RemNoteConnection.DefaultEndpoint).ImportAsync(draft,store));
+    Assert(draft.ImportState!=ImportState.Writing&&draft.ImportState!=ImportState.Unknown,"Unsupported plugin made a safe plan uncertain.");
 });
 await Test("mixed language defaults freeze each child's own destination before any provider call", async () =>
 {

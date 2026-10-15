@@ -76,7 +76,7 @@ namespace KnowledgeClipper
         private readonly IOcrHumanResolutionArtifactReader ocrHumanResolution;
         private readonly DesktopWorkflowSettingsService workflowSettingsService;
         private readonly Button contextButton, originalButton, clipButton, readButton, screenshotButton, statusButton, minimizeButton, closeButton;
-        private readonly TextBox inlineQuestionInput;
+        private readonly LanguageQuestionInputBox inlineQuestionInput;
         private readonly Panel dragFrame, contextSection, originalSection;
         private readonly NotifyIcon tray;
         private bool explicitExit;
@@ -172,12 +172,12 @@ namespace KnowledgeClipper
             contextSection = ModeSection("knowledge-clipper.desktop.section.context", 2, contextButton, clipButton, readButton);
             originalSection = ModeSection("knowledge-clipper.desktop.section.original-image", 1, originalButton, screenshotButton);
             statusButton = ActionButton("", AutomationCatalogV11.StatusAutomationId); statusButton.Font = new Font("微软雅黑", 9F, FontStyle.Bold); statusButton.BackColor = Color.FromArgb(250, 251, 253); statusButton.Cursor = Cursors.Default; statusButton.Margin = new Padding(2);
-            inlineQuestionInput = new TextBox
+            inlineQuestionInput = new LanguageQuestionInputBox
             {
                 Name = AutomationCatalogV12.InlineQuestionInputAutomationId,
                 AccessibleName = AutomationCatalogV12.InlineQuestionInputAutomationId,
-                AccessibleDescription = "按默认路径处理文字；问号结尾提问，否则翻译。Enter 提交",
-                PlaceholderText = "问号结尾提问，否则翻译；Enter 提交",
+                AccessibleDescription = LanguageQuestionInputBox.Hint,
+                PlaceholderText = LanguageQuestionInputBox.Hint,
                 Dock = DockStyle.Fill,
                 Margin = new Padding(4, 4, 4, 3),
                 BorderStyle = BorderStyle.FixedSingle,
@@ -190,8 +190,9 @@ namespace KnowledgeClipper
                 ShortcutsEnabled = true
             };
             sections.Controls.Add(contextSection, 0, 0); sections.SetColumnSpan(contextSection, 2); sections.Controls.Add(originalSection, 2, 0);
-            var inputRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 1, Margin = Padding.Empty };
+            var inputRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 1, Margin = Padding.Empty };
             inputRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100)); inputRow.Controls.Add(inlineQuestionInput, 0, 0);
+            inputRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize)); inputRow.Controls.Add(inlineQuestionInput.ImageIndicator, 1, 0);
             root.Controls.Add(titleBar, 0, 0); root.Controls.Add(sections, 0, 1); root.Controls.Add(statusButton, 0, 2); root.Controls.Add(inputRow, 0, 3);
             dragFrame = new Panel { Name = AutomationCatalogV11.DragFrameAutomationId, AccessibleName = AutomationCatalogV11.DragFrameAutomationId, Dock = DockStyle.Fill, Margin = Padding.Empty, Padding = new Padding(6), BackColor = Color.FromArgb(156, 170, 183), Cursor = Cursors.SizeAll };
             dragFrame.Controls.Add(root); Controls.Add(dragFrame);
@@ -260,11 +261,11 @@ namespace KnowledgeClipper
             {
                 if (e.KeyCode == Keys.Escape)
                 {
-                    e.SuppressKeyPress = true; e.Handled = true; inlineQuestionInput.Clear(); RestoreNoActivate(); return;
+                    e.SuppressKeyPress = true; e.Handled = true; inlineQuestionInput.ClearQuestion(); RestoreNoActivate(); return;
                 }
                 if (e.KeyCode != Keys.Enter) return;
                 e.SuppressKeyPress = true; e.Handled = true;
-                if (!string.IsNullOrWhiteSpace(inlineQuestionInput.Text)) await SubmitInlineQuestionAsync();
+                if (inlineQuestionInput.HasQuestion) await SubmitInlineQuestionAsync();
             };
             minimizeButton.Click += delegate { HideToTray(); };
             closeButton.Click += delegate { Close(); };
@@ -1089,7 +1090,7 @@ namespace KnowledgeClipper
         {
             if (inlineSubmitInProgress) return;
             var original = inlineQuestionInput.Text;
-            if (string.IsNullOrWhiteSpace(original)) return;
+            if (!inlineQuestionInput.HasQuestion) return;
             var restoreAfterQuestion = previousForegroundWindow;
             inlineSubmitInProgress = true;
             inlineQuestionInput.Enabled = false;
@@ -1098,21 +1099,8 @@ namespace KnowledgeClipper
                 try
                 {
                     RestoreNoActivate();
-                    var route = KnowledgeClipper.Workflow.MaterialRouting.Resolve(KnowledgeClipper.Workflow.MaterialKind.TypedText, languageFlow.Settings, original);
-                    if (route == null)
-                    {
-                        using var choice = new MaterialRouteForm(KnowledgeClipper.Workflow.MaterialRouting.Choices(KnowledgeClipper.Workflow.MaterialKind.TypedText));
-                        if (choice.ShowDialog(this) != DialogResult.OK) return;
-                        route = choice.SelectedRoute;
-                        if (choice.Remember) languageFlow.SaveSettings(languageFlow.Settings with { TypedDefaultRoute = route });
-                    }
-                    var accepted = route switch {
-                        "excerpt" => await excerptFlow.StartTextAsync(original),
-                        "translation" => await languageFlow.StartTranslationTextAsync(original),
-                        "question" => await languageFlow.StartQuestionTextAsync(original),
-                        _ => await languageFlow.StartTextAsync(original)
-                    };
-                    if (accepted) inlineQuestionInput.Clear();
+                    var accepted = await languageFlow.StartQuestionInputAsync(original, inlineQuestionInput.Images);
+                    if (accepted) inlineQuestionInput.ClearQuestion();
                 }
                 finally { inlineQuestionInput.Enabled = true; inlineSubmitInProgress = false; }
                 return;

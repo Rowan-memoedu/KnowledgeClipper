@@ -249,6 +249,9 @@ public sealed class ClipDraft
     public ExcerptFields? Excerpt { get; set; }
     public bool IsOriginalExcerpt { get; set; }
     public List<ConversationTurn> Conversation { get; set; } = [];
+    // Optional: legacy histories and frozen cards are never migrated on read.
+    public ChatSession? Chat { get; set; }
+    public QuestionTypeTarget? QuestionTarget { get; set; }
     public Dictionary<int, string> FollowUpCards { get; set; } = new();
     public Dictionary<string, string> ModeCards { get; set; } = new();
     public string[] SelectedModeIds { get; set; } = [];
@@ -321,7 +324,11 @@ public sealed class DraftStore(string root, string folder = "language-drafts")
     {
         var snapshot = ReadDrafts().ToArray();
         var byId = snapshot.ToDictionary(draft => draft.Id, StringComparer.Ordinal);
-        return snapshot.Where(draft => IsSession(draft, id => byId.GetValueOrDefault(id)));
+        return snapshot.Where(draft => IsSession(draft, id => byId.GetValueOrDefault(id))).Select(draft =>
+        {
+            HistoryRecords.RestoreChatCards(draft, id => byId.GetValueOrDefault(id));
+            return draft;
+        });
     }
     public IEnumerable<ClipDraft> RecentSessions() => AllSessions().Take(20);
     public IEnumerable<ClipDraft> RecentSpeech() => ReadDrafts().Where(d => d.LastSpeechAt != null && d.SupportsSpeech)
@@ -337,6 +344,7 @@ public sealed class DraftStore(string root, string folder = "language-drafts")
         ClipDraft? parent;
         try { parent = find(draft.ParentDraftId); }
         catch (Exception ex) when (ex is JsonException or IOException) { return true; }
+        if (HistoryRecords.IsChatExportChild(draft, parent) && HistoryRecords.ResolveChatSession(draft, find).Id != draft.Id) return false;
         if (parent == null || !parent.FollowUpCards.Values.Contains(draft.Id) || draft.Conversation.Count > parent.Conversation.Count) return true;
         // Old single-card previews could grow their own conversation; keep those branches accessible.
         return draft.Conversation.Where((turn, index) => {
