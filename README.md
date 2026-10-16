@@ -4,9 +4,10 @@ Windows 悬浮式知识采集工具：划词朗读、图文提问、多轮问答
 
 ## 当前交付状态
 
-2026-10-16 核对的现役桌面包为 `D:/Artifacts/KnowledgeClipper/tab-controls-20261016/published/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64`。实际进程、桌面快捷方式和 `Personal Tool - KnowledgeClipper` 计划任务均已指向此包；在前一正式包上只更新本次已验收程序集和界面，保留其配置、不可变合同及运行依赖原字节。RemNote 专用服务仍使用 `performance-20261016/remnote`，HTTP/WS/安装服务分别为 43111/43112/43113。路径是本机部署事实，其他机器按其安装配置核对。
+2026-10-16 核对的现役桌面包为 `D:/Artifacts/KnowledgeClipper/chat-integrate-20261016/candidate/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64`。实际进程、桌面快捷方式和 `Personal Tool - KnowledgeClipper` 计划任务均已指向此包；正式构建包含整合制卡修复及此前 Tab 焦点修复，配置和不可变合同与前一正式包原字节一致。RemNote 专用服务仍使用 `performance-20261016/remnote`，HTTP/WS/安装服务分别为 43111/43112/43113。路径是本机部署事实，其他机器按其安装配置核对。
 
-- [Tab 关闭、撤回和拖拽验收](D:/Artifacts/KnowledgeClipper/tab-controls-20261016/validation.md)：249 项 Chat、27 项专项界面、18 组业务回归及综合聊天界面通过；原生鼠标拖拽和 Ctrl+Z、连续十轮焦点检查、关闭后来源保留、在途关闭及重开恢复均验证。切换前后 1,137 份既有数据与配置字节未变。
+- [整合对话重试与智能多卡验收](D:/Artifacts/KnowledgeClipper/chat-integrate-20261016/validation.md)：空卡整合全部对话，有选材或手工稿时聚焦当前内容并参考跨 Tab 上下文；自动判断张数，支持补充要求指定数量。293 项 Chat、19 项整合界面、27 项 Tab、25 项综合界面及 18 组业务回归通过；真实 API/Codex 和 RemNote/Anki 多卡导出、丢回执恢复通过，1,137 份既有数据与配置字节未变。
+- [Tab 关闭、撤回和拖拽验收](D:/Artifacts/KnowledgeClipper/tab-controls-20261016/validation.md)：249 项 Chat、27 项专项界面、18 组业务回归及综合聊天界面通过；原生鼠标拖拽和 Ctrl+Z、连续十轮焦点检查、关闭后来源保留、在途关闭及重开恢复均验证。
 - [同页分叉 Tab 与共享卡片验收](D:/Artifacts/KnowledgeClipper/chat-tabs-20261016/validation.md)：从消息分叉或新建空白 Tab，跨分支选材到同一卡片，输入和回复各归原对话；真实 Codex/API 分叉、双端四图导出与回执丢失恢复、专项及综合界面通过。
 - [此前性能优化验收](D:/Artifacts/KnowledgeClipper/performance-20261016/validation.md)：优化历史读取/排版、旧制卡记录重开和双端导入；原功能与格式保持。
 - [最新批注书面化修复与真实验收](D:/Artifacts/KnowledgeClipper/annotation-formalize-fix-20261015/validation.md)：缺失历史来源不再使辅助操作在发送前报错；保留保存的正文、双面批注及原来源编号。
@@ -14,13 +15,14 @@ Windows 悬浮式知识采集工具：划词朗读、图文提问、多轮问答
 - [问答日期目录与后台定位验收](D:/Artifacts/KnowledgeClipper/question-dated-import-20261015/validation.md)：保留类型精确绑定、当日目录、普通摘录顺序及空行规则，冻结旧路径不迁移。
 - [全部发布与验收历史](docs/release-history.md)：只用于追溯，不作为当前运行路径或跨任务授权。
 
-当前包包含各轮已经验收的聊天、同页分叉、Tab 关闭/恢复/排序、共享卡片、历史、批注、撤销/重做、补充要求和双端导出修改。源码、部署与验收分别留痕；本轮证据见[Tab 微调验收](D:/Artifacts/KnowledgeClipper/tab-controls-20261016/validation.md)，此前代码整合见 [收尾记录](D:/Artifacts/KnowledgeClipper/closeout-20261016/closeout.md)。
+当前包包含各轮已经验收的聊天、同页分叉、Tab 关闭/恢复/排序、共享卡片、历史、批注、撤销/重做、补充要求和双端导出修改。源码、部署与验收分别留痕；本轮证据见[整合多卡验收](D:/Artifacts/KnowledgeClipper/chat-integrate-20261016/validation.md)，此前代码整合见 [收尾记录](D:/Artifacts/KnowledgeClipper/closeout-20261016/closeout.md)。
 
 ## 使用与设置
 
 - 文字浮点“读 / 卡 / 摘 / 问”，图片浮点另有“图”；快捷模式与普通模式共用原稿、导入身份及失败反馈。
 - 图文输入进入同一问答页。普通“卡”按问题类型使用 Codex 默认模型/推理；最右“问”按配置的 API 快捷问模型发送一次，不自动导出。
 - 多轮消息可选入卡片正反面，保留原始 Markdown、公式、图片与 Mermaid。双面正文和批注支持独立或全部书面化、图转文字、补充图片、预览、撤销及重做。
+- “整合对话”在卡面与选材均空时使用全部保留对话；有选材或手工内容时以其为重点，参考对话补足上下文。模型按知识目标判断张数，也可在补充要求中指定 1 至 20 张；停止或超时后 API 辅助请求可在原页面明确再次生成，旧输入和部分输出保留，Codex 不确定回合继续按原身份核对。
 - 消息旁第五个按钮为“分叉”；原对话和分叉用左侧顶部 Tab 切换，末尾“＋”和右上“新建对话”均在同页创建空白 Tab。所有 Tab 共用右侧卡片，可跨分支选材；关闭重开恢复原状态。
 - Tab 支持点 × 关闭和拖拽排序；在 Tab 栏按 Ctrl+Z 可逐次撤回关闭，也可点加号左侧的撤回按钮。关闭保留卡片来源，排序与关闭历史随草稿保存；输入框和卡片区继续使用各自原有撤销。
 - 问答历史按会话归组；导出子卡保留各自冻结身份。旧记录重开不自动生成或导入。

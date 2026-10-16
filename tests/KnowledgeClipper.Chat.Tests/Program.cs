@@ -113,6 +113,7 @@ RedoChecks.Run(Check);
 await HistoryChecks.Run(repo,output,Check);
 HistorySessionChecks.Run(repo,output,Check);
 await BranchChecks.Run(repo,output,Check);
+await IntegrationChecks.Run(repo,output,Check);
 WorkflowJson.Save(Path.Combine(output,"unit-results.json"), new { checks = checks.Count, passed = checks });
 Console.WriteLine($"PASS {checks.Count} chat checks");
 
@@ -125,6 +126,9 @@ var corpusIndex=Array.IndexOf(args,"--corpus");
 if(corpusIndex>=0)CorpusChecks.Run(args[corpusIndex+1],output);
 if(args.Contains("--faults"))await FaultChecks.Run(repo,output);
 if(args.Contains("--api-live"))await LiveApi.Run(repo,output);
+if(args.Contains("--integration-live"))await IntegrationLive.Run(repo,output,"api");
+if(args.Contains("--integration-codex-live"))await IntegrationLive.Run(repo,output,"codex");
+if(args.Contains("--integration-exports"))await IntegrationExports.Run(repo,output);
 if(args.Contains("--anki-live"))await LiveDelivery.Run(repo,output,ExportDestination.Anki);
 if(args.Contains("--remnote-live"))await LiveDelivery.Run(repo,output,ExportDestination.RemNote);
 if(args.Contains("--compaction-live"))await LiveCompaction.Run(repo,output);

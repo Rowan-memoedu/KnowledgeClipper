@@ -196,7 +196,7 @@ internal static partial class Program
         Check(chat.Proposals.Last().Status=="preview"&&chat.Proposals.Last().Cards.Count==1,"真实 Codex 书面化候选在界面正常呈现");
         await Button(form,"采用候选");await Wait(form,"document.querySelectorAll('.proposal').length===0");
         Check(chat.Compositions[0].Back==previousBack,"采用书面化候选保留原解答");
-        await Button(form,"整合所选对话");await AuxiliaryTurn(form,1);
+        await Button(form,"整合对话");await AuxiliaryTurn(form,1);
         Check(chat.Proposals.Last().Status=="preview"&&chat.Proposals.Last().Cards.Any(c=>c.Back.Contains("28")),"真实整合候选保留问题条件与正确结论");
         await Button(form,"采用候选");await Wait(form,"document.querySelectorAll('.proposal').length===0");
         await Button(form,"预览卡片");await Wait(form,"document.querySelector('.card-preview .katex')!==null");await Shot(form,"composition-preview");

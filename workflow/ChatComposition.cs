@@ -199,7 +199,13 @@ public static class ChatComposition
             .Join(ChatWorkspace.Messages(session), id => id, m => m.Id, (_, m) => m, StringComparer.Ordinal).ToArray();
         var generateFront = action is "formalize" or "formalize-all" && string.IsNullOrWhiteSpace(card.Front);
         var generateBack = action is "formalize-answer" or "formalize-all" && string.IsNullOrWhiteSpace(card.Back);
-        var context = generateFront || generateBack || action is "transcribe" or "formalize-annotation" ? (contextSession ?? session).Messages.Where(m => m.Action == null && m.Status == "completed").ToArray() : [];
+        var context = action == "integrate"
+            ? ChatWorkspace.Messages(session).Where(m => m.Action == null && m.Role is "user" or "assistant" && !string.IsNullOrWhiteSpace(Material(m))).ToArray()
+            : generateFront || generateBack || action is "transcribe" or "formalize-annotation"
+                ? (contextSession ?? session).Messages.Where(m => m.Action == null && m.Status == "completed").ToArray() : [];
+        var focused = messages.Length > 0 || !string.IsNullOrWhiteSpace(card.Front) || !string.IsNullOrWhiteSpace(card.Back) ||
+            !string.IsNullOrWhiteSpace(card.FrontAnnotation) || !string.IsNullOrWhiteSpace(card.Annotation);
+        var requestedCardCount = action == "integrate" ? IntegrationRequirements.CardCount(requirements) : null;
         if (string.IsNullOrWhiteSpace(card.Front) && string.IsNullOrWhiteSpace(card.Back) && messages.Length == 0 &&
             action is not ("transcribe" or "formalize-annotation") && context.Length == 0 &&
             (action != "formalize-all" || string.IsNullOrWhiteSpace(card.FrontAnnotation) && string.IsNullOrWhiteSpace(card.Annotation)))
@@ -212,7 +218,12 @@ public static class ChatComposition
         var images = materials.SelectMany(m => m.Images).DistinctBy(a => a.Sha256).ToArray();
         var input = JsonSerializer.Serialize(new { proposalId, action, targetSide, allowedTypes, front = card.Front, back = card.Back,
             annotation = card.Annotation, frontAnnotation = card.FrontAnnotation, typeId = card.TypeId, requirements, generateFront, generateBack,
-            context = context.Select(m => new { m.Id, m.Role, material = Material(m) }),
+            contextScope = action == "integrate" ? focused ? "selected-and-draft" : "all-conversations" : null,
+            requestedCardCount,
+            conversations = action == "integrate" ? new[] { (Id: "main", Title: "原对话", Session: session) }
+                .Concat(session.Branches.Select(b => (b.Id, b.Title, b.Session))).Select(c => new {
+                    c.Id, c.Title, messageIds = c.Session.Messages.Where(m => context.Any(x => x.Id == m.Id)).Select(m => m.Id) }).ToArray() : null,
+            context = context.Select(m => new { m.Id, m.Role, material = Material(m), m.Status }),
             messages = messages.Select(m => new { m.Id, m.Role, material = Material(m), m.Status }),
             media = images.Select((a, index) => new { id = "asset:" + a.Sha256, attachmentIndex = index + 1,
                 sources = materials.Where(m => m.Images.Any(i => i.Sha256 == a.Sha256)).Select(m => m.Source) }) }, ModelJson);
@@ -247,6 +258,16 @@ public static class ChatComposition
             if (cards.Count is < 1 or > 20 || cards.Any(c => c.Front == null || c.Back == null || !allowedTypes.Contains(c.TypeId)) ||
                 proposal.Action is "integrate" or "formalize" or "formalize-all" && cards.Any(c => string.IsNullOrWhiteSpace(c.Front)))
                 throw new InvalidDataException("候选数量、正面或类型无效。");
+            if (proposal.Action == "integrate")
+            {
+                if (cards.Any(c => string.IsNullOrWhiteSpace(c.Back)))
+                    throw new InvalidDataException("整合结果缺少完整答案；原稿未改，请重试整合。");
+                if (cards.Select(c => (c.Front.Trim(), c.Back.Trim(), c.TypeId)).Distinct().Count() != cards.Count)
+                    throw new InvalidDataException("整合结果含重复卡片，不能靠重复内容满足数量；原稿未改，请重试整合。");
+                using var snapshot = JsonDocument.Parse(proposal.InputSnapshot);
+                if (snapshot.RootElement.TryGetProperty("requestedCardCount", out var count) && count.ValueKind == JsonValueKind.Number && cards.Count != count.GetInt32())
+                    throw new InvalidDataException($"补充要求指定 {count.GetInt32()} 张卡，实际返回 {cards.Count} 张；原稿未改，请重试整合。");
+            }
             if (proposal.Action == "formalize")
             {
                 if (cards.Count != 1) throw new InvalidDataException("生成书面化问题必须只返回一个正面。");
@@ -356,14 +377,20 @@ public static class ChatComposition
             using var snapshot = JsonDocument.Parse(proposal.InputSnapshot);
             if (snapshot.RootElement.TryGetProperty("frontAnnotation", out _)) frontAnnotation = first.FrontAnnotation;
         }
+        var additions = proposal.Cards.Skip(1).Select(Clone).ToArray();
+        foreach (var extra in additions)
+        {
+            extra.FrontSources = [.. original.FrontSources]; extra.BackSources = [.. original.BackSources];
+            extra.FrontAnnotationEnabled = original.FrontAnnotationEnabled; extra.AnnotationEnabled = original.AnnotationEnabled;
+        }
         var beforeRevision = original.Revision;
         Edit(original, first.Front, proposal.Action == "formalize" ? original.Back : first.Back, first.TypeId, annotation, frontAnnotation: frontAnnotation);
         if (proposal.Cards.Count > 1)
         {
             if (original.Revision == beforeRevision) { Remember(original); original.Revision++; }
-            original.UndoHistory[^1] = original.UndoHistory[^1] with { AddedCards = proposal.Cards.Skip(1).Select(c => new CardUndoAddition(c.Id, CardFingerprint(c))).ToArray() };
+            original.UndoHistory[^1] = original.UndoHistory[^1] with { AddedCards = additions.Select(c => new CardUndoAddition(c.Id, CardFingerprint(c))).ToArray() };
         }
-        foreach (var extra in proposal.Cards.Skip(1)) session.Compositions.Add(extra);
+        session.Compositions.InsertRange(session.Compositions.IndexOf(original) + 1, additions);
         proposal.Status = "adopted";
     }
 

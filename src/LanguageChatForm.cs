@@ -382,20 +382,29 @@ internal sealed class LanguageChatForm : Form
                 ChatComposition.Edit(card, Text("side") == "front" ? card.Front + "\n" + markdown : card.Front,
                     Text("side") == "back" ? card.Back + "\n" + markdown : card.Back, card.TypeId); Save(); break;
             case "compose":
+            {
                 if (Busy || auxiliaryModelsLoading) throw new InvalidOperationException("请等待当前请求或辅助模型目录加载完成。");
-                if (Card().ExportDraftId != null) throw new InvalidOperationException("请先编辑为新草稿。");
-                if (root.Auxiliary.Current.Binding.NeedsReconciliation) throw new InvalidOperationException("上次辅助操作待核对，不会重发。请核对原动作；API 未知结果需要保留并新建对话草稿。");
-                var proposal = ChatComposition.Begin(root, Card(), Text("action"), Text("requirements"), config.Load().Types.Select(t => t.Id).ToArray(), e.TryGetProperty("side", out var targetSide) ? targetSide.GetString() : null, chat); Save();
-                await RunAsync(async () => {
-                    var auxiliaryChat = root.Auxiliary.Current;
-                    auxiliaryChat.TypeId = chat.TypeId; auxiliaryChat.IncludeExamples = chat.IncludeExamples;
-                    var images = ChatComposition.ProposalImages(proposal, root);
-                    try { await auxiliaryCoordinator.SendAsync(auxiliaryModels, proposal.Action, proposal.InputSnapshot, images, requestCancellation.Token); }
-                    finally
-                    {
-                        FinishAuxiliaryProposal(proposal);
-                    }
-                }, true); break;
+                auxiliaryError = null;
+                try
+                {
+                    var sourceCard = Card();
+                    if (sourceCard.ExportDraftId != null) throw new InvalidOperationException("请先编辑为新草稿。");
+                    if (root.Auxiliary.Current.Binding.NeedsReconciliation && root.Auxiliary.Provider != "api")
+                        throw new InvalidOperationException("上次辅助操作待核对，请先核对原辅助回合。");
+                    var proposal = ChatComposition.Begin(root, sourceCard, Text("action"), Text("requirements"), config.Load().Types.Select(t => t.Id).ToArray(), e.TryGetProperty("side", out var targetSide) ? targetSide.GetString() : null, chat);
+                    if (root.Auxiliary.PrepareExplicitRequest()) BindAuxiliary();
+                    Save();
+                    await RunAsync(async () => {
+                        var auxiliaryChat = root.Auxiliary.Current;
+                        auxiliaryChat.TypeId = sourceCard.TypeId; auxiliaryChat.IncludeExamples = chat.IncludeExamples;
+                        var images = ChatComposition.ProposalImages(proposal, root);
+                        try { await auxiliaryCoordinator.SendAsync(auxiliaryModels, proposal.Action, proposal.InputSnapshot, images, requestCancellation.Token); }
+                        finally { FinishAuxiliaryProposal(proposal); }
+                    }, true);
+                }
+                catch (Exception ex) { auxiliaryError = ex is OperationCanceledException ? root.Auxiliary.Current.Binding.Error ?? "已停止处理，原输入已保留。" : ex.Message; throw; }
+                break;
+            }
             case "editProposal":
                 var candidate = root.Proposals.Single(p => p.Id == Text("proposalId"));
                 if (candidate.Status != "preview") throw new InvalidOperationException("候选已处理。");

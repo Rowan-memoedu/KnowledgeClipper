@@ -150,6 +150,7 @@ public sealed class ChatAuxiliaryState
 {
     public string Provider { get; set; } = "api";
     public Dictionary<string, ChatSession> Sessions { get; set; } = new(StringComparer.Ordinal);
+    public List<ChatSession> PreviousAttempts { get; set; } = [];
     [JsonIgnore] public ChatSession Current
     {
         get
@@ -159,6 +160,21 @@ public sealed class ChatAuxiliaryState
                 Sessions[Provider] = session = new() { Binding = new() { Provider = Provider } };
             return session;
         }
+    }
+
+    // Only a new, explicit auxiliary action may replace an API wait that cannot
+    // be read back. Preserve the entire uncertain attempt, including its IDs and
+    // partial output; the learning conversation and native recovery stay separate.
+    public bool PrepareExplicitRequest()
+    {
+        var previous = Current;
+        if (!previous.Binding.NeedsReconciliation) return false;
+        if (Provider != "api") throw new InvalidOperationException("上次辅助操作待核对，请先核对原辅助回合。");
+        if (previous.Gate.CurrentCount == 0) throw new InvalidOperationException("上次辅助请求仍在停止，请稍后重试。");
+        PreviousAttempts.Add(previous);
+        Sessions[Provider] = new() { Binding = new() { Provider = Provider }, Model = previous.Model, Effort = previous.Effort,
+            TypeId = previous.TypeId, IncludeExamples = previous.IncludeExamples };
+        return true;
     }
 }
 public sealed record ChatAuxiliaryPreferences(string Provider = "api", string Model = "", string? Effort = null);

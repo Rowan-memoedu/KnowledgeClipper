@@ -76,7 +76,7 @@ internal static partial class Program
             {
                 var proposal=chat.Proposals.LastOrDefault(p=>p.Action==action&&p.Status!="adopted"&&p.Status!="discarded");
                 var previousCount=chat.Proposals.Count;
-                if(proposal==null){await Button(form,action=="formalize"?"生成书面化问题":"整合所选对话");}
+                if(proposal==null){await Button(form,action=="formalize"?"生成书面化问题":"整合对话");}
                 var timer=System.Diagnostics.Stopwatch.StartNew();var reported="";
                 while(timer.Elapsed.TotalSeconds<240)
                 {

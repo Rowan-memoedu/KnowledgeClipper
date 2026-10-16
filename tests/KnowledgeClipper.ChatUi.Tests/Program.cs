@@ -28,6 +28,7 @@ internal static class Program
     }
     static async Task Run(string[] args)
     {
+        if(args.Contains("--integration-only")){await IntegrationUiChecks.Run(args);return;}
         if(args.Contains("--tabs-only")){await BranchUiChecks.Run(args);return;}
         var repo=args[0];var release=args[1];var output=args[2];Directory.CreateDirectory(output);
         var data=Path.Combine(output,"fixture",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(data);

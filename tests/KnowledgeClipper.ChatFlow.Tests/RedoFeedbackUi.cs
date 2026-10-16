@@ -54,7 +54,7 @@ internal static partial class Program
             await Turn(form,0);await Wait(form,"!document.querySelector('textarea[aria-label=\"问题\"]').disabled");
             Check(apiCalls==1&&draft.Chat.Binding.Stage=="completed","正常发送完成后解除本地等待，只有一次实际模型调用");
 
-            foreach(var label in new[]{"生成书面化问题","生成书面化答案","全部书面化","整合所选对话","预览卡片","确认并导入 RemNote","确认并导入 Anki","新卡片"}){
+            foreach(var label in new[]{"生成书面化问题","生成书面化答案","全部书面化","整合对话","预览卡片","确认并导入 RemNote","确认并导入 Anki","新卡片"}){
                 await Wait(form,"!!("+Find(label)+")&&!"+Find(label)+".disabled");
                 var result=await Js(form,"(()=>{window.__held=[];const b="+Find(label)+";const t=performance.now();b.click();return {disabled:b.disabled,busy:b.getAttribute('aria-busy'),ms:performance.now()-t};})()");
                 var row=JsonDocument.Parse(result).RootElement.Clone();measurements.Add(row);

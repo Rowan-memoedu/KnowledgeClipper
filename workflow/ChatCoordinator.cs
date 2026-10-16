@@ -105,7 +105,9 @@ public sealed class ChatCoordinator(ClipDraft draft, DraftStore store, ChatConfi
                 message.NativeTurnId = Session.Binding.TurnId;
                 snapshot.Stage = Session.Binding.Stage = "sending"; Save();
                 var reply = Message("api-answer-" + snapshot.Id);
-                await new ContentModule(http, apiKey).StreamChatAsync(snapshot.Instructions, Session.Messages.Where(m => m.CreatedAt < message.CreatedAt).ToArray(),
+                // Auxiliary requests already freeze their exact focus and reference
+                // context. Previous card operations must not become extra material.
+                await new ContentModule(http, apiKey).StreamChatAsync(snapshot.Instructions, action == null ? Session.Messages.Where(m => m.CreatedAt < message.CreatedAt).ToArray() : [],
                     snapshot.ModelInput, requestImages, draft.Settings with { Model = snapshot.Model, ContentMaxRetries = 0 }, text => {
                         reply.Parts = [new("text", reply.Text + text)]; StreamChanged(); return Task.CompletedTask;
                     }, ct, snapshot.Effort);
@@ -114,7 +116,9 @@ public sealed class ChatCoordinator(ClipDraft draft, DraftStore store, ChatConfi
         }
         catch (Exception ex)
         {
-            Session.Binding.Error ??= ex is OperationCanceledException ? "已停止本地等待，输入已保留。" : ex.Message;
+            Session.Binding.Error ??= ex is OperationCanceledException
+                ? ct.IsCancellationRequested ? "已停止本地等待，输入已保留。" : "请求等待超时，输入和部分回复已保留。"
+                : ex.Message;
             if (attempt != null)
             {
                 Session.Binding.Stage = Session.Binding.NeedsReconciliation ? "unknown" : "failed";

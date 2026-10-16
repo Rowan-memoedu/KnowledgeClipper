@@ -77,7 +77,7 @@ const MessageView = memo(function MessageView(){
   </MessagePrimitive.Root>;
 });
 
-function CardEditor({card,state}:{card:Card;state:State}){
+function CardEditor({card,state,onIntegrate}:{card:Card;state:State;onIntegrate:()=>void}){
   const historyPending=usePendingActions().history.has(card.id);
   const [front,setFront]=useState(card.front),[back,setBack]=useState(card.back),[type,setType]=useState(card.typeId);
   const [requirement,setRequirement]=useState('');
@@ -95,7 +95,7 @@ function CardEditor({card,state}:{card:Card;state:State}){
   const frozen=!!card.exportDraftId;
   const auxiliary=state.auxiliary;
   const auxiliaryModel=auxiliary?.models.find(m=>m.id===auxiliary.model);
-  const auxiliaryUnavailable=state.busy||frozen||!auxiliaryModel||!!auxiliary?.loading||!!auxiliary?.needsReconciliation;
+  const auxiliaryUnavailable=state.busy||frozen||!auxiliaryModel||!!auxiliary?.loading||!!auxiliary?.needsReconciliation&&auxiliary.provider!=='api';
   const sources=(side:'front'|'back')=><ol className="sources">{(side==='front'?card.frontSources:card.backSources).map((id,i,all)=><li key={id}>
     <span>{state.sourceMessages?.find(m=>m.id===id)?.conversation&&<small className="source-tab">{state.sourceMessages.find(m=>m.id===id)!.conversation} · </small>}
       {state.sourceMessages?.find(m=>m.id===id)?.title||state.messages.find(m=>m.id===id)?.parts.find(p=>p.kind==='text')?.text?.slice(0,32)||'消息 / 图片'}</span>
@@ -133,7 +133,8 @@ function CardEditor({card,state}:{card:Card;state:State}){
       <ActionButton className="preview-action" onClick={()=>send('preview',{cardId:card.id})}>预览卡片</ActionButton></div>
     <SupplementalRequirements text={requirement} onTextChange={setRequirement} selected={requirementSelection} onSelectionChange={setRequirementSelection} disabled={state.busy}/>
     <div className="auxiliary-panel">
-      <div className="tools auxiliary-actions"><ActionButton disabled={auxiliaryUnavailable} onClick={()=>send('compose',{cardId:card.id,action:'integrate',requirements})}>整合所选对话</ActionButton></div>
+      <div className="tools auxiliary-actions"><ActionButton disabled={auxiliaryUnavailable} aria-busy={auxiliary?.busy&&state.proposals.some(p=>p.action==='integrate'&&p.status==='pending')||false}
+        onClick={()=>{onIntegrate();send('compose',{cardId:card.id,action:'integrate',requirements});}}>整合对话</ActionButton></div>
       <div className="auxiliary-settings" aria-label="辅助操作设置" aria-busy={auxiliary?.loading||auxiliary?.busy||false}
         data-state={auxiliary?.error?'error':auxiliary?.loading?'loading':auxiliaryModel?'success':'default'}>
         <label>服务<select aria-label="辅助服务" value={auxiliary?.provider||'api'} disabled={state.busy} onChange={e=>send('auxiliarySettings',{provider:e.target.value})}>
@@ -144,6 +145,7 @@ function CardEditor({card,state}:{card:Card;state:State}){
           <option value="">{auxiliaryModel?.defaultEffort?`默认 (${auxiliaryModel.defaultEffort})`:'默认'}</option>{auxiliaryModel?.efforts.map(e=><option key={e}>{e}</option>)}</select></label>
       </div>
       {auxiliary?.error&&<p className="error" role="alert">{auxiliary.error}</p>}
+      {!state.busy&&auxiliary?.needsReconciliation&&auxiliary.provider==='api'&&<p className="notice">上次处理未完成。可修改内容后再次生成；原输入和部分回复会保留。</p>}
       {!auxiliary?.loading&&!auxiliaryModel&&<ActionButton className="auxiliary-retry" disabled={state.busy} onClick={()=>send('auxiliaryModels')}>重新加载辅助模型</ActionButton>}
       {auxiliary?.needsReconciliation&&auxiliary.provider==='codex'&&<ActionButton disabled={state.busy} onClick={()=>send('recoverAuxiliary')}>核对原辅助回合</ActionButton>}
     </div>
@@ -250,7 +252,7 @@ function App(){
       </div>
       </div></main></ConversationRuntime><aside className="cards"><div className="cards-heading"><h2>卡片编辑</h2><ActionButton onClick={()=>send('addCard')}>新卡片</ActionButton></div>
       <nav aria-label="卡片">{state.cards.map((c,i)=><ActionButton key={c.id} aria-pressed={card?.id===c.id} onClick={()=>setActive(c.id)}>卡片 {i+1}{c.exportDraftId?' · 已确认':''}</ActionButton>)}</nav>
-      {card&&<CardEditor key={card.id} card={card} state={state}/>}
+      {card&&<CardEditor key={card.id} card={card} state={state} onIntegrate={()=>setActive(card.id)}/>}
     </aside></div>
   </Context.Provider>;
 }
