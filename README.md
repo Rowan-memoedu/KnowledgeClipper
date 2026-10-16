@@ -4,9 +4,9 @@ Windows 悬浮式知识采集工具：划词朗读、图文提问、多轮问答
 
 ## 当前交付状态
 
-2026-10-16 核对的现役桌面包为 `D:/Artifacts/KnowledgeClipper/tab-controls-20261016/accepted/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64`。实际进程、桌面快捷方式和 `Personal Tool - KnowledgeClipper` 计划任务均已指向此包。RemNote 专用服务仍使用 `performance-20261016/remnote`，HTTP/WS/安装服务分别为 43111/43112/43113。路径是本机部署事实，其他机器按其安装配置核对。
+2026-10-16 核对的现役桌面包为 `D:/Artifacts/KnowledgeClipper/tab-controls-20261016/published/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64`。实际进程、桌面快捷方式和 `Personal Tool - KnowledgeClipper` 计划任务均已指向此包；在前一正式包上只更新本次已验收程序集和界面，保留其配置、不可变合同及运行依赖原字节。RemNote 专用服务仍使用 `performance-20261016/remnote`，HTTP/WS/安装服务分别为 43111/43112/43113。路径是本机部署事实，其他机器按其安装配置核对。
 
-- [Tab 关闭、撤回和拖拽验收](D:/Artifacts/KnowledgeClipper/tab-controls-20261016/validation.md)：249 项 Chat、26 项专项界面、18 组业务回归及综合聊天界面通过；原生鼠标拖拽和 Ctrl+Z、关闭后来源保留、在途关闭及重开恢复均验证。切换前后 1,137 份既有数据与配置字节未变。
+- [Tab 关闭、撤回和拖拽验收](D:/Artifacts/KnowledgeClipper/tab-controls-20261016/validation.md)：249 项 Chat、27 项专项界面、18 组业务回归及综合聊天界面通过；原生鼠标拖拽和 Ctrl+Z、连续十轮焦点检查、关闭后来源保留、在途关闭及重开恢复均验证。切换前后 1,137 份既有数据与配置字节未变。
 - [同页分叉 Tab 与共享卡片验收](D:/Artifacts/KnowledgeClipper/chat-tabs-20261016/validation.md)：从消息分叉或新建空白 Tab，跨分支选材到同一卡片，输入和回复各归原对话；真实 Codex/API 分叉、双端四图导出与回执丢失恢复、专项及综合界面通过。
 - [此前性能优化验收](D:/Artifacts/KnowledgeClipper/performance-20261016/validation.md)：优化历史读取/排版、旧制卡记录重开和双端导入；原功能与格式保持。
 - [最新批注书面化修复与真实验收](D:/Artifacts/KnowledgeClipper/annotation-formalize-fix-20261015/validation.md)：缺失历史来源不再使辅助操作在发送前报错；保留保存的正文、双面批注及原来源编号。

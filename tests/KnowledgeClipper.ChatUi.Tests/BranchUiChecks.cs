@@ -139,6 +139,8 @@ internal static class BranchUiChecks
         await UndoClosed();await Wait($"document.activeElement?.id==='conversation-{blank.Id}'");
         await UndoClosed();await Wait("document.activeElement?.id==='conversation-main'");
         Check(draft.Chat.ClosedTabs.Count==0&&ChatWorkspace.OpenIds(draft.Chat).Last()=="main","连续关闭可逐次 Ctrl+Z 按逆序恢复");
+        for(var cycle=0;cycle<10;cycle++){await CloseTab("main");await UndoClosed();await Wait("document.activeElement?.id==='conversation-main'");}
+        Check(draft.Chat.ClosedTabs.Count==0,"连续十轮关闭与真实 Ctrl+Z 恢复始终保持 Tab 焦点");
         await Click("#conversation-"+branch.Id);await Wait("document.querySelector('.composer .error')!==null");
         await CloseTab(branch.Id);await UndoClosed();await Wait($"document.activeElement?.id==='conversation-{branch.Id}'");
         Check(branch.Session.Binding.Stage=="unknown"&&branch.Session.Input=="ERROR_FIXTURE"&&requests==2,"关闭及撤回未知分支保留原状态和输入，不重发模型请求");

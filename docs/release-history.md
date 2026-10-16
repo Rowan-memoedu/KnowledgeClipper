@@ -4,7 +4,7 @@
 
 ## Tab 关闭、撤回和拖拽排序（2026-10-16）
 
-原对话与分支均可点 × 关闭、Ctrl+Z 逐次撤回关闭、拖拽到目标前后排序；关闭历史和显示顺序随原草稿持久保存，消息、原生身份和共享卡片来源保留。关闭最后 Tab 自动补空白页，输入框及卡片区的原有撤销保留，在途回复继续归原会话。249 项 Chat、26 项专项界面、18 组业务回归与综合聊天界面通过，含原生鼠标拖拽、真实键盘及重开恢复。[验收记录](D:/Artifacts/KnowledgeClipper/tab-controls-20261016/validation.md)、[切换回执](D:/Artifacts/KnowledgeClipper/tab-controls-20261016/deployment.json)。
+原对话与分支均可点 × 关闭、Ctrl+Z 逐次撤回关闭、拖拽到目标前后排序；关闭历史和显示顺序随原草稿持久保存，消息、原生身份和共享卡片来源保留。关闭最后 Tab 自动补空白页，输入框及卡片区的原有撤销保留，在途回复继续归原会话。249 项 Chat、27 项专项界面、18 组业务回归与综合聊天界面通过，含原生鼠标拖拽、真实键盘、连续十轮焦点检查及重开恢复。最终 `published` 包保留前一正式包的配置、不可变合同及运行依赖原字节；临时快照的合同换行差异及失败记录见验收报告。[验收记录](D:/Artifacts/KnowledgeClipper/tab-controls-20261016/validation.md)、[切换回执](D:/Artifacts/KnowledgeClipper/tab-controls-20261016/deployment-published.json)。
 
 ## 同页分叉 Tab 与共享卡片（2026-10-16）
 
