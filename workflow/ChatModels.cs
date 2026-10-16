@@ -120,9 +120,13 @@ public sealed class ChatSession
     public int Revision { get; set; }
     public string ActiveConversationId { get; set; } = "main";
     public List<ChatBranch> Branches { get; set; } = [];
+    public List<string>? ConversationOrder { get; set; }
+    public List<ClosedChatTab> ClosedTabs { get; set; } = [];
     public ChatFork? Fork { get; set; }
     [JsonIgnore] public SemaphoreSlim Gate { get; } = new(1, 1);
 }
+
+public sealed record ClosedChatTab(string Id, int Index);
 
 public sealed class ChatBranch
 {

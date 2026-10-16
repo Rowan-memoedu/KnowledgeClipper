@@ -4,7 +4,15 @@
 /* Hallmark · component: conversation tabs and fork action · existing desktop tokens
  * states: default · hover · focus · active · disabled · loading · error · success
  * pre-emit critique: P4 H4 E4 S5 R5 V4 */
-.conversation-tabs{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;padding:10px 20px 0;min-width:0}
+.conversation-tabs{display:flex;gap:6px;padding:10px 20px 0;min-width:0}
+.conversation-tabs [role=tablist]{flex:1}
+.conversation-tab{display:flex;flex-shrink:0;position:relative;border-radius:5px}
+.conversation-tab [role=tab]{border-radius:5px 0 0 5px;border-right:0;min-width:0}
+.conversation-tabs .close-conversation-tab{padding:4px 7px;border-radius:0 5px 5px 0;min-width:28px}
+.conversation-tab:has([aria-selected=true]) .close-conversation-tab{border-color:var(--accent);background:var(--selected);color:var(--accent)}
+.conversation-tab[data-drop=before]::before,.conversation-tab[data-drop=after]::after{content:'';position:absolute;top:0;bottom:0;width:2px;background:var(--accent);pointer-events:none}
+.conversation-tab[data-drop=before]::before{left:-4px}.conversation-tab[data-drop=after]::after{right:-4px}
+.conversation-tabs .restore-conversation-tab{align-self:start}
 .conversation-tabs [role=tablist]{display:flex;gap:6px;overflow-x:auto;min-width:0;padding:2px 2px 6px}
 .conversation-tabs button{white-space:nowrap;min-height:32px;font-size:12px;padding:6px 10px;flex-shrink:0}
 .conversation-tabs [role=tab]{max-width:210px;overflow:hidden;text-overflow:ellipsis}

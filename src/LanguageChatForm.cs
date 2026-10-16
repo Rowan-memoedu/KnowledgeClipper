@@ -199,7 +199,8 @@ internal sealed class LanguageChatForm : Form
             needsReconciliation = session.Binding.NeedsReconciliation || session.Fork is { Stage: not "verified" } };
         web.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new {
             draftId = Draft.Id, conversationId = root.ActiveConversationId,
-            tabs = new[] { Tab("main", "原对话", root) }.Concat(root.Branches.Select(b => Tab(b.Id, b.Title, b.Session))),
+            tabs = ChatWorkspace.OpenIds(root).Select(id => Tab(id, id == "main" ? "原对话" : root.Branches.Single(b => b.Id == id).Title, ChatWorkspace.Session(root, id))),
+            canUndoClose = root.ClosedTabs.Count > 0,
             busy = Busy, conversationBusy = coordinator.Busy && chat.Fork is not { Stage: not "verified" }, error = error ?? chat.Binding.Error,
             status = auxiliaryCoordinator.Busy ? "正在处理卡片…" : coordinator.Busy && chat.Fork is { Stage: not "verified" } ? "正在建立或核对分叉…" : coordinator.Busy ? "正在回复…" : Busy ? "其他对话正在处理…" : chat.Binding.NeedsReconciliation ? "结果待核对" : "草稿已保存",
             provider = chat.Binding.Provider, chat.Model, chat.Effort, chat.TypeId, chat.Input, chat.IncludeExamples, chat.UseQuestionTypeDefaults,
@@ -293,6 +294,12 @@ internal sealed class LanguageChatForm : Form
             case "new":
                 Save(); var blank = ChatWorkspace.New(root); await SwitchConversationAsync(blank.Id); break;
             case "switchConversation": await SwitchConversationAsync(Text("id")); break;
+            case "closeConversation":
+                Save(); ChatWorkspace.Close(root, Text("id")); await SwitchConversationAsync(root.ActiveConversationId); break;
+            case "undoCloseConversation":
+                Save(); if (ChatWorkspace.UndoClose(root)) await SwitchConversationAsync(root.ActiveConversationId); break;
+            case "moveConversation":
+                ChatWorkspace.Move(root, Text("id"), Text("targetId"), e.GetProperty("after").GetBoolean()); Save(); break;
             case "fork":
                 if (Busy) throw new InvalidOperationException("请等待当前回合完成或停止后分叉。");
                 Save(); var branch = ChatWorkspace.Fork(root, Text("messageId")); await SwitchConversationAsync(branch.Id);

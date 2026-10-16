@@ -52,6 +52,9 @@ internal static class BranchUiChecks
         Check(draft.Chat.Input=="原对话未发送输入"&&draft.Chat.Compositions.Single().Back.Contains("后续原对话回答"),"切换保留各 Tab 输入和共享卡片内容");
         await Click(".composer-actions .primary");
         await Wait("document.querySelector('[role=tab][aria-selected=true]').textContent.includes('回复中')");
+        await CloseTab(branch.Id);await Wait("document.querySelectorAll('[role=tab]').length===1");
+        await UndoClosed();await Wait($"document.activeElement?.id==='conversation-{branch.Id}'");
+        Check(ChatWorkspace.Active(draft.Chat)==branch.Session&&requests==1,"回复中关闭并撤回仍绑定同一协调器，不中断或重发原请求");
         await Click(".new-conversation-tab");await Wait("document.querySelectorAll('[role=tab]').length===3&&document.querySelectorAll('.message').length===0");
         var blank=draft.Chat.Branches.Last();await Wait("document.querySelector('.composer-actions .primary')!==null&&document.querySelector('.composer-actions').textContent.includes('草稿已保存')");
         Check(blank.Session.Messages.Count==0&&branch.Session.Messages.Last().Text.Contains("隔离分支回复")&&Application.OpenForms.OfType<LanguageChatForm>().Count()==windows,"生成中切换空白 Tab，流式回复仍写入原分支且不串页");
@@ -85,8 +88,78 @@ internal static class BranchUiChecks
         await Click(".new-conversation-tab");await Wait("document.querySelectorAll('[role=tab]').length===4&&document.querySelector('.composer-actions').textContent.includes('草稿已保存')");
         Check(branch.Session.Binding.Stage=="unknown"&&draft.Chat.Branches.Last().Session.Messages.Count==0&&await web.CoreWebView2.ExecuteScriptAsync("document.querySelector('.composer .error')===null")=="true","后台分支断线保留原输入和未知状态，错误不会串到新 Tab");
         await Click("#conversation-"+branch.Id);await Wait("document.querySelector('.composer .error')!==null");
+        await web.CoreWebView2.CallDevToolsProtocolMethodAsync("Emulation.clearDeviceMetricsOverride","{}");
+        async Task CloseTab(string tabId)
+        {
+            await Click($"[data-tab-id='{tabId}'] .close-conversation-tab");
+            await Wait($"document.getElementById('conversation-{tabId}')===null");
+        }
+        async Task UndoClosed()
+        {
+            await Script("document.querySelector('[role=tab][aria-selected=true]').focus()");
+            await web.CoreWebView2.CallDevToolsProtocolMethodAsync("Input.dispatchKeyEvent","{\"type\":\"keyDown\",\"modifiers\":2,\"key\":\"z\",\"code\":\"KeyZ\",\"windowsVirtualKeyCode\":90}");
+            await web.CoreWebView2.CallDevToolsProtocolMethodAsync("Input.dispatchKeyEvent","{\"type\":\"keyUp\",\"key\":\"z\",\"code\":\"KeyZ\",\"windowsVirtualKeyCode\":90}");
+        }
+        var last=draft.Chat.Branches.Last();
+        var dragReceiver=web.CoreWebView2.GetDevToolsProtocolEventReceiver("Input.dragIntercepted");
+        string intercepted=null;
+        EventHandler<CoreWebView2DevToolsProtocolEventReceivedEventArgs> observeDrag=(_,e)=>intercepted=e.ParameterObjectAsJson;
+        dragReceiver.DevToolsProtocolEventReceived+=observeDrag;
+        await web.CoreWebView2.CallDevToolsProtocolMethodAsync("Input.setInterceptDrags","{\"enabled\":true}");
+        using(var bounds=JsonDocument.Parse(await web.CoreWebView2.ExecuteScriptAsync($"(()=>{{const a=document.getElementById('conversation-{branch.Id}').getBoundingClientRect(),b=document.getElementById('conversation-main').getBoundingClientRect();return {{x:a.left+a.width/2,y:a.top+a.height/2,toX:b.left+2,toY:b.top+b.height/2}};}})()")))
+        {
+            var b=bounds.RootElement;var x=b.GetProperty("x").GetDouble();var y=b.GetProperty("y").GetDouble();var toX=b.GetProperty("toX").GetDouble();var toY=b.GetProperty("toY").GetDouble();
+            await web.CoreWebView2.CallDevToolsProtocolMethodAsync("Input.dispatchMouseEvent",JsonSerializer.Serialize(new{type="mousePressed",x,y,button="left",buttons=1,clickCount=1}));
+            await web.CoreWebView2.CallDevToolsProtocolMethodAsync("Input.dispatchMouseEvent",JsonSerializer.Serialize(new{type="mouseMoved",x=x+12,y,button="left",buttons=1}));
+            await web.CoreWebView2.CallDevToolsProtocolMethodAsync("Input.dispatchMouseEvent",JsonSerializer.Serialize(new{type="mouseMoved",x=toX,y=toY,button="left",buttons=1}));
+            var dragWatch=Stopwatch.StartNew();while(intercepted==null){if(dragWatch.Elapsed.TotalSeconds>10)throw new Exception("Native mouse drag did not start");await Task.Delay(30);}
+            using var drag=JsonDocument.Parse(intercepted);var dataPayload=drag.RootElement.GetProperty("data");
+            foreach(var eventType in new[]{"dragEnter","dragOver","drop"})await web.CoreWebView2.CallDevToolsProtocolMethodAsync("Input.dispatchDragEvent",JsonSerializer.Serialize(new{type=eventType,x=toX,y=toY,data=dataPayload}));
+            await web.CoreWebView2.CallDevToolsProtocolMethodAsync("Input.dispatchMouseEvent",JsonSerializer.Serialize(new{type="mouseReleased",x=toX,y=toY,button="left",buttons=0,clickCount=1}));
+        }
+        await web.CoreWebView2.CallDevToolsProtocolMethodAsync("Input.setInterceptDrags","{\"enabled\":false}");
+        dragReceiver.DevToolsProtocolEventReceived-=observeDrag;
+        await Wait($"document.querySelector('[role=tab]')?.id==='conversation-{branch.Id}'");
+        Check(ChatWorkspace.OpenIds(draft.Chat).First()==branch.Id,"原生鼠标按下、移动及放下可实际拖拽到目标之前");
+        await Script($"(()=>{{const source=document.querySelector('[data-tab-id=main]'),target=document.querySelector('[data-tab-id=\"{last.Id}\"]'),dataTransfer=new DataTransfer(),box=target.getBoundingClientRect();source.dispatchEvent(new DragEvent('dragstart',{{bubbles:true,dataTransfer}}));target.dispatchEvent(new DragEvent('dragover',{{bubbles:true,cancelable:true,dataTransfer,clientX:box.right-1}}));target.dispatchEvent(new DragEvent('drop',{{bubbles:true,cancelable:true,dataTransfer,clientX:box.right-1}}));source.dispatchEvent(new DragEvent('dragend',{{bubbles:true,dataTransfer}}));}})()");
+        await Wait("[...document.querySelectorAll('[role=tab]')].at(-1)?.id==='conversation-main'");
+        Check(ChatWorkspace.OpenIds(draft.Chat).Last()=="main"&&draft.Chat.ActiveConversationId==branch.Id,"拖拽事件实际重排 Tab，可跨原对话且不切换当前分支");
+        var sharedBack=draft.Chat.Compositions[0].Back;var sourceIds=draft.Chat.Compositions[0].BackSources.ToArray();
+        await CloseTab("main");
+        Check(draft.Chat.ActiveConversationId==branch.Id&&draft.Chat.Compositions[0].Back==sharedBack&&ChatWorkspace.Messages(draft.Chat).Any(m=>m.Id=="a2"),"点击非当前 Tab 的叉不切页，原对话来源与共享卡完整保留");
+        var history=draft.Chat.ClosedTabs.Count;
+        await Script("document.querySelector('textarea[aria-label=问题]').focus()");
+        await web.CoreWebView2.CallDevToolsProtocolMethodAsync("Input.dispatchKeyEvent","{\"type\":\"keyDown\",\"modifiers\":2,\"key\":\"z\",\"code\":\"KeyZ\",\"windowsVirtualKeyCode\":90}");
+        await web.CoreWebView2.CallDevToolsProtocolMethodAsync("Input.dispatchKeyEvent","{\"type\":\"keyUp\",\"key\":\"z\",\"code\":\"KeyZ\",\"windowsVirtualKeyCode\":90}");
+        await Task.Delay(100);
+        Check(draft.Chat.ClosedTabs.Count==history,"问题输入框 Ctrl+Z 保留原生文字撤销，不误开 Tab");
+        await UndoClosed();await Wait("document.getElementById('conversation-main')!==null&&document.activeElement?.id==='conversation-main'");
+        Check(ChatWorkspace.OpenIds(draft.Chat).Last()=="main"&&draft.Chat.Input=="迟到的原对话输入","真实 Ctrl+Z 恢复原位置、原输入并聚焦恢复的 Tab");
+        await CloseTab("main");await CloseTab(blank.Id);
+        await UndoClosed();await Wait($"document.activeElement?.id==='conversation-{blank.Id}'");
+        await UndoClosed();await Wait("document.activeElement?.id==='conversation-main'");
+        Check(draft.Chat.ClosedTabs.Count==0&&ChatWorkspace.OpenIds(draft.Chat).Last()=="main","连续关闭可逐次 Ctrl+Z 按逆序恢复");
+        await Click("#conversation-"+branch.Id);await Wait("document.querySelector('.composer .error')!==null");
+        await CloseTab(branch.Id);await UndoClosed();await Wait($"document.activeElement?.id==='conversation-{branch.Id}'");
+        Check(branch.Session.Binding.Stage=="unknown"&&branch.Session.Input=="ERROR_FIXTURE"&&requests==2,"关闭及撤回未知分支保留原状态和输入，不重发模型请求");
+        foreach(var openId in ChatWorkspace.OpenIds(draft.Chat).ToArray())await CloseTab(openId);
+        await Wait("document.querySelectorAll('[role=tab]').length===1&&document.querySelectorAll('.message').length===0");
+        Check(draft.Chat.Compositions.Count==3&&draft.Chat.Compositions[0].Back==sharedBack&&draft.Chat.Compositions[0].BackSources.SequenceEqual(sourceIds),"关闭最后 Tab 自动补空白页，多张卡及跨分支来源不丢失");
+        using(var shot=File.Create(Path.Combine(output,"tabs-closed.png")))await web.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png,shot);
+        var openBefore=ChatWorkspace.OpenIds(draft.Chat).ToArray();var closedBefore=draft.Chat.ClosedTabs.Count;
         var id=draft.Id;form.Close();var restored=store.Find(id)!;
-        Check(restored.Chat!.Branches.Count==3&&restored.Chat.Compositions.Count==3&&restored.Chat.ActiveConversationId==branch.Id,"关闭重开数据保留 Tab 顺序、当前分支与三张共享卡");
+        Check(ChatWorkspace.OpenIds(restored.Chat!).SequenceEqual(openBefore)&&restored.Chat.ClosedTabs.Count==closedBefore&&restored.Chat.Compositions.Count==3,"关闭重开数据保留 Tab 排序、关闭历史与三张共享卡");
+        using(var reopened=new LanguageChatForm(restored,store,data,release,()=>"fixture",()=>throw new Exception("Must stay in same page")))
+        {
+            reopened.Show();
+            var reopenedWeb=(WebView2)typeof(LanguageChatForm).GetField("web",BindingFlags.Instance|BindingFlags.NonPublic)!.GetValue(reopened)!;
+            var watch=Stopwatch.StartNew();while(reopenedWeb.CoreWebView2==null||await reopenedWeb.CoreWebView2.ExecuteScriptAsync("document.querySelector('.restore-conversation-tab')!==null")!="true")
+            {if(watch.Elapsed.TotalSeconds>40)throw new Exception("Reopen closed Tab UI");await Task.Delay(30);}
+            await reopenedWeb.CoreWebView2.ExecuteScriptAsync("document.querySelector('.restore-conversation-tab').click()");
+            while(ChatWorkspace.OpenIds(restored.Chat).Count!=2){if(watch.Elapsed.TotalSeconds>40)throw new Exception("Restore persisted closed Tab");await Task.Delay(30);}
+            Check(restored.Chat.ActiveConversationId=="main"&&restored.Chat.Input=="迟到的原对话输入","实际重开界面后可撤回上次关闭的原 Tab，不新建对话身份");
+            reopened.Close();
+        }
         Check(requests==2,"分叉、新建、切换、选材和新增卡片均不调用模型，仅两次显式发送");
         WorkflowJson.Save(Path.Combine(output,"tabs-ui-results.json"),new{passed=true,checks,screenshots,requests,data,id});
         server.Stop();await serving;

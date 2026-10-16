@@ -11,10 +11,43 @@ public static class ChatWorkspace
         root.Branches.SingleOrDefault(b => b.Id == id)?.Session ?? throw new InvalidDataException("找不到原对话 Tab。");
     public static IEnumerable<ChatMessage> Messages(ChatSession root) => root.Messages
         .Concat(root.Branches.SelectMany(b => b.Session.Messages)).DistinctBy(m => m.Id);
+    public static IReadOnlyList<string> OpenIds(ChatSession root) => root.ConversationOrder ??
+        new[] { "main" }.Concat(root.Branches.Select(b => b.Id)).ToList();
     public static void Switch(ChatSession root, string id)
     {
+        if (!OpenIds(root).Contains(id)) throw new InvalidOperationException("此对话 Tab 已关闭，可撤回关闭后继续。");
         _ = Session(root, id);
         root.ActiveConversationId = id;
+    }
+    public static void Close(ChatSession root, string id)
+    {
+        var order = OpenIds(root).ToList(); var index = order.IndexOf(id);
+        if (index < 0) throw new InvalidOperationException("此对话 Tab 已关闭。");
+        order.RemoveAt(index); root.ConversationOrder = order;
+        root.ClosedTabs.Add(new(id, index)); root.Version = 3;
+        // Retain the session, native identity and card sources, even while a
+        // response is in flight. Closing is a view operation, never deletion.
+        if (order.Count == 0) New(root);
+        else if (root.ActiveConversationId == id) root.ActiveConversationId = order[Math.Min(index, order.Count - 1)];
+    }
+    public static bool UndoClose(ChatSession root)
+    {
+        if (root.ClosedTabs.Count == 0) return false;
+        var closed = root.ClosedTabs[^1]; _ = Session(root, closed.Id);
+        var order = OpenIds(root).ToList();
+        if (order.Contains(closed.Id)) throw new InvalidDataException("关闭记录与当前 Tab 不一致。");
+        order.Insert(Math.Clamp(closed.Index, 0, order.Count), closed.Id);
+        root.ConversationOrder = order; root.ClosedTabs.RemoveAt(root.ClosedTabs.Count - 1);
+        root.ActiveConversationId = closed.Id; root.Version = 3;
+        return true;
+    }
+    public static void Move(ChatSession root, string id, string targetId, bool after)
+    {
+        var order = OpenIds(root).ToList();
+        if (!order.Contains(id) || !order.Contains(targetId)) throw new InvalidOperationException("Tab 已关闭，未改变排序。");
+        if (id == targetId) return;
+        order.Remove(id); order.Insert(order.IndexOf(targetId) + (after ? 1 : 0), id);
+        root.ConversationOrder = order; root.Version = 3;
     }
     private static ChatSession Empty(ChatSession source) => new()
     {
@@ -23,8 +56,10 @@ public static class ChatWorkspace
     };
     public static ChatBranch New(ChatSession root)
     {
+        var order = OpenIds(root).ToList();
         var branch = new ChatBranch { Title = "新对话 " + (root.Branches.Count + 1), Session = Empty(Active(root)) };
-        root.Branches.Add(branch); root.ActiveConversationId = branch.Id; root.Version = 2;
+        root.Branches.Add(branch); order.Add(branch.Id); root.ConversationOrder = order;
+        root.ActiveConversationId = branch.Id; root.Version = Math.Max(root.Version, 2);
         return branch;
     }
     public static bool CanFork(ChatSession session, ChatMessage message)
@@ -38,6 +73,7 @@ public static class ChatWorkspace
     }
     public static ChatBranch Fork(ChatSession root, string messageId)
     {
+        var order = OpenIds(root).ToList();
         var source = Active(root);
         var selected = source.Messages.Single(m => m.Id == messageId);
         if (!CanFork(source, selected)) throw new InvalidOperationException("请从本轮最后一条已完成回答分叉；未完成内容先核对原回合。");
@@ -61,7 +97,8 @@ public static class ChatWorkspace
             session.Fork = new() { SourceThreadId = source.Binding.ThreadId, LastTurnId = retainedTurn };
         var branch = new ChatBranch { Title = "分叉 " + (root.Branches.Count + 1), ParentId = root.ActiveConversationId,
             MessageId = selected.Id, Session = session };
-        root.Branches.Add(branch); root.ActiveConversationId = branch.Id; root.Version = 2;
+        root.Branches.Add(branch); order.Add(branch.Id); root.ConversationOrder = order;
+        root.ActiveConversationId = branch.Id; root.Version = Math.Max(root.Version, 2);
         return branch;
     }
 }
