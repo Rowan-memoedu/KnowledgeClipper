@@ -135,6 +135,28 @@ def run(request, channel):
         client.initialize()
         channel.client = client
         action = request["action"]
+        if action in ("fork", "verifyFork"):
+            source_id, boundary = request["sourceThreadId"], request["lastTurnId"]
+            source = body(client.thread_read(source_id, include_turns=True))["thread"]
+            turns = source.get("turns", [])
+            matches = [i for i, turn in enumerate(turns) if turn["id"] == boundary]
+            if len(matches) != 1 or turns[matches[0]]["status"] not in ("completed", "interrupted"):
+                raise RuntimeError("分叉位置不是已完成的原生回合；尚未创建分叉。")
+            expected = [turn["id"] for turn in turns[:matches[0] + 1]]
+            if action == "fork":
+                channel.emit("stage", durable=True, stage="forking")
+                result = client.thread_fork(source_id, {"lastTurnId": boundary, "excludeTurns": True})
+                channel.thread_id = result.thread.id
+                channel.emit("forked", durable=True, threadId=channel.thread_id)
+            else:
+                channel.thread_id = request.get("threadId")
+            if not channel.thread_id or channel.thread_id == source_id:
+                raise RuntimeError("缺少精确的新分叉身份；不会重新分叉。")
+            copied = body(client.thread_read(channel.thread_id, include_turns=True))["thread"]
+            if [turn["id"] for turn in copied.get("turns", [])] != expected:
+                raise RuntimeError("原生分叉历史与指定回合边界不符；保留新身份，禁止发送。")
+            channel.emit("forkVerified", durable=True, threadId=channel.thread_id, lastTurnId=boundary)
+            return
         if action == "models":
             account = body(client.account_read())
             if (account.get("account") or {}).get("type") != "chatgpt":

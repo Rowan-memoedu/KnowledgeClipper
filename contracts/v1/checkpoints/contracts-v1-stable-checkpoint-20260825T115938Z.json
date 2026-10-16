@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "checkpointId": "contracts-v1-20260825T115938Z",
+  "status": "stable",
+  "createdAt": "2026-08-25T11:59:38.6123225Z",
+  "compatibilityRule": "Breaking changes require controller adjudication and a new versioned checkpoint; this receipt and the identified files are never overwritten.",
+  "validation": {
+    "workingDirectory": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper",
+    "command": "python tools\\validate_contracts.py",
+    "exitCode": 0,
+    "result": { "schemaVersion": "1.0.0", "schemasChecked": 18, "validFixturesAccepted": 27, "invalidFixturesRejected": 15, "authoritativeRegistryEntries": 0, "workerCliDescriptorChecked": true, "speechEdgeRegistryState": "planned-only-not-runnable", "imageOcrRegistryState": "planned-only-not-runnable", "ipcFramingChecked": true }
+  },
+  "buildGate": {
+    "command": "D:\\Applications\\RemNoteQuickClipperRuntime\\dotnet-sdk-8.0.424\\dotnet.exe build orchestrator\\RemNoteQuickClipper.Orchestrator.csproj --configuration Release --no-restore",
+    "exitCode": 0,
+    "result": "Build succeeded; 0 warnings; 0 errors."
+  },
+  "canaryGate": {
+    "command": "D:\\Applications\\RemNoteQuickClipperRuntime\\dotnet-sdk-8.0.424\\dotnet.exe tests\\Orchestrator.ContractTests\\bin\\Release\\net8.0\\Orchestrator.ContractTests.dll C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper",
+    "exitCode": 0,
+    "result": "6 groups passed: four cancellation reasons with result inside 2000 ms grace; task.cancel payload propagation; Named Pipe JSON Lines including exact 1 MiB + CRLF accepted, 1 MiB+1 rejected, and framing drift rejected."
+  },
+  "files": [
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\artifact.schema.json", "$id": "./artifact.schema.json", "schemaVersion": "1.0.0", "sha256": "14AAA3BA918B201280DF462677C39A373ACDF421C8DA06C1D4A7B6D619DA0E91" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\ipc-request.schema.json", "$id": "./ipc-request.schema.json", "protocolVersion": "1.0", "sha256": "E307C1CA7C8D73BA7E453E50C83C19B4AEC044BB551C72FE4DACFDB606E045A9" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\ipc-response.schema.json", "$id": "./ipc-response.schema.json", "protocolVersion": "1.0", "sha256": "208AC075F8E5CE1904271542CD5CD4D2B7F756E3D26EE3D83D04CC4B6921D2CE" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\pipeline.schema.json", "$id": "./pipeline.schema.json", "schemaVersion": "1.0.0", "sha256": "B47FBCCE239E078D934B155DC2EEC08D3B3031BD834BBB44C7488FEE397E4FDC" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\task-cancel-payload.schema.json", "$id": "./task-cancel-payload.schema.json", "schemaVersion": "1.0.0", "sha256": "3DCD9160741008C492966368AB4D9E81B5883ED7017F87C8FCF92A5D12F88075" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\task-command-receipt.schema.json", "$id": "./task-command-receipt.schema.json", "schemaVersion": "1.0.0", "sha256": "4D7D62F7B1A8A94276630A58CFA0699DA5BF261FC6A9D49E6DD7B1EE42DFC3D0" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\task-command.schema.json", "$id": "./task-command.schema.json", "schemaVersion": "1.0.0", "sha256": "CF683AC3687D9E9CB094BADA130CFBF93ECB932DDD7FC91ECF218A5FAD925AD2" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\task-manifest.schema.json", "$id": "./task-manifest.schema.json", "schemaVersion": "1.0.0", "sha256": "1DBD79E94C891A08E5324AF52A48F4254DEAA9AA691CBF3D2AD745680A7E8660" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\task-query-result.schema.json", "$id": "./task-query-result.schema.json", "schemaVersion": "1.0.0", "sha256": "972C6514D0F2EEBA7B7FDDAC073AF258B9FE61803B4E24974D9A31490E8E40FD" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\task-query.schema.json", "$id": "./task-query.schema.json", "schemaVersion": "1.0.0", "sha256": "F0DDE6C33E00E6451C4BF5488D5E298E6366598ADD658D7F95A2F97B8E0D19B2" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\task-status.schema.json", "$id": "./task-status.schema.json", "schemaVersionSource": "v1 enum schema", "sha256": "C60AE83AD5471C2E055FCED9775D37058336A627D9236BD20236F75A5703F0C9" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\worker-cancel-signal.schema.json", "$id": "./worker-cancel-signal.schema.json", "schemaVersion": "1.0.0", "sha256": "8B77470B38577611C2FCCF0156491C67411EEBB75E0E032A1A184A3A665CFDFE" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\worker-describe.schema.json", "$id": "./worker-describe.schema.json", "schemaVersion": "1.0.0", "sha256": "1C24D2E767A577BD4CDD01ED25B1375DDE3B6AF3E04B69E13246A201F8ACA500" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\worker-registry.schema.json", "$id": "./worker-registry.schema.json", "schemaVersion": "1.0.0", "sha256": "05A6309C33CB8A51F1E36A073BBB1EA003447FBDB6A2DA8B6381DE54ED5A86C6" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\worker-request.schema.json", "$id": "./worker-request.schema.json", "schemaVersion": "1.0.0", "sha256": "F013C89569713FB0D4D31A48B24D2E0181FD39D91ACC251D4145C9F1CAD76ECC" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\common\\worker-result.schema.json", "$id": "./worker-result.schema.json", "schemaVersion": "1.0.0", "sha256": "13818C9BB4EB3CD6576CA93844106023DBD7FEBAE870C0994EFBD2408DD479F2" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\speech\\speech-request.schema.json", "$id": "./speech-request.schema.json", "schemaVersion": "1.0.0", "schemaVersionSource": "common envelope and speech payload", "sha256": "03AF43F98FABA54B8F8185260B9D6D4359D0D43A5309969F60C7AA6EDF5B70B6" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\schemas\\speech\\speech-result.schema.json", "$id": "./speech-result.schema.json", "schemaVersion": "1.0.0", "schemaVersionSource": "common worker-result envelope", "sha256": "986DB79790DAFA7717D5162BDE4D82DBF0E8D768522084E8D73B3F0E20AE3110" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\ipc\\orchestrator-ipc.v1.json", "$id": null, "schemaVersion": "1.0.0", "sha256": "6C5302BE4A813A7726AABA461F27724CE33659EADA661C6DD423799A9C22DAE4" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\worker\\worker-cli.v1.json", "$id": null, "schemaVersion": "1.0.0", "sha256": "B3FCF3BFD1E2EA6679F26C868C58F221E45FB9EF7747D9C97B17427B7E6D2946" },
+    { "path": "C:\\Users\\fy\\Desktop\\新建文件夹\\04 Projects\\RemNote Quick Clipper\\contracts\\v1\\registry\\worker-registry.v1.json", "$id": null, "schemaVersion": "1.0.0", "sha256": "ACB4BA01ADBC0A410AAE7050FEC04F527C47EE6D0A98F30B73E7AC2B0E35F6E1" }
+  ]
+}

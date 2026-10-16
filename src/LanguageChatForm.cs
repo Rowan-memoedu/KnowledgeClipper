@@ -22,7 +22,9 @@ internal sealed class LanguageChatForm : Form
     private readonly DraftStore store;
     private readonly string dataRoot, baseRoot;
     private readonly ChatConfigurationLoader config;
-    private readonly ChatCoordinator coordinator;
+    private ChatCoordinator coordinator;
+    private readonly Dictionary<ChatSession, ChatCoordinator> conversations = new();
+    private readonly Dictionary<string, int> conversationPages = new();
     private ChatCoordinator auxiliaryCoordinator, activeRequest;
     private readonly Func<string> apiKey;
     private readonly HttpClient http = new() { Timeout = Timeout.InfiniteTimeSpan };
@@ -35,7 +37,7 @@ internal sealed class LanguageChatForm : Form
     private int auxiliaryModelGeneration;
     private bool auxiliaryModelsLoading;
     private string auxiliaryError;
-    private bool Busy => activeRequest != null || coordinator.Busy || auxiliaryCoordinator.Busy;
+    private bool Busy => activeRequest != null || conversations.Values.Any(c => c.Busy) || auxiliaryCoordinator.Busy;
     private int visibleCount = 20;
     private string error;
     private bool dirty, ready, closeRequested;
@@ -65,9 +67,8 @@ internal sealed class LanguageChatForm : Form
             draft.Chat.Auxiliary.Current.Effort = preferences.Effort;
         }
         if (draft.Chat.Compositions.Count == 0) draft.Chat.Compositions.Add(new() { TypeId = draft.Chat.TypeId });
-        coordinator = new(draft, store, config, new CodexChatProcess(Path.Combine(baseRoot, "helpers", "codex_chat.py"), dataRoot), http, apiKey, dataRoot);
+        BindConversation(ChatWorkspace.Active(draft.Chat));
         BindAuxiliary();
-        coordinator.Changed += () => { if (IsDisposed) return; if (InvokeRequired) BeginInvoke((Action)(() => dirty = true)); else dirty = true; };
         Text = "问答与制卡 · 零碎知识剪藏"; Name = "knowledge-clipper.chat";
         Size = new Size(1240, 860); MinimumSize = new Size(680, 520); StartPosition = FormStartPosition.CenterParent;
         Controls.Add(web); Controls.Add(status);
@@ -125,7 +126,11 @@ internal sealed class LanguageChatForm : Form
                         requestId = id.GetString();
                     await CommandAsync(json.RootElement);
                 }
-                catch (Exception ex) { error = ex.Message; Publish(); }
+                catch (Exception ex)
+                {
+                    if (ex.Data["KnowledgeClipper.ChatSession"] is not ChatSession affected || affected == ChatWorkspace.Active(Draft.Chat)) error = ex.Message;
+                    Publish();
+                }
                 finally {
                     if (requestId != null && !IsDisposed && ready)
                         web.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new { kind = "commandAcknowledged", requestId }));
@@ -138,6 +143,27 @@ internal sealed class LanguageChatForm : Form
     }
 
     private void Save() { coordinator.SaveEdits(); Saved?.Invoke(Draft); }
+    private void BindConversation(ChatSession session)
+    {
+        if (!conversations.TryGetValue(session, out var bound))
+        {
+            bound = new(Draft, store, config, new CodexChatProcess(Path.Combine(baseRoot, "helpers", "codex_chat.py"), dataRoot), http, apiKey, dataRoot, session);
+            bound.Changed += () => { if (IsDisposed) return; if (InvokeRequired) BeginInvoke((Action)(() => dirty = true)); else dirty = true; };
+            conversations.Add(session, bound);
+        }
+        coordinator = bound;
+    }
+    private async Task SwitchConversationAsync(string id)
+    {
+        var root = Draft.Chat;
+        var previousId = coordinator.Session == root ? "main" : root.Branches.Single(b => b.Session == coordinator.Session).Id;
+        conversationPages[previousId] = visibleCount;
+        var oldProvider = coordinator.Session.Binding.Provider;
+        ChatWorkspace.Switch(root, id); BindConversation(ChatWorkspace.Active(root));
+        visibleCount = conversationPages.GetValueOrDefault(id, 20);
+        modelGeneration++; error = null; Save(); Publish();
+        if (oldProvider != coordinator.Session.Binding.Provider || models.Length == 0) await LoadModelsAsync();
+    }
     private string Display(string key, string raw)
     {
         if (raw == null) return null;
@@ -163,42 +189,58 @@ internal sealed class LanguageChatForm : Form
     private void Publish()
     {
         if (!ready || IsDisposed) return;
-        var chat = Draft.Chat;
+        var root = Draft.Chat; var chat = ChatWorkspace.Active(root);
         ChatConfiguration current;
         try { current = config.Load(); } catch (Exception ex) { error = ex.Message; current = new([]); }
-        var exportStatus = chat.Compositions.ToDictionary(c => c.Id, ExportStatus);
+        var exportStatus = root.Compositions.ToDictionary(c => c.Id, ExportStatus);
+        var sourceIds = root.Compositions.SelectMany(c => c.FrontSources.Concat(c.BackSources)).ToHashSet();
+        object Tab(string id, string title, ChatSession session) => new { id, title, busy = conversations.TryGetValue(session, out var c) && c.Busy,
+            forking = session.Fork is { Stage: not "verified" },
+            needsReconciliation = session.Binding.NeedsReconciliation || session.Fork is { Stage: not "verified" } };
         web.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(new {
-            draftId = Draft.Id, busy = Busy, conversationBusy = coordinator.Busy, error = error ?? chat.Binding.Error,
-            status = auxiliaryCoordinator.Busy ? "正在生成候选…" : coordinator.Busy ? "正在回复…" : chat.Binding.NeedsReconciliation ? "结果待核对" : "草稿已保存",
+            draftId = Draft.Id, conversationId = root.ActiveConversationId,
+            tabs = new[] { Tab("main", "原对话", root) }.Concat(root.Branches.Select(b => Tab(b.Id, b.Title, b.Session))),
+            busy = Busy, conversationBusy = coordinator.Busy && chat.Fork is not { Stage: not "verified" }, error = error ?? chat.Binding.Error,
+            status = auxiliaryCoordinator.Busy ? "正在处理卡片…" : coordinator.Busy && chat.Fork is { Stage: not "verified" } ? "正在建立或核对分叉…" : coordinator.Busy ? "正在回复…" : Busy ? "其他对话正在处理…" : chat.Binding.NeedsReconciliation ? "结果待核对" : "草稿已保存",
             provider = chat.Binding.Provider, chat.Model, chat.Effort, chat.TypeId, chat.Input, chat.IncludeExamples, chat.UseQuestionTypeDefaults,
-            messages = chat.Messages.TakeLast(visibleCount).Select(m => new { m.Id, m.Role, m.Status, m.TypeId, m.Action, m.CreatedAt,
+            messages = chat.Messages.TakeLast(visibleCount).Select(m => new { m.Id, m.Role, m.Status, m.TypeId, m.Action, m.CreatedAt, canFork = ChatWorkspace.CanFork(chat, m),
                 parts = m.Parts.Select((p, i) => new { p.Kind, p.Text, displayText = Display(m.Id + ":" + i, p.Text), copyMath = CopyMath(m.Id + ":" + i, p.Text), image = p.Image == null ? null : new { p.Image.Sha256 } }) }),
             total = chat.Messages.Count, hasSent = chat.Prompts.Count > 0, models, types = current.Types, attachments = chat.Attachments.Select(a => new { a.Sha256 }),
-            cards = chat.Compositions.Select(c => new { c.Id, c.TypeId, c.FrontSources, c.BackSources, c.Front, c.Back, c.Annotation, c.AnnotationEnabled, c.FrontAnnotation, c.FrontAnnotationEnabled, c.Revision,
+            sourceMessages = ChatWorkspace.Messages(root).Where(m => sourceIds.Contains(m.Id)).Select(m => new { m.Id, title = m.Text.Length > 32 ? m.Text[..32] + "…" : m.Text,
+                conversation = root.Messages.Any(x => x.Id == m.Id) ? "原对话" : root.Branches.First(b => b.Session.Messages.Any(x => x.Id == m.Id)).Title }),
+            cards = root.Compositions.Select(c => new { c.Id, c.TypeId, c.FrontSources, c.BackSources, c.Front, c.Back, c.Annotation, c.AnnotationEnabled, c.FrontAnnotation, c.FrontAnnotationEnabled, c.Revision,
                 c.ManuallyEdited, c.SourcesChanged, c.ExportDraftId, canUndo = c.ExportDraftId == null && c.UndoHistory.Count > 0,
                 canRedo = c.ExportDraftId == null && c.RedoHistory.Count > 0 }),
-            proposals = chat.Proposals, exportStatus, cardPreview, needsReconciliation = chat.Binding.NeedsReconciliation,
-            auxiliary = new { provider = chat.Auxiliary.Provider, model = chat.Auxiliary.Current.Model, effort = chat.Auxiliary.Current.Effort,
+            proposals = root.Proposals, exportStatus, cardPreview, needsReconciliation = chat.Binding.NeedsReconciliation || chat.Fork is { Stage: not "verified" },
+            auxiliary = new { provider = root.Auxiliary.Provider, model = root.Auxiliary.Current.Model, effort = root.Auxiliary.Current.Effort,
                 models = auxiliaryModels, loading = auxiliaryModelsLoading, busy = auxiliaryCoordinator.Busy,
-                error = auxiliaryError ?? chat.Auxiliary.Current.Binding.Error, needsReconciliation = chat.Auxiliary.Current.Binding.NeedsReconciliation }
+                error = auxiliaryError ?? root.Auxiliary.Current.Binding.Error, needsReconciliation = root.Auxiliary.Current.Binding.NeedsReconciliation }
         }, ViewJson));
     }
 
     internal async Task CommandAsync(JsonElement e)
     {
         string Text(string key) => e.GetProperty(key).GetString() ?? "";
-        var chat = Draft.Chat; var command = Text("command"); error = null;
-        CardComposition Card() => chat.Compositions.Single(c => c.Id == Text("cardId"));
+        var root = Draft.Chat; var chat = ChatWorkspace.Active(root); var command = Text("command"); error = null;
+        if (e.TryGetProperty("conversationId", out var owner) && owner.GetString() is { Length: > 0 } ownerId && ownerId != root.ActiveConversationId)
+        {
+            if (command == "input") { ChatWorkspace.Session(root, ownerId).Input = Text("text"); Save(); return; }
+            if (command is "send" or "settings" or "attach" or "pasteImage" or "removeImage" or "fork" or "roundCard" or "snapshot" or "older" or "recover" or "openRules" || command == "pasteImageData" && !e.TryGetProperty("cardId", out _))
+                throw new InvalidOperationException("对话已切换；原操作未应用到其他 Tab。");
+        }
+        CardComposition Card() => root.Compositions.Single(c => c.Id == Text("cardId"));
         switch (command)
         {
             case "ready":
+                var initialCoordinator = coordinator;
                 var sendInitially = initialSendPending;
                 initialSendPending = false;
                 ready = true; Publish();
-                if (!coordinator.Busy && chat.Binding.Provider == "codex" && chat.Binding.NeedsReconciliation && chat.Binding.ThreadId != null && chat.Binding.TurnId != null)
+                if (!coordinator.Busy && chat.Binding.Provider == "codex" && chat.Binding.ThreadId != null &&
+                    (chat.Binding.NeedsReconciliation && chat.Binding.TurnId != null || chat.Fork is { Stage: not "verified" }))
                     await RunAsync(() => coordinator.RecoverAsync(requestCancellation.Token));
                 await Task.WhenAll(LoadModelsAsync(), LoadAuxiliaryModelsAsync());
-                if (sendInitially && !IsDisposed)
+                if (sendInitially && !IsDisposed && coordinator == initialCoordinator)
                 {
                     // The ready event claims the initial send before catalog loading or any request awaits.
                     if (chat.Prompts.Count == 0) await RunAsync(() => coordinator.SendAsync(models, ct: requestCancellation.Token));
@@ -208,7 +250,7 @@ internal sealed class LanguageChatForm : Form
             case "auxiliaryModels": await LoadAuxiliaryModelsAsync(); break;
             case "auxiliarySettings":
                 if (Busy) throw new InvalidOperationException("当前请求的设置已冻结。");
-                var auxiliary = chat.Auxiliary;
+                var auxiliary = root.Auxiliary;
                 if (e.TryGetProperty("provider", out var auxiliaryProvider))
                 {
                     if (auxiliaryProvider.GetString() is not ("api" or "codex")) throw new InvalidDataException("辅助服务无效。");
@@ -248,14 +290,25 @@ internal sealed class LanguageChatForm : Form
                 await RunAsync(() => coordinator.SendAsync(models, ct: requestCancellation.Token)); break;
             case "stop": await StopAsync(); break;
             case "recover": await RunAsync(() => coordinator.RecoverAsync(requestCancellation.Token)); break;
-            case "new": Save(); newConversation(); break;
+            case "new":
+                Save(); var blank = ChatWorkspace.New(root); await SwitchConversationAsync(blank.Id); break;
+            case "switchConversation": await SwitchConversationAsync(Text("id")); break;
+            case "fork":
+                if (Busy) throw new InvalidOperationException("请等待当前回合完成或停止后分叉。");
+                Save(); var branch = ChatWorkspace.Fork(root, Text("messageId")); await SwitchConversationAsync(branch.Id);
+                if (branch.Session.Fork != null)
+                {
+                    var forkCoordinator = conversations[branch.Session];
+                    await RunAsync(() => forkCoordinator.ForkAsync(requestCancellation.Token), owner: forkCoordinator);
+                }
+                break;
             case "attach": ChooseImages(chat.Attachments); Save(); break;
             case "pasteImage":
                 if (!Clipboard.ContainsImage()) throw new InvalidDataException("剪贴板没有图片。");
                 using (var image = Clipboard.GetImage()) { using var bytes = new MemoryStream(); image.Save(bytes, ImageFormat.Png); chat.Attachments.Add(StoreImage(bytes.ToArray())); }
                 Save(); break;
             case "removeImage": chat.Attachments.RemoveAll(a => a.Sha256 == Text("sha256")); Save(); break;
-            case "copyMessage": WriteClipboardText(ChatComposition.Material(chat.Messages.Single(m => m.Id == Text("messageId")))); break;
+            case "copyMessage": WriteClipboardText(ChatComposition.Material(ChatWorkspace.Messages(root).Single(m => m.Id == Text("messageId")))); break;
             case "copySelectionError": throw new InvalidDataException(Text("message"));
             case "pasteImageData":
                 if (Busy && !e.TryGetProperty("cardId", out _)) throw new InvalidOperationException("当前回合的输入已冻结。");
@@ -290,31 +343,31 @@ internal sealed class LanguageChatForm : Form
                     side == "annotation" ? Insert() : null, side == "annotation" ? true : null,
                     side == "frontAnnotation" ? Insert() : null, side == "frontAnnotation" ? true : null);
                 cardPreview = null; Save(); break;
-            case "addCard": chat.Compositions.Add(new() { TypeId = chat.TypeId }); Save(); break;
-            case "copyCard": ChatComposition.Editable(chat, Card()); Save(); break;
-            case "select": ChatComposition.Select(chat, Card(), Text("messageId"), Text("side"), e.GetProperty("selected").GetBoolean()); Save(); break;
+            case "addCard": root.Compositions.Add(new() { TypeId = chat.TypeId }); Save(); break;
+            case "copyCard": ChatComposition.Editable(root, Card()); Save(); break;
+            case "select": ChatComposition.Select(root, Card(), Text("messageId"), Text("side"), e.GetProperty("selected").GetBoolean()); Save(); break;
             case "editCard":
                 var editedCard = Card();
                 ChatComposition.Edit(editedCard,
-                    e.TryGetProperty("front", out var frontEdit) ? ChatMarkdown.NormalizeMediaReferences(frontEdit.GetString(), chat.Assets) : editedCard.Front,
-                    e.TryGetProperty("back", out var backEdit) ? ChatMarkdown.NormalizeMediaReferences(backEdit.GetString(), chat.Assets) : editedCard.Back,
+                    e.TryGetProperty("front", out var frontEdit) ? ChatMarkdown.NormalizeMediaReferences(frontEdit.GetString(), root.Assets) : editedCard.Front,
+                    e.TryGetProperty("back", out var backEdit) ? ChatMarkdown.NormalizeMediaReferences(backEdit.GetString(), root.Assets) : editedCard.Back,
                     e.TryGetProperty("typeId", out var typeEdit) ? typeEdit.GetString() : editedCard.TypeId,
-                    e.TryGetProperty("annotation", out var annotationEdit) ? ChatMarkdown.NormalizeMediaReferences(annotationEdit.GetString(), chat.Assets) : null,
+                    e.TryGetProperty("annotation", out var annotationEdit) ? ChatMarkdown.NormalizeMediaReferences(annotationEdit.GetString(), root.Assets) : null,
                     e.TryGetProperty("annotationEnabled", out var annotationEnabled) ? annotationEnabled.GetBoolean() : null,
-                    e.TryGetProperty("frontAnnotation", out var frontAnnotationEdit) ? ChatMarkdown.NormalizeMediaReferences(frontAnnotationEdit.GetString(), chat.Assets) : null,
+                    e.TryGetProperty("frontAnnotation", out var frontAnnotationEdit) ? ChatMarkdown.NormalizeMediaReferences(frontAnnotationEdit.GetString(), root.Assets) : null,
                     e.TryGetProperty("frontAnnotationEnabled", out var frontAnnotationEnabled) ? frontAnnotationEnabled.GetBoolean() : null);
                 cardPreview = null; Save(); break;
-            case "move": ChatComposition.Move(chat, Card(), Text("side"), e.GetProperty("index").GetInt32(), e.GetProperty("offset").GetInt32()); Save(); break;
-            case "rebuild": ChatComposition.Rebuild(chat, Card()); Save(); break;
-            case "undo": ChatComposition.Undo(Card(), chat); cardPreview = null; Save(); break;
-            case "redo": ChatComposition.Redo(Card(), chat); cardPreview = null; Save(); break;
+            case "move": ChatComposition.Move(root, Card(), Text("side"), e.GetProperty("index").GetInt32(), e.GetProperty("offset").GetInt32()); Save(); break;
+            case "rebuild": ChatComposition.Rebuild(root, Card()); Save(); break;
+            case "undo": ChatComposition.Undo(Card(), root); cardPreview = null; Save(); break;
+            case "redo": ChatComposition.Redo(Card(), root); cardPreview = null; Save(); break;
             case "roundCard":
                 var selected = chat.Messages.Single(m => m.Id == Text("messageId")); var index = chat.Messages.IndexOf(selected);
                 var user = selected.Role == "user" ? selected : chat.Messages.Take(index).LastOrDefault(m => m.Role == "user" && m.Action == null);
                 if (user == null) throw new InvalidDataException("没有对应问题。");
                 var next = chat.Messages.Skip(chat.Messages.IndexOf(user) + 1).TakeWhile(m => m.Role != "user").Where(m => m.Role == "assistant" && m.Action == null).ToArray();
                 var newCard = new CardComposition { TypeId = user.TypeId, FrontSources = [user.Id], BackSources = next.Select(m => m.Id).ToList() };
-                ChatComposition.Rebuild(chat, newCard); chat.Compositions.Add(newCard); Save(); break;
+                ChatComposition.Rebuild(root, newCard); root.Compositions.Add(newCard); Save(); break;
             case "cardImage":
                 var card = Card(); if (card.ExportDraftId != null) throw new InvalidOperationException("请先编辑为新草稿。");
                 var added = new List<ImageAsset>(); ChooseImages(added);
@@ -324,12 +377,12 @@ internal sealed class LanguageChatForm : Form
             case "compose":
                 if (Busy || auxiliaryModelsLoading) throw new InvalidOperationException("请等待当前请求或辅助模型目录加载完成。");
                 if (Card().ExportDraftId != null) throw new InvalidOperationException("请先编辑为新草稿。");
-                if (chat.Auxiliary.Current.Binding.NeedsReconciliation) throw new InvalidOperationException("上次辅助操作待核对，不会重发。请核对原动作；API 未知结果需要保留并新建对话草稿。");
-                var proposal = ChatComposition.Begin(chat, Card(), Text("action"), Text("requirements"), config.Load().Types.Select(t => t.Id).ToArray(), e.TryGetProperty("side", out var targetSide) ? targetSide.GetString() : null); Save();
+                if (root.Auxiliary.Current.Binding.NeedsReconciliation) throw new InvalidOperationException("上次辅助操作待核对，不会重发。请核对原动作；API 未知结果需要保留并新建对话草稿。");
+                var proposal = ChatComposition.Begin(root, Card(), Text("action"), Text("requirements"), config.Load().Types.Select(t => t.Id).ToArray(), e.TryGetProperty("side", out var targetSide) ? targetSide.GetString() : null, chat); Save();
                 await RunAsync(async () => {
-                    var auxiliaryChat = chat.Auxiliary.Current;
+                    var auxiliaryChat = root.Auxiliary.Current;
                     auxiliaryChat.TypeId = chat.TypeId; auxiliaryChat.IncludeExamples = chat.IncludeExamples;
-                    var images = ChatComposition.ProposalImages(proposal, chat);
+                    var images = ChatComposition.ProposalImages(proposal, root);
                     try { await auxiliaryCoordinator.SendAsync(auxiliaryModels, proposal.Action, proposal.InputSnapshot, images, requestCancellation.Token); }
                     finally
                     {
@@ -337,20 +390,20 @@ internal sealed class LanguageChatForm : Form
                     }
                 }, true); break;
             case "editProposal":
-                var candidate = chat.Proposals.Single(p => p.Id == Text("proposalId"));
+                var candidate = root.Proposals.Single(p => p.Id == Text("proposalId"));
                 if (candidate.Status != "preview") throw new InvalidOperationException("候选已处理。");
                 var c = candidate.Cards[e.GetProperty("index").GetInt32()];
                 if (candidate.Action != "transcribe" || candidate.TargetSide == "front") c.Front = Text("front");
                 if (candidate.Action != "formalize" && (candidate.Action != "transcribe" || candidate.TargetSide == "back")) c.Back = Text("back"); Save(); break;
-            case "adopt": ChatComposition.Adopt(chat, chat.Proposals.Single(p => p.Id == Text("proposalId"))); Save(); break;
-            case "discard": chat.Proposals.Single(p => p.Id == Text("proposalId")).Status = "discarded"; Save(); break;
+            case "adopt": ChatComposition.Adopt(root, root.Proposals.Single(p => p.Id == Text("proposalId"))); Save(); break;
+            case "discard": root.Proposals.Single(p => p.Id == Text("proposalId")).Status = "discarded"; Save(); break;
             case "export":
                 var destination = Text("destination") switch { "RemNote" => ExportDestination.RemNote, "Anki" => ExportDestination.Anki, _ => throw new InvalidDataException("导出对象无效。") };
                 await ChatComposition.ExportAsync(Draft, Card(), store, config, new CardImportRouter(http), destination); Save(); break;
             case "preview":
-                var previewCard = Card(); ChatMarkdown.Render(previewCard.Front, previewCard.Back, chat.Assets, previewCard.Annotation, previewCard.FrontAnnotation);
+                var previewCard = Card(); ChatMarkdown.Render(previewCard.Front, previewCard.Back, root.Assets, previewCard.Annotation, previewCard.FrontAnnotation);
                 cardPreview = new { cardId = previewCard.Id, revision = previewCard.Revision,
-                    front = ChatMarkdown.ForDisplay(ChatMarkdown.BackWithAnnotation(previewCard.Front, previewCard.FrontAnnotation), chat.Assets), back = ChatMarkdown.ForDisplay(ChatMarkdown.BackWithAnnotation(previewCard.Back, previewCard.Annotation), chat.Assets) }; break;
+                    front = ChatMarkdown.ForDisplay(ChatMarkdown.BackWithAnnotation(previewCard.Front, previewCard.FrontAnnotation), root.Assets), back = ChatMarkdown.ForDisplay(ChatMarkdown.BackWithAnnotation(previewCard.Back, previewCard.Annotation), root.Assets) }; break;
             case "openRules":
                 var relative = Text("kind") switch { "type" => config.Load().Types.Single(t => t.Id == chat.TypeId).PromptFile,
                     "profile" => "profiles/common.md", "registry" => "question-types.json", _ => throw new InvalidDataException("配置入口无效。") };
@@ -373,17 +426,18 @@ internal sealed class LanguageChatForm : Form
     private async Task LoadModelsAsync()
     {
         var generation = ++modelGeneration;
-        var provider = Draft.Chat.Binding.Provider;
+        var session = coordinator.Session;
+        var provider = session.Binding.Provider;
         models = []; Publish();
         ChatModel[] fetched;
         try { fetched = await coordinator.ModelsAsync(provider); }
-        catch when (IsDisposed || generation != modelGeneration || provider != Draft.Chat.Binding.Provider) { return; }
-        if (IsDisposed || generation != modelGeneration || provider != Draft.Chat.Binding.Provider) return;
+        catch when (IsDisposed || generation != modelGeneration || session != coordinator.Session || provider != session.Binding.Provider) { return; }
+        if (IsDisposed || generation != modelGeneration || session != coordinator.Session || provider != session.Binding.Provider) return;
         models = fetched;
-        ChatTypeDefaults.Apply(Draft.Chat);
+        ChatTypeDefaults.Apply(session);
         // First use may select the user's existing API model, but never silently replace an invalid saved selection.
-        if (string.IsNullOrWhiteSpace(Draft.Chat.Model) && Draft.Chat.Binding.Provider == "api" && models.Any(m => m.Id == Draft.Settings.Model))
-            Draft.Chat.Model = Draft.Settings.Model;
+        if (string.IsNullOrWhiteSpace(session.Model) && provider == "api" && models.Any(m => m.Id == Draft.Settings.Model))
+            session.Model = Draft.Settings.Model;
         Save(); Publish();
     }
     private void BindAuxiliary()
@@ -440,12 +494,13 @@ internal sealed class LanguageChatForm : Form
         if (proposal.Status is "unparsed" or "stale" or "failed")
             throw new InvalidOperationException(proposal.Error);
     }
-    private async Task RunAsync(Func<Task> run, bool auxiliary = false)
+    private async Task RunAsync(Func<Task> run, bool auxiliary = false, ChatCoordinator owner = null)
     {
         if (Busy) throw new InvalidOperationException("已有请求在运行。");
-        activeRequest = auxiliary ? auxiliaryCoordinator : coordinator;
+        activeRequest = owner ?? (auxiliary ? auxiliaryCoordinator : coordinator);
         requestCancellation = new();
         try { await run(); }
+        catch (Exception ex) { ex.Data["KnowledgeClipper.ChatSession"] = activeRequest.Session; throw; }
         finally { requestCancellation.Dispose(); requestCancellation = null; activeRequest = null; Publish(); if (closeRequested) Close(); }
     }
     private async Task StopAsync()

@@ -1,0 +1,2 @@
+# Preserve the immutable, byte-verified contract checkpoint on every checkout.
+contracts/v1/checkpoints/contracts-v1-stable-checkpoint-20260825T115938Z.json -text

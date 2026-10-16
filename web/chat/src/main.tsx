@@ -10,15 +10,16 @@ import 'katex/dist/katex.min.css';
 import './style.css';
 import {copySelection,pasteImages,type CopyMath} from './clipboard';
 import {SupplementalRequirements,composeRequirements,type RequirementOption} from './SupplementalRequirements';
-import {ActionButton,send,receiveCommandAck,usePendingActions} from './commands';
+import {ActionButton,send,receiveCommandAck,usePendingActions,setCommandConversation} from './commands';
 
 type Part = {kind: string; text?: string; displayText?:string; copyMath?:CopyMath[]; image?: {sha256:string}};
-type Message = {id:string;role:'user'|'assistant';parts:Part[];status:string;typeId:string;action?:string;createdAt:string};
+type Message = {id:string;role:'user'|'assistant';parts:Part[];status:string;typeId:string;action?:string;createdAt:string;canFork?:boolean};
 type Card = {id:string;typeId:string;front:string;back:string;annotation?:string;annotationEnabled?:boolean;frontAnnotation?:string;frontAnnotationEnabled?:boolean;revision:number;frontSources:string[];backSources:string[];manuallyEdited:boolean;sourcesChanged:boolean;exportDraftId?:string;canUndo?:boolean;canRedo?:boolean};
 type Proposal = {id:string;action:string;targetSide?:'front'|'back';status:string;rawOutput:string;error?:string;cards:Card[]};
 type Model = {id:string;name:string;efforts:string[];inputModalities:string[];defaultEffort?:string};
 type Auxiliary = {provider:string;model:string;effort?:string;models:Model[];loading:boolean;busy:boolean;error?:string;needsReconciliation:boolean};
-type State = {draftId:string;busy:boolean;error?:string;status:string;provider:string;model:string;effort?:string;typeId:string;input:string;
+type State = {draftId:string;conversationId?:string;tabs?:{id:string;title:string;busy:boolean;forking?:boolean;needsReconciliation:boolean}[];
+  sourceMessages?:{id:string;title:string;conversation:string}[];busy:boolean;error?:string;status:string;provider:string;model:string;effort?:string;typeId:string;input:string;
   includeExamples:boolean;useQuestionTypeDefaults?:boolean;messages:Message[];total:number;hasSent?:boolean;models:Model[];types:{id:string;label:string;modelHint?:string}[];
   attachments:{sha256:string}[];cards:Card[];proposals:Proposal[];exportStatus:Record<string,string>;needsReconciliation:boolean;
   conversationBusy?:boolean;auxiliary?:Auxiliary;cardPreview?:{cardId:string;revision:number;front:string;back:string}};
@@ -68,7 +69,10 @@ const MessageView = memo(function MessageView(){
       const selected=(side==='front'?card.frontSources:card.backSources).includes(id);
       return <ActionButton key={side} aria-pressed={selected} disabled={!!card.exportDraftId}
        onClick={()=>send('select',{cardId:card.id,messageId:id,side,selected:!selected})}>{selected?'已选入':'加入'}{side==='front'?'正面':'背面'}</ActionButton>;
-    })}<ActionButton onClick={()=>send('roundCard',{messageId:id})}>按轮制卡</ActionButton><ActionButton onClick={()=>send('copyMessage',{messageId:id})}>复制整条</ActionButton></div>}
+    })}<ActionButton onClick={()=>send('roundCard',{messageId:id})}>按轮制卡</ActionButton><ActionButton onClick={()=>send('copyMessage',{messageId:id})}>复制整条</ActionButton>
+      <ActionButton className="fork-action" disabled={state.busy||source.canFork===false}
+        title={source.canFork===false?'请从本轮最后一条已完成回答分叉':source.role==='user'?'在新 Tab 修改并重新发送这个问题':'保留此前对话，在新 Tab 从这里继续'}
+        onClick={()=>send('fork',{messageId:id})}>分叉</ActionButton></div>}
     {source.action&&<div className="message-actions"><ActionButton onClick={()=>send('copyMessage',{messageId:id})}>复制整条</ActionButton></div>}
   </MessagePrimitive.Root>;
 });
@@ -93,7 +97,8 @@ function CardEditor({card,state}:{card:Card;state:State}){
   const auxiliaryModel=auxiliary?.models.find(m=>m.id===auxiliary.model);
   const auxiliaryUnavailable=state.busy||frozen||!auxiliaryModel||!!auxiliary?.loading||!!auxiliary?.needsReconciliation;
   const sources=(side:'front'|'back')=><ol className="sources">{(side==='front'?card.frontSources:card.backSources).map((id,i,all)=><li key={id}>
-    <span>{state.messages.find(m=>m.id===id)?.parts.find(p=>p.kind==='text')?.text?.slice(0,32)||'消息 / 图片'}</span>
+    <span>{state.sourceMessages?.find(m=>m.id===id)?.conversation&&<small className="source-tab">{state.sourceMessages.find(m=>m.id===id)!.conversation} · </small>}
+      {state.sourceMessages?.find(m=>m.id===id)?.title||state.messages.find(m=>m.id===id)?.parts.find(p=>p.kind==='text')?.text?.slice(0,32)||'消息 / 图片'}</span>
     <ActionButton aria-label="上移" disabled={frozen||i===0} onClick={()=>send('move',{cardId:card.id,side,index:i,offset:-1})}>↑</ActionButton>
     <ActionButton aria-label="下移" disabled={frozen||i===all.length-1} onClick={()=>send('move',{cardId:card.id,side,index:i,offset:1})}>↓</ActionButton>
     <ActionButton aria-label="移除" disabled={frozen} onClick={()=>send('select',{cardId:card.id,messageId:id,side,selected:false})}>移除</ActionButton>
@@ -149,11 +154,18 @@ function CardEditor({card,state}:{card:Card;state:State}){
   </div>;
 }
 
+function ConversationRuntime({state,children}:{state:State;children:React.ReactNode}){
+  const onNew=useCallback(async()=>send('send'),[]),onCancel=useCallback(async()=>send('stop'),[]);
+  const runtime=useExternalStoreRuntime({messages:state.messages,convertMessage:convert,isRunning:state.conversationBusy??state.busy,onNew,onCancel});
+  return <AssistantRuntimeProvider runtime={runtime}>{children}</AssistantRuntimeProvider>;
+}
 function App(){
   const [hostState,setState]=useState<State>(empty),[input,setInput]=useState(''),[active,setActive]=useState('');
   const pending=usePendingActions();
   const state=useMemo(()=>({...hostState,busy:hostState.busy||pending.busy,status:pending.busy&&!hostState.busy?'正在处理…':hostState.status}),[hostState,pending.busy]);
   const latestState=useRef(state);latestState.current=state;
+  const focusTab=useRef(false);
+  useEffect(()=>{if(focusTab.current){document.getElementById(`conversation-${state.conversationId||'main'}`)?.focus({preventScroll:true});focusTab.current=false;}},[state.conversationId]);
   useEffect(()=>{
     const copy=(event:ClipboardEvent)=>{
       const selection=window.getSelection();const root=document.querySelector<HTMLElement>('.viewport');
@@ -169,24 +181,32 @@ function App(){
   useEffect(()=>{const receive=(e:{data:unknown})=>{
     receiveCommandAck(e.data);
     const next=e.data as State;if(!next.draftId)return;
+    setCommandConversation(next.conversationId||'main');
     setState(previous=>{
       // Only changed items acquire a new object; this keeps long Markdown messages mounted.
       const byId=new Map(previous.messages.map(m=>[m.id,m]));
       next.messages=next.messages.map(m=>{const old=byId.get(m.id);return old&&JSON.stringify(old)===JSON.stringify(m)?old:m;});
-      if(previous.draftId!==next.draftId||previous.input!==next.input)setInput(next.input);
+      if(previous.draftId!==next.draftId||previous.conversationId!==next.conversationId||previous.input!==next.input)setInput(next.input);
       return next;
     });
   };window.chrome?.webview.addEventListener('message',receive);send('ready');
     return()=>window.chrome?.webview.removeEventListener('message',receive);},[]);
   const card=state.cards.find(c=>c.id===active)||state.cards.at(-1);
-  const onNew=useCallback(async()=>send('send'),[]),onCancel=useCallback(async()=>send('stop'),[]);
-  const runtime=useExternalStoreRuntime({messages:state.messages,convertMessage:convert,isRunning:state.conversationBusy??state.busy,onNew,onCancel});
   const currentModel=state.models.find(m=>m.id===state.model);
   const canSend=!state.busy&&!!currentModel&&!state.needsReconciliation&&!!(input.trim()||state.attachments.length);
   const context=useMemo(()=>({state,card}),[state,card]);
-  return <Context.Provider value={context}><AssistantRuntimeProvider runtime={runtime}>
+  return <Context.Provider value={context}>
     <header><div><h1>问答与制卡</h1><p>从一段对话，留下一个清楚的问题。</p></div><ActionButton onClick={()=>send('new')}>新建对话</ActionButton></header>
-    <div className="workspace"><main className="conversation">
+    <div className="workspace"><ConversationRuntime key={state.conversationId||state.draftId} state={state}><main className="conversation">
+      <div className="conversation-tabs"><div role="tablist" aria-label="对话分叉">{(state.tabs||[{id:'main',title:'原对话',busy:false,needsReconciliation:false}]).map(tab=>
+        <ActionButton role="tab" key={tab.id} id={`conversation-${tab.id}`} aria-selected={tab.id===(state.conversationId||'main')}
+          data-state={tab.needsReconciliation?'error':tab.busy?'loading':tab.id===(state.conversationId||'main')?'success':'default'}
+          aria-controls="conversation-panel" tabIndex={tab.id===(state.conversationId||'main')?0:-1} title={tab.title}
+          onKeyDown={event=>{const tabs=state.tabs||[];const index=tabs.findIndex(t=>t.id===tab.id);const next=event.key==='ArrowRight'?(index+1)%tabs.length:event.key==='ArrowLeft'?(index+tabs.length-1)%tabs.length:event.key==='Home'?0:event.key==='End'?tabs.length-1:-1;
+            if(next>=0){event.preventDefault();focusTab.current=true;send('switchConversation',{id:tabs[next].id});}}}
+          onClick={()=>send('switchConversation',{id:tab.id})}>{tab.title}{tab.busy?(tab.forking?' · 分叉中':' · 回复中'):tab.needsReconciliation?' · 待核对':''}</ActionButton>)}</div>
+        <ActionButton className="new-conversation-tab" aria-label="新建对话 Tab" title="新建空白对话" onClick={()=>send('new')}>＋</ActionButton></div>
+      <div id="conversation-panel" className="conversation-panel" role="tabpanel" aria-labelledby={`conversation-${state.conversationId||'main'}`}>
       <div className="selectors"><label>服务<select value={state.provider} disabled={state.busy||state.hasSent} onChange={e=>send('settings',{provider:e.target.value})}>
         <option value="api">API</option><option value="codex">Codex · ChatGPT 登录</option></select></label>
         <label>模型<select value={state.model} disabled={state.busy||(state.useQuestionTypeDefaults&&state.provider==='codex')} onChange={e=>send('settings',{model:e.target.value})}><option value="">选择模型</option>{state.models.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
@@ -207,10 +227,10 @@ function App(){
           {hostState.busy?<ActionButton onClick={()=>send('stop')}>停止</ActionButton>:<ActionButton className="primary" disabled={!canSend} onClick={()=>send('send',{input})}>发送</ActionButton>}
         </div>{state.error&&<p className="error" role="alert">{state.error}</p>}
       </div>
-    </main><aside className="cards"><div className="cards-heading"><h2>卡片编辑</h2><ActionButton onClick={()=>send('addCard')}>新卡片</ActionButton></div>
+      </div></main></ConversationRuntime><aside className="cards"><div className="cards-heading"><h2>卡片编辑</h2><ActionButton onClick={()=>send('addCard')}>新卡片</ActionButton></div>
       <nav aria-label="卡片">{state.cards.map((c,i)=><ActionButton key={c.id} aria-pressed={card?.id===c.id} onClick={()=>setActive(c.id)}>卡片 {i+1}{c.exportDraftId?' · 已确认':''}</ActionButton>)}</nav>
       {card&&<CardEditor key={card.id} card={card} state={state}/>}
     </aside></div>
-  </AssistantRuntimeProvider></Context.Provider>;
+  </Context.Provider>;
 }
 createRoot(document.getElementById('root')!).render(<ChatErrorBoundary><App/></ChatErrorBoundary>);

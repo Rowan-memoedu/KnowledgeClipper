@@ -28,6 +28,7 @@ class Client:
         self.conflict = self.lost_injection = False
         self.account_type = "chatgpt"
         self.status = "completed"
+        self.source_status = "completed"
         self.events = [NS(method="item/completed", payload={"item": {"id": "compact", "type": "contextCompaction"}}),
                        NS(method="turn/completed", payload={"turn": {"id": "fixture-turn", "status": "completed"}})]
     def __enter__(self): return self
@@ -56,9 +57,40 @@ class Client:
     def unregister_turn_notifications(self, turn): self.calls.append("unregister")
     def thread_read(self, thread, include_turns):
         self.calls.append("thread/read")
+        if thread=="source": return {"thread":{"turns":[{"id":"past","status":self.source_status},{"id":"future","status":"completed"}]}}
+        if thread=="fork-thread": return {"thread":{"turns":[{"id":"past","status":self.source_status}]}}
         return {"thread": {"turns": [{"id": "fixture-turn", "items": [], "status": self.status}]}}
+    def thread_fork(self, thread, params):
+        assert thread=="source" and params=={"lastTurnId":"past","excludeTurns":True}
+        self.calls.append("thread/fork")
+        return NS(thread=NS(id="fork-thread"))
 
 class NativeContract(unittest.TestCase):
+    def test_interrupted_terminal_turn_can_fork_without_regeneration(self):
+        self.client.source_status="interrupted"
+        self.request.update(action="fork",sourceThreadId="source",lastTurnId="past")
+        native.run(self.request,self.channel)
+        self.assertEqual(self.client.calls,["initialize","thread/read","thread/fork","thread/read"])
+    def test_in_progress_turn_is_not_a_fork_boundary(self):
+        self.client.source_status="inProgress"
+        self.request.update(action="fork",sourceThreadId="source",lastTurnId="past")
+        with self.assertRaisesRegex(RuntimeError,"尚未创建"):native.run(self.request,self.channel)
+        self.assertNotIn("thread/fork",self.client.calls)
+    def test_native_fork_copies_only_the_exact_completed_prefix_without_generation(self):
+        self.request.update(action="fork",sourceThreadId="source",lastTurnId="past")
+        native.run(self.request,self.channel)
+        self.assertEqual(self.client.calls,["initialize","thread/read","thread/fork","thread/read"])
+        self.assertEqual([e["kind"] for e in self.channel.events],["stage","forked","forkVerified"])
+        self.assertTrue(self.channel.events[1]["durable"])
+    def test_fork_recovery_only_reads_saved_identity(self):
+        self.request.update(action="verifyFork",sourceThreadId="source",lastTurnId="past",threadId="fork-thread")
+        native.run(self.request,self.channel)
+        self.assertEqual(self.client.calls,["initialize","thread/read","thread/read"])
+        self.assertEqual(self.channel.events[-1]["kind"],"forkVerified")
+    def test_bad_fork_boundary_rejected_before_mutation(self):
+        self.request.update(action="fork",sourceThreadId="source",lastTurnId="absent")
+        with self.assertRaisesRegex(RuntimeError,"尚未创建"):native.run(self.request,self.channel)
+        self.assertNotIn("thread/fork",self.client.calls)
     def setUp(self):
         self.client = Client()
         native.CodexClient = lambda config: self.client

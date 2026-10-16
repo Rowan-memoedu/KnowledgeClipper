@@ -16,7 +16,7 @@ public static class ChatComposition
     public static void Select(ChatSession session, CardComposition card, string messageId, string side, bool selected)
     {
         EnsureUnfrozen(card);
-        var message = session.Messages.Single(m => m.Id == messageId);
+        var message = ChatWorkspace.Messages(session).Single(m => m.Id == messageId);
         if (message.Action != null && selected) throw new InvalidOperationException("辅助操作保留在对话中，请从候选采用内容。");
         if (selected && string.IsNullOrWhiteSpace(Material(message))) throw new InvalidDataException("该消息尚无可加入的正文或图片。");
         var sources = side == "front" ? card.FrontSources : side == "back" ? card.BackSources : throw new InvalidDataException("卡面无效。");
@@ -42,7 +42,7 @@ public static class ChatComposition
     {
         EnsureUnfrozen(card);
         if (remember) Remember(card);
-        string Join(IEnumerable<string> ids) => string.Join("\n\n", ids.Select(id => Material(session.Messages.Single(m => m.Id == id))));
+        string Join(IEnumerable<string> ids) => string.Join("\n\n", ids.Select(id => Material(ChatWorkspace.Messages(session).Single(m => m.Id == id))));
         card.Front = Join(card.FrontSources); card.Back = Join(card.BackSources);
         card.ManuallyEdited = false; card.SourcesChanged = false; card.Revision++;
     }
@@ -184,7 +184,7 @@ public static class ChatComposition
         if (history.Count > 20) history.RemoveAt(0);
     }
 
-    public static ComposeProposal Begin(ChatSession session, CardComposition card, string action, string requirements, string[] allowedTypes, string? targetSide = null)
+    public static ComposeProposal Begin(ChatSession session, CardComposition card, string action, string requirements, string[] allowedTypes, string? targetSide = null, ChatSession? contextSession = null)
     {
         if (action is not ("integrate" or "formalize" or "formalize-answer" or "formalize-all" or "formalize-annotation" or "transcribe")) throw new InvalidDataException("未知辅助动作。");
         if (action == "formalize-annotation" && (targetSide is not ("front" or "back") ||
@@ -196,10 +196,10 @@ public static class ChatComposition
         // Restored cards can retain provenance from another session. Their saved
         // bodies remain usable even when those source messages are unavailable.
         var messages = card.FrontSources.Concat(card.BackSources).Distinct()
-            .Join(session.Messages, id => id, m => m.Id, (_, m) => m, StringComparer.Ordinal).ToArray();
+            .Join(ChatWorkspace.Messages(session), id => id, m => m.Id, (_, m) => m, StringComparer.Ordinal).ToArray();
         var generateFront = action is "formalize" or "formalize-all" && string.IsNullOrWhiteSpace(card.Front);
         var generateBack = action is "formalize-answer" or "formalize-all" && string.IsNullOrWhiteSpace(card.Back);
-        var context = generateFront || generateBack || action is "transcribe" or "formalize-annotation" ? session.Messages.Where(m => m.Action == null && m.Status == "completed").ToArray() : [];
+        var context = generateFront || generateBack || action is "transcribe" or "formalize-annotation" ? (contextSession ?? session).Messages.Where(m => m.Action == null && m.Status == "completed").ToArray() : [];
         if (string.IsNullOrWhiteSpace(card.Front) && string.IsNullOrWhiteSpace(card.Back) && messages.Length == 0 &&
             action is not ("transcribe" or "formalize-annotation") && context.Length == 0 &&
             (action != "formalize-all" || string.IsNullOrWhiteSpace(card.FrontAnnotation) && string.IsNullOrWhiteSpace(card.Annotation)))

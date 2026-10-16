@@ -22,9 +22,15 @@ internal static class LiveDelivery
                 draft.Chat.Assets.Add(new(path,ImageAsset.Hash(File.ReadAllBytes(path)),i<2?"question":"answer",i+1));
             }
             string Image(int index)=>"![公开矩形示意](asset:"+draft.Chat.Assets[index].Sha256+")";
-            draft.Chat.Compositions.Add(new(){TypeId="fast-answer",ManuallyEdited=true,
+            var materials=new CardComposition{TypeId="fast-answer",ManuallyEdited=true,
                 Front="公开组合卡：矩形的长 $a=7$、宽 \\(b=4\\)。\n同一正面第二行。\n\n"+Image(0)+"\n\n"+Image(1)+"\n\n求面积，并说明单位。",
-                Back="- 定义与条件：长度单位为厘米。\n  - 面积为 $S=ab$。\n  - 代入得到 \\(S=28\\) 平方厘米。\n- 独立公式\n\n$$\n\\begin{aligned}a&=7\\\\b&=4\\\\S&=ab=28\\end{aligned}\n$$\n\n"+Image(2)+"\n\n"+Image(3)+"\n\n核验 → 保留普通箭头，不新增卡片。"});
+                Back="- 定义与条件：长度单位为厘米。\n  - 面积为 $S=ab$。\n  - 代入得到 \\(S=28\\) 平方厘米。\n- 独立公式\n\n$$\n\\begin{aligned}a&=7\\\\b&=4\\\\S&=ab=28\\end{aligned}\n$$\n\n"+Image(2)+"\n\n"+Image(3)+"\n\n核验 → 保留普通箭头，不新增卡片。"};
+            var frontSource=new ChatMessage{Role="assistant",Parts=[new("text",materials.Front)]};draft.Chat.Messages.Add(frontSource);
+            var branch=ChatWorkspace.Fork(draft.Chat,frontSource.Id);
+            var backSource=new ChatMessage{Role="assistant",Parts=[new("text",materials.Back)]};branch.Session.Messages.Add(backSource);
+            var composition=new CardComposition{TypeId="fast-answer"};draft.Chat.Compositions.Add(composition);
+            ChatComposition.Select(draft.Chat,composition,frontSource.Id,"front",true);
+            ChatComposition.Select(draft.Chat,composition,backSource.Id,"back",true);
             store.Save(draft);File.WriteAllText(idPath,draft.Id);
         }
         var card=draft.Chat!.Compositions.Single();var child=card.ExportDraftId==null?null:store.Find(card.ExportDraftId);

@@ -118,7 +118,26 @@ public sealed class ChatSession
     public List<ComposeProposal> Proposals { get; set; } = [];
     public ChatAuxiliaryState? Auxiliary { get; set; }
     public int Revision { get; set; }
+    public string ActiveConversationId { get; set; } = "main";
+    public List<ChatBranch> Branches { get; set; } = [];
+    public ChatFork? Fork { get; set; }
     [JsonIgnore] public SemaphoreSlim Gate { get; } = new(1, 1);
+}
+
+public sealed class ChatBranch
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Title { get; set; } = "新对话";
+    public string? ParentId { get; set; }
+    public string? MessageId { get; set; }
+    public ChatSession Session { get; set; } = new();
+}
+
+public sealed class ChatFork
+{
+    public string SourceThreadId { get; set; } = "";
+    public string LastTurnId { get; set; } = "";
+    public string Stage { get; set; } = "prepared";
 }
 
 // Auxiliary actions have independent settings and native identities, while their

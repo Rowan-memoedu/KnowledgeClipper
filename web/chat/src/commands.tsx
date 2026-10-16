@@ -5,7 +5,9 @@ type Flight = {ids:Set<string>;release:()=>void};
 type Pending = {command:string;cardId?:string;flight?:Flight};
 const pending = new Map<string,Pending>();
 const listeners = new Set<()=>void>();
-const blocking = new Set(['send','compose','export','recover','recoverAuxiliary']);
+const blocking = new Set(['send','compose','export','recover','recoverAuxiliary','fork']);
+let conversationId='';
+export const setCommandConversation=(id:string)=>{conversationId=id;};
 let sequence = 0;
 const viewId=crypto.randomUUID();
 let clickFlight:Flight|undefined;
@@ -41,6 +43,7 @@ export const receiveCommandAck = (value:unknown) => {
   if(ack?.kind==='commandAcknowledged'&&typeof ack.requestId==='string')finish(ack.requestId);
 };
 export function send(command:string,payload:object={}) {
+  payload={conversationId,...payload};
   if(blocking.has(command)&&snapshot.busy)return;
   const history=command==='undo'||command==='redo';
   const cardId=(payload as {cardId?:string}).cardId;

@@ -68,7 +68,7 @@
     <Content Include="..\contracts\core\v2.1\profile-resolver.v2.1.json" Link="contracts\core\v2.1\profile-resolver.v2.1.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\contracts\desktop-automation\**\*" Link="contracts\desktop-automation\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\contracts\v1\**\*" Link="contracts\v1\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <Content Include="..\receipts\contracts-v1-stable-checkpoint-20260825T115938Z.json" Link="receipts\contracts-v1-stable-checkpoint-20260825T115938Z.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\contracts\v1\checkpoints\contracts-v1-stable-checkpoint-20260825T115938Z.json" Link="receipts\contracts-v1-stable-checkpoint-20260825T115938Z.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\workers\image-ocr\candidates\1.2.2\image-ocr-capability-config-descriptor.v4.json" Link="descriptors\image-ocr-capability-config-descriptor.v4.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\workers\image-ocr\candidates\1.2.3\image-ocr-capability-config-descriptor.v5.json" Link="descriptors\image-ocr-capability-config-descriptor.v5.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

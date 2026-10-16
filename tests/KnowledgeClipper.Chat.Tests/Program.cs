@@ -112,10 +112,13 @@ DetachedSourceChecks.Run(output,Check);
 RedoChecks.Run(Check);
 await HistoryChecks.Run(repo,output,Check);
 HistorySessionChecks.Run(repo,output,Check);
+await BranchChecks.Run(repo,output,Check);
 WorkflowJson.Save(Path.Combine(output,"unit-results.json"), new { checks = checks.Count, passed = checks });
 Console.WriteLine($"PASS {checks.Count} chat checks");
 
 if (args.Contains("--extras")) await LiveExtras.Run(repo,output);
+if (args.Contains("--branch-live")) await BranchLive.Run(repo,output);
+if (args.Contains("--api-branch-live")) await BranchLive.Run(repo,output,true);
 if (args.Contains("--annotations-live")) await AnnotationLive.Run(repo,output);
 if (args.Contains("--symmetric-exports-live")) await AnnotationLive.Run(repo,output,true);
 var corpusIndex=Array.IndexOf(args,"--corpus");

@@ -11,7 +11,12 @@ public sealed class ChatCoordinator(ClipDraft draft, DraftStore store, ChatConfi
     public bool Busy { get; private set; }
     private long lastStreamCheckpoint;
     private PromptSnapshot? Active => Session.Prompts.LastOrDefault();
-    private void Save() { store.Save(draft); Changed?.Invoke(); }
+    private void Save()
+    {
+        if (draft.Chat != null && Session != draft.Chat)
+            foreach (var asset in Session.Assets.Where(a => !draft.Chat.Assets.Any(existing => existing.Sha256 == a.Sha256))) draft.Chat.Assets.Add(asset);
+        store.Save(draft); Changed?.Invoke();
+    }
     private void StreamChanged()
     {
         // Checkpoint partial output without writing the entire draft for every token.
@@ -60,6 +65,7 @@ public sealed class ChatCoordinator(ClipDraft draft, DraftStore store, ChatConfi
         PromptSnapshot? attempt = null;
         try
         {
+            if (Session.Fork is { Stage: not "verified" }) throw new InvalidOperationException("分叉尚未核对完成，保留原身份，不会发送或另建替代对话。");
             if (Session.Binding.NeedsReconciliation) throw new InvalidOperationException("上次结果待核对，请先核对原回合，不会重发。");
             var input = actionInput ?? Session.Input;
             var images = actionImages ?? Session.Attachments.ToArray();
@@ -125,6 +131,7 @@ public sealed class ChatCoordinator(ClipDraft draft, DraftStore store, ChatConfi
 
     public async Task RecoverAsync(CancellationToken ct = default)
     {
+        if (Session.Fork is { Stage: not "verified" }) { await ForkAsync(ct); return; }
         if (!await Session.Gate.WaitAsync(0, ct)) throw new InvalidOperationException("本对话正在处理。");
         try
         {
@@ -135,6 +142,43 @@ public sealed class ChatCoordinator(ClipDraft draft, DraftStore store, ChatConfi
                 mediaRoot = Path.Combine(dataRoot, "chat-media") }, Receive, ct);
         }
         catch (Exception ex) { Session.Binding.Error = ex.Message; Session.Binding.Stage = "unknown"; throw; }
+        finally { Busy = false; Save(); Session.Gate.Release(); }
+    }
+
+    public async Task ForkAsync(CancellationToken ct = default)
+    {
+        var fork = Session.Fork ?? throw new InvalidOperationException("当前对话不是原生分叉。");
+        if (fork.Stage == "verified") return;
+        if (fork.Stage != "prepared" && Session.Binding.ThreadId == null)
+            throw new InvalidOperationException("原生分叉回执未知且缺少新 Thread ID；保留此 Tab，不会重复分叉或新建替代对话。");
+        if (!await Session.Gate.WaitAsync(0, ct)) throw new InvalidOperationException("本对话正在处理。");
+        try
+        {
+            Busy = true; Session.Binding.Error = null; Save();
+            await native.RunAsync(new { action = fork.Stage == "prepared" ? "fork" : "verifyFork",
+                cwd = Path.Combine(dataRoot, "chat-workspace"), sourceThreadId = fork.SourceThreadId, lastTurnId = fork.LastTurnId,
+                threadId = Session.Binding.ThreadId, model = Session.Model, mediaRoot = Path.Combine(dataRoot, "chat-media") }, e =>
+            {
+                switch (e.GetProperty("kind").GetString())
+                {
+                    case "stage": fork.Stage = "creating"; Session.Binding.Stage = "unknown"; break;
+                    case "forked":
+                        var id = e.GetProperty("threadId").GetString();
+                        if (string.IsNullOrWhiteSpace(id) || id == fork.SourceThreadId) throw new InvalidDataException("原生分叉返回了无效身份。");
+                        Session.Binding.ThreadId = id; Session.Binding.TurnId = null; fork.Stage = "created"; break;
+                    case "forkVerified": fork.Stage = "verified"; Session.Binding.Stage = "completed"; Session.Binding.NativeStatus = "completed"; break;
+                    case "error": Session.Binding.Error = e.GetProperty("message").GetString(); break;
+                }
+                Save(); return Task.CompletedTask;
+            }, ct);
+            if (fork.Stage != "verified") throw new InvalidDataException("原生分叉缺少精确回读确认。");
+        }
+        catch (Exception ex)
+        {
+            if (fork.Stage != "prepared") fork.Stage = "unknown";
+            Session.Binding.Stage = fork.Stage == "prepared" ? "failed" : "unknown";
+            Session.Binding.Error = ex.Message; throw;
+        }
         finally { Busy = false; Save(); Session.Gate.Release(); }
     }
 
@@ -202,7 +246,7 @@ public sealed class ChatCoordinator(ClipDraft draft, DraftStore store, ChatConfi
                      m.CreatedAt >= snapshot.CreatedAt)) message.Status = Session.Binding.Stage;
         if (nativeStatus == "completed")
         {
-            if (snapshot.Action == null && !already)
+            if (snapshot.Action == null && !already && (sessionOverride == null || Session == draft.Chat))
             {
                 var text = string.Join("\n\n", Session.Messages.Where(m => m.Role == "assistant" && m.CreatedAt >= snapshot.CreatedAt).Select(m => m.Text));
                 var answer = new QuestionAnswer("answered", text, []);
