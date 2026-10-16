@@ -12,7 +12,7 @@ Windows 悬浮式知识采集工具：划词朗读、图文提问、多轮问答
 - [问答日期目录与后台定位验收](D:/Artifacts/KnowledgeClipper/question-dated-import-20261015/validation.md)：保留类型精确绑定、当日目录、普通摘录顺序及空行规则，冻结旧路径不迁移。
 - [全部发布与验收历史](docs/release-history.md)：只用于追溯，不作为当前运行路径或跨任务授权。
 
-当前包包含各轮已经验收的聊天、历史、批注、撤销/重做、补充要求和双端导出修改。源码提交、远端集成、已部署和真实验收分别留痕；此前功能整合见 [收尾记录](D:/Artifacts/KnowledgeClipper/closeout-20261016/closeout.md)，本次性能版本以顶部验收及部署回执为准。
+当前包包含各轮已经验收的聊天、历史、批注、撤销/重做、补充要求和双端导出修改。源码提交、远端集成、已部署和真实验收分别留痕；功能整合与性能改动均已进入 main，最终代码、运行包、远端及文档核对见 [收尾记录](D:/Artifacts/KnowledgeClipper/closeout-20261016/closeout.md)。
 
 ## 使用与设置
 
