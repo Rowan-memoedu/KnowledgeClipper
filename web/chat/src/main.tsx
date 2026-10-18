@@ -45,11 +45,12 @@ const empty:State = {draftId:'',busy:false,status:'加载问答…',provider:'ap
 const convert = (m:Message):ThreadMessageLike => ({id:m.id,role:m.role,createdAt:new Date(m.createdAt),
   content:m.parts.filter(p=>p.kind==='text'||p.kind==='image').map(p=>p.kind==='image'
     ? {type:'image' as const,image:imageUrl(p.image!.sha256)} : {type:'text' as const,text:p.displayText??p.text??''})});
+const MarkdownTable = ({children}:any) => <div className="markdown-table-scroll" role="region" aria-label="表格" tabIndex={0}><table>{children}</table></div>;
 const PreviewMarkdown = ({text}:{text:string}) => <Streamdown mode="static" plugins={{math,cjk,mermaid}} controls={markdownControls}
   remarkRehypeOptions={{allowDangerousHtml:false}} urlTransform={url=>/^https:\/\/clipper-media\.local\/[a-f0-9]{64}\.png$/.test(url)?url:''}
-  components={{a:({children}:any)=><span>{children}</span>,img:({src,alt}:any)=>src?.startsWith('https://clipper-media.local/')?<img src={src} alt={alt||'卡片图片'}/>:null}}>{text}</Streamdown>;
+  components={{table:MarkdownTable,a:({children}:any)=><span>{children}</span>,img:({src,alt}:any)=>src?.startsWith('https://clipper-media.local/')?<img src={src} alt={alt||'卡片图片'}/>:null}}>{text}</Streamdown>;
 const Markdown = () => <StreamdownTextPrimitive plugins={{math,cjk,mermaid}} controls={markdownControls}
-  components={{a:({children}:any)=><span>{children}</span>,img:()=>null}}
+  components={{table:MarkdownTable,a:({children}:any)=><span>{children}</span>,img:()=>null}}
   remarkRehypeOptions={{allowDangerousHtml:false}} />;
 const MessageView = memo(function MessageView(){
   const {state,card}=useContext(Context); const id=useAuiState(s=>s.message.id);

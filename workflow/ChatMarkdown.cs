@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Markdig;
 using Markdig.Extensions.Mathematics;
+using Markdig.Extensions.Tables;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 
@@ -14,9 +15,9 @@ public sealed record ChatCopyMath(string Tex, string Markdown, bool Block);
 // A shared AST keeps code/escapes out of math parsing. Source messages are never normalized in place.
 public static class ChatMarkdown
 {
-    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder().UseMathematics().UsePreciseSourceLocation().DisableHtml().Build();
+    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder().UsePipeTables().UseMathematics().UsePreciseSourceLocation().DisableHtml().Build();
     private static readonly MarkdownPipeline CodeSpans = new MarkdownPipelineBuilder().UsePreciseSourceLocation().DisableHtml().Build();
-    private sealed record Row(RemNoteRichPart[] Parts, int Parent);
+    private sealed record Row(RemNoteRichPart[] Parts, int Parent, string? Html = null);
 
     public static void ValidateAssets(string markdown, IReadOnlyList<ImageAsset> assets) => Parse(markdown, assets);
 
@@ -95,7 +96,7 @@ public static class ChatMarkdown
         {
             var depth = 0; var parent = row.Parent;
             while (parent >= 0) { depth++; parent = rows[parent].Parent; }
-            return string.Concat(Enumerable.Repeat("　", depth)) + string.Concat(row.Parts.Select(p => p.Kind switch
+            return row.Html ?? string.Concat(Enumerable.Repeat("　", depth)) + string.Concat(row.Parts.Select(p => p.Kind switch
             {
                 "image" => used.Single(a => a.Sha256 == p.Sha256).Html,
                 "mermaid" => MermaidCards.Html(p.Text ?? ""),
@@ -114,12 +115,12 @@ public static class ChatMarkdown
         var normalized = BracketMath(NormalizeMediaReferences(source, assets).Replace("\r\n", "\n"));
         var document = Markdown.Parse(normalized, Pipeline);
         var rows = new List<Row>();
-        int Add(RemNoteRichPart[] parts, int parent)
+        int Add(RemNoteRichPart[] parts, int parent, string? html = null)
         {
             if (!parts.Any(p => p.Kind == "image" || !string.IsNullOrWhiteSpace(p.Text))) return parent;
-            rows.Add(new(parts, parent)); return rows.Count - 1;
+            rows.Add(new(parts, parent, html)); return rows.Count - 1;
         }
-        RemNoteRichPart[] Inlines(ContainerInline? inline)
+        RemNoteRichPart[] Inlines(ContainerInline? inline, bool tableCell = false)
         {
             var parts = new List<RemNoteRichPart>();
             void Walk(Inline? current)
@@ -128,7 +129,7 @@ public static class ChatMarkdown
                     switch (current)
                     {
                         case MathInline math: parts.Add(new("latex", math.Content.ToString(), Block: math.DelimiterCount > 1)); break;
-                        case CodeInline code: parts.Add(new("text", code.Content)); break;
+                        case CodeInline code: parts.Add(new("text", tableCell ? code.Content.Replace("\\|", "|") : code.Content)); break;
                         case LiteralInline literal: parts.Add(new("text", literal.Content.ToString())); break;
                         case LineBreakInline: parts.Add(new("text", "\n")); break;
                         case LinkInline { IsImage: true } image:
@@ -143,6 +144,71 @@ public static class ChatMarkdown
             }
             Walk(inline?.FirstChild); return Compact(parts);
         }
+        void AddTable(Table table, int parent)
+        {
+            var native = new StringBuilder(@"\def\arraystretch{1.6}\begin{array}{|");
+            var html = new StringBuilder("<div style=\"max-width:100%;overflow-x:auto;text-align:left\"><table style=\"border-collapse:collapse;min-width:100%;table-layout:auto\">");
+            var images = new List<RemNoteRichPart>();
+            foreach (var column in table.ColumnDefinitions)
+                native.Append(column.Alignment == TableColumnAlign.Right ? "r|" : column.Alignment == TableColumnAlign.Center ? "c|" : "l|");
+            native.Append(@"}\hline ");
+            foreach (TableRow row in table)
+            {
+                html.Append("<tr>");
+                for (var index = 0; index < table.ColumnDefinitions.Count; index++)
+                {
+                    if (index > 0) native.Append(" & ");
+                    var tag = row.IsHeader ? "th" : "td";
+                    var alignment = table.ColumnDefinitions[index].Alignment;
+                    html.Append('<').Append(tag).Append(" style=\"border:1px solid #89939b;padding:8px 12px;min-width:8em;max-width:28em;vertical-align:top;white-space:normal;overflow-wrap:anywhere;text-align:")
+                        .Append(alignment == TableColumnAlign.Right ? "right" : alignment == TableColumnAlign.Center ? "center" : "left").Append("\">");
+                    var cell = index < row.Count ? (TableCell)row[index] : null;
+                    var parts = cell == null ? [] : cell.OfType<LeafBlock>().SelectMany(leaf => Inlines(leaf.Inline, true)).ToArray();
+                    var cellImages = parts.Where(p => p.Kind == "image").ToArray();
+                    var imageNumber = images.Count;
+                    var nativeParts = parts.Select(p => p.Kind == "image"
+                        ? new RemNoteRichPart("text", "［图 " + (++imageNumber) + "］") : p).ToArray();
+                    native.Append(TableMath.Cell(nativeParts, row.IsHeader));
+                    images.AddRange(cellImages);
+                    foreach (var leaf in cell?.OfType<LeafBlock>() ?? []) html.Append(TableHtml(leaf.Inline));
+                    html.Append("</").Append(tag).Append('>');
+                }
+                native.Append(@" \\ \hline ");html.Append("</tr>");
+            }
+            native.Append(@"\end{array}");html.Append("</table></div>");
+            // Use RemNote's native formula RichText on both note and card. Anki receives a real HTML grid.
+            // Image cells retain numbered positions; their exact registered bytes follow the native grid.
+            var rich = new List<RemNoteRichPart> { new("latex", native.ToString(), Block: true) };
+            for (var i = 0; i < images.Count; i++) rich.AddRange([new("text", "\n图 " + (i + 1) + "："), images[i]]);
+            Add(rich.ToArray(), parent, html.ToString());
+        }
+        string TableHtml(ContainerInline? inline)
+        {
+            var html = new StringBuilder();
+            void Walk(Inline? current)
+            {
+                for (; current != null; current = current.NextSibling)
+                    switch (current)
+                    {
+                        case MathInline math:
+                            html.Append("<span style=\"display:inline-block;max-width:28em;overflow-x:auto;vertical-align:middle;white-space:nowrap\">")
+                                .Append(WebUtility.HtmlEncode(AnkiMathText.Normalize((math.DelimiterCount > 1 ? "\\[" : "\\(") + math.Content + (math.DelimiterCount > 1 ? "\\]" : "\\)"))))
+                                .Append("</span>");break;
+                        case CodeInline code: html.Append("<code>").Append(WebUtility.HtmlEncode(code.Content.Replace("\\|", "|"))).Append("</code>"); break;
+                        case LiteralInline literal: html.Append(AnkiNoteDraft.Html(literal.Content.ToString())); break;
+                        case LineBreakInline: html.Append("<br>"); break;
+                        case LinkInline { IsImage: true } image:
+                            var asset = assets.Single(a => "asset:" + a.Sha256 == image.Url);html.Append(asset.Html);break;
+                        case EmphasisInline emphasis:
+                            var tag = emphasis.DelimiterCount == 2 ? "strong" : "em";
+                            html.Append('<').Append(tag).Append('>');Walk(emphasis.FirstChild);html.Append("</").Append(tag).Append('>');break;
+                        case ContainerInline container: Walk(container.FirstChild); break;
+                        case AutolinkInline link: html.Append(WebUtility.HtmlEncode(link.Url)); break;
+                        default: throw new InvalidDataException("暂不能无损导出表格内联类型：" + current.GetType().Name);
+                    }
+            }
+            Walk(inline?.FirstChild);return html.ToString();
+        }
         void Blocks(IEnumerable<Block> container, int inherited)
         {
             var headings = new Stack<(int Level, int Row)>();
@@ -151,6 +217,7 @@ public static class ChatMarkdown
                 var parent = headings.Count == 0 ? inherited : headings.Peek().Row;
                 switch (block)
                 {
+                    case Table table: AddTable(table, parent); break;
                     case HeadingBlock heading:
                         while (headings.Count > 0 && headings.Peek().Level >= heading.Level) headings.Pop();
                         parent = headings.Count == 0 ? inherited : headings.Peek().Row;
@@ -166,6 +233,7 @@ public static class ChatMarkdown
                                     var index = Add(Inlines(paragraph.Inline), itemParent);
                                     if (initial) itemParent = index;
                                 }
+                                else if (child is Table table) AddTable(table, itemParent);
                                 else if (child is ContainerBlock nested)
                                 {
                                     if (nested is ListBlock) Blocks(new Block[] { nested }, itemParent);

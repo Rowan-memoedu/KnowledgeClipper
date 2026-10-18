@@ -39,6 +39,19 @@ var invalid = ChatComposition.Begin(session, card, "integrate", "", ["fast-answe
 ChatComposition.Parse(invalid, "模型没有返回 JSON，但该文本必须保留", session, ["fast-answer"]);
 Check(invalid.Status == "unparsed" && invalid.RawOutput.Contains("必须保留"), "解析失败保留原回复");
 var rendered = ChatMarkdown.Render("给定 $x=2$，求结果。", "# 主步骤\n\n- 先计算 $x^2=4$。\n  - 再验证。\n\n$$\n\\begin{cases}x=2\\\\y=3\\end{cases}\n$$", []);
+var tableFixture=File.ReadAllText(Path.Combine(repo,"tests","table-fixture.md"));
+var tableRendered=ChatMarkdown.Render(tableFixture,tableFixture,[]);
+WorkflowJson.Save(Path.Combine(output,"table-rendered.json"),tableRendered);
+Check(tableRendered.FrontHtml.Contains("<table ")&&tableRendered.BackHtml.Contains("<table ")&&tableRendered.FrontHtml.Split("<tr>").Length==5,"双面 Markdown 表格转换为 Anki 四行 HTML 网格");
+Check(tableRendered.FrontHtml.Contains("<strong>加粗</strong>")&&tableRendered.FrontHtml.Contains("左|右")&&tableRendered.FrontHtml.Contains("<code>a|b</code>"),"表格内转义竖线、代码与强调保留");
+Check(tableRendered.FrontHtml.Contains("\\(S=ab\\)")&&tableRendered.FrontHtml.Contains("text-align:right"),"Anki 表格保留公式与列对齐");
+Check(tableRendered.Card.Front.Count(p=>p.Kind=="latex"&&p.Text!.Contains("\\begin{array}{|l|l|r|}"))==1&&
+ tableRendered.Card.Back.Length==3&&tableRendered.Card.Back[1].Single().Text!.Contains("\\text{面积}"),"RemNote 表格保持为单个原生公式网格，前后文字顺序不变");
+WorkflowJson.Save(Path.Combine(output,"table-rendered.json"),tableRendered);
+var tableEscapes=ChatMarkdown.Render("问题","| 特殊字符 | 空格 |\n| --- | --- |\n| & % # _ { } \\ $ ^ ~ | |",[]);
+Check(tableEscapes.Card.Back[0][0].Text!.Contains("\\& \\% \\# \\_ \\{ \\}")&&tableEscapes.Card.Back[0][0].Text!.Contains("\\text{ }"),"原生表格安全转义 LaTeX 特殊字符并保留空单元格");
+var codeTable=ChatMarkdown.Render("问题","```text\n| a | b |\n| --- | --- |\n| c | d |\n```",[]);
+Check(codeTable.Card.Back.All(r=>r.All(p=>p.Kind=="text"))&&!codeTable.BackHtml.Contains("<table"),"代码围栏中的表格语法不转换");
 var graphSource = "flowchart LR\n A[输入] --> B[处理]\n B --> C[输出]";
 var sequenceSource = "sequenceDiagram\n participant A as 学生\n participant B as 教师\n A->>B: 提问\n B-->>A: 回答";
 var graph = ChatMarkdown.Render("普通前文\n\n```mermaid\n"+graphSource+"\n```\n\n后文 $x=2$。", "```mermaid\n"+sequenceSource+"\n```", []);
@@ -58,6 +71,9 @@ var mediaPath = Path.Combine(output, "public-pixel.png");
 File.WriteAllBytes(mediaPath, Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/N2kAAAAASUVORK5CYII="));
 var image = new ImageAsset(mediaPath, ImageAsset.Hash(File.ReadAllBytes(mediaPath)), "question", 1);
 var withImages = ChatMarkdown.Render("前 $a$ ![图](asset:" + image.Sha256 + ") 后", "![图](asset:" + image.Sha256 + ")\n\n结论", [image]);
+var tableImage=ChatMarkdown.Render("问题","| 图像 | 说明 |\n| --- | --- |\n| ![公开图](asset:"+image.Sha256+") ![重复图](asset:"+image.Sha256+") | 原图 |",[image]);
+Check(tableImage.Media.Single().Sha256==image.Sha256&&tableImage.Card.Back[0].Count(p=>p.Kind=="image")==2&&
+ tableImage.Card.Back[0][0].Text!.Contains("［图 1］")&&tableImage.Card.Back[0][0].Text!.Contains("［图 2］")&&tableImage.BackHtml.Split("<img").Length==3,"表格图片在 Anki 单元格内保留，RemNote 网格保留位置编号及原图字节且不重复显示");
 Check(withImages.Card.Front.Select(p => p.Kind).SequenceEqual(new[] { "text", "latex", "text", "image", "text" }), "正面图文公式交错顺序");
 Check(withImages.Media.Length == 1 && withImages.Card.Back.SelectMany(r => r).Any(p => p.Kind == "image"), "双面图片去重并保持位置");
 var localUrl = "https://clipper-media.local/" + image.Sha256 + ".png";
@@ -129,6 +145,7 @@ if(args.Contains("--api-live"))await LiveApi.Run(repo,output);
 if(args.Contains("--integration-live"))await IntegrationLive.Run(repo,output,"api");
 if(args.Contains("--integration-codex-live"))await IntegrationLive.Run(repo,output,"codex");
 if(args.Contains("--integration-exports"))await IntegrationExports.Run(repo,output);
+if(args.Contains("--tables-live"))await TableDelivery.Run(repo,output);
 if(args.Contains("--anki-live"))await LiveDelivery.Run(repo,output,ExportDestination.Anki);
 if(args.Contains("--remnote-live"))await LiveDelivery.Run(repo,output,ExportDestination.RemNote);
 if(args.Contains("--compaction-live"))await LiveCompaction.Run(repo,output);
