@@ -157,6 +157,18 @@ internal static class Program
         await Wait("document.querySelector('.card-preview img')?.naturalWidth>0");
         Check(true,"卡片预览显示真实公式、两级答案与登记图片");
         Check(await Js("document.querySelector('.card-preview ul ul')!==null")=="true","预览保留嵌套大纲");
+        var previewCardBefore=JsonSerializer.Serialize(draft.Chat.Compositions[0]);
+        const string previewVisible="(()=>{const r=document.querySelector('.card-preview').getBoundingClientRect(),a=document.querySelector('.cards').getBoundingClientRect();return r.top<Math.min(innerHeight,a.bottom)&&r.bottom>Math.max(0,a.top)})()";
+        for(var repeat=0;repeat<3;repeat++){
+            await Js("document.querySelector('.cards-heading').scrollIntoView({block:'start'})");await Wait("!("+previewVisible+")");
+            await Wait("document.querySelector('.preview-action')?.disabled===false");
+            await Js("document.querySelector('.preview-action').click()");await Wait(previewVisible,5);
+        }
+        Check(true,"正反面内容不变时，连续三次预览点击均重新定位到卡片预览");
+        await Js("document.querySelector('.cards-heading').scrollIntoView({block:'start'})");await Command(new{command="input",text="无关输入刷新"});await Task.Delay(150);
+        Check(await Js("!("+previewVisible+")")=="true","无关状态刷新不会自动跳回卡片预览");
+        await Wait("document.querySelector('.preview-action')?.disabled===false");await Js("document.querySelector('.preview-action').click()");await Wait(previewVisible,5);
+        Check(JsonSerializer.Serialize(draft.Chat.Compositions[0])==previewCardBefore,"重复预览不修改卡片正文、版本、来源或撤销历史");
         for(var page=0;page<9;page++)await Command(new{command="older"});
         await Wait("document.querySelectorAll('.message').length===200");Check(true,"逐页可达全部历史");
         foreach(var width in new[]{1240,768,414,375,320}) {

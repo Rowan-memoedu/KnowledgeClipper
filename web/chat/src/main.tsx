@@ -130,7 +130,7 @@ function CardEditor({card,state,onIntegrate}:{card:Card;state:State;onIntegrate:
       <ActionButton disabled={!card.canUndo||historyPending} title="Ctrl+Z" onClick={()=>send('undo',{cardId:card.id})}>撤销上次编辑</ActionButton>
       <ActionButton disabled={!card.canRedo||historyPending} title="Ctrl+Y" onClick={()=>send('redo',{cardId:card.id})}>重做上次编辑</ActionButton>
       {frozen&&<ActionButton onClick={()=>send('copyCard',{cardId:card.id})}>编辑为新草稿</ActionButton>}
-      <ActionButton className="preview-action" onClick={()=>send('preview',{cardId:card.id})}>预览卡片</ActionButton></div>
+      <ActionButton className="preview-action" onClick={()=>{previewElement.current?.scrollIntoView({block:'nearest'});send('preview',{cardId:card.id});}}>预览卡片</ActionButton></div>
     <SupplementalRequirements text={requirement} onTextChange={setRequirement} selected={requirementSelection} onSelectionChange={setRequirementSelection} disabled={state.busy}/>
     <div className="auxiliary-panel">
       <div className="tools auxiliary-actions"><ActionButton disabled={auxiliaryUnavailable} aria-busy={auxiliary?.busy&&state.proposals.some(p=>p.action==='integrate'&&p.status==='pending')||false}
