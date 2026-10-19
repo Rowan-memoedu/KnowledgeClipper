@@ -11,7 +11,7 @@ namespace KnowledgeClipper
     internal sealed record SelectionSnapshot(string Text, int X, int Y);
 }
 
-internal static class Program
+internal static partial class Program
 {
     private static readonly List<string> checks = new();
     private static readonly List<string> screenshots = new();
@@ -43,6 +43,7 @@ internal static class Program
                     passed = exit == 0, utc = DateTimeOffset.UtcNow, checks, screenshots, error,
                     scope = "Production floating surfaces and native clipboard message listener. Controlled image source exercises races and busy clipboard retries. Real Windows clipboard is neither read for content nor written; isolated desktop only. No application activation, model calls or exports."
                 }, new JsonSerializerOptions { WriteIndented = true }));
+                Console.WriteLine($"Clipboard checks: {checks.Count}; passed={exit == 0}; evidence={output}");
                 context.ExitThread();
             }
         };
@@ -55,6 +56,11 @@ internal static class Program
     {
         var png = Png(Color.CornflowerBlue);
         var red = Png(Color.DarkRed);
+        if (Environment.GetEnvironmentVariable("KNOWLEDGECLIPPER_CLIPBOARD_TEST_SCOPE") == "monitor")
+        { await MonitorChecks(png, red); await HoverMonitorChecks(png, red); return; }
+        await LinkChecks(png, red);
+        if (Environment.GetEnvironmentVariable("KNOWLEDGECLIPPER_IMAGE_LINK_HELPER") is { Length: > 0 } helper)
+            await LiveLinkChecks(helper);
         ScreenshotControllerChecks.Run(output, png, Check);
         DataObjectChecks(png, red);
         await SurfaceChecks(png);
@@ -180,10 +186,26 @@ internal static class Program
         var initialLocation = imageDot.Location;
         var clock = Stopwatch.StartNew();
         await Task.Delay(1150); Notify(monitor);
-        Check(shown.Count == 1 && imageDot.Visible && imageDot.Location == initialLocation, "duplicate clipboard notifications neither move nor replace the visible image dot");
+        Check(shown.Count == 1 && imageDot.Visible && imageDot.Location == initialLocation,
+            $"duplicate clipboard notifications neither move nor replace the visible image dot (count={shown.Count}, visible={imageDot.Visible}, initial={initialLocation}, current={imageDot.Location}, elapsed={clock.ElapsedMilliseconds}ms)");
         await Until(() => !imageDot.Visible, "image dot expires after two seconds", 1500);
         Check(clock.ElapsedMilliseconds >= 1800 && clock.ElapsedMilliseconds < 2800 && shown.Count == 1, "image dot lifetime is two seconds and same-sequence updates do not extend it");
         Check(!monitor.TryConsume(shown[0]), "expired image snapshot cannot dispatch");
+
+        using (var delayedOwner = new Form())
+        using (var delayedDot = LanguageSelectionDot.ForImages((_, _) => { }))
+        {
+            _ = delayedOwner.Handle;
+            var delayedSource = new FakeSource(null); var displayed = false;
+            using var delayed = new ClipboardImageMonitor(delayedOwner, snapshot => {
+                Thread.Sleep(2100); delayedDot.ShowImage(snapshot); displayed = true;
+            }, delayedDot.HideImage, null, delayedSource);
+            delayed.Start(); delayedSource.Copy(png, anchor); Notify(delayed);
+            await Until(() => displayed, "slow native presentation completes", 5000);
+            await Task.Delay(1000);
+            Check(delayedDot.Visible, "a slow native window show does not consume the two-second visible lifetime");
+            await Until(() => !delayedDot.Visible, "slowly created surface expires on its normal visible deadline", 1500);
+        }
 
         source.Copy(red, anchor); Notify(monitor);
         await Until(() => shown.Count == 2, "second copied image appears");
@@ -348,11 +370,15 @@ internal static class Program
         internal int BusyAttempts;
         internal ManualResetEventSlim Gate;
         internal int ReadCount;
+        internal Uri Link;
+        internal int LinkReads;
         internal readonly List<(int Thread, ApartmentState Apartment)> ReadThreads = new();
         public uint SequenceNumber { get { lock (gate) return sequence; } }
         public Point CursorPosition { get { lock (gate) return Cursor; } }
         public bool IsOwnedByCurrentProcess => Owned;
-        internal void Copy(byte[] value, Point point) { lock (gate) { png = value; Cursor = point; sequence++; } }
+        internal void Copy(byte[] value, Point point) { lock (gate) { png = value; Link = null; Cursor = point; sequence++; } }
+        internal void CopyLink(Uri uri, Point point) { lock (gate) { png = null; Link = uri; Cursor = point; sequence++; } }
+        public Uri ReadImageLink() { Interlocked.Increment(ref LinkReads); lock (gate) return Link; }
         public byte[] ReadPng()
         {
             byte[] value; ManualResetEventSlim held;
@@ -375,7 +401,10 @@ internal static class Program
     private static void Check(bool condition, string description)
     {
         if (!condition) throw new InvalidOperationException(description);
-        checks.Add(description); Console.WriteLine("PASS " + description);
+        // Console pipes can block the UI thread while a tool consumer is idle,
+        // consuming the real two-second lifetime under test. Keep the detailed
+        // checks locally and emit only the final summary to stdout.
+        checks.Add(description); File.AppendAllText(Path.Combine(output, "checks.log"), "PASS " + description + Environment.NewLine);
     }
     private static async Task Until(Func<bool> predicate, string description, int timeout = 2500)
     {

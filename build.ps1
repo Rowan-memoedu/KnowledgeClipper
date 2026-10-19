@@ -14,7 +14,8 @@ $clipperExecutable = Join-Path $BuildOutput 'RemNoteQuickClipper.Desktop\Release
 $running = Get-Process -Name KnowledgeClipper -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $clipperExecutable }
 if ($running) { throw "构建目标正在使用中：$clipperExecutable。请改用 -BuildOutput 和 -BuildCache，或退出该运行版后再构建。" }
 if (-not (Test-Path -LiteralPath $DotnetPath)) { throw '请用 -DotnetPath 指定 .NET 8 SDK 的 dotnet.exe。' }
-if (-not (Test-Path -LiteralPath (Join-Path $projectRoot 'helpers\node_modules\selection-hook\package.json'))) {
+if (-not (Test-Path -LiteralPath (Join-Path $projectRoot 'helpers\node_modules\selection-hook\package.json')) -or
+    -not (Test-Path -LiteralPath (Join-Path $projectRoot 'helpers\node_modules\@resvg\resvg-js\package.json'))) {
     & npm ci --prefix (Join-Path $projectRoot 'helpers') --cache 'D:\Caches\npm-cache' --no-audit --no-fund
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }

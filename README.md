@@ -4,8 +4,9 @@ Windows 悬浮式知识采集工具：划词朗读、图文提问、多轮问答
 
 ## 当前交付状态
 
-2026-10-18 核对的现役桌面包为 `D:/Artifacts/KnowledgeClipper/tables-20261018/release/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64`。实际进程、桌面快捷方式和 `Personal Tool - KnowledgeClipper` 计划任务均已指向此包。本次修复表格预览重叠，并支持 Anki HTML 表格、RemNote 原生 LaTeX 网格导出；此前预览定位、整合制卡和 Tab 功能保留。RemNote 专用服务仍使用 `performance-20261016/remnote`，HTTP/WS/安装服务分别为 43111/43112/43113。路径是本机部署事实，其他机器按其安装配置核对。
+2026-10-19 核对的现役桌面包为 `D:/Artifacts/KnowledgeClipper/image-link-20261019/release-final/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64`。实际进程、桌面快捷方式和 `Personal Tool - KnowledgeClipper` 计划任务均已指向此包。复制明确的图片链接可显示现有图片浮点，静态 SVG 在本地转换；普通网址与原生剪贴板图片沿用原规则。此前表格、预览定位、整合制卡和 Tab 功能保留。RemNote 专用服务仍使用 `performance-20261016/remnote`，HTTP/WS/安装服务分别为 43111/43112/43113。路径是本机部署事实，其他机器按其安装配置核对。
 
+- [图片链接与普通复制回归](D:/Artifacts/KnowledgeClipper/image-link-20261019/validation.md)：172 项剪贴板/浮点检查、140 项实际桌面流程回归与用户 SVG 实际下载转换通过；1,288 份既有数据与配置原字节保留。
 - [表格预览与双端导出](D:/Artifacts/KnowledgeClipper/tables-20261018/validation.md)：五种宽度无单元格重叠，双端真实导入及回读、Anki 原生复习器、300 项聊天检查、17 组业务回归和 28 项界面回归通过；1,206 份既有数据与配置原字节保留。
 - [重复点击预览修复](D:/Artifacts/KnowledgeClipper/preview-repeat-20261018/validation.md)：内容不变时每次点击均重新定位，28 项界面检查通过；卡片数据及撤销历史保持。
 - [整合对话重试与智能多卡验收](D:/Artifacts/KnowledgeClipper/chat-integrate-20261016/validation.md)：空卡整合全部对话，有选材或手工稿时聚焦当前内容并参考跨 Tab 上下文；自动判断张数，支持补充要求指定数量。293 项 Chat、19 项整合界面、27 项 Tab、25 项综合界面及 18 组业务回归通过；真实 API/Codex 和 RemNote/Anki 多卡导出、丢回执恢复通过，1,137 份既有数据与配置字节未变。
@@ -17,11 +18,12 @@ Windows 悬浮式知识采集工具：划词朗读、图文提问、多轮问答
 - [问答日期目录与后台定位验收](D:/Artifacts/KnowledgeClipper/question-dated-import-20261015/validation.md)：保留类型精确绑定、当日目录、普通摘录顺序及空行规则，冻结旧路径不迁移。
 - [全部发布与验收历史](docs/release-history.md)：只用于追溯，不作为当前运行路径或跨任务授权。
 
-当前包包含各轮已经验收的聊天、同页分叉、Tab 关闭/恢复/排序、共享卡片、历史、批注、撤销/重做、补充要求和双端导出修改。源码、部署与验收分别留痕；本轮证据见[表格预览与导出验收](D:/Artifacts/KnowledgeClipper/tables-20261018/validation.md)，此前代码整合见 [收尾记录](D:/Artifacts/KnowledgeClipper/closeout-20261016/closeout.md)。
+当前包包含各轮已经验收的聊天、同页分叉、Tab 关闭/恢复/排序、共享卡片、历史、批注、撤销/重做、补充要求和双端导出修改。源码、部署与验收分别留痕；本轮证据见[图片链接验收](D:/Artifacts/KnowledgeClipper/image-link-20261019/validation.md)，此前代码整合见 [收尾记录](D:/Artifacts/KnowledgeClipper/closeout-20261016/closeout.md)。
 
 ## 使用与设置
 
 - 文字浮点“读 / 卡 / 摘 / 问”，图片浮点另有“图”；快捷模式与普通模式共用原稿、导入身份及失败反馈。
+- 复制 PNG/JPEG/GIF/BMP/SVG 图片直链，下载完成后显示同一图片浮点；普通网址不探测，真实剪贴板图片始终优先。SVG 原文件与来源随图片操作保存在本地，进入既有流程的是 PNG；不改写剪贴板。
 - 图文输入进入同一问答页。普通“卡”按问题类型使用 Codex 默认模型/推理；最右“问”按配置的 API 快捷问模型发送一次，不自动导出。
 - 多轮消息可选入卡片正反面，保留原始 Markdown、公式、图片与 Mermaid。双面正文和批注支持独立或全部书面化、图转文字、补充图片、预览、撤销及重做。
 - “整合对话”在卡面与选材均空时使用全部保留对话；有选材或手工内容时以其为重点，参考对话补足上下文。模型按知识目标判断张数，也可在补充要求中指定 1 至 20 张；停止或超时后 API 辅助请求可在原页面明确再次生成，旧输入和部分输出保留，Codex 不确定回合继续按原身份核对。

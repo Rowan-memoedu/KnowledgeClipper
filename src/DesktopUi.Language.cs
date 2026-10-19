@@ -85,11 +85,13 @@ internal sealed partial class BoundClipperForm
             selection => { selectionDot.ShowSelection(selection); languageFlow.PrepareSpeech(); }, () => selectionDot.HideSelection(),
             message => SetStatus("自动选词未完成：" + message, Color.FromArgb(38, 90, 150), Color.FromArgb(238, 245, 255)));
         clipboardImageDot = LanguageSelectionDot.ForImages((snapshot, action) => _ = HandleClipboardImageAsync(snapshot, action));
+        var imageLinks = new ClipboardImageLinkLoader(() => languageFlow.Settings.NodePath,
+            Path.Combine(AppContext.BaseDirectory, "helpers", "render-svg.cjs"));
         clipboardImageMonitor = new ClipboardImageMonitor(this,
             snapshot => { selectionDot.HideSelection(); clipboardImageDot.ShowImage(snapshot); },
             () => clipboardImageDot.HideImage(),
             message => SetStatus("图片浮点未显示：" + message, Color.FromArgb(38, 90, 150), Color.FromArgb(238, 245, 255)),
-            isDotPoint: point => clipboardImageDot.ContainsScreenPoint(point));
+            isDotPoint: point => clipboardImageDot.ContainsScreenPoint(point), loadLink: imageLinks.LoadAsync);
         textDotItem = new ToolStripMenuItem("文字浮点") { CheckOnClick = true, Name = "knowledge-clipper.desktop.menu.dot.text" };
         imageDotItem = new ToolStripMenuItem("图片浮点") { CheckOnClick = true, Name = "knowledge-clipper.desktop.menu.dot.image" };
         textDotItem.Click += (_, _) => languageFlow.SaveSettings(languageFlow.Settings with { GlobalSelection = textDotItem.Checked });
@@ -192,6 +194,7 @@ internal sealed partial class BoundClipperForm
         try
         {
             var png = snapshot.PngBytes.ToArray();
+            if (snapshot.Original != null) await Task.Run(() => ClipboardImageLinkLoader.SaveOriginal(config.WorkDirectory, snapshot));
             if (action == ClipboardImageDotAction.Excerpt) imageFlow.StartClipboardImage(png, "excerpt", languageFlow.Settings.QuickExcerpt);
             else if (action == ClipboardImageDotAction.Read) imageFlow.StartClipboardImage(png, "language", languageFlow.Settings.QuickLanguage);
             else if (action == ClipboardImageDotAction.Question) imageFlow.StartClipboardImage(png, "question", languageFlow.Settings.QuickQuestion);

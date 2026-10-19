@@ -29,6 +29,16 @@ internal sealed class FloatingDotLifetime
 
 // Each notification owns encoded pixels rather than a live clipboard handle.
 // Continuing a capture after another copy therefore keeps the original image.
+internal sealed class ClipboardImageOriginal
+{
+    private readonly byte[] bytes;
+    internal string SourceUrl { get; }
+    internal string MediaType { get; }
+    internal ReadOnlyMemory<byte> Bytes => bytes;
+    internal ClipboardImageOriginal(string sourceUrl, string mediaType, byte[] bytes)
+    { SourceUrl = sourceUrl; MediaType = mediaType; this.bytes = (byte[])bytes.Clone(); }
+}
+
 internal sealed class ClipboardImageSnapshot
 {
     private readonly byte[] png;
@@ -36,12 +46,14 @@ internal sealed class ClipboardImageSnapshot
     internal Point Anchor { get; }
     internal DateTimeOffset CapturedAt { get; }
     internal ReadOnlyMemory<byte> PngBytes => png;
+    internal ClipboardImageOriginal Original { get; }
 
-    internal ClipboardImageSnapshot(uint sequenceNumber, Point anchor, DateTimeOffset capturedAt, byte[] png)
+    internal ClipboardImageSnapshot(uint sequenceNumber, Point anchor, DateTimeOffset capturedAt, byte[] png, ClipboardImageOriginal original = null)
     {
         if (png == null || png.Length == 0) throw new ArgumentException("图片内容为空。", nameof(png));
         SequenceNumber = sequenceNumber; Anchor = anchor; CapturedAt = capturedAt;
         this.png = (byte[])png.Clone();
+        Original = original;
     }
 
     internal void SavePng(string path) => File.WriteAllBytes(path, png);

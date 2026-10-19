@@ -47,6 +47,7 @@
     <Compile Include="..\src\DesktopUi.cs" Link="DesktopUi.cs" />
     <Compile Include="..\src\DesktopUi.Language.cs" Link="DesktopUi.Language.cs" />
     <Compile Include="..\src\ClipboardImageMonitor.cs" Link="ClipboardImageMonitor.cs" />
+    <Compile Include="..\src\ClipboardImageLink.cs" Link="ClipboardImageLink.cs" />
     <Compile Include="..\src\Language*.cs" Link="%(Filename)%(Extension)" />
     <Compile Include="..\src\Excerpt*.cs" Link="%(Filename)%(Extension)" />
     <Compile Include="..\src\Image*.cs" Link="%(Filename)%(Extension)" />

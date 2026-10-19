@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="..\..\src\LanguageSelectionDot.cs" Link="Production\LanguageSelectionDot.cs" />
     <Compile Include="..\..\src\ClipboardImageMonitor.cs" Link="Production\ClipboardImageMonitor.cs" />
+    <Compile Include="..\..\src\ClipboardImageLink.cs" Link="Production\ClipboardImageLink.cs" />
     <Compile Include="..\..\src\RemNoteQuickClipper.Desktop.Core\DesktopController.cs" Link="Production\DesktopController.cs" />
     <Compile Include="..\..\src\RemNoteQuickClipper.Desktop.Core\DesktopState.cs" Link="Production\DesktopState.cs" />
     <Compile Include="..\..\src\RemNoteQuickClipper.Desktop.Core\Ports.cs" Link="Production\Ports.cs" />

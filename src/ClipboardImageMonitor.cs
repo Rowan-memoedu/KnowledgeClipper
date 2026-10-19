@@ -25,6 +25,7 @@ internal sealed class ClipboardImageMonitor : IDisposable
     private readonly IClipboardImageSource source;
     private readonly Func<Point, bool> isDotPoint;
     private readonly Func<Action, IDisposable> registerListener;
+    private readonly Func<Uri, CancellationToken, Task<(byte[] Png, ClipboardImageOriginal Original)>> loadLink;
     private readonly FloatingDotLifetime display = new();
     private readonly int uiThread = Environment.CurrentManagedThreadId;
     private readonly System.Windows.Forms.Timer timer;
@@ -37,12 +38,14 @@ internal sealed class ClipboardImageMonitor : IDisposable
     private bool running, disposed, readInFlight;
 
     internal ClipboardImageMonitor(Form dispatcher, Action<ClipboardImageSnapshot> selected,
-        Action invalidated, Action<string> error = null, Func<Point, bool> isDotPoint = null)
-        : this(dispatcher, selected, invalidated, error, new SystemClipboardImageSource(), isDotPoint: isDotPoint) { }
+        Action invalidated, Action<string> error = null, Func<Point, bool> isDotPoint = null,
+        Func<Uri, CancellationToken, Task<(byte[] Png, ClipboardImageOriginal Original)>> loadLink = null)
+        : this(dispatcher, selected, invalidated, error, new SystemClipboardImageSource(), isDotPoint: isDotPoint, loadLink: loadLink) { }
 
     internal ClipboardImageMonitor(Form dispatcher, Action<ClipboardImageSnapshot> selected,
         Action invalidated, Action<string> error, IClipboardImageSource source,
-        Func<Action, IDisposable> registerListener = null, Func<Point, bool> isDotPoint = null)
+        Func<Action, IDisposable> registerListener = null, Func<Point, bool> isDotPoint = null,
+        Func<Uri, CancellationToken, Task<(byte[] Png, ClipboardImageOriginal Original)>> loadLink = null)
     {
         this.dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
         this.selected = selected ?? throw new ArgumentNullException(nameof(selected));
@@ -51,6 +54,7 @@ internal sealed class ClipboardImageMonitor : IDisposable
         this.source = source ?? throw new ArgumentNullException(nameof(source));
         this.isDotPoint = isDotPoint ?? (_ => false);
         this.registerListener = registerListener ?? (changed => new Listener(changed));
+        this.loadLink = loadLink;
         timer = new System.Windows.Forms.Timer { Interval = 50 };
         timer.Tick += (_, _) => Tick();
     }
@@ -148,7 +152,7 @@ internal sealed class ClipboardImageMonitor : IDisposable
 
     private void TryStartRead()
     {
-        if (!running || disposed || suppressions != 0 || readInFlight || pending == null ||
+        if (!running || disposed || suppressions != 0 || readInFlight || pending == null || pending.Resolving ||
             Environment.TickCount64 < retryAt) return;
         var ticket = pending;
         ticket.Attempts++;
@@ -158,36 +162,66 @@ internal sealed class ClipboardImageMonitor : IDisposable
 
     private async Task ReadAsync(ReadTicket ticket)
     {
-        var result = new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var result = new TaskCompletionSource<(byte[] Png, Uri Link)>(TaskCreationOptions.RunContinuationsAsynchronously);
         var reader = new Thread(() =>
         {
             try
             {
                 if (source.SequenceNumber != ticket.Sequence || source.IsOwnedByCurrentProcess)
-                    result.TrySetResult(null);
-                else result.TrySetResult(source.ReadPng());
+                    result.TrySetResult((null, null));
+                else
+                {
+                    var pixels = source.ReadPng();
+                    result.TrySetResult((pixels, pixels == null && loadLink != null ? source.ReadImageLink() : null));
+                }
             }
             catch (Exception ex) { result.TrySetException(ex); }
         }) { IsBackground = true, Name = "KnowledgeClipper clipboard image" };
         reader.SetApartmentState(ApartmentState.STA);
         reader.Start();
         byte[] png = null;
+        Uri link = null;
         Exception failure = null;
-        try { png = await result.Task.WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false); }
+        try { (png, link) = await result.Task.WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false); }
         catch (Exception ex) { failure = ex; }
-        Post(() => FinishRead(ticket, png, failure));
+        Post(() => FinishRead(ticket, png, link, failure));
     }
 
-    private void FinishRead(ReadTicket ticket, byte[] png, Exception failure)
+    private void FinishRead(ReadTicket ticket, byte[] png, Uri link, Exception failure)
     {
         readInFlight = false;
-        if (disposed || !running) return;
+        if (disposed || !running) { ticket.Cancellation.Dispose(); return; }
         ObserveClipboardChange();
-        if (!ReferenceEquals(ticket, pending)) { TryStartRead(); return; }
+        if (!ReferenceEquals(ticket, pending)) { ticket.Cancellation.Dispose(); TryStartRead(); return; }
         if (suppressions != 0 || source.SequenceNumber != ticket.Sequence || source.IsOwnedByCurrentProcess)
-        { Invalidate(); return; }
+        { Invalidate(); ticket.Cancellation.Dispose(); return; }
         if (failure is ExternalException && ticket.Attempts < MaximumAttempts)
         { retryAt = Environment.TickCount64 + RetryMilliseconds; return; }
+        if (failure == null && png == null && link != null)
+        {
+            // Download outside the clipboard STA and its two-second read limit.
+            // A newer normal image can be read immediately while this is cancelled.
+            ticket.Resolving = true;
+            _ = ResolveLinkAsync(ticket, link);
+            return;
+        }
+        FinishImage(ticket, png, null, failure);
+    }
+
+    private async Task ResolveLinkAsync(ReadTicket ticket, Uri link)
+    {
+        byte[] png = null; ClipboardImageOriginal original = null; Exception failure = null;
+        try { (png, original) = await Task.Run(() => loadLink(link, ticket.Cancellation.Token)).ConfigureAwait(false); }
+        catch (Exception ex) { failure = ex; }
+        Post(() => FinishImage(ticket, png, original, failure));
+    }
+
+    private void FinishImage(ReadTicket ticket, byte[] png, ClipboardImageOriginal original, Exception failure)
+    {
+        ticket.Cancellation.Dispose();
+        if (disposed || !running || !ReferenceEquals(ticket, pending)) return;
+        if (suppressions != 0 || source.SequenceNumber != ticket.Sequence || source.IsOwnedByCurrentProcess)
+        { pending = null; Invalidate(); return; }
         pending = null;
         if (failure != null)
         {
@@ -195,14 +229,22 @@ internal sealed class ClipboardImageMonitor : IDisposable
             return;
         }
         if (png == null || png.Length == 0) return;
-        current = new ClipboardImageSnapshot(ticket.Sequence, ticket.Anchor, ticket.ObservedAt, png);
+        var snapshot = new ClipboardImageSnapshot(ticket.Sequence, ticket.Anchor, ticket.ObservedAt, png, original);
+        current = snapshot;
         display.Start(Environment.TickCount64);
-        selected(current);
-        display.ObservePointer(isDotPoint(source.CursorPosition), Environment.TickCount64);
+        selected(snapshot);
+        if (ReferenceEquals(current, snapshot))
+        {
+            // Native window creation can itself take seconds. The user receives
+            // the full existing lifetime after the surface is actually shown.
+            display.Start(Environment.TickCount64);
+            display.ObservePointer(isDotPoint(source.CursorPosition), Environment.TickCount64);
+        }
     }
 
     private void Invalidate()
     {
+        pending?.Cancellation.Cancel();
         pending = null;
         current = null;
         display.Clear();
@@ -249,6 +291,8 @@ internal sealed class ClipboardImageMonitor : IDisposable
         internal Point Anchor { get; } = anchor;
         internal DateTimeOffset ObservedAt { get; } = observedAt;
         internal int Attempts { get; set; }
+        internal bool Resolving { get; set; }
+        internal CancellationTokenSource Cancellation { get; } = new();
     }
 
     private sealed class Suppression(ClipboardImageMonitor owner) : IDisposable
@@ -293,6 +337,7 @@ internal interface IClipboardImageSource
     Point CursorPosition { get; }
     bool IsOwnedByCurrentProcess { get; }
     byte[] ReadPng();
+    Uri ReadImageLink() => null;
 }
 
 internal sealed class SystemClipboardImageSource : IClipboardImageSource
@@ -312,6 +357,7 @@ internal sealed class SystemClipboardImageSource : IClipboardImageSource
 
     public byte[] ReadPng()
         => EncodeDataObject(Clipboard.GetDataObject());
+    public Uri ReadImageLink() => ClipboardImageLink.FromDataObject(Clipboard.GetDataObject());
 
     internal static byte[] EncodeDataObject(IDataObject data)
     {
