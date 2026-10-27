@@ -1,0 +1,80 @@
+name: Codex maintenance
+run-name: Codex maintenance ${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: '要修改的内容、期望结果和必要的复现步骤'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  maintain:
+    if: github.actor == github.repository_owner && github.ref == 'refs/heads/main' && github.event.repository.private
+    runs-on: [self-hosted, Windows, X64, knowledgeclipper]
+    timeout-minutes: 90
+    permissions:
+      contents: write
+      pull-requests: write
+    defaults:
+      run:
+        shell: D:\AppData\GitHubActions\KnowledgeClipper\tools\pwsh\pwsh.exe -NoLogo -NoProfile -File {0}
+    env:
+      CODEX_HOME: D:\AppData\GitHubActions\KnowledgeClipper\codex
+      CODEX_BIN: D:\AppData\GitHubActions\KnowledgeClipper\tools\codex\codex.exe
+      DOTNET_EXE: D:\Applications\RemNoteQuickClipperRuntime\dotnet-sdk-8.0.424\dotnet.exe
+      DOTNET_CLI_HOME: D:\AppData\GitHubActions\KnowledgeClipper\dotnet
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      NPM_CONFIG_CACHE: D:\Caches\npm-cache
+      NUGET_PACKAGES: D:\Caches\NuGet\packages
+      TEMP: D:\Caches\GitHubActions\KnowledgeClipper\temp
+      TMP: D:\Caches\GitHubActions\KnowledgeClipper\temp
+      MAINTENANCE_TASK: ${{ inputs.task }}
+      MAINTENANCE_RUN: D:\Artifacts\GitHubActions\KnowledgeClipper\runs\${{ github.run_id }}\${{ github.run_attempt }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prepare task branch
+        run: |
+          'D:\AppData\GitHubActions\KnowledgeClipper\tools\pwsh' >> $env:GITHUB_PATH
+          'D:\AppData\GitHubActions\KnowledgeClipper\tools\codex' >> $env:GITHUB_PATH
+          & .\tools\automation\Invoke-Maintenance.ps1 -Phase Prepare
+
+      - name: Run Codex with subscription login
+        timeout-minutes: 30
+        run: '& .\tools\automation\Invoke-Maintenance.ps1 -Phase Agent'
+
+      - name: Build and run offline checks
+        timeout-minutes: 40
+        run: |
+          & .\tools\automation\Test-Maintenance.ps1 -RepositoryPath $env:GITHUB_WORKSPACE -RunDirectory $env:MAINTENANCE_RUN -DotnetPath $env:DOTNET_EXE
+
+      - name: Publish pull request
+        id: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: '& .\tools\automation\Invoke-Maintenance.ps1 -Phase Publish'
+
+      - name: Record result
+        if: always()
+        env:
+          FINAL_JOB_STATUS: ${{ job.status }}
+        run: '& .\tools\automation\Invoke-Maintenance.ps1 -Phase Report'
+
+      - name: Upload check results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: maintenance-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.MAINTENANCE_RUN }}\reports\
+          if-no-files-found: ignore
+          retention-days: 14
