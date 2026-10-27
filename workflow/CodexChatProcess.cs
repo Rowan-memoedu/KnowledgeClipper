@@ -6,7 +6,9 @@ namespace KnowledgeClipper.Workflow;
 
 public sealed class CodexChatProcess(string helper, string dataRoot)
 {
-    public const string PythonPath = @"D:\Applications\RemNoteQuickClipperRuntime\codex-python\Scripts\python.exe";
+    public const string DefaultPythonPath = @"D:\Applications\RemNoteQuickClipperRuntime\codex-python\Scripts\python.exe";
+    public static string PythonPath => Environment.GetEnvironmentVariable("KNOWLEDGECLIPPER_CODEX_PYTHON") is { Length: > 0 } configured
+        ? configured : DefaultPythonPath;
     private Process? process;
     private bool cancelRequested;
     private readonly SemaphoreSlim stdinGate = new(1, 1);

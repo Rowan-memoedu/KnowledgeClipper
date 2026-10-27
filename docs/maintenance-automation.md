@@ -30,13 +30,15 @@ runner 已注册为 Windows 自动启动服务，运行账户为 `NT AUTHORITY\N
 
 runner 的官方 `.env` 文件为服务补充专用工具路径，workflow 使用 Actions 原生 `shell: pwsh`。修改该环境文件后，在没有作业运行时重启 runner 服务生效。
 
+聊天离线测试会启动 Python fixture。runner 通过 `KNOWLEDGECLIPPER_CODEX_PYTHON` 指向专用目录中的 Python 3.14.6，使用已验证签名的官方解释器和标准库，不访问用户目录下的 Python 安装。不设置该变量时，应用继续使用原来的 `codex-python` 虚拟环境；生产应用及其运行环境无需调整。
+
 ## 本机目录
 
 | 用途 | 位置 |
 | --- | --- |
 | 官方 runner | `D:\AppData\GitHubActions\KnowledgeClipper\runner` |
 | Codex 登录 | `D:\AppData\GitHubActions\KnowledgeClipper\codex` |
-| PowerShell / Codex 程序 | `D:\AppData\GitHubActions\KnowledgeClipper\tools` |
+| PowerShell / Codex / Python 程序 | `D:\AppData\GitHubActions\KnowledgeClipper\tools` |
 | Actions 临时 checkout | `D:\Artifacts\GitHubActions\KnowledgeClipper\work` |
 | 每次执行的日志与产物 | `D:\Artifacts\GitHubActions\KnowledgeClipper\runs\<run id>\<attempt>` |
 | 构建缓存 | `D:\Caches\GitHubActions\KnowledgeClipper` |

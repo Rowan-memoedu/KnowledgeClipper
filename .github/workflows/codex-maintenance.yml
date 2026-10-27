@@ -26,6 +26,8 @@ jobs:
     env:
       CODEX_HOME: D:\AppData\GitHubActions\KnowledgeClipper\codex
       CODEX_BIN: D:\AppData\GitHubActions\KnowledgeClipper\tools\codex\codex.exe
+      KNOWLEDGECLIPPER_CODEX_PYTHON: D:\AppData\GitHubActions\KnowledgeClipper\tools\python\python.exe
+      PYTHONDONTWRITEBYTECODE: '1'
       DOTNET_EXE: D:\Applications\RemNoteQuickClipperRuntime\dotnet-sdk-8.0.424\dotnet.exe
       DOTNET_CLI_HOME: D:\AppData\GitHubActions\KnowledgeClipper\dotnet
       DOTNET_CLI_TELEMETRY_OPTOUT: '1'

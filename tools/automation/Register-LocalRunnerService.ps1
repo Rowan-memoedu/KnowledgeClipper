@@ -8,7 +8,7 @@ $principal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIde
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) { throw 'Official Windows runner service registration requires an elevated PowerShell.' }
 $exitCode = 1
 try {
-    foreach ($path in @("$root\runner\config.cmd", "$root\tools\pwsh\pwsh.exe", "$root\tools\codex\codex.exe")) {
+    foreach ($path in @("$root\runner\config.cmd", "$root\tools\pwsh\pwsh.exe", "$root\tools\codex\codex.exe", "$root\tools\python\python.exe")) {
         if (-not (Test-Path -LiteralPath $path)) { throw "Missing verified runtime: $path" }
     }
     if (Test-Path -LiteralPath "$root\runner\.runner") { throw 'Runner is already configured; inspect it instead of replacing its identity.' }

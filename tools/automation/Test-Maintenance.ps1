@@ -18,6 +18,9 @@ $env:NUGET_PACKAGES = 'D:\Caches\NuGet\packages'
 Push-Location -LiteralPath $RepositoryPath
 try {
     Invoke-Checked git @('diff', '--check')
+    $python = if ($env:KNOWLEDGECLIPPER_CODEX_PYTHON) { $env:KNOWLEDGECLIPPER_CODEX_PYTHON } else { 'D:\Applications\RemNoteQuickClipperRuntime\codex-python\Scripts\python.exe' }
+    Write-Host "Checking the Python interpreter used by offline chat fixtures: $python"
+    Invoke-Checked $python @('--version')
     Write-Host 'Building the desktop application into the per-run D: directory...'
     & .\build.ps1 -DotnetPath $DotnetPath -BuildOutput $build -BuildCache $cache
     if ($LASTEXITCODE -ne 0) { throw "Desktop build failed with exit code $LASTEXITCODE" }
