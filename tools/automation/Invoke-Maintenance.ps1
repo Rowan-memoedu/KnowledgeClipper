@@ -86,7 +86,9 @@ $task
 if (-not $env:GH_TOKEN) { throw 'Publishing requires the job-scoped GITHUB_TOKEN.' }
 $checks = Get-Content -Raw -LiteralPath (Join-Path $reports 'checks.json') | ConvertFrom-Json
 if (-not $checks.passed) { throw 'The offline checks have not passed.' }
-$changed = @((Get-CheckedText git @('-c', 'core.quotepath=false', 'ls-files', '--modified', '--deleted', '--others', '--exclude-standard')) -split "`n" | Where-Object { $_ })
+$workingPaths = Get-CheckedText git @('-c', 'core.quotepath=false', 'ls-files', '--modified', '--deleted', '--others', '--exclude-standard')
+$stagedPaths = Get-CheckedText git @('-c', 'core.quotepath=false', 'diff', '--cached', '--name-only')
+$changed = @(($workingPaths + "`n" + $stagedPaths) -split "`n" | Where-Object { $_ } | Sort-Object -Unique)
 Assert-PublishablePaths $changed
 $titleText = (($task -split '\r?\n')[0] -replace '\s+', ' ').Trim()
 if ($titleText.Length -gt 90) { $titleText = $titleText.Substring(0, 90) }

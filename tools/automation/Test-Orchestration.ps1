@@ -65,6 +65,11 @@ try {
     $result = Get-Content -Raw -LiteralPath (Join-Path $run 'reports\result.json') | ConvertFrom-Json
     if ($result.outcome -ne 'no changes' -or $result.pullRequest) { throw 'No-change run attempted a PR.' }
     $checks.Add('no-change run produces no commit or PR')
+    New-Item -ItemType Directory -Path '.codex' | Out-Null
+    '{}' | Set-Content -LiteralPath '.codex\auth.json'
+    Invoke-Checked git @('add','--','.codex/auth.json')
+    Reject-Operation { & $entry -Phase Publish } 'credential-like' 'already-staged credential file cannot bypass publication checks'
+    Invoke-Checked git @('restore','--staged','--','.codex/auth.json')
     'exit 7' | Set-Content -LiteralPath 'build.ps1'
     $testEntry = Join-Path $PSScriptRoot 'Test-Maintenance.ps1'
     Reject-Operation { & $testEntry -RepositoryPath $repo -RunDirectory (Join-Path $run 'failed-build') -DotnetPath $env:DOTNET_EXE } 'Desktop build failed' 'desktop script nonzero exit cannot count as passed'
