@@ -12,6 +12,9 @@ try {
         if (-not (Test-Path -LiteralPath $path)) { throw "Missing verified runtime: $path" }
     }
     if (Test-Path -LiteralPath "$root\runner\.runner") { throw 'Runner is already configured; inspect it instead of replacing its identity.' }
+    # Runner.Listener officially loads .env before starting. This lets Actions use its native pwsh shell.
+    $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+    "PATH=$root\tools\pwsh;$root\tools\codex;$machinePath" | Set-Content -LiteralPath "$root\runner\.env" -Encoding utf8
     $gh = 'C:\Program Files\GitHub CLI\gh.exe'
     $repo = & $gh api repos/Rowan-memoedu/KnowledgeClipper | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0 -or -not $repo.private -or -not $repo.permissions.admin) { throw 'A private repository and current GitHub admin permission are required.' }

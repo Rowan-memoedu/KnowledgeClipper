@@ -28,6 +28,8 @@ gh run list --repo Rowan-memoedu/KnowledgeClipper --workflow codex-maintenance.y
 
 runner 已注册为 Windows 自动启动服务，运行账户为 `NT AUTHORITY\NETWORK SERVICE`。服务名称是 `actions.runner.Rowan-memoedu-KnowledgeClipper.knowledgeclipper-windows-local`，与 ChatGPT 桌面端中的 Codex 是否打开无关。PowerShell 7.6.5 和 Codex CLI 0.163.0 使用已验证签名的官方运行文件；runner 2.338.2 来自 GitHub 官方发行包并校验发行 SHA-256。runner 保留官方自动更新，Codex/PowerShell 更新时应先验证新文件再替换专用工具目录。
 
+runner 的官方 `.env` 文件为服务补充专用工具路径，workflow 使用 Actions 原生 `shell: pwsh`。修改该环境文件后，在没有作业运行时重启 runner 服务生效。
+
 ## 本机目录
 
 | 用途 | 位置 |

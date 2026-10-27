@@ -22,7 +22,7 @@ jobs:
       pull-requests: write
     defaults:
       run:
-        shell: D:\AppData\GitHubActions\KnowledgeClipper\tools\pwsh\pwsh.exe -NoLogo -NoProfile -File {0}
+        shell: pwsh
     env:
       CODEX_HOME: D:\AppData\GitHubActions\KnowledgeClipper\codex
       CODEX_BIN: D:\AppData\GitHubActions\KnowledgeClipper\tools\codex\codex.exe
@@ -44,10 +44,7 @@ jobs:
           persist-credentials: false
 
       - name: Prepare task branch
-        run: |
-          'D:\AppData\GitHubActions\KnowledgeClipper\tools\pwsh' >> $env:GITHUB_PATH
-          'D:\AppData\GitHubActions\KnowledgeClipper\tools\codex' >> $env:GITHUB_PATH
-          & .\tools\automation\Invoke-Maintenance.ps1 -Phase Prepare
+        run: '& .\tools\automation\Invoke-Maintenance.ps1 -Phase Prepare'
 
       - name: Run Codex with subscription login
         timeout-minutes: 30
