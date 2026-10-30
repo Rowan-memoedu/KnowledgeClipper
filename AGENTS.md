@@ -1,5 +1,7 @@
 # 零碎知识剪藏
 
+- Codex 问答的 WakeWire 接口与部署边界见 [docs/wakewire.md](docs/wakewire.md)。后续开发先核对该文件和 helpers/codex_chat.py；不得用 webhook 包装或跨会话消息替换原问题。
+
 Windows 悬浮式知识采集工具，活动源码仅位于本仓库 `D:\Projects\RemNote Quick Clipper`。使用 .NET 8、WinForms，工作流在 `workflow`，桌面入口在 `src`，本地提示词与 Schema 在 `modes`。
 
 - README 是当前交付与验收的唯一入口；旧发布叙事归入 `docs/release-history.md`，不得作为当前运行路径或跨任务授权。

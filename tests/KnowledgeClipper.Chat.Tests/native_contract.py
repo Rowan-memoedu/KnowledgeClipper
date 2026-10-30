@@ -66,6 +66,29 @@ class Client:
         return NS(thread=NS(id="fork-thread"))
 
 class NativeContract(unittest.TestCase):
+    def test_wakewire_keeps_native_options_and_exact_input(self):
+        configs, turns = [], []
+        def connect(config):
+            configs.append(config)
+            return self.client
+        native.CodexClient = connect
+        original = self.client.turn_start
+        def turn_start(thread, inputs, params):
+            turns.append((thread, inputs, params))
+            return original(thread, inputs, params)
+        self.client.turn_start = turn_start
+        self.request.update(input="原文% 保留\n" * 1000, effort="high")
+        native.run(self.request, self.channel)
+        config = configs[0]
+        self.assertEqual(config.launch_args_override[2:5],
+                         ("codex-session", "--client", "knowledge_clipper"))
+        self.assertEqual(config.codex_bin, "fixture-codex.exe")
+        self.assertEqual(config.launch_args_override[-12:],
+                         tuple(arg for option in config.config_overrides for arg in ("--config", option)))
+        self.assertEqual(turns, [("fixture-thread",
+            [{"type":"text","text":self.request["input"]}],
+            {"model":"fixture","effort":"high"})])
+
     def test_interrupted_terminal_turn_can_fork_without_regeneration(self):
         self.client.source_status="interrupted"
         self.request.update(action="fork",sourceThreadId="source",lastTurnId="past")

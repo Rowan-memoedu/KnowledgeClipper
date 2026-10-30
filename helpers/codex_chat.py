@@ -129,7 +129,13 @@ def run(request, channel):
     cwd.mkdir(parents=True, exist_ok=True)
     options = ("memories.use_memories=false", "memories.generate_memories=false", "project_doc_max_bytes=0",
                'web_search="disabled"', "features.shell_tool=false", "features.multi_agent=false")
-    with CodexClient(CodexConfig(codex_bin=resolve_runtime(request), cwd=str(cwd),
+    runtime = resolve_runtime(request)
+    launch = (os.environ.get("WAKEWIRE_NODE", "C:/Program Files/nodejs/node.exe"),
+              os.environ.get("WAKEWIRE_CLI", "D:/Applications/WakeWire/node_modules/wakewire/dist/cli.js"),
+              "codex-session", "--client", "knowledge_clipper", "--codex", runtime, "--cwd", str(cwd),
+              *(arg for option in options for arg in ("--config", option)))
+    with CodexClient(CodexConfig(codex_bin=runtime, launch_args_override=launch, cwd=str(cwd),
+                                env={"WAKEWIRE_HOME": os.environ.get("WAKEWIRE_HOME", "D:/AppData/WakeWire")},
                                 experimental_api=True, client_name="knowledge_clipper",
                                 client_title="KnowledgeClipper", config_overrides=options)) as client:
         client.initialize()
