@@ -88,6 +88,8 @@ button[data-pending=true]{cursor:progress}
 .message-body svg[aria-roledescription]{display:block;width:auto!important;max-width:100%!important;height:auto!important}
 .message-body svg[aria-roledescription] p{margin:0!important}
 .message-body [data-streamdown="code-block"]{min-width:0;max-width:100%;overflow-x:auto}
+/* Streamdown's line spans need block layout without Tailwind; CRLF-only lines also need height. */
+.message-body [data-streamdown="code-block-body"] pre code>span{display:block;min-height:1lh}
 .message-body [data-streamdown="mermaid-block"]{min-width:0;max-width:100%;overflow-x:auto}
 .message-body [data-streamdown="mermaid"]>div{height:auto!important;max-height:none!important;cursor:default!important;pointer-events:none}
 .message-body [data-streamdown="mermaid"] [role="application"]{height:auto!important;transform:none!important}
