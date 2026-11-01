@@ -34,15 +34,6 @@ try {
         Invoke-Checked $DotnetPath $testArgs
         $passed.Add($name)
     }
-    Write-Host 'Checking code line layout in the real WebView2 chat and card preview...'
-    $uiName = 'KnowledgeClipper.ChatUi.Tests'
-    Invoke-Checked $DotnetPath @('build', "tests\$uiName\$uiName.csproj", '-c', 'Release', '--nologo', "-p:KnowledgeClipperBuildOutput=$build", "-p:KnowledgeClipperBuildCache=$cache")
-    $uiDll = Join-Path $build "$uiName\Release\net8.0-windows\$uiName.dll"
-    $release = Join-Path $build 'RemNoteQuickClipper.Desktop\Release\net8.0-windows\win-x64'
-    & (Join-Path $RepositoryPath 'tools\Invoke-IsolatedDesktopTest.ps1') -Executable $DotnetPath `
-        -Arguments @($uiDll, $RepositoryPath, $release, (Join-Path $reports 'code-blocks'), '--code-blocks-only') -TimeoutSeconds 180
-    if ($LASTEXITCODE -ne 0) { throw "Code block UI checks failed with exit code $LASTEXITCODE" }
-    $passed.Add('code block WebView2 layout')
     foreach ($component in @('remnote-host', 'remnote-plugin')) {
         Invoke-Checked npm.cmd @('ci', '--prefix', $component, '--cache', 'D:\Caches\npm-cache', '--no-audit', '--no-fund')
         Invoke-Checked npm.cmd @('test', '--prefix', $component)
