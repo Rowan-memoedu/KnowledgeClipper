@@ -157,7 +157,7 @@ public sealed class LanguageHistoryLookup
             var file = new FileInfo(path);
             return Path.IsPathFullyQualified(path) && file.Exists && file.Length > 0 &&
                 (file.Attributes & FileAttributes.ReparsePoint) == 0 &&
-                file.Name.EndsWith("-" + StreamingSpeech.AudioCacheKey(text, SpeechPurpose.Selection, settings) + ".mp3", StringComparison.OrdinalIgnoreCase);
+                StreamingSpeech.MatchesAudioCacheKey(file.Name, text, SpeechPurpose.Selection, settings);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException) { return false; }
     }

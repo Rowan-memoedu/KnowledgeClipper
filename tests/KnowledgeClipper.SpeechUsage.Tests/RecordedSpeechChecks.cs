@@ -40,7 +40,7 @@ internal static class RecordedSpeechChecks
         Environment.SetEnvironmentVariable("KC_RECORDED_PLAYER_REPORT", playerReport);
         var settings = new LanguageSettings { FfplayPath = Path.Combine(AppContext.BaseDirectory, "KnowledgeClipper.SpeechUsage.Tests.exe") };
         var oldSettings = settings with { EnglishVoice = "en-US-AvaMultilingualNeural", RatePercent = 15 };
-        var recording = Path.Combine(audioRoot, "old-draft-" + StreamingSpeech.AudioCacheKey("Lead", SpeechPurpose.Selection, oldSettings) + ".mp3");
+        var recording = Path.Combine(audioRoot, "old-draft-" + StreamingSpeech.LegacyAudioCacheKey("Lead", SpeechPurpose.Selection, oldSettings) + ".mp3");
         var info = new ProcessStartInfo(@"D:\Applications\P47\FFmpeg\ffmpeg-8.1.2-full_build\bin\ffmpeg.exe") { UseShellExecute = false, CreateNoWindow = true };
         foreach (var arg in new[] { "-v", "error", "-f", "lavfi", "-i", "sine=frequency=440:duration=0.15", "-codec:a", "libmp3lame", recording }) info.ArgumentList.Add(arg);
         using (var generator = Process.Start(info)!) { await generator.WaitForExitAsync(); Check(generator.ExitCode == 0, "generated independent MP3 fixture without provider or audio output"); }
