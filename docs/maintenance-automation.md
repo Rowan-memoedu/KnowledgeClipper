@@ -11,7 +11,11 @@ gh workflow run codex-maintenance.yml --repo Rowan-memoedu/KnowledgeClipper --re
 gh run list --repo Rowan-memoedu/KnowledgeClipper --workflow codex-maintenance.yml
 ```
 
-输入按文本传给 Codex，不作为 PowerShell 命令执行。当前只接入手动 dispatch；录音处理、文档监听和其他项目路由不在此流程中。
+输入按文本传给 Codex，不作为 PowerShell 命令执行。以上为手动 dispatch 入口。
+
+### RemNote 投放与完成条件
+
+在 RemNote 的“零碎知识剪藏”Document 中，以行首单个 `%` 标记维护任务（例如 `% 补充维护文档`）。WakeWire 每天北京时间（Asia/Shanghai）02:00 扫描并投放任务；受理后，原任务移入该 Document 的“已开始”。维护通过正式 `submit` 完成各关联仓库的 Actions 独立检查并创建或复用 PR，再用 `finalize` 登记完整 PR 集。只有全部关联 PR 检查通过并合并后，原任务才自动移入“已完成”；仅投放成功、检查通过或创建 PR 均不表示完成。
 
 ## 执行与结果
 
