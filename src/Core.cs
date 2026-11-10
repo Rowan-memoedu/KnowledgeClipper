@@ -499,9 +499,9 @@ namespace KnowledgeClipper
         public async Task<CleanOutcome> ReviewAsync(string source)
         {
             if (string.IsNullOrWhiteSpace(source)) return new CleanOutcome { Problem = "没有可清洗的文本" };
-            var key = SecretConfig.Get("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY");
-            if (string.IsNullOrWhiteSpace(key)) return new CleanOutcome { Problem = "未找到 DeepSeek API Key（DEEPSEEK_KNOWLEDGECLIPPER_API_KEY）" };
             var baseUrl = SecretConfig.Get("AI_PRODUCER_BASE_URL") ?? config.DeepSeekBaseUrl;
+            var key = KnowledgeClipper.Workflow.OpenAiTransport.Credential(new KnowledgeClipper.Workflow.LanguageSettings { ApiBaseUrl = baseUrl }, () => SecretConfig.Get("DEEPSEEK_KNOWLEDGECLIPPER_API_KEY"));
+            if (string.IsNullOrWhiteSpace(key)) return new CleanOutcome { Problem = "未找到所选内容 API 的凭据" };
             var model = SecretConfig.Get("AI_PRODUCER_MODEL") ?? config.DeepSeekModel;
             var retriesText = SecretConfig.Get("AI_PRODUCER_MAX_RETRIES");
             int retries;
@@ -549,15 +549,22 @@ namespace KnowledgeClipper
             {
                 client.Timeout = TimeSpan.FromSeconds(240);
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", key);
-                var url = baseUrl.TrimEnd('/') + "/chat/completions";
-                var response = await client.PostAsync(url, new StringContent(Json.New().Serialize(body), Encoding.UTF8, "application/json"));
+                var openai = new Uri(baseUrl).Host == "api.openai.com";
+                var url = baseUrl.TrimEnd('/') + (openai ? "/responses" : "/chat/completions");
+                var requestBody = openai ? KnowledgeClipper.Workflow.OpenAiTransport.Payload(model,
+                    new object[] { new {role="system",content=system},new {role="user",content=user} },8192,true,false,"low") : (object)body;
+                var response = await client.PostAsync(url, new StringContent(Json.New().Serialize(requestBody), Encoding.UTF8, "application/json"));
                 var raw = await response.Content.ReadAsStringAsync();
                 if (!response.IsSuccessStatusCode) throw new InvalidOperationException("DeepSeek HTTP " + (int)response.StatusCode);
                 var root = Json.Dict(Json.New().DeserializeObject(raw));
-                var choices = Json.Array(Get(root, "choices"));
-                if (choices.Length == 0) throw new InvalidOperationException("DeepSeek 未返回 choices");
-                var message = Json.Dict(Get(Json.Dict(choices[0]), "message"));
-                var content = Json.String(message, "content");
+                string content;
+                if(openai) { using(var parsed=System.Text.Json.JsonDocument.Parse(raw)) content=KnowledgeClipper.Workflow.OpenAiTransport.Text(parsed.RootElement); }
+                else {
+                    var choices = Json.Array(Get(root, "choices"));
+                    if (choices.Length == 0) throw new InvalidOperationException("内容 API 未返回 choices");
+                    var message = Json.Dict(Get(Json.Dict(choices[0]), "message"));
+                    content = Json.String(message, "content");
+                }
                 if (string.IsNullOrWhiteSpace(content)) throw new InvalidOperationException("DeepSeek 返回空内容");
                 var cleanedPayload = Json.Dict(Json.New().DeserializeObject(content));
                 var cleaned = Json.String(cleanedPayload, "cleaned_text");

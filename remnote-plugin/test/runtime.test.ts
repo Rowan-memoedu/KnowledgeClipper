@@ -21,7 +21,10 @@ describe('dedicated plugin transport',()=>{
   vi.stubGlobal('Worker',WorkerMock);vi.stubGlobal('location',{href:'http://localhost:43113/index.html?widgetName=index'});
   vi.stubGlobal('setTimeout',()=>{throw new Error('hidden page timer must not be used');});
   vi.stubGlobal('setInterval',()=>{throw new Error('hidden page timer must not be used');});
-  const plugin=sdk(),stop=startRuntime(plugin);expect(String(worker.url)).toBe('http://localhost:43113/transport-worker.js');
+  vi.stubGlobal('__REMNOTE_TRANSPORT_TOKEN','synthetic-token-long-enough');
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValueOnce({ok:true,text:async()=>''}));
+  const plugin=sdk(),stop=await startRuntime(plugin);expect(String(worker.url)).toMatch(/^blob:/);
+  expect(worker.postMessage.mock.calls[0][0].hello.token).toBe('synthetic-token-long-enough');
   expect(worker.postMessage.mock.calls[0][0].hello.protocol).toBe('knowledge-clipper.transport.v1');
   await worker.onmessage({data:{type:'status',value:'connected',generation:1}});
   let finish!:(value:boolean)=>void;

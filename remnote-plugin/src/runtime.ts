@@ -42,8 +42,13 @@ export function createDispatcher(plugin:ReactRNPlugin,wait?:()=>Promise<void>) {
   }
  };
 }
-export function startRuntime(plugin:ReactRNPlugin) {
- const worker=new Worker(new URL('transport-worker.js',plugin.rootURL??globalThis.location.href),{name:'KnowledgeClipper transport'});
+export async function startRuntime(plugin:ReactRNPlugin) {
+ const token=(globalThis as typeof globalThis & {__REMNOTE_TRANSPORT_TOKEN?:string}).__REMNOTE_TRANSPORT_TOKEN;
+ if(!token)throw new Error('KnowledgeClipper frame credential unavailable');
+ const source=await fetch(new URL('transport-worker.js',plugin.rootURL??globalThis.location.href),{cache:'no-store'});
+ if(!source.ok)throw new Error('KnowledgeClipper worker unavailable');
+ const workerURL=URL.createObjectURL(new Blob([await source.text()],{type:'application/javascript'}));
+ const worker=new Worker(workerURL,{name:'KnowledgeClipper transport'});
  let stopped=false,generation=0,connected=false,nextWait=0;
  const waits=new Map<string,{resolve:()=>void;reject:(error:Error)=>void}>();
  const rejectWaits=()=>{for(const pending of waits.values())pending.reject(new Error('Navigation connection interrupted; imported content is unchanged'));waits.clear();};
@@ -72,6 +77,6 @@ export function startRuntime(plugin:ReactRNPlugin) {
    catch(error){if(!stopped)send({id:message.id,error:error instanceof Error?error.message:String(error)},current);}
  };
  worker.onerror=()=>{connected=false;rejectWaits();status('后台连接组件加载失败，请重新加载剪藏插件');};
- worker.postMessage({type:'start',hello:{type:'hello',protocol:'knowledge-clipper.transport.v1',pluginId:'knowledge-clipper',version:'1.0.2',capabilities:CAPABILITIES}});
- return ()=>{stopped=true;connected=false;rejectWaits();worker.postMessage({type:'stop'});worker.terminate();status('已停用');};
+ worker.postMessage({type:'start',hello:{type:'hello',token,protocol:'knowledge-clipper.transport.v1',pluginId:'knowledge-clipper',version:'1.0.2',capabilities:CAPABILITIES}});
+ return ()=>{stopped=true;connected=false;rejectWaits();worker.postMessage({type:'stop'});worker.terminate();URL.revokeObjectURL(workerURL);status('已停用');};
 }

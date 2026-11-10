@@ -10,6 +10,16 @@ const headers={'Content-Type':'application/json','X-KnowledgeClipper-Protocol':'
 const pause=()=>new Promise(done=>setTimeout(done,25));
 async function connect(port:number){const ws=new WebSocket(`ws://127.0.0.1:${port}`);await new Promise(done=>ws.once('open',done));return ws;}
 describe('standalone SDK transport',()=>{
+ it('authenticates opaque sandbox sockets before exposing SDK actions',async()=>{
+  const host=new PluginTransport('synthetic-secret');const port=await host.start(0);
+  const rejected=new WebSocket(`ws://127.0.0.1:${port}`,{origin:'null'});
+  await new Promise(done=>rejected.once('open',done));
+  const closed=new Promise(done=>rejected.once('close',done));rejected.send(JSON.stringify({...hello,token:'wrong'}));await closed;
+  expect(host.isConnected()).toBe(false);
+  const accepted=new WebSocket(`ws://127.0.0.1:${port}`,{origin:'null'});await new Promise(done=>accepted.once('open',done));
+  try{accepted.send(JSON.stringify({...hello,token:'synthetic-secret'}));await pause();expect(host.isConnected()).toBe(true);}
+  finally{accepted.terminate();await host.stop();}
+ });
  it('keeps browser message-level liveness alive beyond its 90 second idle timeout',async()=>{
   vi.useFakeTimers({toFake:['setInterval','clearInterval']});
   const host=new PluginTransport();const port=await host.start(0);const ws=await connect(port);let ticks=0;

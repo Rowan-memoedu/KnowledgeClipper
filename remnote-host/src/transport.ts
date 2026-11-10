@@ -14,6 +14,7 @@ const actions = new Set(['knowledge_clipper_health','knowledge_clipper_export','
   'knowledge_clipper_repair_plain_structure','knowledge_clipper_test_plain_structure','knowledge_clipper_adopt',
   'knowledge_clipper_mermaid_render_state']);
 export class PluginTransport implements ClipperTransport {
+  constructor(private readonly sandboxToken?:string){}
   private server?: WebSocketServer;
   private client?: WebSocket;
   private capabilities = new Set<string>();
@@ -22,11 +23,11 @@ export class PluginTransport implements ClipperTransport {
   private pending = new Map<string,{resolve:(value:unknown)=>void;reject:(error:Error)=>void;timer:ReturnType<typeof setTimeout>}>();
   async start(port: number): Promise<number> {
     const server=this.server=new WebSocketServer({host:'127.0.0.1',port,maxPayload:48*1024*1024,
-      verifyClient:({req}:{req:IncomingMessage})=>!req.headers.origin || ['http://localhost:43113','http://127.0.0.1:43113'].includes(req.headers.origin)});
+      verifyClient:({req}:{req:IncomingMessage})=>!req.headers.origin || ['http://localhost:43113','http://127.0.0.1:43113','null'].includes(req.headers.origin)});
     const alive=new WeakSet<WebSocket>();
     this.heartbeat=setInterval(()=>{for(const socket of server.clients){if(!alive.has(socket)){socket.terminate();continue;}alive.delete(socket);socket.ping();if(socket===this.client && socket.readyState===WebSocket.OPEN)socket.send(JSON.stringify({type:'ping'}));}},15000);
     this.heartbeat.unref();
-    server.on('connection',socket=>{
+    server.on('connection',(socket,request)=>{
       const wakeups=new Map<string,ReturnType<typeof setTimeout>>();
       alive.add(socket);socket.on('pong',()=>alive.add(socket));
       let ready=false;
@@ -35,6 +36,7 @@ export class PluginTransport implements ClipperTransport {
         try {
           const message=JSON.parse(raw.toString());
           if(!ready){
+            if(request.headers.origin==='null'&&(!this.sandboxToken||message.token!==this.sandboxToken))throw new Error('Sandbox authentication required');
             if(message.type!=='hello'||message.protocol!=='knowledge-clipper.transport.v1'||message.pluginId!=='knowledge-clipper'||!Array.isArray(message.capabilities)) throw new Error('Invalid hello');
             if(this.client && this.client.readyState===WebSocket.OPEN){socket.close(1008,'Plugin already connected');return;}
             clearTimeout(timer);ready=true;this.client=socket;this.capabilities=new Set(message.capabilities.filter((x:unknown)=>typeof x==='string'));
