@@ -25,7 +25,7 @@ try {
     & .\build.ps1 -DotnetPath $DotnetPath -BuildOutput $build -BuildCache $cache
     if ($LASTEXITCODE -ne 0) { throw "Desktop build failed with exit code $LASTEXITCODE" }
     $passed.Add('desktop Release build')
-    foreach ($name in @('KnowledgeClipper.Workflow.Tests', 'KnowledgeClipper.Chat.Tests', 'KnowledgeClipper.SpeechUsage.Tests', 'KnowledgeClipper.LanguageHistory.Tests')) {
+    foreach ($name in @('KnowledgeClipper.Workflow.Tests', 'KnowledgeClipper.Chat.Tests', 'KnowledgeClipper.SpeechUsage.Tests', 'KnowledgeClipper.LanguageHistory.Tests', 'KnowledgeClipper.OpenAi.Tests')) {
         Write-Host "Building and executing $name (offline)..."
         Invoke-Checked $DotnetPath @('build', "tests\$name\$name.csproj", '-c', 'Release', '--nologo', "-p:KnowledgeClipperBuildOutput=$build", "-p:KnowledgeClipperBuildCache=$cache")
         $dll = Join-Path $build "$name\Release\net8.0\$name.dll"
