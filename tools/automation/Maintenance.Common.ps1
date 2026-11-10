@@ -29,7 +29,7 @@ function Assert-RunnerCheckout {
     if (-not $root.StartsWith('D:\Artifacts\GitHubActions\KnowledgeClipper\work\', [StringComparison]::OrdinalIgnoreCase)) {
         throw 'Refusing to modify a directory outside the dedicated runner checkout.'
     }
-    if ($env:GITHUB_REPOSITORY -ne 'Rowan-memoedu/KnowledgeClipper' -or $env:GITHUB_REF -ne 'refs/heads/main') {
+    if ($env:GITHUB_REPOSITORY -notin @('Rowan-memoedu/KnowledgeClipper', 'memoedu/KnowledgeClipper') -or $env:GITHUB_REF -ne 'refs/heads/main') {
         throw 'This workflow is restricted to KnowledgeClipper main.'
     }
     Set-Location -LiteralPath $root

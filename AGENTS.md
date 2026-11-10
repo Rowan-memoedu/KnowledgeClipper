@@ -2,7 +2,6 @@
 
 - 代码提交、PR 合并、同步与共享边界遵守 [CONTRIBUTING.md](CONTRIBUTING.md)。历史任务授权、私人账号及生产数据权限不随源码共享转移给其他成员或 Agent。
 
-
 - Codex 问答的 WakeWire 接口与部署边界见 [docs/wakewire.md](docs/wakewire.md)。后续开发先核对该文件和 helpers/codex_chat.py；不得用 webhook 包装或跨会话消息替换原问题。
 
 Windows 悬浮式知识采集工具，活动源码仅位于本仓库 `D:\Projects\RemNote Quick Clipper`。使用 .NET 8、WinForms，工作流在 `workflow`，桌面入口在 `src`，本地提示词与 Schema 在 `modes`。

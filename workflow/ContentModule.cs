@@ -97,8 +97,9 @@ public sealed partial class ContentModule(HttpClient http, Func<string> key)
         {
             try
             {
-                using var request = new HttpRequestMessage(HttpMethod.Post, settings.ApiBaseUrl.TrimEnd('/') + "/chat/completions");
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key());
+                var openai = OpenAiTransport.Selected(settings);
+                using var request = new HttpRequestMessage(HttpMethod.Post, settings.ApiBaseUrl.TrimEnd('/') + (openai ? "/responses" : "/chat/completions"));
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", OpenAiTransport.Credential(settings, key));
                 object userContent = JsonSerializer.Serialize(input, WorkflowJson.Options);
                 if (images is { Count: > 0 })
                 {
@@ -126,7 +127,9 @@ public sealed partial class ContentModule(HttpClient http, Func<string> key)
                     ["messages"] = messages
                 };
                 if (disableThinking) payload["thinking"] = new { type = "disabled" };
-                request.Content = JsonContent.Create(payload);
+                request.Content = JsonContent.Create(openai ? OpenAiTransport.Payload(settings.Model, messages,
+                    settings.Model == "gpt-6.1-sol" ? Math.Max(8192, maxTokens) : maxTokens, true, false,
+                    settings.Model == "gpt-6.1-sol" ? "high" : "low") : payload);
                 using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 timeout.CancelAfter(TimeSpan.FromSeconds(settings.ContentTimeoutSeconds));
                 using var response = await http.SendAsync(request, timeout.Token);
@@ -134,9 +137,14 @@ public sealed partial class ContentModule(HttpClient http, Func<string> key)
                     throw new UnauthorizedAccessException("内容 API 身份验证失败，请检查安全设置。");
                 if (!response.IsSuccessStatusCode) throw new HttpRequestException("内容 API 请求失败（HTTP " + (int)response.StatusCode + "）。");
                 using var result = JsonDocument.Parse(await response.Content.ReadAsStringAsync(timeout.Token));
-                var choice = result.RootElement.GetProperty("choices")[0];
-                if (choice.GetProperty("finish_reason").GetString() != "stop") throw new InvalidDataException("内容响应未完整结束。");
-                var content = choice.GetProperty("message").GetProperty("content").GetString();
+                string? content;
+                if (openai) content = OpenAiTransport.Text(result.RootElement);
+                else
+                {
+                    var choice = result.RootElement.GetProperty("choices")[0];
+                    if (choice.GetProperty("finish_reason").GetString() != "stop") throw new InvalidDataException("内容响应未完整结束。");
+                    content = choice.GetProperty("message").GetProperty("content").GetString();
+                }
                 if (string.IsNullOrWhiteSpace(content)) throw new InvalidDataException("内容响应为空。");
                 // Validate JSON with the same parser used by the workflow before a
                 // schema library can throw a different, unhandled parser exception.

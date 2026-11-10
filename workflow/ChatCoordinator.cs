@@ -31,18 +31,20 @@ public sealed class ChatCoordinator(ClipDraft draft, DraftStore store, ChatConfi
         if (provider == "api")
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, draft.Settings.ApiBaseUrl.TrimEnd('/') + "/models");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey());
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", OpenAiTransport.Credential(draft.Settings, apiKey));
             using var response = await http.SendAsync(request, ct); response.EnsureSuccessStatusCode();
             using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
-            return document.RootElement.GetProperty("data").EnumerateArray().Select(m =>
+            var openai = OpenAiTransport.Selected(draft.Settings);
+            return document.RootElement.GetProperty("data").EnumerateArray()
+                .Where(m => !openai || m.GetProperty("id").GetString() is "gpt-6-luna" or "gpt-6.1-sol").Select(m =>
             {
                 var id = m.GetProperty("id").GetString()!;
                 var efforts = m.TryGetProperty("effort", out var effort) ? effort : default;
                 return new ChatModel(id, m.TryGetProperty("name", out var name) ? name.GetString()! : id,
                     efforts.ValueKind == JsonValueKind.Object && efforts.TryGetProperty("supported_levels", out var levels)
-                        ? levels.EnumerateArray().Select(v => v.GetString()!).ToArray() : [],
+                        ? levels.EnumerateArray().Select(v => v.GetString()!).ToArray() : openai ? id == "gpt-6-luna" ? ["none", "low", "medium", "high", "xhigh", "max"] : ["low", "medium", "high", "xhigh", "max"] : [],
                     m.TryGetProperty("input_modalities", out var modalities) ? modalities.EnumerateArray().Select(v => v.GetString()!).ToArray()
-                        : id == draft.Settings.ImageModel ? ["text", "image"] : ["text"],
+                        : openai || id == draft.Settings.ImageModel ? ["text", "image"] : ["text"],
                     efforts.ValueKind == JsonValueKind.Object && efforts.TryGetProperty("default_level", out var defaultEffort) ? defaultEffort.GetString() : null);
             }).ToArray();
         }

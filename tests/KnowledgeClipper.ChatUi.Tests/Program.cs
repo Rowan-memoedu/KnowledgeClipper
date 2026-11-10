@@ -28,6 +28,7 @@ internal static class Program
     }
     static async Task Run(string[] args)
     {
+        if(args.Contains("--code-blocks-only")){await CodeBlockUiChecks.Run(args);return;}
         if(args.Contains("--tables-only")){await TableUiChecks.Run(args);return;}
         if(args.Contains("--integration-only")){await IntegrationUiChecks.Run(args);return;}
         if(args.Contains("--tabs-only")){await BranchUiChecks.Run(args);return;}

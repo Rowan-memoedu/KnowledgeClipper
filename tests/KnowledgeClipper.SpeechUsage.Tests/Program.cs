@@ -3,6 +3,7 @@ using System.Text.Json;
 
 if (args.Contains("-nodisp")) { await RecordedSpeechChecks.ReceivePlayerAsync(); return; }
 if (args.Contains("--recorded")) { await RecordedSpeechChecks.RunAsync(); return; }
+if (args.Contains("--pronunciation")) { await PronunciationChecks.RunAsync(args[Array.IndexOf(args, "--pronunciation") + 1]); return; }
 
 var settings = new LanguageSettings();
 if (args.Contains("--live"))
@@ -26,7 +27,15 @@ Check(StreamingSpeech.SpokenText("𠀀hello𰀀", settings) == "hello", "Supplem
 Check(StreamingSpeech.SpokenText("只有中文。", settings) == "只有中文。", "Pure Chinese playback is preserved");
 Check(StreamingSpeech.SpokenText("English\ntext", settings) == "English\ntext", "Pure English text is preserved");
 Check(StreamingSpeech.SpokenText("苹果 apple", settings with { AutoVoice = false }) == "苹果 apple", "Manual playback preserves mixed text");
+Check(StreamingSpeech.SpeechStyle("严谨", settings).Contains("标准普通话"), "Chinese words receive Mandarin reading instructions");
+Check(StreamingSpeech.SpeechStyle("pain", settings).Contains("American English"), "Short English words receive an explicit pronunciation language");
+Check(StreamingSpeech.SpeechStyle("苹果 apple", settings).Contains("American English"), "Automatic mixed text style follows the actual English spoken text");
+Check(StreamingSpeech.SpeechStyle("苹果 apple", settings with { AutoVoice = false }).Contains("按原文顺序切换语言"), "Manual bilingual speech keeps both languages");
 var key = StreamingSpeech.AudioCacheKey("selected", SpeechPurpose.Selection, settings);
+var legacyKey = StreamingSpeech.LegacyAudioCacheKey("selected", SpeechPurpose.Selection, settings);
+Check(key != legacyKey, "New reading instructions do not reuse an unguided synthesis cache entry");
+Check(StreamingSpeech.MatchesAudioCacheKey("history-" + legacyKey + ".mp3", "selected", SpeechPurpose.Selection, settings), "Explicit old recording identity remains valid");
+Check(!StreamingSpeech.MatchesAudioCacheKey("history-" + legacyKey + ".mp3", "different", SpeechPurpose.Selection, settings), "Legacy compatibility still rejects different source text");
 Check(key != StreamingSpeech.AudioCacheKey("selected", SpeechPurpose.Sentence, settings), "Purpose isolation");
 Check(key != StreamingSpeech.AudioCacheKey("selected sentence", SpeechPurpose.Selection, settings), "Text isolation");
 Check(key != StreamingSpeech.AudioCacheKey("selected", SpeechPurpose.Selection, settings with { EnglishVoice = "other" }), "Voice isolation");
@@ -66,6 +75,15 @@ using (var speech = new StreamingSpeech(Path.Combine(AppContext.BaseDirectory, "
     await speech.SpeakAsync(mixed, false, () => { });
     Check(mixed.SpeechError == null && File.ReadAllText(mixed.AudioPath!) == "apple pear" && mixed.Original.SelectedText == "苹果 apple 和 pear",
         "Multilingual voice transport receives only English while the captured source stays intact");
+    var legacyDraft = new ClipDraft { Id = Guid.NewGuid().ToString("N") };
+    var legacyPath = Path.Combine(audioRoot, legacyDraft.Id + "-" + legacyKey + ".mp3");
+    File.WriteAllText(legacyPath, "previous recording");
+    await speech.SpeakAsync(legacyDraft, true, () => { });
+    Check(legacyDraft.SpeechError == null && legacyDraft.AudioPath == legacyPath && File.ReadAllText(legacyPath) == "previous recording" &&
+        !legacyDraft.Times.ContainsKey("audioComplete"), "Replay after upgrade plays the original recording without synthesis");
+    await speech.SpeakAsync(legacyDraft, false, () => { });
+    Check(legacyDraft.SpeechError == null && legacyDraft.AudioPath != legacyPath && File.ReadAllText(legacyPath) == "previous recording",
+        "Explicit fresh synthesis uses the new profile and preserves the old recording");
 }
 if (args.Length == 2 && args[0] == "--discover")
 {
@@ -82,7 +100,8 @@ namespace KnowledgeClipper.Workflow
 {
     public sealed record LanguageSettings
     {
-        public string PythonPath { get; init; } = @"D:\Applications\RemNoteQuickClipperRuntime\edge-tts-7.2.8\Scripts\python.exe";
+        public string PythonPath { get; init; } = Environment.GetEnvironmentVariable("KNOWLEDGECLIPPER_CODEX_PYTHON") ??
+            @"D:\Applications\RemNoteQuickClipperRuntime\edge-tts-7.2.8\Scripts\python.exe";
         public string FfplayPath { get; init; } = "unused";
         public bool AutoVoice { get; init; } = true;
         public bool SpeechAutoPlay { get; init; } = true;

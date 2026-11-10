@@ -58,7 +58,7 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
         var root = Path.GetFullPath(audioRoot).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
         var path = Path.GetFullPath(audioPath);
         if (!Path.IsPathFullyQualified(audioPath) || !path.StartsWith(root, StringComparison.OrdinalIgnoreCase) ||
-            !Path.GetFileName(path).EndsWith("-" + AudioCacheKey(sourceText, SpeechPurpose.Selection, sourceSettings) + ".mp3", StringComparison.OrdinalIgnoreCase))
+            !MatchesAudioCacheKey(path, sourceText, SpeechPurpose.Selection, sourceSettings))
             throw new InvalidDataException("历史录音的路径、文字或音色参数与原记录不符。");
         var file = new FileInfo(path);
         if (!file.Exists || file.Length == 0) throw new FileNotFoundException("历史录音不存在或尚未保存完整。", path);
@@ -103,11 +103,36 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
         return filtered ? Regex.Replace(spoken.ToString(), @"\s+", " ").Trim() : text;
     }
 
-    // Persisted audio is reusable only for the same purpose, exact text, voice and synthesis settings.
+    public static string SpeechStyle(string text, LanguageSettings settings)
+    {
+        var spoken = SpokenText(text, settings);
+        var english = spoken.Any(c => c is >= 'a' and <= 'z' or >= 'A' and <= 'Z');
+        var chinese = spoken.EnumerateRunes().Any(r => r.Value is >= 0x3400 and <= 0x9FFF or
+            >= 0xF900 and <= 0xFAFF or >= 0x20000 and <= 0x2FA1F or >= 0x30000 and <= 0x3347F);
+        if (chinese)
+            return "自然、平稳地完整朗读原文，使用标准普通话、正常语速和自然的轻重音、连读与标点停顿。" +
+                (english ? "英文部分使用自然的美式英语，按原文顺序切换语言。" : "") +
+                "词语或短语只正常读一遍；不逐字顿读，不添加解释、语气词、笑声或表演。";
+        return (english ? "Read the supplied text in natural, neutral American English. " : "Read the supplied text naturally in its original language. ") +
+            "Use a normal conversational pace, correct word stress, connected phrasing and pauses at punctuation. " +
+            "Read a word or short phrase once normally; do not spell ordinary words letter by letter. " +
+            "Read verbatim without explanations, extra words or performed emotions and sound effects.";
+    }
+
+    // New synthesis includes its reading instructions in the identity. Explicit replay
+    // also accepts the old identity, so upgrading never regenerates saved recordings.
     public static string AudioCacheKey(string text, SpeechPurpose purpose, LanguageSettings settings) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("natural-reading-v1\n" +
+            LegacyAudioCacheKey(text, purpose, settings) + "\n" + SpeechStyle(text, settings)))).ToLowerInvariant();
+
+    internal static string LegacyAudioCacheKey(string text, SpeechPurpose purpose, LanguageSettings settings) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
         { provider = "mimo-v2.5-tts", text, purpose, voice = SelectVoice(text, settings), spokenText = SpokenText(text, settings),
             settings.RatePercent, settings.VolumePercent, settings.PitchHz })))).ToLowerInvariant();
+
+    public static bool MatchesAudioCacheKey(string path, string text, SpeechPurpose purpose, LanguageSettings settings) =>
+        Path.GetFileName(path).EndsWith("-" + AudioCacheKey(text, purpose, settings) + ".mp3", StringComparison.OrdinalIgnoreCase) ||
+        Path.GetFileName(path).EndsWith("-" + LegacyAudioCacheKey(text, purpose, settings) + ".mp3", StringComparison.OrdinalIgnoreCase);
 
     public Task SpeakTextAsync(ClipDraft draft, string text, SpeechPurpose purpose, bool replay, Action changed, Action<int>? playerStarted = null) =>
         SpeakCoreAsync(draft, text, purpose, replay, changed, playerStarted, null);
@@ -140,6 +165,11 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
             Directory.CreateDirectory(audioRoot);
             var cacheKey = AudioCacheKey(text, purpose, synthesisSettings);
             var cached = recording?.Path ?? Path.Combine(audioRoot, draft.Id + "-" + cacheKey + ".mp3");
+            if (recording == null && replay && !File.Exists(cached))
+            {
+                var legacy = Path.Combine(audioRoot, draft.Id + "-" + LegacyAudioCacheKey(text, purpose, synthesisSettings) + ".mp3");
+                if (File.Exists(legacy)) cached = legacy;
+            }
             // Unique partial paths prevent a cancelled request from deleting the next request's stream.
             var audio = Path.Combine(audioRoot, draft.Id + "-" + Guid.NewGuid().ToString("N") + ".mp3");
             var reuse = recording != null || replay && File.Exists(cached);
@@ -167,6 +197,7 @@ public sealed class StreamingSpeech(string helperPath, string audioRoot) : IDisp
             var stderr = process.StandardError.ReadToEndAsync();
             var voice = SelectVoice(text, synthesisSettings);
             await process.StandardInput.WriteLineAsync(JsonSerializer.Serialize(new { text = SpokenText(text, synthesisSettings), voice,
+                style = SpeechStyle(text, synthesisSettings),
                 rate = synthesisSettings.RatePercent, volume = synthesisSettings.VolumePercent, pitch = synthesisSettings.PitchHz, ffplay = settings.FfplayPath,
                 audio = reuse ? cached : audio, replay = reuse, losslessReplay = true, preconnect = true,
                 play = replay || settings.SpeechAutoPlay || purpose == SpeechPurpose.Sentence }, WorkflowJson.Options).AsMemory(), token).ConfigureAwait(false);

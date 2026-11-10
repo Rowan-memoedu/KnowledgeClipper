@@ -2,12 +2,13 @@
 
 协作开发、Agent 提交与合并规则见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-
 Codex 问答已通过 WakeWire 托管原生连接；接口、部署和后续开发入口见 [WakeWire 接入说明](docs/wakewire.md)。原模型、图文消息、流式回复、停止、分叉、界面和导出合同保持不变。
 
 Windows 悬浮式知识采集工具：划词朗读、图文提问、多轮问答与组合制卡，统一导出到 Anki 或 RemNote。活动源码位于本仓库；用户草稿、凭据、模型回合和学习库数据不进入 Git。
 
 ## 当前交付状态
+
+RemNote 独立连接支持 IPv4、IPv6 回环安装入口和 Origin:null 沙箱。随机凭据仅交付给受 RemNote frame-ancestors 限制的 iframe HTML，HTML 不开放 CORS；后台 WebSocket 继续校验凭据和原协议。插件使用 Blob Worker 维持原后台传输。2026-10-24 已核验真实连接与 SDK 响应，桌面包及既有制卡数据沿用原部署。
 
 2026-10-19 核对的现役桌面包为 `D:/Artifacts/KnowledgeClipper/image-link-20261019/release-final/RemNoteQuickClipper.Desktop/Release/net8.0-windows/win-x64`。实际进程、桌面快捷方式和 `Personal Tool - KnowledgeClipper` 计划任务均已指向此包。复制明确的图片链接可显示现有图片浮点，静态 SVG 在本地转换；普通网址与原生剪贴板图片沿用原规则。此前表格、预览定位、整合制卡和 Tab 功能保留。RemNote 专用服务仍使用 `performance-20261016/remnote`，HTTP/WS/安装服务分别为 43111/43112/43113。路径是本机部署事实，其他机器按其安装配置核对。
 
@@ -26,6 +27,8 @@ Windows 悬浮式知识采集工具：划词朗读、图文提问、多轮问答
 当前包包含各轮已经验收的聊天、同页分叉、Tab 关闭/恢复/排序、共享卡片、历史、批注、撤销/重做、补充要求和双端导出修改。源码、部署与验收分别留痕；本轮证据见[图片链接验收](D:/Artifacts/KnowledgeClipper/image-link-20261019/validation.md)，此前代码整合见 [收尾记录](D:/Artifacts/KnowledgeClipper/closeout-20261016/closeout.md)。
 
 ## 使用与设置
+
+API 调用新增 OpenAI Responses 路径，原 DeepSeek 路径保留；按接口域名选择凭据，OpenAI 读取 `OPENAI_ENV_FILE` 或本机外部 `.env.local`，失败不跨供应商回退。文本、图片、流式回复和结构化内容沿用原有工作流与校验，Codex 原生问答不受此配置影响。迁移候选包已完成模型实测和回归；当前运行的旧桌面包及本机默认值尚未切换，部署时须同时更新程序和 API 设置。
 
 - 文字浮点“读 / 卡 / 摘 / 问”，图片浮点另有“图”；快捷模式与普通模式共用原稿、导入身份及失败反馈。
 - 复制 PNG/JPEG/GIF/BMP/SVG 图片直链，下载完成后显示同一图片浮点；普通网址不探测，真实剪贴板图片始终优先。SVG 原文件与来源随图片操作保存在本地，进入既有流程的是 PNG；不改写剪贴板。

@@ -19,11 +19,12 @@ public sealed partial class ContentModule
             messages.Add(new { role = message.Role, content = Parts(message.Parts) });
         messages.Add(new { role = "user", content = Parts((string.IsNullOrEmpty(input) ? [] : new[] { new ChatPart("text", input) })
             .Concat(images.Select(image => new ChatPart("image", Image: image)))) });
-        using var request = new HttpRequestMessage(HttpMethod.Post, settings.ApiBaseUrl.TrimEnd('/') + "/chat/completions");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key());
+        var openai = OpenAiTransport.Selected(settings);
+        using var request = new HttpRequestMessage(HttpMethod.Post, settings.ApiBaseUrl.TrimEnd('/') + (openai ? "/responses" : "/chat/completions"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", OpenAiTransport.Credential(settings, key));
         var payload = new Dictionary<string, object> { ["model"] = settings.Model, ["stream"] = true, ["messages"] = messages };
         if (effort != null) payload["reasoning_effort"] = effort;
-        request.Content = JsonContent.Create(payload);
+        request.Content = JsonContent.Create(openai ? OpenAiTransport.Payload(settings.Model, messages, null, false, true, effort ?? "high") : payload);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(TimeSpan.FromSeconds(settings.ContentTimeoutSeconds));
         using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
@@ -38,6 +39,18 @@ public sealed partial class ContentModule
             var data = line[5..].Trim();
             if (data == "[DONE]") { done = true; break; }
             using var document = JsonDocument.Parse(data);
+            if (openai)
+            {
+                var type = document.RootElement.GetProperty("type").GetString();
+                if (type == "response.output_text.delta") await append(document.RootElement.GetProperty("delta").GetString()!);
+                if (type is "error" or "response.failed" or "response.incomplete") throw new IOException("OpenAI 流式回复未完成；原文和部分回复已保留。");
+                if (type == "response.completed")
+                {
+                    _ = OpenAiTransport.Text(document.RootElement.GetProperty("response"));
+                    done = true; finish = "stop"; break;
+                }
+                continue;
+            }
             if (document.RootElement.TryGetProperty("error", out _)) throw new IOException("API 在流式回复中报告失败；原文和部分回复已保留。");
             if (!document.RootElement.TryGetProperty("choices", out var choices) || choices.GetArrayLength() == 0) continue;
             var choice = choices[0];

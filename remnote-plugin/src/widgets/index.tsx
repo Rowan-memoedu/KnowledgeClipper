@@ -7,7 +7,7 @@ async function activate(plugin:ReactRNPlugin) {
  await plugin.app.registerWidget('status',WidgetLocation.RightSidebar,{});
  await plugin.app.registerPowerup({name:'剪藏 Mermaid',code:MERMAID_POWERUP,description:'保留 Mermaid 源码并显示矢量图',options:{slots:[]}});
  await plugin.app.registerWidget('mermaid',WidgetLocation.UnderRemEditor,{dimensions:{height:'auto',width:'100%'},powerupFilter:MERMAID_POWERUP});
- stop?.();stop=startRuntime(plugin);
+ stop?.();stop=await startRuntime(plugin);
 }
 async function deactivate(plugin:ReactRNPlugin){stop?.();stop=undefined;await plugin.app.unregisterWidget('status',WidgetLocation.RightSidebar);}
 declareIndexPlugin(activate,deactivate);
