@@ -1,5 +1,8 @@
 # 零碎知识剪藏
 
+协作开发、Agent 提交与合并规则见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+
 Codex 问答已通过 WakeWire 托管原生连接；接口、部署和后续开发入口见 [WakeWire 接入说明](docs/wakewire.md)。原模型、图文消息、流式回复、停止、分叉、界面和导出合同保持不变。
 
 Windows 悬浮式知识采集工具：划词朗读、图文提问、多轮问答与组合制卡，统一导出到 Anki 或 RemNote。活动源码位于本仓库；用户草稿、凭据、模型回合和学习库数据不进入 Git。
